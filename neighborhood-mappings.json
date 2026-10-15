@@ -1,0 +1,3536 @@
+{
+  "Maputo": {
+    "Baixa / Central": [
+      {
+        "name": "Aeroporto",
+        "codigo": "AER-001",
+        "coordinates": "-25.9200,32.5700",
+        "routeCount": 1,
+        "routes": [
+          "VIA-AER-BAI"
+        ]
+      },
+      {
+        "name": "Albasine",
+        "codigo": "PAR-VIA-21-5",
+        "coordinates": "-25.8373,32.6382",
+        "routeCount": 3,
+        "routes": [
+          "VIA-21",
+          "VIA-53",
+          "VIA-39A"
+        ]
+      },
+      {
+        "name": "Albasine (Rotunda)",
+        "codigo": "PAR-ALBAZINE",
+        "coordinates": "-25.8373,32.6382",
+        "routeCount": 3,
+        "routes": [
+          "VIA-21",
+          "VIA-39A",
+          "VIA-53"
+        ]
+      },
+      {
+        "name": "Albazine (401)",
+        "codigo": "OSM-6791046848",
+        "coordinates": "-25.8372684,32.6381206",
+        "routeCount": 3,
+        "routes": [
+          "VIA-21",
+          "VIA-39A",
+          "VIA-53"
+        ]
+      },
+      {
+        "name": "Albazine (402)",
+        "codigo": "OSM-6791046847",
+        "coordinates": "-25.8373119,32.6382",
+        "routeCount": 3,
+        "routes": [
+          "VIA-21",
+          "VIA-39A",
+          "VIA-53"
+        ]
+      },
+      {
+        "name": "Albazine (X04)",
+        "codigo": "OSM-6795123873",
+        "coordinates": "-25.8372303,32.6380499",
+        "routeCount": 3,
+        "routes": [
+          "VIA-21",
+          "VIA-39A",
+          "VIA-53"
+        ]
+      },
+      {
+        "name": "Albazine (X07)",
+        "codigo": "OSM-6795123872",
+        "coordinates": "-25.8371934,32.6379826",
+        "routeCount": 3,
+        "routes": [
+          "VIA-21",
+          "VIA-39A",
+          "VIA-53"
+        ]
+      },
+      {
+        "name": "Albazine (X08)",
+        "codigo": "OSM-6795123869",
+        "coordinates": "-25.8371584,32.6379106",
+        "routeCount": 3,
+        "routes": [
+          "VIA-21",
+          "VIA-39A",
+          "VIA-53"
+        ]
+      },
+      {
+        "name": "Albazine (X09)",
+        "codigo": "OSM-6795123867",
+        "coordinates": "-25.8371267,32.6378407",
+        "routeCount": 3,
+        "routes": [
+          "VIA-21",
+          "VIA-39A",
+          "VIA-53"
+        ]
+      },
+      {
+        "name": "Albazine (X10)",
+        "codigo": "OSM-6795123865",
+        "coordinates": "-25.8370925,32.6377725",
+        "routeCount": 3,
+        "routes": [
+          "VIA-21",
+          "VIA-39A",
+          "VIA-53"
+        ]
+      },
+      {
+        "name": "Albazine (X40)",
+        "codigo": "OSM-6795123864",
+        "coordinates": "-25.8370631,32.6377198",
+        "routeCount": 3,
+        "routes": [
+          "VIA-21",
+          "VIA-39A",
+          "VIA-53"
+        ]
+      },
+      {
+        "name": "Albazine (X41)",
+        "codigo": "OSM-6795123862",
+        "coordinates": "-25.837026,32.6376707",
+        "routeCount": 3,
+        "routes": [
+          "VIA-21",
+          "VIA-39A",
+          "VIA-53"
+        ]
+      },
+      {
+        "name": "Albert Lithule",
+        "codigo": "PAR-ALBERT",
+        "coordinates": "-25.9734,32.5694",
+        "routeCount": 21,
+        "routes": [
+          "VIA-39A",
+          "VIA-39B",
+          "VIA-47",
+          "VIA-11",
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Albineiro",
+        "codigo": "OSM-6832554818",
+        "coordinates": "-25.8338492,32.5487408",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Albineiro",
+        "codigo": "OSM-6832554819",
+        "coordinates": "-25.8337702,32.5488296",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Alto Maé",
+        "codigo": "PAR-ALTOMAE-1",
+        "coordinates": "-25.9550,32.5800",
+        "routeCount": 6,
+        "routes": [
+          "VIA-POL-BAI",
+          "VIA-11",
+          "VIA-20",
+          "VIA-53",
+          "VIA-37"
+        ]
+      },
+      {
+        "name": "Anfrena",
+        "codigo": "OSM-6828259167",
+        "coordinates": "-25.9438615,32.4882696",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Av. 25 de Setembro",
+        "codigo": "PAR-VIA-1A-2",
+        "coordinates": "-25.9700,32.5720",
+        "routeCount": 25,
+        "routes": [
+          "VIA-1A",
+          "VIA-POL-BAI",
+          "VIA-SOM-BAI",
+          "VIA-AER-BAI",
+          "VIA-11"
+        ]
+      },
+      {
+        "name": "Av. de Moçambique",
+        "codigo": "PAR-VIA-1A-5",
+        "coordinates": "-25.9500,32.5500",
+        "routeCount": 5,
+        "routes": [
+          "VIA-1A",
+          "VIA-T3-BAI",
+          "VIA-MAG-BAI",
+          "VIA-37",
+          "VIA-T3-MUS"
+        ]
+      },
+      {
+        "name": "Av. Eduardo Mondlane",
+        "codigo": "PAR-VIA-1A-4",
+        "coordinates": "-25.9600,32.5650",
+        "routeCount": 13,
+        "routes": [
+          "VIA-1A",
+          "VIA-POL-BAI",
+          "VIA-MACH-MUS",
+          "VIA-POL-MAT",
+          "VIA-T3-MUS"
+        ]
+      },
+      {
+        "name": "Av. Julius Nyerere",
+        "codigo": "PAR-VIA-1A-3",
+        "coordinates": "-25.9650,32.5750",
+        "routeCount": 16,
+        "routes": [
+          "VIA-1A",
+          "VIA-21",
+          "VIA-37",
+          "VIA-AER-BAI",
+          "VIA-11"
+        ]
+      },
+      {
+        "name": "Bananeiras",
+        "codigo": "OSM-6792145481",
+        "coordinates": "-25.9268488,32.5053694",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Bananeiras",
+        "codigo": "OSM-6792165385",
+        "coordinates": "-25.9261133,32.5057232",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Bananeiras",
+        "codigo": "OSM-6792145484",
+        "coordinates": "-25.9263956,32.5050231",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Banco",
+        "codigo": "OSM-6795453567",
+        "coordinates": "-25.9224537,32.4976216",
+        "routeCount": 1,
+        "routes": [
+          "VIA-FOM-BAI"
+        ]
+      },
+      {
+        "name": "Banco",
+        "codigo": "OSM-6795453566",
+        "coordinates": "-25.9223498,32.49768",
+        "routeCount": 1,
+        "routes": [
+          "VIA-FOM-BAI"
+        ]
+      },
+      {
+        "name": "Barraca Verde",
+        "codigo": "OSM-6790637063",
+        "coordinates": "-25.9083864,32.5277567",
+        "routeCount": 2,
+        "routes": [
+          "VIA-T3-MUS",
+          "VIA-T3-BAI"
+        ]
+      },
+      {
+        "name": "Barraca Verde",
+        "codigo": "OSM-6790637062",
+        "coordinates": "-25.9086634,32.5276577",
+        "routeCount": 2,
+        "routes": [
+          "VIA-T3-MUS",
+          "VIA-T3-BAI"
+        ]
+      },
+      {
+        "name": "Bombas",
+        "codigo": "OSM-6795453575",
+        "coordinates": "-25.9153658,32.4852451",
+        "routeCount": 4,
+        "routes": [
+          "VIA-FOM-BAI",
+          "VIA-MGARE-BAI",
+          "VIA-MACH-MUS",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Bombas",
+        "codigo": "OSM-6795453577",
+        "coordinates": "-25.9155231,32.4851109",
+        "routeCount": 4,
+        "routes": [
+          "VIA-FOM-BAI",
+          "VIA-MGARE-BAI",
+          "VIA-MACH-MUS",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Bombas da Machava",
+        "codigo": "OSM-6789970179",
+        "coordinates": "-25.9113303,32.4958273",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MACH-MUS",
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Boquisso",
+        "codigo": "PAR-BOQUIS",
+        "coordinates": "-25.8160,32.5410",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Campo",
+        "codigo": "OSM-6788210154",
+        "coordinates": "-25.9011084,32.4966246",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Campo",
+        "codigo": "OSM-6788210150",
+        "coordinates": "-25.9011037,32.4964601",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Canhueiro",
+        "codigo": "OSM-6832554836",
+        "coordinates": "-25.8472369,32.5485316",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Canhueiro",
+        "codigo": "OSM-6832554838",
+        "coordinates": "-25.8472702,32.5484267",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Canhueiro",
+        "codigo": "OSM-6831098252",
+        "coordinates": "-25.8496419,32.5479805",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Canhueiro",
+        "codigo": "OSM-6831098254",
+        "coordinates": "-25.8496521,32.5478641",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Canhueiro-P1499",
+        "codigo": "OSM-6832554814",
+        "coordinates": "-25.8289151,32.547654",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Canhueiro-P1499",
+        "codigo": "OSM-6832554813",
+        "coordinates": "-25.8290038,32.5475303",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Carcaça",
+        "codigo": "OSM-6794859965",
+        "coordinates": "-25.8641557,32.5459394",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Carcaça",
+        "codigo": "OSM-6794859967",
+        "coordinates": "-25.8642711,32.5461184",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Carpintaria",
+        "codigo": "OSM-6811495799",
+        "coordinates": "-25.8314339,32.6298249",
+        "routeCount": 1,
+        "routes": [
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Casa Branca",
+        "codigo": "OSM-6790599961",
+        "coordinates": "-25.9331027,32.5032688",
+        "routeCount": 5,
+        "routes": [
+          "VIA-47",
+          "VIA-FOM-BAI",
+          "VIA-MGARE-BAI",
+          "VIA-MACH-MUS",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Casa Branca",
+        "codigo": "OSM-6790599959",
+        "coordinates": "-25.9332983,32.5033728",
+        "routeCount": 5,
+        "routes": [
+          "VIA-47",
+          "VIA-FOM-BAI",
+          "VIA-MGARE-BAI",
+          "VIA-MACH-MUS",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Casa Branca",
+        "codigo": "OSM-6792311435",
+        "coordinates": "-25.9312673,32.5053831",
+        "routeCount": 6,
+        "routes": [
+          "VIA-47",
+          "VIA-FOM-BAI",
+          "VIA-MGARE-BAI",
+          "VIA-MACH-MUS",
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Cavalo Branco",
+        "codigo": "OSM-6795453571",
+        "coordinates": "-25.920217,32.493601",
+        "routeCount": 1,
+        "routes": [
+          "VIA-FOM-BAI"
+        ]
+      },
+      {
+        "name": "Cavalo Branco",
+        "codigo": "OSM-6795453569",
+        "coordinates": "-25.9202831,32.4935187",
+        "routeCount": 1,
+        "routes": [
+          "VIA-FOM-BAI"
+        ]
+      },
+      {
+        "name": "Cemitério",
+        "codigo": "OSM-6788524443",
+        "coordinates": "-25.8522765,32.5442479",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Cemitério",
+        "codigo": "OSM-6788524444",
+        "coordinates": "-25.8523768,32.5440583",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Centro",
+        "codigo": "OSM-6795453564",
+        "coordinates": "-25.924024,32.5005564",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Centro",
+        "codigo": "OSM-6788608822",
+        "coordinates": "-25.8530626,32.5441514",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Centro",
+        "codigo": "OSM-6795453565",
+        "coordinates": "-25.9238943,32.5006679",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Centro",
+        "codigo": "OSM-6788608821",
+        "coordinates": "-25.8529407,32.5442638",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Centro de Saúde",
+        "codigo": "OSM-6830937353",
+        "coordinates": "-25.829016,32.611004",
+        "routeCount": 1,
+        "routes": [
+          "VIA-11"
+        ]
+      },
+      {
+        "name": "Centro de Saúde",
+        "codigo": "OSM-6811495804",
+        "coordinates": "-25.822155,32.6329856",
+        "routeCount": 1,
+        "routes": [
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Chamissava",
+        "codigo": "PAR-CHAMIS",
+        "coordinates": "-26.0371,32.5186",
+        "routeCount": 1,
+        "routes": [
+          "VIA-1A"
+        ]
+      },
+      {
+        "name": "Chapa Branca",
+        "codigo": "OSM-5365801227",
+        "coordinates": "-25.886796,32.5544341",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Chapa Branca",
+        "codigo": "OSM-5365801226",
+        "coordinates": "-25.8866825,32.5544564",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Chiwewe",
+        "codigo": "OSM-6828236497",
+        "coordinates": "-25.9493152,32.4800096",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Cimento",
+        "codigo": "OSM-6828259177",
+        "coordinates": "-25.947848,32.4821414",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Cimento",
+        "codigo": "OSM-6828259176",
+        "coordinates": "-25.9479507,32.4822328",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Colete",
+        "codigo": "OSM-6808174216",
+        "coordinates": "-25.8257542,32.631712",
+        "routeCount": 1,
+        "routes": [
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Contentor Vermelho",
+        "codigo": "OSM-5287538497",
+        "coordinates": "-25.8297183,32.6130273",
+        "routeCount": 1,
+        "routes": [
+          "VIA-11"
+        ]
+      },
+      {
+        "name": "Costa do Sol",
+        "codigo": "PAR-COSTASOL",
+        "coordinates": "-25.9189,32.6347",
+        "routeCount": 1,
+        "routes": [
+          "VIA-17"
+        ]
+      },
+      {
+        "name": "Distrito",
+        "codigo": "OSM-5365801229",
+        "coordinates": "-25.8869234,32.5560784",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Distrito",
+        "codigo": "OSM-5365801230",
+        "coordinates": "-25.887032,32.5560535",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Distrito",
+        "codigo": "OSM-6792281735",
+        "coordinates": "-25.8869409,32.5562399",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Distrito",
+        "codigo": "OSM-6792281734",
+        "coordinates": "-25.8870496,32.556294",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Dom Alexandre",
+        "codigo": "PAR-DOMALEX",
+        "coordinates": "-25.9419,32.6056",
+        "routeCount": 2,
+        "routes": [
+          "VIA-21",
+          "VIA-17"
+        ]
+      },
+      {
+        "name": "Escola",
+        "codigo": "OSM-6831098255",
+        "coordinates": "-25.8503112,32.5469006",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Escola",
+        "codigo": "OSM-6831098257",
+        "coordinates": "-25.8503907,32.5469266",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Esplanada",
+        "codigo": "OSM-6832554824",
+        "coordinates": "-25.8374514,32.54925",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Esplanada",
+        "codigo": "OSM-6832554825",
+        "coordinates": "-25.837366,32.5495108",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Estádio",
+        "codigo": "OSM-6790509972",
+        "coordinates": "-25.9110678,32.5281721",
+        "routeCount": 2,
+        "routes": [
+          "VIA-T3-BAI",
+          "VIA-T3-MUS"
+        ]
+      },
+      {
+        "name": "Estádio",
+        "codigo": "OSM-6790509971",
+        "coordinates": "-25.9126377,32.5271805",
+        "routeCount": 2,
+        "routes": [
+          "VIA-T3-BAI",
+          "VIA-T3-MUS"
+        ]
+      },
+      {
+        "name": "Estádio",
+        "codigo": "OSM-6790509970",
+        "coordinates": "-25.9122417,32.5292503",
+        "routeCount": 2,
+        "routes": [
+          "VIA-T3-BAI",
+          "VIA-T3-MUS"
+        ]
+      },
+      {
+        "name": "Estaleiro",
+        "codigo": "OSM-6830994303",
+        "coordinates": "-25.8309603,32.6170689",
+        "routeCount": 1,
+        "routes": [
+          "VIA-11"
+        ]
+      },
+      {
+        "name": "Estaleiro Naife",
+        "codigo": "OSM-6832554810",
+        "coordinates": "-25.8243141,32.5473589",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Estaleiro Naife",
+        "codigo": "OSM-6832554809",
+        "coordinates": "-25.8244181,32.5472737",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Facebook",
+        "codigo": "OSM-6808197944",
+        "coordinates": "-25.8245279,32.6321307",
+        "routeCount": 1,
+        "routes": [
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Ferragem",
+        "codigo": "OSM-6811495801",
+        "coordinates": "-25.8298399,32.6303681",
+        "routeCount": 1,
+        "routes": [
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Ginásio",
+        "codigo": "OSM-6811495803",
+        "coordinates": "-25.8241408,32.6322568",
+        "routeCount": 1,
+        "routes": [
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Grande Maputo",
+        "codigo": "OSM-6808174220",
+        "coordinates": "-25.834418,32.6286906",
+        "routeCount": 1,
+        "routes": [
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Grande Maputo",
+        "codigo": "OSM-6808174222",
+        "coordinates": "-25.8328756,32.6242765",
+        "routeCount": 1,
+        "routes": [
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Hospital",
+        "codigo": "OSM-6828101437",
+        "coordinates": "-25.9100399,32.493791",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MACH-MUS",
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Hulene",
+        "codigo": "PAR-VIA-17-3",
+        "coordinates": "-25.9083,32.5939",
+        "routeCount": 8,
+        "routes": [
+          "VIA-17",
+          "VIA-39A",
+          "VIA-39B",
+          "VIA-11",
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Hulene (Praça)",
+        "codigo": "PAR-HULENE",
+        "coordinates": "-25.9083,32.5939",
+        "routeCount": 6,
+        "routes": [
+          "VIA-53",
+          "VIA-11",
+          "VIA-20",
+          "VIA-37",
+          "VIA-39A"
+        ]
+      },
+      {
+        "name": "Igreja Mundial",
+        "codigo": "OSM-6808212713",
+        "coordinates": "-25.8232477,32.6325971",
+        "routeCount": 1,
+        "routes": [
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Intena",
+        "codigo": "OSM-6788210152",
+        "coordinates": "-25.9080375,32.4964627",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Intena",
+        "codigo": "OSM-6788210151",
+        "coordinates": "-25.9079786,32.4963205",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Jardim",
+        "codigo": "PAR-JARDIM",
+        "coordinates": "-25.9688,32.5714",
+        "routeCount": 18,
+        "routes": [
+          "VIA-21",
+          "VIA-53",
+          "VIA-11",
+          "VIA-20",
+          "VIA-37"
+        ]
+      },
+      {
+        "name": "Laurentina",
+        "codigo": "PAR-LAURENT",
+        "coordinates": "-25.9734,32.5694",
+        "routeCount": 21,
+        "routes": [
+          "VIA-53",
+          "VIA-1A",
+          "VIA-11",
+          "VIA-17",
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Machava Naz Naz",
+        "codigo": "OSM-6789927353",
+        "coordinates": "-25.9086148,32.4913147",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MACH-MUS"
+        ]
+      },
+      {
+        "name": "Machava Naz Naz",
+        "codigo": "OSM-6789927355",
+        "coordinates": "-25.9087609,32.4914281",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MACH-MUS"
+        ]
+      },
+      {
+        "name": "Machava Sede",
+        "codigo": "OSM-6828101439",
+        "coordinates": "-25.9132834,32.4994926",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Machava Sede",
+        "codigo": "OSM-6825838953",
+        "coordinates": "-25.9134413,32.4993444",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Machava Sede",
+        "codigo": "PAR-MACHSEDE",
+        "coordinates": "-25.9125,32.4914",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MACH-MUS"
+        ]
+      },
+      {
+        "name": "Magoanine",
+        "codigo": "PAR-VIA-17-4",
+        "coordinates": "-25.8752,32.6105",
+        "routeCount": 8,
+        "routes": [
+          "VIA-17",
+          "VIA-37",
+          "VIA-39A",
+          "VIA-39B",
+          "VIA-MAG-BAI"
+        ]
+      },
+      {
+        "name": "Magoanine A",
+        "codigo": "MAG-001",
+        "coordinates": "-25.8752,32.6105",
+        "routeCount": 6,
+        "routes": [
+          "VIA-MAG-BAI",
+          "VIA-53",
+          "VIA-MAG-ZIM",
+          "VIA-20",
+          "VIA-37"
+        ]
+      },
+      {
+        "name": "Magoanine B",
+        "codigo": "MAG-002",
+        "coordinates": "-25.8780,32.6120",
+        "routeCount": 6,
+        "routes": [
+          "VIA-MAG-ZIM",
+          "VIA-MAG-BAI",
+          "VIA-20",
+          "VIA-53",
+          "VIA-37"
+        ]
+      },
+      {
+        "name": "Manduca",
+        "codigo": "OSM-6792521243",
+        "coordinates": "-25.9139481,32.5328845",
+        "routeCount": 1,
+        "routes": [
+          "VIA-T3-MUS"
+        ]
+      },
+      {
+        "name": "Manduca",
+        "codigo": "OSM-6792521245",
+        "coordinates": "-25.9140096,32.5327274",
+        "routeCount": 1,
+        "routes": [
+          "VIA-T3-MUS"
+        ]
+      },
+      {
+        "name": "Maquele",
+        "codigo": "OSM-6832554815",
+        "coordinates": "-25.8316055,32.5482369",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Maquele",
+        "codigo": "OSM-6832554817",
+        "coordinates": "-25.8316937,32.5481623",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Matchekane",
+        "codigo": "OSM-6790233090",
+        "coordinates": "-25.8678372,32.5463795",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Matendene",
+        "codigo": "PAR-MATEND",
+        "coordinates": "-25.8264,32.6315",
+        "routeCount": 1,
+        "routes": [
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Maxaquene",
+        "codigo": "MAX-001",
+        "coordinates": "-25.9400,32.5700",
+        "routeCount": 4,
+        "routes": [
+          "VIA-MAX-BAI",
+          "VIA-AER-BAI",
+          "VIA-39A",
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Michafutene",
+        "codigo": "PAR-MICHAF",
+        "coordinates": "-25.8092,32.6189",
+        "routeCount": 1,
+        "routes": [
+          "VIA-11"
+        ]
+      },
+      {
+        "name": "Museu",
+        "codigo": "PAR-VIA-MAT-BAI-4",
+        "coordinates": "-25.9723,32.5836",
+        "routeCount": 12,
+        "routes": [
+          "VIA-MAT-BAI",
+          "VIA-53",
+          "VIA-TCH-BAI",
+          "VIA-MGARE-BAI",
+          "VIA-FOM-BAI"
+        ]
+      },
+      {
+        "name": "Mussumbuluco",
+        "codigo": "PAR-VIA-T3-BAI-2",
+        "coordinates": "-25.8894,32.5117",
+        "routeCount": 1,
+        "routes": [
+          "VIA-T3-BAI"
+        ]
+      },
+      {
+        "name": "Nice Nice",
+        "codigo": "OSM-6827056052",
+        "coordinates": "-25.908244,32.4903703",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MACH-MUS"
+        ]
+      },
+      {
+        "name": "Padaria",
+        "codigo": "OSM-6834504747",
+        "coordinates": "-25.9101089,32.5176682",
+        "routeCount": 1,
+        "routes": [
+          "VIA-T3-BAI"
+        ]
+      },
+      {
+        "name": "Padaria",
+        "codigo": "OSM-6830723057",
+        "coordinates": "-25.9364613,32.5000832",
+        "routeCount": 2,
+        "routes": [
+          "VIA-47",
+          "VIA-MACH-MUS"
+        ]
+      },
+      {
+        "name": "Padaria",
+        "codigo": "OSM-6808517759",
+        "coordinates": "-25.9053149,32.4964856",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Padaria",
+        "codigo": "OSM-6808517757",
+        "coordinates": "-25.9052981,32.4963549",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Padaria",
+        "codigo": "OSM-6832554833",
+        "coordinates": "-25.8421253,32.5499197",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Padaria",
+        "codigo": "OSM-6832554835",
+        "coordinates": "-25.8421745,32.5498109",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Padaria-P1494",
+        "codigo": "OSM-6832554829",
+        "coordinates": "-25.8398116,32.5497614",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Padaria-P1494",
+        "codigo": "OSM-6832554828",
+        "coordinates": "-25.8398513,32.54965",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Paragem das Bombas (N4)",
+        "codigo": "PAR-BOMBAS",
+        "coordinates": "-25.9320,32.5050",
+        "routeCount": 5,
+        "routes": [
+          "VIA-47",
+          "VIA-FOM-BAI",
+          "VIA-MGARE-BAI",
+          "VIA-MACH-MUS",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Paragem Praia",
+        "codigo": "PAR-PRAIA",
+        "coordinates": "-25.9525,32.6184",
+        "routeCount": 1,
+        "routes": [
+          "VIA-17"
+        ]
+      },
+      {
+        "name": "Pepsi",
+        "codigo": "OSM-6830723065",
+        "coordinates": "-25.944935,32.4855216",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Petromoc",
+        "codigo": "OSM-6828259174",
+        "coordinates": "-25.9468898,32.4837446",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Petromoc",
+        "codigo": "OSM-6828259173",
+        "coordinates": "-25.9469925,32.4838359",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Polana Cimento",
+        "codigo": "POL-001",
+        "coordinates": "-25.9650,32.5850",
+        "routeCount": 5,
+        "routes": [
+          "VIA-POL-BAI",
+          "VIA-POL-MAT",
+          "VIA-SOM-BAI",
+          "VIA-17",
+          "VIA-21"
+        ]
+      },
+      {
+        "name": "Polana Shopping",
+        "codigo": "POL-002",
+        "coordinates": "-25.9680,32.5880",
+        "routeCount": 3,
+        "routes": [
+          "VIA-POL-MAT",
+          "VIA-POL-BAI",
+          "VIA-21"
+        ]
+      },
+      {
+        "name": "Portagem",
+        "codigo": "PAR-VIA-MAT-BAI-3",
+        "coordinates": "-25.9392,32.5147",
+        "routeCount": 11,
+        "routes": [
+          "VIA-MAT-BAI",
+          "VIA-MACH-MUS",
+          "VIA-TCH-BAI",
+          "VIA-MAT-MUS",
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Portagem (Matola)",
+        "codigo": "PAR-PORTAG",
+        "coordinates": "-25.9392,32.5147",
+        "routeCount": 10,
+        "routes": [
+          "VIA-47",
+          "VIA-51A",
+          "VIA-51C",
+          "VIA-MAT-MUS",
+          "VIA-MAT-BAI"
+        ]
+      },
+      {
+        "name": "Praça dos Trabalhadores",
+        "codigo": "PAR-VIA-1A-1",
+        "coordinates": "-25.9734,32.5694",
+        "routeCount": 21,
+        "routes": [
+          "VIA-1A",
+          "VIA-MAT-BAI",
+          "VIA-T3-BAI",
+          "VIA-POL-BAI",
+          "VIA-MAG-BAI"
+        ]
+      },
+      {
+        "name": "Praça dos Trabalhadores (Baixa)",
+        "codigo": "PAR-BAIXA",
+        "coordinates": "-25.9734,32.5694",
+        "routeCount": 21,
+        "routes": [
+          "VIA-1A",
+          "VIA-11",
+          "VIA-17",
+          "VIA-20",
+          "VIA-39A"
+        ]
+      },
+      {
+        "name": "Pt",
+        "codigo": "OSM-6832554830",
+        "coordinates": "-25.8412272,32.5498172",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Pt",
+        "codigo": "OSM-6832554831",
+        "coordinates": "-25.841178,32.549926",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "PT",
+        "codigo": "OSM-6798818334",
+        "coordinates": "-25.8283879,32.6309271",
+        "routeCount": 1,
+        "routes": [
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Rádio Marcone",
+        "codigo": "PAR-MARCONE",
+        "coordinates": "-25.9224,32.5831",
+        "routeCount": 2,
+        "routes": [
+          "VIA-11",
+          "VIA-39A"
+        ]
+      },
+      {
+        "name": "Recheio",
+        "codigo": "OSM-6828101438",
+        "coordinates": "-25.9126713,32.4979698",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Rua da Escolinha",
+        "codigo": "OSM-6811495796",
+        "coordinates": "-25.8332813,32.6291469",
+        "routeCount": 1,
+        "routes": [
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Rua da Ferragem",
+        "codigo": "OSM-6808259382",
+        "coordinates": "-25.8226924,32.6328048",
+        "routeCount": 1,
+        "routes": [
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Rua da Igreja",
+        "codigo": "OSM-6798818336",
+        "coordinates": "-25.8264777,32.6315389",
+        "routeCount": 1,
+        "routes": [
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Rua da Padaria",
+        "codigo": "OSM-6831161744",
+        "coordinates": "-25.8415985,32.55113",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Rua do Parque",
+        "codigo": "OSM-6831161746",
+        "coordinates": "-25.8433669,32.5509459",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Rua do Parque",
+        "codigo": "OSM-6831161748",
+        "coordinates": "-25.843395,32.5508903",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Serralharia",
+        "codigo": "OSM-6790233088",
+        "coordinates": "-25.8680718,32.5465416",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Sial",
+        "codigo": "OSM-12143145356",
+        "coordinates": "-25.9281194,32.4826685",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MACH-MUS",
+          "VIA-47"
+        ]
+      },
+      {
+        "name": "Sial",
+        "codigo": "OSM-12143145355",
+        "coordinates": "-25.9284667,32.4821884",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MACH-MUS"
+        ]
+      },
+      {
+        "name": "Sommerschield",
+        "codigo": "SOM-001",
+        "coordinates": "-25.9600,32.5900",
+        "routeCount": 3,
+        "routes": [
+          "VIA-SOM-BAI",
+          "VIA-17",
+          "VIA-21"
+        ]
+      },
+      {
+        "name": "Stop 12565544210",
+        "codigo": "OSM-12565544210",
+        "coordinates": "-25.9173766,32.480831",
+        "routeCount": 4,
+        "routes": [
+          "VIA-FOM-BAI",
+          "VIA-MGARE-BAI",
+          "VIA-MACH-MUS",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "T3 (Terminal)",
+        "codigo": "T3-001",
+        "coordinates": "-25.9083,32.5222",
+        "routeCount": 2,
+        "routes": [
+          "VIA-T3-BAI",
+          "VIA-T3-MUS"
+        ]
+      },
+      {
+        "name": "T3 Mercado",
+        "codigo": "T3-002",
+        "coordinates": "-25.9090,32.5230",
+        "routeCount": 2,
+        "routes": [
+          "VIA-T3-MUS",
+          "VIA-T3-BAI"
+        ]
+      },
+      {
+        "name": "Tamega",
+        "codigo": "OSM-6790043138",
+        "coordinates": "-25.9164418,32.5049893",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Tamega",
+        "codigo": "OSM-6790043139",
+        "coordinates": "-25.9165411,32.5049045",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Terminal Katembe",
+        "codigo": "PAR-KATEMBE",
+        "coordinates": "-25.9861,32.5594",
+        "routeCount": 1,
+        "routes": [
+          "VIA-1A"
+        ]
+      },
+      {
+        "name": "Terminal Museu",
+        "codigo": "PAR-MUSEU",
+        "coordinates": "-25.9723,32.5836",
+        "routeCount": 7,
+        "routes": [
+          "VIA-21",
+          "VIA-MACH-MUS",
+          "VIA-MAT-MUS",
+          "VIA-MAL-MUS",
+          "VIA-37"
+        ]
+      },
+      {
+        "name": "Terminal Zimpeto",
+        "codigo": "PAR-ZIMPETO",
+        "coordinates": "-25.8643,32.6186",
+        "routeCount": 6,
+        "routes": [
+          "VIA-17",
+          "VIA-37",
+          "VIA-39A",
+          "VIA-MAG-ZIM",
+          "VIA-20"
+        ]
+      },
+      {
+        "name": "Xikhelene",
+        "codigo": "OSM-6789863453",
+        "coordinates": "-25.8556885,32.5445427",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Xikhelene",
+        "codigo": "OSM-6789863452",
+        "coordinates": "-25.8558024,32.5443706",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Xipamanine",
+        "codigo": "PAR-XIPAMA",
+        "coordinates": "-25.9442,32.5639",
+        "routeCount": 8,
+        "routes": [
+          "VIA-T3-BAI",
+          "VIA-MAG-BAI",
+          "VIA-17",
+          "VIA-39A",
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Zimpeto",
+        "codigo": "PAR-VIA-MAG-BAI-2",
+        "coordinates": "-25.8643,32.6186",
+        "routeCount": 8,
+        "routes": [
+          "VIA-MAG-BAI",
+          "VIA-21",
+          "VIA-53",
+          "VIA-17",
+          "VIA-37"
+        ]
+      },
+      {
+        "name": "Zuide",
+        "codigo": "OSM-6795453573",
+        "coordinates": "-25.9182188,32.4900592",
+        "routeCount": 2,
+        "routes": [
+          "VIA-FOM-BAI",
+          "VIA-MACH-MUS"
+        ]
+      },
+      {
+        "name": "Zuide",
+        "codigo": "OSM-6795453572",
+        "coordinates": "-25.9182721,32.4899592",
+        "routeCount": 2,
+        "routes": [
+          "VIA-FOM-BAI",
+          "VIA-MACH-MUS"
+        ]
+      }
+    ],
+    "Zimpeto": [
+      {
+        "name": "Cruzamento de Zimpeto",
+        "codigo": "OSM-6832554822",
+        "coordinates": "-25.8353381,32.5491245",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      },
+      {
+        "name": "Cruzamento de Zimpeto",
+        "codigo": "OSM-6832554823",
+        "coordinates": "-25.8352701,32.5492395",
+        "routeCount": 1,
+        "routes": [
+          "VIA-39B"
+        ]
+      }
+    ],
+    "Jardim": [
+      {
+        "name": "Jardim da Machava",
+        "codigo": "OSM-6797110118",
+        "coordinates": "-25.9129262,32.5226306",
+        "routeCount": 2,
+        "routes": [
+          "VIA-T3-MUS",
+          "VIA-T3-BAI"
+        ]
+      },
+      {
+        "name": "Jardim da Machava",
+        "codigo": "OSM-6797110117",
+        "coordinates": "-25.9130892,32.5226275",
+        "routeCount": 2,
+        "routes": [
+          "VIA-T3-MUS",
+          "VIA-T3-BAI"
+        ]
+      }
+    ]
+  },
+  "Matola": {
+    "Matola Sede": [
+      {
+        "name": "006",
+        "codigo": "OSM-6830593614",
+        "coordinates": "-25.9775064,32.4634529",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-MAT-BAI",
+          "VIA-POL-MAT"
+        ]
+      },
+      {
+        "name": "006",
+        "codigo": "OSM-6830593613",
+        "coordinates": "-25.9775888,32.4633247",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-MAT-BAI",
+          "VIA-POL-MAT"
+        ]
+      },
+      {
+        "name": "007",
+        "codigo": "OSM-6830593617",
+        "coordinates": "-25.9757656,32.4623188",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-MAT-BAI",
+          "VIA-POL-MAT"
+        ]
+      },
+      {
+        "name": "007",
+        "codigo": "OSM-6830593616",
+        "coordinates": "-25.9758283,32.4622277",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-MAT-BAI",
+          "VIA-POL-MAT"
+        ]
+      },
+      {
+        "name": "120",
+        "codigo": "OSM-6787896684",
+        "coordinates": "-25.8936615,32.4337971",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "120",
+        "codigo": "OSM-6787905085",
+        "coordinates": "-25.8936658,32.4336061",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "16",
+        "codigo": "OSM-6787734342",
+        "coordinates": "-25.8594662,32.4664103",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "16",
+        "codigo": "OSM-6787734343",
+        "coordinates": "-25.8594937,32.4663329",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Barraca Amarela",
+        "codigo": "OSM-12100132367",
+        "coordinates": "-26.0173795,32.2890162",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Barraca Amarela",
+        "codigo": "OSM-12100132366",
+        "coordinates": "-26.0173373,32.2889022",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Barraca Amarela Mcel",
+        "codigo": "OSM-12100132363",
+        "coordinates": "-26.0189059,32.2858096",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Barraca Amarela Mcel",
+        "codigo": "OSM-12100132364",
+        "coordinates": "-26.0189619,32.2859598",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Bic",
+        "codigo": "OSM-6790541972",
+        "coordinates": "-25.948879,32.4714101",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAT-MUS"
+        ]
+      },
+      {
+        "name": "Boane",
+        "codigo": "PAR-BOANE",
+        "coordinates": "-26.0428,32.3275",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Boane (101)",
+        "codigo": "OSM-6787863230",
+        "coordinates": "-26.0452092,32.32746",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Boane (103)",
+        "codigo": "OSM-6787863228",
+        "coordinates": "-26.045303,32.3274547",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Boane (104)",
+        "codigo": "OSM-6834504755",
+        "coordinates": "-26.0454086,32.3272587",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Boane (105)",
+        "codigo": "OSM-6787863227",
+        "coordinates": "-26.0454163,32.3274708",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Boane (106)",
+        "codigo": "OSM-6835112234",
+        "coordinates": "-26.0454743,32.3272613",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Boane (707)",
+        "codigo": "OSM-6828307498",
+        "coordinates": "-26.045168,32.3272553",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Boane (C3)",
+        "codigo": "OSM-6830989935",
+        "coordinates": "-26.0452847,32.3272535",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Bombas",
+        "codigo": "OSM-6795468190",
+        "coordinates": "-25.9017558,32.4584808",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Bombas",
+        "codigo": "OSM-6795468191",
+        "coordinates": "-25.9016463,32.4586303",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Casa Abandonada",
+        "codigo": "OSM-6787721912",
+        "coordinates": "-25.8551578,32.4643942",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Casa Abandonada",
+        "codigo": "OSM-6787721910",
+        "coordinates": "-25.8551853,32.4643168",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Casa Bonita",
+        "codigo": "OSM-6787507010",
+        "coordinates": "-25.8797365,32.434279",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Casa Bonita",
+        "codigo": "OSM-6787507012",
+        "coordinates": "-25.8796422,32.4342717",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Ceres",
+        "codigo": "OSM-6790695063",
+        "coordinates": "-25.9541542,32.4598583",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Ceres",
+        "codigo": "OSM-6790695062",
+        "coordinates": "-25.953949,32.4597212",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Chissano",
+        "codigo": "OSM-6787717616",
+        "coordinates": "-25.9727637,32.460335",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51A",
+          "VIA-MAT-BAI"
+        ]
+      },
+      {
+        "name": "Chissano",
+        "codigo": "OSM-6787717617",
+        "coordinates": "-25.9726764,32.4603998",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51A",
+          "VIA-MAT-BAI"
+        ]
+      },
+      {
+        "name": "Chiwewe",
+        "codigo": "OSM-6828236495",
+        "coordinates": "-25.9492125,32.4799182",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Cidade da Matola (109)",
+        "codigo": "OSM-6787971995",
+        "coordinates": "-25.9793157,32.4648917",
+        "routeCount": 1,
+        "routes": [
+          "VIA-POL-MAT"
+        ]
+      },
+      {
+        "name": "Cidade da Matola (110)",
+        "codigo": "OSM-6787971994",
+        "coordinates": "-25.9793742,32.4648685",
+        "routeCount": 1,
+        "routes": [
+          "VIA-POL-MAT"
+        ]
+      },
+      {
+        "name": "Cidade da Matola (C4)",
+        "codigo": "OSM-6830521017",
+        "coordinates": "-25.979345,32.4648798",
+        "routeCount": 1,
+        "routes": [
+          "VIA-POL-MAT"
+        ]
+      },
+      {
+        "name": "Contentor Amarelo",
+        "codigo": "OSM-6795179355",
+        "coordinates": "-25.898172,32.4520938",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Contentor Amarelo",
+        "codigo": "OSM-6795179354",
+        "coordinates": "-25.8982347,32.4520093",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Control",
+        "codigo": "OSM-5648693044",
+        "coordinates": "-25.8761363,32.4741417",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Controle",
+        "codigo": "OSM-6827399052",
+        "coordinates": "-25.8761007,32.4740335",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Cossa",
+        "codigo": "OSM-6787602737",
+        "coordinates": "-25.841045,32.4576562",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Cossa",
+        "codigo": "OSM-6787602738",
+        "coordinates": "-25.8410175,32.4577336",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Cruzamento",
+        "codigo": "OSM-6785094105",
+        "coordinates": "-26.0447365,32.3315731",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Cruzamento",
+        "codigo": "OSM-6785094106",
+        "coordinates": "-26.0446627,32.3317225",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Cruzamento de Namaacha",
+        "codigo": "OSM-12088542944",
+        "coordinates": "-26.0150655,32.2975194",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Cruzamento de Namaacha",
+        "codigo": "OSM-12088542943",
+        "coordinates": "-26.0151041,32.2976415",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Darling",
+        "codigo": "OSM-6787926110",
+        "coordinates": "-25.8981406,32.4337373",
+        "routeCount": 1,
+        "routes": [
+          "VIA-47"
+        ]
+      },
+      {
+        "name": "Darling",
+        "codigo": "OSM-6787926111",
+        "coordinates": "-25.8981203,32.4339269",
+        "routeCount": 1,
+        "routes": [
+          "VIA-47"
+        ]
+      },
+      {
+        "name": "EDM",
+        "codigo": "OSM-6787679571",
+        "coordinates": "-25.8798967,32.4406714",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "EDM",
+        "codigo": "OSM-6787679569",
+        "coordinates": "-25.8797993,32.4406747",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Electro Matola",
+        "codigo": "OSM-6828236513",
+        "coordinates": "-25.9572048,32.4666517",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Electro Matola",
+        "codigo": "OSM-6828236515",
+        "coordinates": "-25.9572909,32.4667077",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Escola da Matola A",
+        "codigo": "OSM-6828236527",
+        "coordinates": "-25.9663548,32.4691513",
+        "routeCount": 2,
+        "routes": [
+          "VIA-51A",
+          "VIA-MAT-BAI"
+        ]
+      },
+      {
+        "name": "Escola da Matola A",
+        "codigo": "OSM-6828236526",
+        "coordinates": "-25.9663082,32.4692224",
+        "routeCount": 2,
+        "routes": [
+          "VIA-51A",
+          "VIA-MAT-BAI"
+        ]
+      },
+      {
+        "name": "Estaleiro",
+        "codigo": "OSM-6828236510",
+        "coordinates": "-25.9557044,32.4691371",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Estaleiro",
+        "codigo": "OSM-6828236512",
+        "coordinates": "-25.9557895,32.4691901",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Farmácia",
+        "codigo": "OSM-6829971475",
+        "coordinates": "-25.8949496,32.4456766",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Farmácia",
+        "codigo": "OSM-6829971476",
+        "coordinates": "-25.8949158,32.4459368",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Ferragem",
+        "codigo": "OSM-11420195188",
+        "coordinates": "-25.9957623,32.4042553",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Ferragem",
+        "codigo": "OSM-11420195187",
+        "coordinates": "-25.9959202,32.4043961",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Fim do Muro 2",
+        "codigo": "OSM-6787704986",
+        "coordinates": "-25.8537881,32.4636623",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Fim do Muro 2",
+        "codigo": "OSM-6787680884",
+        "coordinates": "-25.8537606,32.4637397",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Fim do Murro",
+        "codigo": "OSM-3841629093",
+        "coordinates": "-25.879779,32.4757846",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Finanças",
+        "codigo": "OSM-6787717604",
+        "coordinates": "-25.9600061,32.4545625",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Finanças",
+        "codigo": "OSM-6830593608",
+        "coordinates": "-25.9600684,32.4543661",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Fipag",
+        "codigo": "OSM-6830593611",
+        "coordinates": "-25.9673602,32.454633",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Fipag",
+        "codigo": "OSM-6830593609",
+        "coordinates": "-25.9672431,32.4546637",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Godinho",
+        "codigo": "PAR-VIA-MAT-BAI-2",
+        "coordinates": "-25.9528,32.4655",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-BAI",
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Godinho (Cruzamento)",
+        "codigo": "PAR-GODINHO",
+        "coordinates": "-25.9528,32.4655",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Hospital",
+        "codigo": "OSM-6834504740",
+        "coordinates": "-25.9670684,32.4443742",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Hospital",
+        "codigo": "OSM-6834504741",
+        "coordinates": "-25.9669825,32.444174",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Ibavet",
+        "codigo": "OSM-6828236522",
+        "coordinates": "-25.9636029,32.4675648",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51A",
+          "VIA-MAT-BAI"
+        ]
+      },
+      {
+        "name": "Ibavet",
+        "codigo": "OSM-6828236524",
+        "coordinates": "-25.9635564,32.4676359",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51A",
+          "VIA-MAT-BAI"
+        ]
+      },
+      {
+        "name": "Igreja",
+        "codigo": "OSM-6787717613",
+        "coordinates": "-25.9694175,32.4581999",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51A",
+          "VIA-MAT-BAI"
+        ]
+      },
+      {
+        "name": "Igreja",
+        "codigo": "OSM-6787717614",
+        "coordinates": "-25.96935,32.4582802",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-BAI",
+          "VIA-MAT-MUS",
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Igreja",
+        "codigo": "OSM-6788353109",
+        "coordinates": "-25.8606574,32.4742885",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Igreja",
+        "codigo": "OSM-6788353111",
+        "coordinates": "-25.8606755,32.4743698",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Igreja",
+        "codigo": "OSM-6828236498",
+        "coordinates": "-25.9508061,32.4772242",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Igreja",
+        "codigo": "OSM-6828236500",
+        "coordinates": "-25.9509309,32.4773217",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Inav",
+        "codigo": "OSM-6787469910",
+        "coordinates": "-25.9790384,32.4643348",
+        "routeCount": 1,
+        "routes": [
+          "VIA-POL-MAT"
+        ]
+      },
+      {
+        "name": "João Mateus",
+        "codigo": "OSM-6791297026",
+        "coordinates": "-25.9568973,32.4532675",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "João Mateus",
+        "codigo": "OSM-6791297027",
+        "coordinates": "-25.9569617,32.4533312",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "João Mateus",
+        "codigo": "OSM-6792260398",
+        "coordinates": "-25.9577761,32.4522833",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Kaino",
+        "codigo": "OSM-6787673616",
+        "coordinates": "-25.9899133,32.4269942",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Kaino",
+        "codigo": "OSM-6787673615",
+        "coordinates": "-25.9899753,32.4271234",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "km 15",
+        "codigo": "OSM-6787956060",
+        "coordinates": "-25.8715682,32.4722438",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "km 15",
+        "codigo": "OSM-6787956061",
+        "coordinates": "-25.8714098,32.4719562",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "km 15",
+        "codigo": "OSM-6787956062",
+        "coordinates": "-25.8713724,32.4720394",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "km 15",
+        "codigo": "OSM-6787956059",
+        "coordinates": "-25.8717625,32.4721155",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Lusalite",
+        "codigo": "OSM-6795468193",
+        "coordinates": "-25.9006652,32.4563416",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Lusalite",
+        "codigo": "OSM-6795468194",
+        "coordinates": "-25.9006103,32.4565124",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Macuacua",
+        "codigo": "OSM-6787708876",
+        "coordinates": "-25.9700721,32.4207362",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Macuacua",
+        "codigo": "OSM-6787708875",
+        "coordinates": "-25.9701206,32.4209558",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Mafuiane",
+        "codigo": "PAR-MAFUI",
+        "coordinates": "-26.0375,32.2222",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Mafureira",
+        "codigo": "OSM-12088542940",
+        "coordinates": "-26.0425841,32.3241203",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Mafureira",
+        "codigo": "OSM-12088542941",
+        "coordinates": "-26.0425769,32.3239533",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Mafurreira",
+        "codigo": "OSM-6788433280",
+        "coordinates": "-25.8651742,32.4730395",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Mafurreira",
+        "codigo": "OSM-6788433279",
+        "coordinates": "-25.8651923,32.4731208",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Magaiza",
+        "codigo": "OSM-6827409896",
+        "coordinates": "-26.0127238,32.2956373",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Magaiza",
+        "codigo": "OSM-6827409897",
+        "coordinates": "-26.0126458,32.2957175",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Malhampsene",
+        "codigo": "PAR-VIA-TCH-BAI-2",
+        "coordinates": "-25.8885,32.4336",
+        "routeCount": 4,
+        "routes": [
+          "VIA-TCH-BAI",
+          "VIA-MAL-MUS",
+          "VIA-47",
+          "VIA-MGARE-BAI"
+        ]
+      },
+      {
+        "name": "Malhampsene (105)",
+        "codigo": "OSM-6787789189",
+        "coordinates": "-25.8798883,32.4336785",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Malhapsene",
+        "codigo": "OSM-6830041229",
+        "coordinates": "-25.8888211,32.4342692",
+        "routeCount": 3,
+        "routes": [
+          "VIA-TCH-BAI",
+          "VIA-MAL-MUS",
+          "VIA-MGARE-BAI"
+        ]
+      },
+      {
+        "name": "Malhapsene",
+        "codigo": "OSM-6830041230",
+        "coordinates": "-25.8889299,32.4342488",
+        "routeCount": 3,
+        "routes": [
+          "VIA-TCH-BAI",
+          "VIA-MAL-MUS",
+          "VIA-MGARE-BAI"
+        ]
+      },
+      {
+        "name": "Mangueira",
+        "codigo": "OSM-6834504752",
+        "coordinates": "-25.9517876,32.4646774",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Mangueira",
+        "codigo": "OSM-6834504749",
+        "coordinates": "-25.9519431,32.4648893",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Marliza",
+        "codigo": "OSM-6828236518",
+        "coordinates": "-25.9586219,32.4648418",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Marliza",
+        "codigo": "OSM-6828236516",
+        "coordinates": "-25.9586685,32.4647707",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Matola gare",
+        "codigo": "OSM-6431508449",
+        "coordinates": "-25.8294382,32.4522585",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAL-MUS",
+          "VIA-MGARE-BAI"
+        ]
+      },
+      {
+        "name": "Matola Gare",
+        "codigo": "PAR-VIA-TCH-BAI-3",
+        "coordinates": "-25.8271,32.4512",
+        "routeCount": 6,
+        "routes": [
+          "VIA-TCH-BAI",
+          "VIA-MAL-MUS",
+          "VIA-MGARE-BAI",
+          "VIA-47",
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Matola Gare (207)",
+        "codigo": "OSM-6785887020",
+        "coordinates": "-25.8270434,32.4512712",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAL-MUS",
+          "VIA-MGARE-BAI"
+        ]
+      },
+      {
+        "name": "Matola Gare (208)",
+        "codigo": "OSM-6785887019",
+        "coordinates": "-25.8270718,32.4511885",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAL-MUS",
+          "VIA-MGARE-BAI"
+        ]
+      },
+      {
+        "name": "Matola Gare (C2)",
+        "codigo": "OSM-6827439624",
+        "coordinates": "-25.8270693,32.4512357",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAL-MUS",
+          "VIA-MGARE-BAI"
+        ]
+      },
+      {
+        "name": "Matola Gare (Estação)",
+        "codigo": "PAR-MGARE",
+        "coordinates": "-25.8271,32.4512",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAL-MUS",
+          "VIA-MGARE-BAI"
+        ]
+      },
+      {
+        "name": "Matola Rio",
+        "codigo": "OSM-6792260401",
+        "coordinates": "-25.9791449,32.4342328",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Matola Rio",
+        "codigo": "OSM-6792260400",
+        "coordinates": "-25.9788538,32.4342381",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Matola Rio",
+        "codigo": "OSM-8235874981",
+        "coordinates": "-25.9787903,32.4342531",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Mercadinho",
+        "codigo": "OSM-6787784018",
+        "coordinates": "-25.864121,32.4686037",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Mercadinho",
+        "codigo": "OSM-6787784019",
+        "coordinates": "-25.8641485,32.4685263",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Mercado Santos",
+        "codigo": "OSM-6828236507",
+        "coordinates": "-25.9547061,32.4707821",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Mercado Santos",
+        "codigo": "OSM-6828236509",
+        "coordinates": "-25.9547912,32.4708351",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Mesquita",
+        "codigo": "OSM-6828236521",
+        "coordinates": "-25.9611036,32.4662593",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51A",
+          "VIA-MAT-BAI"
+        ]
+      },
+      {
+        "name": "Mesquita",
+        "codigo": "OSM-6828236519",
+        "coordinates": "-25.9611502,32.4661883",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51A",
+          "VIA-MAT-BAI"
+        ]
+      },
+      {
+        "name": "Oficina",
+        "codigo": "OSM-6795179360",
+        "coordinates": "-25.8959196,32.447813",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Oficina",
+        "codigo": "OSM-6795179361",
+        "coordinates": "-25.8959915,32.4477318",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Paragem 16",
+        "codigo": "OSM-6827843974",
+        "coordinates": "-25.8542163,32.4639969",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Paragem 16",
+        "codigo": "OSM-6827843973",
+        "coordinates": "-25.854284,32.4637814",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Paragem 18",
+        "codigo": "OSM-6787686826",
+        "coordinates": "-25.8513493,32.4624999",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Paragem 18",
+        "codigo": "OSM-6787686825",
+        "coordinates": "-25.8513218,32.4625773",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Paragem da Shoprite (Matola)",
+        "codigo": "PAR-SHOPRITE",
+        "coordinates": "-25.9658,32.4612",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-BAI",
+          "VIA-MAT-MUS",
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Paragem João Mateus",
+        "codigo": "OSM-6924631654",
+        "coordinates": "-25.956786,32.4532627",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Pilivi / Cmc",
+        "codigo": "OSM-6791359896",
+        "coordinates": "-25.9445118,32.4799986",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAT-MUS"
+        ]
+      },
+      {
+        "name": "Pilivi / Cmc",
+        "codigo": "OSM-6791359899",
+        "coordinates": "-25.9454493,32.4787757",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAT-MUS"
+        ]
+      },
+      {
+        "name": "Ponte",
+        "codigo": "OSM-6788016284",
+        "coordinates": "-25.9005762,32.4338164",
+        "routeCount": 1,
+        "routes": [
+          "VIA-47"
+        ]
+      },
+      {
+        "name": "Ponte",
+        "codigo": "OSM-6788016283",
+        "coordinates": "-25.9005827,32.4339899",
+        "routeCount": 1,
+        "routes": [
+          "VIA-47"
+        ]
+      },
+      {
+        "name": "Pontinha",
+        "codigo": "OSM-12100132360",
+        "coordinates": "-26.0232186,32.2773573",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Pontinha",
+        "codigo": "OSM-12100132361",
+        "coordinates": "-26.0230836,32.2773492",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Primeira Rua",
+        "codigo": "OSM-6827979847",
+        "coordinates": "-25.8325599,32.4538116",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Primeira Rua",
+        "codigo": "OSM-6827979846",
+        "coordinates": "-25.8326491,32.4535993",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Recheio",
+        "codigo": "OSM-6828236503",
+        "coordinates": "-25.9521485,32.4753053",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Recheio",
+        "codigo": "OSM-6828236501",
+        "coordinates": "-25.9520332,32.4752255",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Registro",
+        "codigo": "OSM-6787717611",
+        "coordinates": "-25.9664744,32.4580031",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-BAI",
+          "VIA-MAT-MUS",
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Registro",
+        "codigo": "OSM-6787717610",
+        "coordinates": "-25.9664981,32.4579037",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-BAI",
+          "VIA-MAT-MUS",
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Rua da Escola",
+        "codigo": "OSM-6787792250",
+        "coordinates": "-25.869259,32.4708855",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Rua da Escola",
+        "codigo": "OSM-6787792251",
+        "coordinates": "-25.8691977,32.4710112",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Rua Real",
+        "codigo": "OSM-6787558807",
+        "coordinates": "-25.8392135,32.4568814",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Rua Real",
+        "codigo": "OSM-6787558808",
+        "coordinates": "-25.839252,32.4567511",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Salão",
+        "codigo": "OSM-6795179357",
+        "coordinates": "-25.8937309,32.4434082",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Salão",
+        "codigo": "OSM-6795179358",
+        "coordinates": "-25.8936473,32.4434789",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Saul",
+        "codigo": "OSM-6787527125",
+        "coordinates": "-25.8345932,32.4545685",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Saul",
+        "codigo": "OSM-6787527126",
+        "coordinates": "-25.8345657,32.4546459",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Seta",
+        "codigo": "OSM-6787565888",
+        "coordinates": "-25.9724732,32.4229478",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Seta",
+        "codigo": "OSM-6787565886",
+        "coordinates": "-25.9735717,32.4244368",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Shoprite",
+        "codigo": "OSM-6790133642",
+        "coordinates": "-25.9529609,32.4596475",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Sikwama (211)",
+        "codigo": "OSM-6793341179",
+        "coordinates": "-25.8933317,32.4428545",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Sikwama (212)",
+        "codigo": "OSM-6793341180",
+        "coordinates": "-25.8933629,32.4429179",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Sons de África",
+        "codigo": "OSM-6828236504",
+        "coordinates": "-25.9536749,32.4725009",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Sons de África",
+        "codigo": "OSM-6828236506",
+        "coordinates": "-25.95376,32.4725539",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      },
+      {
+        "name": "Takis",
+        "codigo": "OSM-6788386127",
+        "coordinates": "-25.8642167,32.4729435",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Takis",
+        "codigo": "OSM-6788386129",
+        "coordinates": "-25.8642348,32.4730248",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Tchumene",
+        "codigo": "PAR-TCHUM",
+        "coordinates": "-25.8856,32.4042",
+        "routeCount": 2,
+        "routes": [
+          "VIA-TCH-BAI",
+          "VIA-47"
+        ]
+      },
+      {
+        "name": "Terminal de Malhampsene",
+        "codigo": "PAR-MALHAM",
+        "coordinates": "-25.8885,32.4336",
+        "routeCount": 3,
+        "routes": [
+          "VIA-TCH-BAI",
+          "VIA-MAL-MUS",
+          "VIA-MGARE-BAI"
+        ]
+      },
+      {
+        "name": "Terminal Matola Sede",
+        "codigo": "PAR-VIA-MAT-BAI-1",
+        "coordinates": "-25.9794,32.4589",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-BAI",
+          "VIA-MAT-MUS",
+          "VIA-POL-MAT"
+        ]
+      },
+      {
+        "name": "Terminal Matola Sede (Hanhane)",
+        "codigo": "PAR-MATSEDE",
+        "coordinates": "-25.9794,32.4589",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-MAT-BAI",
+          "VIA-POL-MAT"
+        ]
+      },
+      {
+        "name": "Thandavanto",
+        "codigo": "OSM-6787673619",
+        "coordinates": "-25.9937301,32.4244684",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Thandavanto",
+        "codigo": "OSM-6787673618",
+        "coordinates": "-25.9938195,32.4246409",
+        "routeCount": 1,
+        "routes": [
+          "VIA-51A"
+        ]
+      },
+      {
+        "name": "Tribunal",
+        "codigo": "OSM-6787717621",
+        "coordinates": "-25.9749742,32.4618382",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-MAT-BAI",
+          "VIA-POL-MAT"
+        ]
+      },
+      {
+        "name": "Tribunal",
+        "codigo": "OSM-6787717620",
+        "coordinates": "-25.9750957,32.4618078",
+        "routeCount": 3,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-MAT-BAI",
+          "VIA-POL-MAT"
+        ]
+      },
+      {
+        "name": "Tricamo",
+        "codigo": "OSM-6786032461",
+        "coordinates": "-25.879099,32.4331293",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Tricamo",
+        "codigo": "OSM-6786032462",
+        "coordinates": "-25.878642,32.4334038",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "União",
+        "codigo": "OSM-6787636979",
+        "coordinates": "-25.8473468,32.4607052",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "União",
+        "codigo": "OSM-6787636978",
+        "coordinates": "-25.8473743,32.4606278",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      }
+    ],
+    "Machava": [
+      {
+        "name": "Barraquinha",
+        "codigo": "OSM-6795468189",
+        "coordinates": "-25.9026812,32.4611024",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Barraquinha",
+        "codigo": "OSM-6795468187",
+        "coordinates": "-25.9028385,32.4610544",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Chapas",
+        "codigo": "OSM-6795453582",
+        "coordinates": "-25.9101215,32.4754099",
+        "routeCount": 3,
+        "routes": [
+          "VIA-FOM-BAI",
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Chapas",
+        "codigo": "OSM-6795453583",
+        "coordinates": "-25.9100343,32.4754917",
+        "routeCount": 3,
+        "routes": [
+          "VIA-FOM-BAI",
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Fibra Glass",
+        "codigo": "OSM-6795453580",
+        "coordinates": "-25.9122503,32.4792424",
+        "routeCount": 3,
+        "routes": [
+          "VIA-FOM-BAI",
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Fibra Glass",
+        "codigo": "OSM-6795453578",
+        "coordinates": "-25.9121479,32.4792942",
+        "routeCount": 3,
+        "routes": [
+          "VIA-FOM-BAI",
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Fomento (Paragem)",
+        "codigo": "FOM-001",
+        "coordinates": "-25.9100,32.4700",
+        "routeCount": 3,
+        "routes": [
+          "VIA-FOM-BAI",
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Liberdade",
+        "codigo": "OSM-6829968408",
+        "coordinates": "-25.9069763,32.4699927",
+        "routeCount": 3,
+        "routes": [
+          "VIA-FOM-BAI",
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Liberdade",
+        "codigo": "OSM-6829968407",
+        "coordinates": "-25.9069878,32.469827",
+        "routeCount": 3,
+        "routes": [
+          "VIA-FOM-BAI",
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Liberdade (Paragem)",
+        "codigo": "PAR-LIBERDADE",
+        "coordinates": "-25.9067,32.4695",
+        "routeCount": 3,
+        "routes": [
+          "VIA-FOM-BAI",
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Machava Socimol",
+        "codigo": "PAR-MACHSOC",
+        "coordinates": "-25.9255,32.4792",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MACH-MUS",
+          "VIA-47"
+        ]
+      },
+      {
+        "name": "Mercadinho",
+        "codigo": "OSM-6795453584",
+        "coordinates": "-25.905156,32.4664667",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Mercadinho",
+        "codigo": "OSM-6795468185",
+        "coordinates": "-25.9050683,32.4666191",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Raimundo",
+        "codigo": "OSM-6829971478",
+        "coordinates": "-25.9036406,32.4629661",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Raimundo",
+        "codigo": "OSM-6829971479",
+        "coordinates": "-25.9035175,32.4629903",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Stop 12565371040",
+        "codigo": "OSM-12565371040",
+        "coordinates": "-25.9112965,32.4638037",
+        "routeCount": 3,
+        "routes": [
+          "VIA-47",
+          "VIA-MGARE-BAI",
+          "VIA-TCH-BAI"
+        ]
+      },
+      {
+        "name": "Stop 12565371041",
+        "codigo": "OSM-12565371041",
+        "coordinates": "-25.9132428,32.4645272",
+        "routeCount": 1,
+        "routes": [
+          "VIA-47"
+        ]
+      }
+    ],
+    "Liberdade": [
+      {
+        "name": "Bic",
+        "codigo": "OSM-6790541970",
+        "coordinates": "-25.9498915,32.4696495",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MAT-MUS",
+          "VIA-51C"
+        ]
+      }
+    ],
+    "Fomento": [
+      {
+        "name": "Contentor Branco",
+        "codigo": "OSM-6837377683",
+        "coordinates": "-25.9281402,32.4752048",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MACH-MUS"
+        ]
+      },
+      {
+        "name": "Oficina",
+        "codigo": "OSM-6837377682",
+        "coordinates": "-25.9266363,32.4790958",
+        "routeCount": 2,
+        "routes": [
+          "VIA-MACH-MUS",
+          "VIA-47"
+        ]
+      }
+    ],
+    "Matola Gare": [
+      {
+        "name": "Matola Gare",
+        "codigo": "OSM-6827844605",
+        "coordinates": "-25.8635462,32.4683489",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      },
+      {
+        "name": "Matola Gare",
+        "codigo": "OSM-6827844604",
+        "coordinates": "-25.8636004,32.4681861",
+        "routeCount": 1,
+        "routes": [
+          "VIA-MAL-MUS"
+        ]
+      }
+    ]
+  }
+}

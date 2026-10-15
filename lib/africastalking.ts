@@ -1,0 +1,33 @@
+/**
+ * Africa's Talking SDK Configuration
+ * 
+ * This is optional - only needed if you want to:
+ * - Send SMS notifications
+ * - Make voice calls
+ * - Send airtime
+ * - Use other Africa's Talking services
+ * 
+ * For USSD, you DON'T need this!
+ * Africa's Talking calls your endpoint directly.
+ */
+
+// Uncomment if you install the SDK: npm install africastalking
+/*
+const africastalking = require('africastalking')({
+  apiKey: process.env.AFRICASTALKING_API_KEY || '',
+  username: process.env.AFRICASTALKING_USERNAME || 'sandbox'
+});
+
+export const sms = africastalking.SMS;
+export const voice = africastalking.VOICE;
+export const airtime = africastalking.AIRTIME;
+
+export default africastalking;
+*/
+
+// For now, just export a placeholder
+export const africastalkingConfig = {
+  username: process.env.AFRICASTALKING_USERNAME || 'sandbox',
+  // API key is available but not exposed
+  isConfigured: !!(process.env.AFRICASTALKING_API_KEY && process.env.AFRICASTALKING_USERNAME)
+};

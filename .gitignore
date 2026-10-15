@@ -1,0 +1,75 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Production
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Database
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+prisma/dev.db
+prisma/dev.db-journal
+
+# ngrok
+ngrok.exe
+ngrok.zip
+
+# Misc
+*.pem
+.cache/
+
+# Ignore all markdown files recursively
+**/*.md
+*.md
+
+# Exceptions for markdown files we want to keep
+!README.md
+!docs/getting-started.md
+!docs/architecture.md
+!docs/database.md
+!transport-admin/README.md
+!transport-client/README.md
+!transport-driver/README.md
+

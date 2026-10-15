@@ -1,0 +1,5 @@
+# Keep local secrets and build output out of CLI uploads; production values live in Vercel env vars.
+.env*
+node_modules
+.next
+*.log

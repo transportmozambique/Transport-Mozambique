@@ -1,0 +1,310 @@
+// Schema do Prisma para o Sistema de Transportes
+// Baseado no Modelo de Domínio fornecido
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ADMINISTRAÇÃO
+// ============================================
+
+model Administrador {
+  id        String   @id @default(cuid())
+  nome      String
+  email     String   @unique
+  senha     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  provincias Provincia[]
+  municipios Municipio[]
+  vias       Via[]
+  paragens   Paragem[]
+}
+
+// ============================================
+// LOCALIZAÇÃO GEOGRÁFICA
+// ============================================
+
+model Provincia {
+  id              String  @id @default(cuid())
+  nome            String
+  geoLocation     String
+  codigo          String  @unique
+  administradorId String?
+
+  // Relações
+  administrador Administrador? @relation(fields: [administradorId], references: [id])
+  cidades       Cidade[]
+  municipios    Municipio[]
+
+  @@index([administradorId])
+}
+
+model Cidade {
+  id              String  @id @default(cuid())
+  nome            String
+  localizacao     String
+  codigo          String  @unique
+  codigoProvinciaString String
+
+  // Relações
+  provincia   Provincia @relation(fields: [provinciaId], references: [id])
+  provinciaId String
+  municipios  Municipio[]
+
+  @@index([provinciaId])
+}
+
+model Municipio {
+  id              String  @id @default(cuid())
+  nome            String
+  codigo          String  @unique
+  endereco        String?
+  contacto1       Int?
+  codigoCidade    String?
+  administradorId String?
+
+  // Relações
+  administrador Administrador? @relation(fields: [administradorId], references: [id])
+  provincia     Provincia?     @relation(fields: [provinciaId], references: [id])
+  provinciaId   String?
+  cidade        Cidade?        @relation(fields: [cidadeId], references: [id])
+  cidadeId      String?
+  vias          Via[]
+
+  @@index([administradorId])
+  @@index([provinciaId])
+  @@index([cidadeId])
+}
+
+// ============================================
+// ROTAS E PARAGENS
+// ============================================
+
+model Via {
+  id                 String  @id @default(cuid())
+  nome               String
+  codigo             String  @unique
+  cor                String  @default("#3B82F6")
+  terminalPartida    String
+  terminalChegada    String
+  geoLocationPath    String
+  codigoMunicipio    String
+  administradorId    String?
+
+  // Relações
+  administrador      Administrador? @relation(fields: [administradorId], references: [id])
+  municipio          Municipio      @relation(fields: [municipioId], references: [id])
+  municipioId        String
+  paragens           ViaParagem[]
+  transportes        Transporte[]
+
+  @@index([administradorId])
+  @@index([municipioId])
+}
+
+model Paragem {
+  id              String  @id @default(cuid())
+  nome            String
+  codigo          String  @unique
+  geoLocation     String
+  administradorId String?
+
+  // Relações
+  administrador Administrador? @relation(fields: [administradorId], references: [id])
+  vias          ViaParagem[]
+  missoes       MISSION[]
+
+  @@index([administradorId])
+}
+
+// Tabela de junção entre Via e Paragem
+model ViaParagem {
+  id              String  @id @default(cuid())
+  codigoParagem   String
+  codigoVia       String
+  terminalBoolean Boolean @default(false)
+
+  // Relações
+  via       Via     @relation(fields: [viaId], references: [id], onDelete: Cascade)
+  viaId     String
+  paragem   Paragem @relation(fields: [paragemId], references: [id], onDelete: Cascade)
+  paragemId String
+
+  @@unique([viaId, paragemId])
+  @@index([viaId])
+  @@index([paragemId])
+}
+
+// ============================================
+// PROPRIETÁRIOS E TRANSPORTES
+// ============================================
+
+model Proprietario {
+  id               String   @id @default(cuid())
+  nome             String
+  bi               String   @unique
+  nacionalidade    String
+  birthDate        DateTime
+  endereco         String
+  contacto1        Int
+  contacto2        Int?
+  tipoProprietario String   @default("Indivíduo") // "Empresa" ou "Indivíduo"
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relações
+  transportes TransporteProprietario[]
+}
+
+model Transporte {
+  id                String   @id @default(cuid())
+  matricula         String   @unique
+  modelo            String
+  marca             String
+  cor               String
+  lotacao           Int
+  codigo            Int      @unique
+  codigoVia         String
+  currGeoLocation   String?
+  routePath         String?  // Individual route path for this bus (format: lng,lat;lng,lat;...)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relações
+  via           Via?                     @relation(fields: [viaId], references: [id])
+  viaId         String?
+  proprietarios TransporteProprietario[]
+  motorista     Motorista?               // Um transporte tem apenas UM motorista
+  geoLocations  GeoLocation[]
+
+  @@index([viaId])
+}
+
+// Tabela de junção entre Transporte e Proprietário
+model TransporteProprietario {
+  id                String @id @default(cuid())
+  codigoTransporte  Int
+  idProprietario    String
+
+  // Relações
+  transporte    Transporte   @relation(fields: [transporteId], references: [id], onDelete: Cascade)
+  transporteId  String
+  proprietario  Proprietario @relation(fields: [proprietarioId], references: [id], onDelete: Cascade)
+  proprietarioId String
+
+  @@unique([transporteId, proprietarioId])
+  @@index([transporteId])
+  @@index([proprietarioId])
+}
+
+// ============================================
+// MOTORISTAS
+// ============================================
+
+model Motorista {
+  id              String   @id @default(cuid())
+  nome            String
+  bi              String   @unique
+  cartaConducao   String   @unique
+  telefone        String
+  email           String   @unique
+  dataNascimento  DateTime
+  endereco        String
+  foto            String?  // URL da foto do motorista
+  nacionalidade   String   @default("Moçambicana")
+  genero          String   @default("Masculino") // Masculino, Feminino
+  estadoCivil     String   @default("Solteiro") // Solteiro, Casado, Divorciado, Viúvo
+  numeroEmergencia String  // Telefone de emergência
+  contatoEmergencia String // Nome do contato de emergência
+  deficiencia     String?  // Descrição de deficiência (se houver)
+  dataEmissaoBI   DateTime
+  dataValidadeBI  DateTime
+  dataEmissaoCarta DateTime
+  dataValidadeCarta DateTime
+  categoriaCarta  String   @default("B") // A, B, C, D, E
+  experienciaAnos Int      @default(0) // Anos de experiência como motorista
+  password        String?  // Password for driver login
+  observacoes     String?  @db.Text
+  status          String   @default("ativo") // ativo, inativo, suspenso
+  transporteId    String?  @unique           // Cada motorista só pode estar em UM transporte
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relações
+  transporte Transporte? @relation(fields: [transporteId], references: [id])
+
+  @@index([transporteId])
+}
+
+// ============================================
+// UTENTES (PASSAGEIROS/CLIENTES)
+// ============================================
+
+model Utente {
+  id              String   @id @default(cuid())
+  nome            String
+  email           String   @unique
+  telefone        String   @unique
+  senha           String   // Password hash
+  mISSION         String   @unique
+  geoLocation     String?
+  subscrito       Boolean  @default(false)
+  dataSubscricao  DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relações
+  missoes MISSION[]
+}
+
+// ============================================
+// MISSÕES E LOCALIZAÇÃO
+// ============================================
+
+model MISSION {
+  id                    String   @id @default(cuid())
+  mISSIONUtente         String
+  codigoParagem         String
+  geoLocationUtente     String
+  geoLocationParagem    String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relações
+  utente    Utente  @relation(fields: [utenteId], references: [id])
+  utenteId  String
+  paragem   Paragem @relation(fields: [paragemId], references: [id])
+  paragemId String
+
+  @@index([utenteId])
+  @@index([paragemId])
+}
+
+model GeoLocation {
+  id                    String   @id @default(cuid())
+  geoLocationTransporte String
+  geoDirection          String
+  codigoTransporte      Int
+  geoLocationHist1      String?
+  geoLocationHist2      String?
+  geoLocationHist3      String?
+  geoDateTime1          DateTime?
+  geoDateTime2          DateTime?
+  geoDateTime3          DateTime?
+  createdAt             DateTime @default(now())
+
+  // Relações
+  transporte    Transporte @relation(fields: [transporteId], references: [id])
+  transporteId  String
+
+  @@index([transporteId])
+}

@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
+}
+
+/* Indeterminate circular loader (stroke travels in a loop) */
+@keyframes loading-loop-dash {
+  to {
+    stroke-dashoffset: -113.1;
+  }
+}
+
+.animate-loading-loop {
+  stroke-dasharray: 26 87;
+  stroke-dashoffset: 0;
+  animation: loading-loop-dash 1.1s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-loading-loop {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 0.45;
+  }
+}

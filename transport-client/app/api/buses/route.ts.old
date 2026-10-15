@@ -1,0 +1,614 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+
+export async function GET(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const paragemId = searchParams.get('paragemId'); // Origem
+    const destinoId = searchParams.get('destinoId'); // Destino
+    const viaId = searchParams.get('viaId');
+
+    console.log('Fetching buses for paragemId (origem):', paragemId, 'destinoId:', destinoId, 'viaId:', viaId);
+
+    // If no parameters, return all buses
+    if (!paragemId && !viaId && !destinoId) {
+      console.log('Fetching all buses in circulation');
+      
+      const allTransportes = await prisma.transporte.findMany({
+        include: {
+          via: {
+            include: {
+              paragens: {
+                include: {
+                  paragem: true,
+                },
+                orderBy: {
+                  id: 'asc',
+                },
+              },
+            },
+          },
+          geoLocations: {
+            orderBy: {
+              createdAt: 'desc',
+            },
+            take: 1,
+          },
+        },
+      });
+
+      const allBuses = allTransportes.map((transporte) => {
+        let currentLat, currentLng;
+        
+        if (transporte.currGeoLocation) {
+          [currentLat, currentLng] = transporte.currGeoLocation.split(',').map(Number);
+        } else if (transporte.geoLocations.length > 0) {
+          [currentLat, currentLng] = transporte.geoLocations[0].geoLocationTransporte.split(',').map(Number);
+        } else {
+          const firstStop = transporte.via.paragens[0];
+          if (firstStop) {
+            [currentLat, currentLng] = firstStop.paragem.geoLocation.split(',').map(Number);
+          } else {
+            currentLat = -25.9655;
+            currentLng = 32.5892;
+          }
+        }
+
+        let routePath: [number, number][] = [];
+        if (transporte.routePath) {
+          routePath = transporte.routePath.split(';').map((coord) => {
+            const [lng, lat] = coord.split(',').map(Number);
+            return [lng, lat];
+          });
+        } else if (transporte.via.geoLocationPath) {
+          routePath = transporte.via.geoLocationPath.split(';').map((coord) => {
+            const [lng, lat] = coord.split(',').map(Number);
+            return [lng, lat];
+          });
+        }
+
+        const stops = transporte.via.paragens.map((vp) => {
+          const [lat, lng] = vp.paragem.geoLocation.split(',').map(Number);
+          return {
+            id: vp.paragem.id,
+            nome: vp.paragem.nome,
+            latitude: lat,
+            longitude: lng,
+            isTerminal: vp.terminalBoolean,
+          };
+        });
+
+        // Calculate basic fare: 10 MT per kilometer, minimum 10 MT
+        // For all buses, use a default distance of 5km for fare calculation
+        const defaultDistanceKm = 5;
+        const fare = Math.max(10, Math.ceil(defaultDistanceKm * 10));
+
+        return {
+          id: transporte.id,
+          matricula: transporte.matricula,
+          via: transporte.via.nome,
+          latitude: currentLat,
+          longitude: currentLng,
+          status: 'Em Circulação',
+          fare, // Add fare calculation
+          routePath: routePath,
+          stops: stops,
+        };
+      });
+
+      console.log('Found', allBuses.length, 'buses in circulation');
+
+      return NextResponse.json({
+        buses: allBuses,
+        total: allBuses.length,
+      });
+    }
+
+    if (!paragemId || !viaId || !destinoId) {
+      console.log('Missing required parameters');
+      return NextResponse.json(
+        { error: 'paragemId, destinoId and viaId are required' },
+        { status: 400 }
+      );
+    }
+
+    const paragem = await prisma.paragem.findUnique({
+      where: { id: paragemId },
+    });
+
+    if (!paragem) {
+      return NextResponse.json(
+        { error: 'Paragem (origem) not found' },
+        { status: 404 }
+      );
+    }
+
+    const destino = await prisma.paragem.findUnique({
+      where: { id: destinoId },
+    });
+
+    if (!destino) {
+      return NextResponse.json(
+        { error: 'Destino not found' },
+        { status: 404 }
+      );
+    }
+
+    const via = await prisma.via.findUnique({
+      where: { id: viaId },
+      include: {
+        paragens: {
+          include: {
+            paragem: true,
+          },
+          orderBy: {
+            id: 'asc',
+          },
+        },
+      },
+    });
+
+    if (!via) {
+      return NextResponse.json(
+        { error: 'Via not found' },
+        { status: 404 }
+      );
+    }
+
+    const transportes = await prisma.transporte.findMany({
+      where: {
+        viaId: viaId,
+      },
+      include: {
+        via: {
+          include: {
+            paragens: {
+              include: {
+                paragem: true,
+              },
+              orderBy: {
+                id: 'asc',
+              },
+            },
+          },
+        },
+        geoLocations: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 1,
+        },
+      },
+    });
+
+    const [paragemLat, paragemLng] = paragem.geoLocation.split(',').map(Number);
+    const [destinoLat, destinoLng] = destino.geoLocation.split(',').map(Number);
+
+    // Filter transportes to only include those that pass through origem THEN destino
+    const validTransportes = transportes.filter((transporte) => {
+      // Find the position of origem and destino in the route
+      const origemIndex = transporte.via.paragens.findIndex((vp) => vp.paragem.id === paragemId);
+      const destinoIndex = transporte.via.paragens.findIndex((vp) => vp.paragem.id === destinoId);
+      
+      // Check if both stops are in the route
+      if (origemIndex === -1) {
+        console.log(`Transport ${transporte.matricula} does not pass through origem ${paragem.nome}`);
+        return false;
+      }
+      
+      if (destinoIndex === -1) {
+        console.log(`Transport ${transporte.matricula} does not pass through destino ${destino.nome}`);
+        return false;
+      }
+      
+      // Check if origem comes BEFORE destino in the route
+      if (origemIndex >= destinoIndex) {
+        console.log(`Transport ${transporte.matricula} passes through destino (${destinoIndex + 1}) before origem (${origemIndex + 1}) - wrong direction`);
+        return false;
+      }
+      
+      console.log(`Transport ${transporte.matricula} passes through origem ${paragem.nome} (${origemIndex + 1}) → destino ${destino.nome} (${destinoIndex + 1}) ✓`);
+      return true;
+    });
+
+    if (validTransportes.length === 0) {
+      console.log('No valid buses found on this via, searching other routes');
+      
+      // Search for transportes from other vias that pass through origem AND destino in correct order
+      const allTransportesWithBothStops = await prisma.transporte.findMany({
+        where: {
+          via: {
+            paragens: {
+              some: {
+                paragem: {
+                  id: paragemId
+                }
+              }
+            }
+          }
+        },
+        include: {
+          via: {
+            include: {
+              paragens: {
+                include: {
+                  paragem: true,
+                },
+                orderBy: {
+                  id: 'asc',
+                },
+              },
+            },
+          },
+          geoLocations: {
+            orderBy: {
+              createdAt: 'desc',
+            },
+            take: 1,
+          },
+        },
+      });
+
+      console.log(`Found ${allTransportesWithBothStops.length} transportes that pass through origem ${paragem.nome}`);
+      
+      // Filter to only include buses that pass through BOTH stops in correct order
+      const validBuses = allTransportesWithBothStops.filter((transporte) => {
+        const origemIndex = transporte.via.paragens.findIndex((vp) => vp.paragem.id === paragemId);
+        const destinoIndex = transporte.via.paragens.findIndex((vp) => vp.paragem.id === destinoId);
+        
+        // Must have both stops and origem must come before destino
+        return origemIndex !== -1 && destinoIndex !== -1 && origemIndex < destinoIndex;
+      });
+      
+      console.log(`Filtered to ${validBuses.length} transportes that pass through origem → destino in correct order`);
+      
+      const allBuses = validBuses
+        .map((transporte) => {
+          let currentLat, currentLng;
+          
+          if (transporte.currGeoLocation) {
+            [currentLat, currentLng] = transporte.currGeoLocation.split(',').map(Number);
+          } else if (transporte.geoLocations.length > 0) {
+            [currentLat, currentLng] = transporte.geoLocations[0].geoLocationTransporte.split(',').map(Number);
+          } else {
+            const firstStop = transporte.via.paragens[0];
+            if (firstStop) {
+              [currentLat, currentLng] = firstStop.paragem.geoLocation.split(',').map(Number);
+            } else {
+              currentLat = -25.9655;
+              currentLng = 32.5892;
+            }
+          }
+
+          // Calculate distance to the selected paragem considering route direction
+          const R = 6371e3;
+          
+          // Find the position of the selected paragem in this transport's route
+          const paragemIndex = transporte.via.paragens.findIndex((vp) => vp.paragem.id === paragemId);
+          
+          if (paragemIndex === -1) {
+            // This transport doesn't pass through the selected paragem, skip it
+            return null;
+          }
+
+          // Calculate distance along the route, not direct distance
+          let distancia = 0;
+          let tempoEstimado = 0;
+
+          // Find the closest stop to the current transport position
+          let closestStopIndex = 0;
+          let minDistanceToStop = Infinity;
+
+          transporte.via.paragens.forEach((vp, index) => {
+            const [stopLat, stopLng] = vp.paragem.geoLocation.split(',').map(Number);
+            const φ1 = (currentLat * Math.PI) / 180;
+            const φ2 = (stopLat * Math.PI) / 180;
+            const Δφ = ((stopLat - currentLat) * Math.PI) / 180;
+            const Δλ = ((stopLng - currentLng) * Math.PI) / 180;
+
+            const a =
+              Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distanceToStop = R * c;
+
+            if (distanceToStop < minDistanceToStop) {
+              minDistanceToStop = distanceToStop;
+              closestStopIndex = index;
+            }
+          });
+
+          // Check if the transport has already passed the selected paragem
+          if (closestStopIndex > paragemIndex) {
+            // Transport has already passed the selected paragem, skip this transport
+            console.log(`Transport ${transporte.matricula} has already passed paragem ${paragem.nome} (current: stop ${closestStopIndex + 1}, target: stop ${paragemIndex + 1})`);
+            return null;
+          } else if (closestStopIndex === paragemIndex) {
+            // Transport is at or very close to the selected paragem
+            const φ1 = (currentLat * Math.PI) / 180;
+            const φ2 = (paragemLat * Math.PI) / 180;
+            const Δφ = ((paragemLat - currentLat) * Math.PI) / 180;
+            const Δλ = ((paragemLng - currentLng) * Math.PI) / 180;
+
+            const a =
+              Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            distancia = Math.round(R * c);
+
+            if (distancia < 100) {
+              tempoEstimado = 1; // Very close, arriving soon
+            } else {
+              tempoEstimado = Math.ceil(distancia / 1000 / 45 * 60); // 45 km/h average speed
+            }
+          } else {
+            // Transport hasn't reached the selected paragem yet
+            // Calculate distance along the route from current position to target paragem
+            
+            // Distance from current position to closest stop
+            distancia = Math.round(minDistanceToStop);
+            
+            // Add distances between stops from closest stop to target paragem
+            for (let i = closestStopIndex; i < paragemIndex; i++) {
+              const [currentStopLat, currentStopLng] = transporte.via.paragens[i].paragem.geoLocation.split(',').map(Number);
+              const [nextStopLat, nextStopLng] = transporte.via.paragens[i + 1].paragem.geoLocation.split(',').map(Number);
+              
+              const φ1 = (currentStopLat * Math.PI) / 180;
+              const φ2 = (nextStopLat * Math.PI) / 180;
+              const Δφ = ((nextStopLat - currentStopLat) * Math.PI) / 180;
+              const Δλ = ((nextStopLng - currentStopLng) * Math.PI) / 180;
+
+              const a =
+                Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+              distancia += Math.round(R * c);
+            }
+
+            // Calculate time based on distance and average speed
+            const velocidade = 45; // km/h
+            tempoEstimado = Math.ceil(distancia / 1000 / velocidade * 60);
+            
+            // Minimum time should be at least 1 minute if not at the stop
+            if (tempoEstimado === 0 && distancia > 50) {
+              tempoEstimado = 1;
+            }
+
+            console.log(`Transport ${transporte.matricula} is ${Math.round(distancia)}m away from paragem ${paragem.nome} (${tempoEstimado} min), current at stop ${closestStopIndex + 1}/${transporte.via.paragens.length}`);
+          }
+
+          let routeCoords: [number, number][] = [];
+          if (transporte.via.geoLocationPath) {
+            routeCoords = transporte.via.geoLocationPath.split(';').map((coord) => {
+              const [lng, lat] = coord.split(',').map(Number);
+              return [lng, lat];
+            });
+          }
+
+          // Calculate basic fare: 10 MT per kilometer, minimum 10 MT
+          const distanceKm = distancia / 1000;
+          const fare = Math.max(10, Math.ceil(distanceKm * 10));
+
+          return {
+            id: transporte.id,
+            matricula: transporte.matricula,
+            via: transporte.via.nome,
+            viaId: transporte.via.id,
+            direcao: `${transporte.via.terminalPartida} → ${transporte.via.terminalChegada}`,
+            distancia,
+            tempoEstimado,
+            velocidade: 45,
+            latitude: currentLat,
+            longitude: currentLng,
+            status: 'Em Circulação',
+            fare,
+            routeCoords,
+            stops: transporte.via.paragens.map((vp) => {
+              const [lat, lng] = vp.paragem.geoLocation.split(',').map(Number);
+              return {
+                id: vp.paragem.id,
+                nome: vp.paragem.nome,
+                latitude: lat,
+                longitude: lng,
+                isTerminal: vp.terminalBoolean,
+              };
+            }),
+          };
+        })
+        .filter(bus => bus !== null); // Remove transportes que já passaram pela paragem
+
+      allBuses.sort((a, b) => a.tempoEstimado - b.tempoEstimado);
+
+      return NextResponse.json({
+        buses: allBuses,
+        paragem: {
+          id: paragem.id,
+          nome: paragem.nome,
+          latitude: paragemLat,
+          longitude: paragemLng,
+        },
+      });
+    }
+
+    const busesWithDetails = validTransportes
+      .map((transporte) => {
+        let currentLat, currentLng;
+        
+        if (transporte.currGeoLocation) {
+          [currentLat, currentLng] = transporte.currGeoLocation.split(',').map(Number);
+        } else if (transporte.geoLocations.length > 0) {
+          [currentLat, currentLng] = transporte.geoLocations[0].geoLocationTransporte.split(',').map(Number);
+        } else {
+          const firstStop = transporte.via.paragens[0];
+          if (firstStop) {
+            [currentLat, currentLng] = firstStop.paragem.geoLocation.split(',').map(Number);
+          } else {
+            currentLat = paragemLat;
+            currentLng = paragemLng;
+          }
+        }
+
+        // Calculate distance to the selected paragem considering route direction
+        const R = 6371e3;
+        
+        // Find the position of the selected paragem in the route
+        const paragemIndex = transporte.via.paragens.findIndex((vp) => vp.paragem.id === paragemId);
+        
+        if (paragemIndex === -1) {
+          // This shouldn't happen due to our filtering, but just in case
+          return null;
+        }
+
+        // Calculate distance along the route, not direct distance
+        let distancia = 0;
+        let tempoEstimado = 0;
+
+        // Find the closest stop to the current transport position
+        let closestStopIndex = 0;
+        let minDistanceToStop = Infinity;
+
+        transporte.via.paragens.forEach((vp, index) => {
+          const [stopLat, stopLng] = vp.paragem.geoLocation.split(',').map(Number);
+          const φ1 = (currentLat * Math.PI) / 180;
+          const φ2 = (stopLat * Math.PI) / 180;
+          const Δφ = ((stopLat - currentLat) * Math.PI) / 180;
+          const Δλ = ((stopLng - currentLng) * Math.PI) / 180;
+
+          const a =
+            Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          const distanceToStop = R * c;
+
+          if (distanceToStop < minDistanceToStop) {
+            minDistanceToStop = distanceToStop;
+            closestStopIndex = index;
+          }
+        });
+
+        // Check if the transport has already passed the selected paragem
+        if (closestStopIndex > paragemIndex) {
+          // Transport has already passed the selected paragem
+          console.log(`Transport ${transporte.matricula} has already passed paragem ${paragem.nome} (current: stop ${closestStopIndex + 1}, target: stop ${paragemIndex + 1})`);
+          return null;
+        } else if (closestStopIndex === paragemIndex) {
+          // Transport is at or very close to the selected paragem
+          const φ1 = (currentLat * Math.PI) / 180;
+          const φ2 = (paragemLat * Math.PI) / 180;
+          const Δφ = ((paragemLat - currentLat) * Math.PI) / 180;
+          const Δλ = ((paragemLng - currentLng) * Math.PI) / 180;
+
+          const a =
+            Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          distancia = Math.round(R * c);
+
+          if (distancia < 100) {
+            tempoEstimado = 1; // Very close, arriving soon
+          } else {
+            tempoEstimado = Math.ceil(distancia / 1000 / 45 * 60); // 45 km/h average speed
+          }
+        } else {
+          // Transport hasn't reached the selected paragem yet
+          // Calculate distance along the route from current position to target paragem
+          
+          // Distance from current position to closest stop
+          distancia = Math.round(minDistanceToStop);
+          
+          // Add distances between stops from closest stop to target paragem
+          for (let i = closestStopIndex; i < paragemIndex; i++) {
+            const [currentStopLat, currentStopLng] = transporte.via.paragens[i].paragem.geoLocation.split(',').map(Number);
+            const [nextStopLat, nextStopLng] = transporte.via.paragens[i + 1].paragem.geoLocation.split(',').map(Number);
+            
+            const φ1 = (currentStopLat * Math.PI) / 180;
+            const φ2 = (nextStopLat * Math.PI) / 180;
+            const Δφ = ((nextStopLat - currentStopLat) * Math.PI) / 180;
+            const Δλ = ((nextStopLng - currentStopLng) * Math.PI) / 180;
+
+            const a =
+              Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            distancia += Math.round(R * c);
+          }
+
+          // Calculate time based on distance and average speed
+          const velocidade = 45; // km/h
+          tempoEstimado = Math.ceil(distancia / 1000 / velocidade * 60);
+          
+          // Minimum time should be at least 1 minute if not at the stop
+          if (tempoEstimado === 0 && distancia > 50) {
+            tempoEstimado = 1;
+          }
+
+          console.log(`Transport ${transporte.matricula} is ${Math.round(distancia)}m away from paragem ${paragem.nome} (${tempoEstimado} min), current at stop ${closestStopIndex + 1}/${transporte.via.paragens.length}`);
+        }
+
+        let routeCoords: [number, number][] = [];
+        if (transporte.via.geoLocationPath) {
+          routeCoords = transporte.via.geoLocationPath.split(';').map((coord) => {
+            const [lng, lat] = coord.split(',').map(Number);
+            return [lng, lat];
+          });
+        }
+
+        // Calculate basic fare: 10 MT per kilometer, minimum 10 MT
+        const distanceKm = distancia / 1000;
+        const fare = Math.max(10, Math.ceil(distanceKm * 10));
+
+        return {
+          id: transporte.id,
+          matricula: transporte.matricula,
+          via: transporte.via.nome,
+          viaId: transporte.via.id,
+          direcao: `${transporte.via.terminalPartida} → ${transporte.via.terminalChegada}`,
+          distancia,
+          tempoEstimado,
+          velocidade: 45,
+          latitude: currentLat,
+          longitude: currentLng,
+          status: 'Em Circulação',
+          fare,
+          routeCoords,
+          stops: transporte.via.paragens.map((vp) => {
+            const [lat, lng] = vp.paragem.geoLocation.split(',').map(Number);
+            return {
+              id: vp.paragem.id,
+              nome: vp.paragem.nome,
+              latitude: lat,
+              longitude: lng,
+              isTerminal: vp.terminalBoolean,
+            };
+          }),
+        };
+      })
+      .filter(bus => bus !== null); // Remove transportes que já passaram pela paragem
+
+    busesWithDetails.sort((a, b) => a.tempoEstimado - b.tempoEstimado);
+
+    console.log('Found', busesWithDetails.length, 'valid buses that pass through', paragem.nome);
+
+    return NextResponse.json({
+      buses: busesWithDetails,
+      paragem: {
+        id: paragem.id,
+        nome: paragem.nome,
+        latitude: paragemLat,
+        longitude: paragemLng,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error fetching buses:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    return NextResponse.json(
+      { 
+        error: 'Internal server error',
+        message: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      },
+      { status: 500 }
+    );
+  }
+}

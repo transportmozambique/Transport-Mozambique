@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Transportes to Vias</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f9fafb;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        
+        h1 {
+            font-size: 28px;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 32px;
+        }
+        
+        .button {
+            background: #000;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        
+        .button:hover {
+            background: #1f2937;
+            transform: translateY(-1px);
+        }
+        
+        .button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status {
+            margin-top: 24px;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .status.loading {
+            display: block;
+            background: #dbeafe;
+            color: #1e40af;
+            border: 2px solid #3b82f6;
+        }
+        
+        .status.success {
+            display: block;
+            background: #dcfce7;
+            color: #166534;
+            border: 2px solid #22c55e;
+        }
+        
+        .status.error {
+            display: block;
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #ef4444;
+        }
+        
+        .stats {
+            margin-top: 24px;
+            display: none;
+        }
+        
+        .stats.show {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .stat-card {
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #000;
+        }
+        
+        .top-vias {
+            margin-top: 24px;
+            display: none;
+        }
+        
+        .top-vias.show {
+            display: block;
+        }
+        
+        .top-vias h3 {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+        
+        .via-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .via-name {
+            font-size: 14px;
+            color: #000;
+        }
+        
+        .via-count {
+            font-size: 14px;
+            font-weight: bold;
+            color: #000;
+            background: #e5e7eb;
+            padding: 4px 12px;
+            border-radius: 4px;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #1e40af;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🚍 Assign Transportes to Vias</h1>
+            <p class="subtitle">This will assign each transporte to a via and set its location to the via's start point.</p>
+            
+            <div id="currentStatus" class="status" style="display: block; background: #f3f4f6; color: #374151; border: 2px solid #d1d5db;">
+                <span class="spinner"></span>Checking current status...
+            </div>
+            
+            <button id="assignBtn" class="button" onclick="assignTransportes()" style="display: none;">
+                Assign Transportes Now
+            </button>
+            
+            <div id="status" class="status"></div>
+            
+            <div id="stats" class="stats">
+                <div class="stat-card">
+                    <div class="stat-label">Total Vias</div>
+                    <div class="stat-value" id="totalVias">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Transportes</div>
+                    <div class="stat-value" id="totalTransportes">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Assigned</div>
+                    <div class="stat-value" id="assigned">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg per Via</div>
+                    <div class="stat-value" id="avgPerVia">-</div>
+                </div>
+            </div>
+            
+            <div id="topVias" class="top-vias">
+                <h3>🏆 Top 5 Vias</h3>
+                <div id="topViasList"></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 16px;">📋 What This Does</h2>
+            <ul style="list-style: none; padding: 0;">
+                <li style="padding: 8px 0; color: #374151;">✅ Assigns each transporte to a via (distributed evenly)</li>
+                <li style="padding: 8px 0; color: #374151;">✅ Sets transporte location to via start point</li>
+                <li style="padding: 8px 0; color: #374151;">✅ Updates dashboard graphs with counts</li>
+                <li style="padding: 8px 0; color: #374151;">✅ Makes vias visible on map with transportes</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // Check current status on page load
+        window.addEventListener('DOMContentLoaded', async () => {
+            await checkCurrentStatus();
+        });
+        
+        async function checkCurrentStatus() {
+            const currentStatus = document.getElementById('currentStatus');
+            const btn = document.getElementById('assignBtn');
+            
+            try {
+                const response = await fetch('/api/check-assignments');
+                const data = await response.json();
+                
+                if (data.needsAssignment) {
+                    currentStatus.style.display = 'block';
+                    currentStatus.className = 'status';
+                    currentStatus.style.background = '#fef3c7';
+                    currentStatus.style.color = '#92400e';
+                    currentStatus.style.border = '2px solid #f59e0b';
+                    currentStatus.innerHTML = `⚠️ <strong>Assignment Needed:</strong> ${data.transportes.withVia} of ${data.transportes.total} transportes assigned (${data.transportes.percentage}%)`;
+                    btn.style.display = 'block';
+                } else {
+                    currentStatus.style.display = 'block';
+                    currentStatus.className = 'status';
+                    currentStatus.style.background = '#dcfce7';
+                    currentStatus.style.color = '#166534';
+                    currentStatus.style.border = '2px solid #22c55e';
+                    currentStatus.innerHTML = `✅ <strong>Already Assigned:</strong> ${data.transportes.withVia} of ${data.transportes.total} transportes assigned (${data.transportes.percentage}%)`;
+                    btn.style.display = 'block';
+                    btn.textContent = 'Reassign All Transportes';
+                }
+                
+                // Show sample data
+                if (data.samples && data.samples.length > 0) {
+                    const samplesHtml = `
+                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                            <strong>Sample Transportes:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                ${data.samples.map(s => `
+                                    <li style="margin: 4px 0;">
+                                        Transporte ${s.codigo} (${s.matricula}) → ${s.viaName || 'Not assigned'}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    `;
+                    currentStatus.innerHTML += samplesHtml;
+                }
+                
+            } catch (error) {
+                currentStatus.style.display = 'block';
+                currentStatus.className = 'status error';
+                currentStatus.innerHTML = '❌ Error checking status: ' + error.message;
+                btn.style.display = 'block';
+            }
+        }
+        
+        async function assignTransportes() {
+            const btn = document.getElementById('assignBtn');
+            const status = document.getElementById('status');
+            const stats = document.getElementById('stats');
+            const topVias = document.getElementById('topVias');
+            
+            // Disable button and show loading
+            btn.disabled = true;
+            btn.textContent = 'Assigning...';
+            status.className = 'status loading';
+            status.innerHTML = '<span class="spinner"></span>Assigning transportes to vias...';
+            stats.classList.remove('show');
+            topVias.classList.remove('show');
+            
+            try {
+                const response = await fetch('/api/assign-transportes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show success
+                    status.className = 'status success';
+                    status.innerHTML = '✅ ' + data.message;
+                    
+                    // Show stats
+                    stats.classList.add('show');
+                    document.getElementById('totalVias').textContent = data.stats.totalVias;
+                    document.getElementById('totalTransportes').textContent = data.stats.totalTransportes;
+                    document.getElementById('assigned').textContent = data.stats.assigned;
+                    document.getElementById('avgPerVia').textContent = data.stats.avgPerVia;
+                    
+                    // Show top vias
+                    topVias.classList.add('show');
+                    const topViasList = document.getElementById('topViasList');
+                    topViasList.innerHTML = data.stats.topVias.map((via, index) => `
+                        <div class="via-item">
+                            <span class="via-name">#${index + 1} ${via.name}</span>
+                            <span class="via-count">${via.count}</span>
+                        </div>
+                    `).join('');
+                    
+                    // Update button
+                    btn.textContent = '✅ Assignment Complete';
+                    
+                    // Show verification
+                    if (data.stats.verification.allAssigned && data.stats.verification.allHaveLocation) {
+                        setTimeout(() => {
+                            status.innerHTML = '🎉 SUCCESS! All transportes assigned with locations. <a href="/dashboard" style="color: #1e40af; text-decoration: underline;">View Dashboard</a>';
+                        }, 1000);
+                    }
+                    
+                    // Reload status after 2 seconds
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                } else {
+                    throw new Error(data.error || 'Assignment failed');
+                }
+            } catch (error) {
+                status.className = 'status error';
+                status.innerHTML = '❌ Error: ' + error.message;
+                btn.disabled = false;
+                btn.textContent = 'Try Again';
+            }
+        }
+    </script>
+</body>
+</html>

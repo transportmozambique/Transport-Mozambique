@@ -1,0 +1,250 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Administrador {
+  id         String      @id @default(cuid())
+  nome       String
+  email      String      @unique
+  senha      String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  municipios Municipio[]
+  paragens   Paragem[]
+  provincias Provincia[]
+  vias       Via[]
+}
+
+model Provincia {
+  id              String         @id @default(cuid())
+  nome            String
+  geoLocation     String
+  codigo          String         @unique
+  administradorId String?
+  cidades         Cidade[]
+  municipios      Municipio[]
+  administrador   Administrador? @relation(fields: [administradorId], references: [id])
+
+  @@index([administradorId])
+}
+
+model Cidade {
+  id                    String      @id @default(cuid())
+  nome                  String
+  localizacao           String
+  codigo                String      @unique
+  codigoProvinciaString String
+  provinciaId           String
+  provincia             Provincia   @relation(fields: [provinciaId], references: [id])
+  municipios            Municipio[]
+
+  @@index([provinciaId])
+}
+
+model Municipio {
+  id              String         @id @default(cuid())
+  nome            String
+  codigo          String         @unique
+  endereco        String?
+  contacto1       Int?
+  codigoCidade    String?
+  administradorId String?
+  provinciaId     String?
+  cidadeId        String?
+  administrador   Administrador? @relation(fields: [administradorId], references: [id])
+  cidade          Cidade?        @relation(fields: [cidadeId], references: [id])
+  provincia       Provincia?     @relation(fields: [provinciaId], references: [id])
+  vias            Via[]
+
+  @@index([administradorId])
+  @@index([provinciaId])
+  @@index([cidadeId])
+}
+
+model Via {
+  id              String         @id @default(cuid())
+  nome            String
+  codigo          String         @unique
+  cor             String         @default("#3B82F6")
+  terminalPartida String
+  terminalChegada String
+  geoLocationPath String
+  codigoMunicipio String
+  administradorId String?
+  municipioId     String
+  transportes     Transporte[]
+  administrador   Administrador? @relation(fields: [administradorId], references: [id])
+  municipio       Municipio      @relation(fields: [municipioId], references: [id])
+  paragens        ViaParagem[]
+
+  @@index([administradorId])
+  @@index([municipioId])
+}
+
+model Paragem {
+  id              String         @id @default(cuid())
+  nome            String
+  codigo          String         @unique
+  geoLocation     String
+  administradorId String?
+  missoes         MISSION[]
+  administrador   Administrador? @relation(fields: [administradorId], references: [id])
+  vias            ViaParagem[]
+
+  @@index([administradorId])
+}
+
+model ViaParagem {
+  id              String  @id @default(cuid())
+  codigoParagem   String
+  codigoVia       String
+  terminalBoolean Boolean @default(false)
+  viaId           String
+  paragemId       String
+  paragem         Paragem @relation(fields: [paragemId], references: [id], onDelete: Cascade)
+  via             Via     @relation(fields: [viaId], references: [id], onDelete: Cascade)
+
+  @@unique([viaId, paragemId])
+  @@index([viaId])
+  @@index([paragemId])
+}
+
+model Proprietario {
+  id                  String                   @id @default(cuid())
+  nome                String
+  bi                  String                   @unique
+  nacionalidade       String
+  endereco            String
+  contacto1           Int
+  contacto2           Int?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+  certificado         String?
+  dataInicioOperacoes DateTime
+  foto                String?
+  tipoProprietario    String                   @default("Empresa")
+  transportes         TransporteProprietario[]
+}
+
+model Transporte {
+  id              String                   @id @default(cuid())
+  matricula       String                   @unique
+  modelo          String
+  marca           String
+  cor             String
+  lotacao         Int
+  codigo          Int                      @unique
+  codigoVia       String
+  currGeoLocation String?
+  routePath       String?
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+  viaId           String?
+  geoLocations    GeoLocation[]
+  motorista       Motorista?
+  via             Via?                     @relation(fields: [viaId], references: [id])
+  proprietarios   TransporteProprietario[]
+
+  @@index([viaId])
+}
+
+model TransporteProprietario {
+  id               String       @id @default(cuid())
+  codigoTransporte Int
+  idProprietario   String
+  transporteId     String
+  proprietarioId   String
+  proprietario     Proprietario @relation(fields: [proprietarioId], references: [id], onDelete: Cascade)
+  transporte       Transporte   @relation(fields: [transporteId], references: [id], onDelete: Cascade)
+
+  @@unique([transporteId, proprietarioId])
+  @@index([transporteId])
+  @@index([proprietarioId])
+}
+
+model Motorista {
+  id                String      @id @default(cuid())
+  nome              String
+  bi                String      @unique
+  cartaConducao     String      @unique
+  telefone          String
+  email             String      @unique
+  dataNascimento    DateTime
+  endereco          String
+  foto              String?
+  nacionalidade     String      @default("Moçambicana")
+  genero            String      @default("Masculino")
+  estadoCivil       String      @default("Solteiro")
+  numeroEmergencia  String
+  contatoEmergencia String
+  deficiencia       String?
+  dataEmissaoBI     DateTime
+  dataValidadeBI    DateTime
+  dataEmissaoCarta  DateTime
+  dataValidadeCarta DateTime
+  categoriaCarta    String      @default("B")
+  experienciaAnos   Int         @default(0)
+  observacoes       String?
+  status            String      @default("ativo")
+  transporteId      String?     @unique
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  transporte        Transporte? @relation(fields: [transporteId], references: [id])
+
+  @@index([transporteId])
+}
+
+model Utente {
+  id             String    @id @default(cuid())
+  nome           String
+  email          String    @unique
+  telefone       String    @unique
+  senha          String
+  mISSION        String    @unique
+  geoLocation    String?
+  subscrito      Boolean   @default(false)
+  dataSubscricao DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  missoes        MISSION[]
+}
+
+model MISSION {
+  id                 String   @id @default(cuid())
+  mISSIONUtente      String
+  codigoParagem      String
+  geoLocationUtente  String
+  geoLocationParagem String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  utenteId           String
+  paragemId          String
+  paragem            Paragem  @relation(fields: [paragemId], references: [id])
+  utente             Utente   @relation(fields: [utenteId], references: [id])
+
+  @@index([utenteId])
+  @@index([paragemId])
+}
+
+model GeoLocation {
+  id                    String     @id @default(cuid())
+  geoLocationTransporte String
+  geoDirection          String
+  codigoTransporte      Int
+  geoLocationHist1      String?
+  geoLocationHist2      String?
+  geoLocationHist3      String?
+  geoDateTime1          DateTime?
+  geoDateTime2          DateTime?
+  geoDateTime3          DateTime?
+  createdAt             DateTime   @default(now())
+  transporteId          String
+  transporte            Transporte @relation(fields: [transporteId], references: [id])
+
+  @@index([transporteId])
+}

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Diagnostic</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #0f0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #0f0;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        .section {
+            background: #111;
+            border: 2px solid #0f0;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .section h2 {
+            color: #0ff;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .loading {
+            color: #ff0;
+        }
+        
+        .success {
+            color: #0f0;
+        }
+        
+        .error {
+            color: #f00;
+        }
+        
+        .warning {
+            color: #ff0;
+        }
+        
+        pre {
+            background: #000;
+            padding: 10px;
+            border: 1px solid #333;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 10px 10px 0;
+        }
+        
+        .button:hover {
+            background: #0ff;
+        }
+        
+        .button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 TRANSPORT SYSTEM DIAGNOSTIC</h1>
+        
+        <div class="section">
+            <h2>📊 CURRENT STATUS</h2>
+            <div id="status" class="loading">⏳ Checking system status...</div>
+        </div>
+        
+        <div class="section">
+            <h2>🚍 TRANSPORTES</h2>
+            <div id="transportes">Loading...</div>
+        </div>
+        
+        <div class="section">
+            <h2>🛣️ VIAS</h2>
+            <div id="vias">Loading...</div>
+        </div>
+        
+        <div class="section">
+            <h2>🔗 ASSIGNMENTS</h2>
+            <div id="assignments">Loading...</div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 SAMPLE DATA</h2>
+            <div id="samples">Loading...</div>
+        </div>
+        
+        <div class="section">
+            <h2>⚡ ACTIONS</h2>
+            <button id="createBtn" class="button" onclick="createTransportes()" style="display: none;">
+                CREATE 111 TRANSPORTES
+            </button>
+            <button id="assignBtn" class="button" onclick="runAssignment()">
+                RUN ASSIGNMENT NOW
+            </button>
+            <button class="button" onclick="location.reload()">
+                REFRESH STATUS
+            </button>
+            <button class="button" onclick="window.location.href='/dashboard'">
+                VIEW DASHBOARD
+            </button>
+            <div id="actionResult" style="margin-top: 10px;"></div>
+        </div>
+        
+        <div class="section">
+            <h2>📋 RAW DATA</h2>
+            <pre id="rawData">Loading...</pre>
+        </div>
+    </div>
+    
+    <script>
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/check-assignments');
+                const data = await response.json();
+                
+                // Status
+                const statusDiv = document.getElementById('status');
+                if (data.needsAssignment) {
+                    statusDiv.className = 'warning';
+                    statusDiv.innerHTML = '⚠️ ASSIGNMENT REQUIRED - No transportes assigned to vias';
+                } else {
+                    statusDiv.className = 'success';
+                    statusDiv.innerHTML = '✅ SYSTEM OPERATIONAL - Transportes assigned to vias';
+                }
+                
+                // Transportes
+                const transportesDiv = document.getElementById('transportes');
+                transportesDiv.innerHTML = `
+                    Total: <strong>${data.transportes.total}</strong><br>
+                    With Via: <strong>${data.transportes.withVia}</strong> (${data.transportes.percentage}%)<br>
+                    With Location: <strong>${data.transportes.withLocation}</strong>
+                `;
+                
+                // Show create button if not enough transportes
+                const createBtn = document.getElementById('createBtn');
+                if (data.transportes.total < 111) {
+                    createBtn.style.display = 'inline-block';
+                    transportesDiv.innerHTML += `<br><span class="warning">⚠️ Need ${111 - data.transportes.total} more transportes</span>`;
+                }
+                
+                // Vias
+                document.getElementById('vias').innerHTML = `
+                    Total: <strong>${data.vias.total}</strong><br>
+                    With Transportes: <strong>${data.vias.withTransportes}</strong> (${data.vias.percentage}%)
+                `;
+                
+                // Assignments
+                const assignDiv = document.getElementById('assignments');
+                if (data.needsAssignment) {
+                    assignDiv.className = 'error';
+                    assignDiv.innerHTML = `
+                        ❌ NO ASSIGNMENTS FOUND<br>
+                        <br>
+                        Status: <strong>NOT CONFIGURED</strong><br>
+                        Action Required: <strong>RUN ASSIGNMENT</strong>
+                    `;
+                } else {
+                    assignDiv.className = 'success';
+                    assignDiv.innerHTML = `
+                        ✅ ASSIGNMENTS ACTIVE<br>
+                        <br>
+                        Transportes Assigned: <strong>${data.transportes.withVia}/${data.transportes.total}</strong><br>
+                        Vias with Transportes: <strong>${data.vias.withTransportes}/${data.vias.total}</strong>
+                    `;
+                }
+                
+                // Samples
+                const samplesDiv = document.getElementById('samples');
+                if (data.samples && data.samples.length > 0) {
+                    samplesDiv.innerHTML = data.samples.map((s, i) => `
+                        ${i + 1}. Transporte ${s.codigo} (${s.matricula})<br>
+                        &nbsp;&nbsp;&nbsp;Via: ${s.viaName}<br>
+                        &nbsp;&nbsp;&nbsp;Location: ${s.location || 'Not set'}<br>
+                    `).join('<br>');
+                } else {
+                    samplesDiv.innerHTML = 'No sample data available';
+                }
+                
+                // Raw data
+                document.getElementById('rawData').textContent = JSON.stringify(data, null, 2);
+                
+            } catch (error) {
+                document.getElementById('status').className = 'error';
+                document.getElementById('status').innerHTML = '❌ ERROR: ' + error.message;
+                console.error('Diagnostic error:', error);
+            }
+        }
+        
+        async function runAssignment() {
+            const btn = document.getElementById('assignBtn');
+            const resultDiv = document.getElementById('actionResult');
+            
+            btn.disabled = true;
+            btn.textContent = 'RUNNING...';
+            resultDiv.className = 'loading';
+            resultDiv.innerHTML = '⏳ Assigning transportes to vias...';
+            
+            try {
+                const response = await fetch('/api/assign-transportes', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        ✅ ASSIGNMENT COMPLETE<br>
+                        <br>
+                        Assigned: ${data.stats.assigned} transportes<br>
+                        Avg per Via: ${data.stats.avgPerVia}<br>
+                        <br>
+                        Refreshing in 3 seconds...
+                    `;
+                    
+                    setTimeout(() => {
+                        location.reload();
+                    }, 3000);
+                } else {
+                    throw new Error(data.error || 'Assignment failed');
+                }
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = '❌ ERROR: ' + error.message;
+                btn.disabled = false;
+                btn.textContent = 'RUN ASSIGNMENT NOW';
+            }
+        }
+        
+        async function createTransportes() {
+            const btn = document.getElementById('createBtn');
+            const resultDiv = document.getElementById('actionResult');
+            
+            btn.disabled = true;
+            btn.textContent = 'CREATING...';
+            resultDiv.className = 'loading';
+            resultDiv.innerHTML = '⏳ Creating transportes...';
+            
+            try {
+                const response = await fetch('/api/create-transportes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ count: 111 })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        ✅ CREATION COMPLETE<br>
+                        <br>
+                        Created: ${data.created} transportes<br>
+                        Total: ${data.total}<br>
+                        <br>
+                        Refreshing in 3 seconds...
+                    `;
+                    
+                    setTimeout(() => {
+                        location.reload();
+                    }, 3000);
+                } else {
+                    throw new Error(data.error || 'Creation failed');
+                }
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = '❌ ERROR: ' + error.message;
+                btn.disabled = false;
+                btn.textContent = 'CREATE 111 TRANSPORTES';
+            }
+        }
+        
+        // Auto-check on load
+        window.addEventListener('DOMContentLoaded', checkStatus);
+    </script>
+</body>
+</html>
