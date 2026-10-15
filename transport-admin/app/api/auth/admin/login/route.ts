@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { SESSION_COOKIE, createSessionToken, sessionCookieOptions } from "@/lib/adminSession";
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,8 +43,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Return admin data (without password)
-    return NextResponse.json({
+    const token = createSessionToken(admin.id);
+    if (!token) {
+      console.error("ADMIN_SESSION_SECRET não está definido");
+      return NextResponse.json(
+        { error: "Servidor sem configuração de sessão" },
+        { status: 500 }
+      );
+    }
+
+    // Return admin data (without password) and start the session
+    const response = NextResponse.json({
       admin: {
         id: admin.id,
         nome: admin.nome,
@@ -51,6 +61,8 @@ export async function POST(request: NextRequest) {
         role: "admin", // Default role until migration is run
       },
     });
+    response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions);
+    return response;
   } catch (error) {
     console.error("Erro ao fazer login:", error);
     return NextResponse.json(

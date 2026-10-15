@@ -35,19 +35,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is authenticated
-    const adminData = localStorage.getItem("admin");
-    
-    if (adminData) {
-      try {
-        setAdmin(JSON.parse(adminData));
-      } catch (error) {
-        console.error("Error parsing admin data:", error);
+    // The server session (HttpOnly cookie) decides who is logged in;
+    // localStorage only keeps the profile shown in the UI
+    fetch("/api/auth/admin/session")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.admin) {
+          localStorage.setItem("admin", JSON.stringify(data.admin));
+          setAdmin(data.admin);
+        } else {
+          localStorage.removeItem("admin");
+          setAdmin(null);
+        }
+      })
+      .catch((error) => console.error("Error checking session:", error))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // A 401 from the admin API means the session expired: log out so the user is sent to /login
+  useEffect(() => {
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      const response = await originalFetch(...args);
+      const input = args[0];
+      const url = typeof input === "string" ? input : input instanceof Request ? input.url : String(input);
+      if (response.status === 401 && url.includes("/api/") && !url.includes("/api/auth/admin/")) {
         localStorage.removeItem("admin");
+        setAdmin(null);
       }
-    }
-    
-    setLoading(false);
+      return response;
+    };
+    return () => {
+      window.fetch = originalFetch;
+    };
   }, []);
 
   useEffect(() => {
@@ -67,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [admin, loading, pathname, router]);
 
   const logout = () => {
+    fetch("/api/auth/admin/logout", { method: "POST" }).catch(() => {});
     localStorage.removeItem("admin");
     setAdmin(null);
     router.push("/login");
