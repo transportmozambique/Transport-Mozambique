@@ -146,3 +146,72 @@ export function arrivalMinutes(distanceMeters: number, rule: FareRule): number {
 export function travelMinutes(distanceMeters: number, rule: FareRule): number {
   return Math.ceil((distanceMeters / 1000 / rule.velocidadeViagemKmh) * 60);
 }
+
+export interface RouteStop {
+  id: string;
+  point: LatLng;
+}
+
+export interface TripEstimate {
+  /** Metres the bus still has to travel to reach the origin stop */
+  distanciaAteOrigem: number;
+  /** Minutes until the bus reaches the origin stop */
+  tempoChegada: number;
+  /** The bus is past the origin and has to finish its loop first */
+  jaPassou: boolean;
+  /** Metres from origin to destination along the route */
+  distanciaViagem: number;
+  tempoViagem: number;
+  fare: number;
+}
+
+// Extra wait when the bus already passed the origin and has to turn around
+const TURNAROUND_MIN = 10;
+
+/**
+ * Arrival time, trip length, trip time and fare for a passenger going from
+ * `origemId` to `destinoId` on a bus at `bus`. `stops` must be in travel order
+ * (see orderStopsAlongRoute). Returns null unless the origin comes before the
+ * destination on the route.
+ */
+export function estimateTrip(
+  stops: RouteStop[],
+  bus: LatLng,
+  origemId: string,
+  destinoId: string,
+  rule: FareRule,
+): TripEstimate | null {
+  const o = stops.findIndex((s) => s.id === origemId);
+  const d = stops.findIndex((s) => s.id === destinoId);
+  if (o === -1 || d === -1 || o >= d) return null;
+
+  const along = (from: number, to: number) => pathLengthMeters(stops.slice(from, to + 1).map((s) => s.point));
+
+  // Where the bus is on the route: its nearest stop
+  let closest = 0;
+  let closestDist = Infinity;
+  stops.forEach((s, i) => {
+    const dist = haversineMeters(bus, s.point);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closest = i;
+    }
+  });
+
+  const jaPassou = closest > o;
+  const distanciaAteOrigem = jaPassou
+    ? closestDist + along(closest, stops.length - 1) + along(0, o)
+    : closest === o
+      ? haversineMeters(bus, stops[o].point)
+      : closestDist + along(closest, o);
+
+  const distanciaViagem = along(o, d);
+  return {
+    distanciaAteOrigem,
+    tempoChegada: arrivalMinutes(distanciaAteOrigem, rule) + (jaPassou ? TURNAROUND_MIN : 0),
+    jaPassou,
+    distanciaViagem,
+    tempoViagem: travelMinutes(distanciaViagem, rule),
+    fare: fareFor(distanciaViagem, rule),
+  };
+}

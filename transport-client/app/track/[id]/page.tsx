@@ -4,8 +4,12 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Transport } from "../../types";
+import type { Stop } from "../../components/TransportMap";
 import LoadingScreen from "../../components/LoadingScreen";
 import UserAvatar from "../../components/UserAvatar";
+
+// How often the bus position and estimates are re-read
+const REFRESH_MS = 10000;
 
 const TransportMap = dynamic(() => import("../../components/TransportMap"), {
   ssr: false,
@@ -32,247 +36,92 @@ function TrackTransportContent() {
   const paragemId = searchParams.get('paragem'); // User's origin (EMBARQUE)
   const destinoId = searchParams.get('destino'); // User's destination (DESTINO)
 
-  console.log('🎯 Track Page Parameters:');
-  console.log('   paragemId (EMBARQUE):', paragemId);
-  console.log('   destinoId (DESTINO):', destinoId);
-
   const [transport, setTransport] = useState<Transport | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isTracking, setIsTracking] = useState(true);
-  const [transportStatus, setTransportStatus] = useState<"approaching" | "arrived" | "departed">("approaching");
   const [routeCoords, setRouteCoords] = useState<[number, number][]>([]);
-  const [stops, setStops] = useState<any[]>([]);
+  const [stops, setStops] = useState<Stop[]>([]);
   const [saveStatus, setSaveStatus] = useState<"idle" | "loading" | "success" | "error" | "already-saved">("idle");
   const [saveMessage, setSaveMessage] = useState("");
-  
-  // Coordenadas da paragem (destino do utente) - will be updated from real API data
-  const [paragemLat, setParagemLat] = useState(-25.8797790); // Fim do Murro (exemplo real)
-  const [paragemLng, setParagemLng] = useState(32.4757846); // Fim do Murro (exemplo real)
-  const [paragemNome, setParagemNome] = useState("Sua Paragem");
+  const [paragem, setParagem] = useState<{ lat: number; lng: number; nome: string } | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
-  // Simular atualização em tempo real
+  // Position and estimates come from the server (same numbers as the search and USSD);
+  // re-read them every REFRESH_MS
   useEffect(() => {
-    // Build API URL with origem and destino
-    let apiUrl = `/api/bus/${transportId}`;
-    const queryParams = [];
-    if (paragemId) queryParams.push(`paragem=${paragemId}`);
-    if (destinoId) queryParams.push(`destino=${destinoId}`); // Use destino to match API
-    if (queryParams.length > 0) {
-      apiUrl += `?${queryParams.join('&')}`;
-    }
+    let cancelled = false;
+    let first = true;
+    const query = new URLSearchParams();
+    if (paragemId) query.set('paragem', paragemId);
+    if (destinoId) query.set('destino', destinoId);
+    const apiUrl = `/api/bus/${transportId}${query.size ? `?${query}` : ''}`;
 
-    console.log('Fetching bus data from:', apiUrl);
-
-    // Carregar dados iniciais
-    console.log('🔍 Track Page - API URL:', apiUrl);
-    
-    fetch(apiUrl)
-      .then((res) => res.json())
-      .then((data) => {
+    const load = async () => {
+      try {
+        const data = await fetch(apiUrl).then((res) => res.json());
+        if (cancelled) return;
         if (data.error) {
           console.error('Error fetching bus:', data.error);
-          setLoading(false);
           return;
         }
 
-        const mockTransport: Transport = {
+        setTransport({
           id: data.id,
           matricula: data.matricula,
           via: data.via,
           direcao: data.direcao,
-          distancia: data.distancia || 1200,
-          tempoEstimado: data.tempoEstimado || 5,
-          velocidade: data.velocidade || 45,
-          latitude: data.latitude, // Use real coordinates from API
-          longitude: data.longitude, // Use real coordinates from API
+          distancia: data.distancia,
+          tempoEstimado: data.tempoEstimado,
+          tempoViagem: data.tempoViagem,
+          journeyDistance: data.distanciaViagem,
+          jaPassou: data.jaPassou,
+          velocidade: data.velocidade,
+          latitude: data.latitude,
+          longitude: data.longitude,
           status: data.status || 'Em Circulação',
-          // Add new fields if available from API
-          journeyTime: data.journeyTime,
-          journeyDistance: data.journeyDistance,
-          totalTime: data.totalTime,
-          fare: data.fare || Math.max(10, Math.ceil(((data.distancia || 1200) / 1000) * 10)), // Calculate fare if not provided
-          fullRoute: data.fullRoute,
-          userJourney: data.userJourney,
-        };
+          fare: data.fare,
+        });
+        setLastUpdate(new Date());
 
-        console.log('Transport initialized at:', data.latitude, data.longitude);
-        console.log('Route coords received:', data.routeCoords?.length || 0, 'points');
-        console.log('Stops received:', data.stops?.length || 0, 'stops');
+        if (first) {
+          first = false;
+          setRouteCoords(data.routeCoords || []);
+          setStops(data.stops || []);
 
-        setTransport(mockTransport);
-        setRouteCoords(data.routeCoords || []);
-        setStops(data.stops || []);
+          // The user's stop, or the end of the route when none was chosen
+          const stop = (data.stops as Stop[] | undefined)?.find((st) => st.id === paragemId) ?? data.stops?.[data.stops.length - 1];
+          if (stop) setParagem({ lat: stop.latitude, lng: stop.longitude, nome: stop.nome });
 
-        console.log('=== TRACKING PAGE DEBUG ===');
-        console.log('Transport coordinates:', mockTransport.latitude, mockTransport.longitude);
-        console.log('Route coordinates count:', data.routeCoords?.length || 0);
-        console.log('Stops count:', data.stops?.length || 0);
-        
-        // DETAILED STOP LOGGING
-        if (data.stops && data.stops.length > 0) {
-          console.log('🔍 DETAILED STOPS ANALYSIS:');
-          console.log('Stops with isPickup:', data.stops.filter((s: any) => s.isPickup).length);
-          console.log('Stops with isDestination:', data.stops.filter((s: any) => s.isDestination).length);
-          console.log('All stops:');
-          data.stops.forEach((s: any, i: number) => {
-            const marker = s.isPickup ? '🔴 PICKUP (EMBARQUE)' : s.isDestination ? '🔵 DESTINATION (DESTINO)' : '⚪ Regular';
-            console.log(`  ${i + 1}. [${marker}] ${s.nome} (isPickup: ${s.isPickup}, isDestination: ${s.isDestination})`);
-          });
-          
-          // Verify order
-          const pickupIndex = data.stops.findIndex((s: any) => s.isPickup);
-          const destinationIndex = data.stops.findIndex((s: any) => s.isDestination);
-          if (pickupIndex !== -1 && destinationIndex !== -1) {
-            if (pickupIndex < destinationIndex) {
-              console.log('✅ CORRECT ORDER: Pickup (index', pickupIndex, ') comes BEFORE Destination (index', destinationIndex, ')');
-            } else {
-              console.error('❌ WRONG ORDER: Pickup (index', pickupIndex, ') comes AFTER Destination (index', destinationIndex, ')');
-              console.error('   This means the bus will pass destination before pickup!');
-            }
-          }
-        }
-        
-        if (data.routeCoords && data.routeCoords.length > 0) {
-          console.log('First route point:', data.routeCoords[0]);
-          console.log('Last route point:', data.routeCoords[data.routeCoords.length - 1]);
-        }
-        if (data.stops && data.stops.length > 0) {
-          console.log('First stop:', data.stops[0].nome, 'at', data.stops[0].latitude, data.stops[0].longitude);
-          console.log('Last stop:', data.stops[data.stops.length - 1].nome, 'at', data.stops[data.stops.length - 1].latitude, data.stops[data.stops.length - 1].longitude);
-        }
-
-        // Set paragem to the user's selected stop or last stop as fallback
-        if (paragemId && data.stops && data.stops.length > 0) {
-          // Find the stop that matches the user's selection
-          const selectedStop = data.stops.find((stop: any) => stop.id === paragemId);
-          if (selectedStop) {
-            console.log('Using user selected stop:', selectedStop.nome, 'at', selectedStop.latitude, selectedStop.longitude);
-            setParagemLat(selectedStop.latitude);
-            setParagemLng(selectedStop.longitude);
-            setParagemNome(selectedStop.nome);
-          } else {
-            // Fallback to last stop if selected stop not found
-            console.log('Selected stop not found, using last stop');
-            const lastStop = data.stops[data.stops.length - 1];
-            console.log('Last stop:', lastStop.nome, 'at', lastStop.latitude, lastStop.longitude);
-            setParagemLat(lastStop.latitude);
-            setParagemLng(lastStop.longitude);
-            setParagemNome(lastStop.nome);
-          }
-        } else if (data.stops && data.stops.length > 0) {
-          // No paragemId provided, use last stop
-          console.log('No paragem selected, using last stop');
-          const lastStop = data.stops[data.stops.length - 1];
-          console.log('Last stop:', lastStop.nome, 'at', lastStop.latitude, lastStop.longitude);
-          setParagemLat(lastStop.latitude);
-          setParagemLng(lastStop.longitude);
-          setParagemNome(lastStop.nome);
-        } else {
-          // No stops available, keep default coordinates but log warning
-          console.warn('No stops available, using default coordinates');
-        }
-
-        setLoading(false);
-        
-        // Check if mission already exists for this user
-        const utenteData = localStorage.getItem("utente");
-        if (utenteData && paragemId) {
-          const utente = JSON.parse(utenteData);
-          fetch(`/api/user/missions?utenteId=${utente.id}`)
-            .then(res => res.json())
-            .then(missionsData => {
-              if (missionsData.missions) {
-                const existingMission = missionsData.missions.find(
-                  (m: any) => m.paragemId === paragemId
-                );
-                if (existingMission) {
+          // Check if mission already exists for this user
+          const utenteData = localStorage.getItem("utente");
+          if (utenteData && paragemId) {
+            const utente = JSON.parse(utenteData);
+            fetch(`/api/user/missions?utenteId=${utente.id}`)
+              .then(res => res.json())
+              .then(missionsData => {
+                if (!cancelled && missionsData.missions?.some((m: { paragemId: string }) => m.paragemId === paragemId)) {
                   setSaveStatus("already-saved");
                   setSaveMessage("Este transporte já está nos seus favoritos");
                 }
-              }
-            })
-            .catch(err => console.error('Error checking existing missions:', err));
-        }
-      })
-      .catch((error) => {
-        console.error('Error fetching bus:', error);
-        setLoading(false);
-      });
-
-    // Simular atualização de posição a cada 5 segundos
-    const interval = setInterval(() => {
-      setTransport((prev) => {
-        if (!prev) return prev;
-        
-        // Calcular distância até a paragem usando as coordenadas atuais
-        const distanceToStop = Math.sqrt(
-          Math.pow((prev.latitude - paragemLat) * 111000, 2) +
-          Math.pow((prev.longitude - paragemLng) * 111000, 2)
-        );
-
-        // Simular movimento do transporte em direção à paragem
-        const latDiff = paragemLat - prev.latitude;
-        const lngDiff = paragemLng - prev.longitude;
-        const distance = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff);
-        
-        // Movimento incremental em direção à paragem (velocidade simulada)
-        const moveSpeed = 0.0005; // Ajustar conforme necessário
-        let newLat = prev.latitude;
-        let newLng = prev.longitude;
-        let newDistancia = Math.round(distanceToStop);
-        
-        if (distance > 0.0001) { // Se ainda não chegou muito perto
-          newLat = prev.latitude + (latDiff / distance) * moveSpeed;
-          newLng = prev.longitude + (lngDiff / distance) * moveSpeed;
-          
-          // Recalcular distância com as novas coordenadas
-          const newDistanceToStop = Math.sqrt(
-            Math.pow((newLat - paragemLat) * 111000, 2) +
-            Math.pow((newLng - paragemLng) * 111000, 2)
-          );
-          newDistancia = Math.round(newDistanceToStop);
-        }
-
-        // Calcular tempo estimado baseado na distância real
-        const velocidade = 45; // km/h
-        let newTempoEstimado = Math.max(1, Math.ceil(newDistancia / 1000 / velocidade * 60));
-        
-        // Se muito próximo, definir valores mínimos
-        if (newDistancia < 50) {
-          newTempoEstimado = 1;
-          newDistancia = 0;
-        }
-
-        // Atualizar status baseado na distância
-        if (newDistancia < 50) {
-          // Transporte chegou (menos de 50m)
-          if (transportStatus !== "arrived") {
-            setTransportStatus("arrived");
-            // Após 10 segundos, marcar como partiu
-            setTimeout(() => {
-              setTransportStatus("departed");
-            }, 10000);
+              })
+              .catch(err => console.error('Error checking existing missions:', err));
           }
-        } else if (newDistancia > 200 && transportStatus === "arrived") {
-          // Transporte saiu da paragem (mais de 200m)
-          setTransportStatus("departed");
         }
-        
-        return {
-          ...prev,
-          distancia: newDistancia,
-          tempoEstimado: newTempoEstimado,
-          latitude: newLat,
-          longitude: newLng,
-        };
-      });
-    }, 5000);
+      } catch (error) {
+        console.error('Error fetching bus:', error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
 
-    return () => clearInterval(interval);
-  }, [transportId, paragemLat, paragemLng, transportStatus]);
+    load();
+    const interval = setInterval(load, REFRESH_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [transportId, paragemId, destinoId]);
 
   const handleStopTracking = () => {
-    setIsTracking(false);
     router.push("/search");
   };
 
@@ -357,9 +206,15 @@ function TrackTransportContent() {
     );
   }
 
-  const isArriving = transport.distancia < 500 && transportStatus === "approaching";
-  const hasArrived = transportStatus === "arrived";
-  const hasDeparted = transportStatus === "departed";
+  // The API reports a bus past the stop as jaPassou, with the wait until its next pass
+  const hasDeparted = !!transport.jaPassou;
+  const hasArrived = !hasDeparted && transport.distancia < 100;
+  const isArriving = !hasDeparted && !hasArrived && transport.distancia < 500;
+  // Estimates are minutes from when they were read
+  const chegadaDestino = lastUpdate
+    ? new Date(lastUpdate.getTime() + (transport.tempoEstimado + (transport.tempoViagem ?? 0)) * 60000)
+        .toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })
+    : '--:--';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-neutral-100">
@@ -389,8 +244,8 @@ function TrackTransportContent() {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-900">Transporte Partiu</h2>
-                  <p className="text-sm text-slate-600">O transporte saiu da sua paragem</p>
+                  <h2 className="text-lg font-semibold text-slate-900">Transporte já passou</h2>
+                  <p className="text-sm text-slate-600">Volta à sua paragem na próxima volta, em cerca de {transport.tempoEstimado} min</p>
                 </div>
               </div>
             </div>
@@ -533,7 +388,7 @@ function TrackTransportContent() {
                     <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">Tempo de Chegada</p>
                   </div>
                   <p className="text-3xl font-bold text-slate-900">
-                    {hasDeparted ? "-" : hasArrived ? "0" : transport.tempoEstimado}
+                    {hasArrived ? "0" : transport.tempoEstimado}
                   </p>
                   <p className="text-sm text-slate-500 mt-1">minutos</p>
                 </div>
@@ -562,10 +417,10 @@ function TrackTransportContent() {
                     <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">Velocidade</p>
+                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">Chegada ao Destino</p>
                   </div>
-                  <p className="text-3xl font-bold text-slate-900">{transport.velocidade}</p>
-                  <p className="text-sm text-slate-500 mt-1">km/h</p>
+                  <p className="text-3xl font-bold text-slate-900">{chegadaDestino}</p>
+                  <p className="text-sm text-slate-500 mt-1">hora prevista</p>
                 </div>
 
                 {/* Preço */}
@@ -577,7 +432,7 @@ function TrackTransportContent() {
                     <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">Preço</p>
                   </div>
                   <p className="text-3xl font-bold text-slate-900">
-                    {transport.fare || Math.max(10, Math.ceil((transport.distancia / 1000) * 10))}
+                    {transport.fare ?? "-"}
                   </p>
                   <p className="text-sm text-slate-500 mt-1">MT</p>
                 </div>
@@ -591,39 +446,7 @@ function TrackTransportContent() {
                     <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">Tempo de Viagem</p>
                   </div>
                   <p className="text-3xl font-bold text-slate-900">
-                    {(() => {
-                      // Calculate journey time from user's paragem to final destination
-                      if (!stops || stops.length === 0) return 15;
-                      
-                      // Find user's paragem in the route
-                      const userParagemIndex = stops.findIndex(stop => stop.latitude === paragemLat && stop.longitude === paragemLng);
-                      if (userParagemIndex === -1) return 15;
-                      
-                      // Calculate distance from user's paragem to final destination (last stop)
-                      const lastStop = stops[stops.length - 1];
-                      const R = 6371e3; // Earth's radius in meters
-                      
-                      let journeyDistance = 0;
-                      // Sum distances between stops from user's paragem to final destination
-                      for (let i = userParagemIndex; i < stops.length - 1; i++) {
-                        const currentStop = stops[i];
-                        const nextStop = stops[i + 1];
-                        
-                        const φ1 = (currentStop.latitude * Math.PI) / 180;
-                        const φ2 = (nextStop.latitude * Math.PI) / 180;
-                        const Δφ = ((nextStop.latitude - currentStop.latitude) * Math.PI) / 180;
-                        const Δλ = ((nextStop.longitude - currentStop.longitude) * Math.PI) / 180;
-
-                        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                                Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-                        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                        journeyDistance += R * c;
-                      }
-                      
-                      // Calculate journey time based on average bus speed (30 km/h in city)
-                      const journeyTimeMinutes = Math.ceil(journeyDistance / 1000 / 30 * 60);
-                      return Math.max(5, journeyTimeMinutes); // Minimum 5 minutes
-                    })()}
+                    {transport.tempoViagem ?? "-"}
                   </p>
                   <p className="text-sm text-slate-500 mt-1">minutos no autocarro</p>
                 </div>
@@ -637,68 +460,14 @@ function TrackTransportContent() {
                     <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">Distância Viagem</p>
                   </div>
                   <p className="text-3xl font-bold text-slate-900">
-                    {(() => {
-                      // Calculate journey distance from user's paragem to final destination
-                      if (!stops || stops.length === 0) return "2.5";
-                      
-                      // Find user's paragem in the route
-                      const userParagemIndex = stops.findIndex(stop => stop.latitude === paragemLat && stop.longitude === paragemLng);
-                      if (userParagemIndex === -1) return "2.5";
-                      
-                      const R = 6371e3; // Earth's radius in meters
-                      let journeyDistance = 0;
-                      
-                      // Sum distances between stops from user's paragem to final destination
-                      for (let i = userParagemIndex; i < stops.length - 1; i++) {
-                        const currentStop = stops[i];
-                        const nextStop = stops[i + 1];
-                        
-                        const φ1 = (currentStop.latitude * Math.PI) / 180;
-                        const φ2 = (nextStop.latitude * Math.PI) / 180;
-                        const Δφ = ((nextStop.latitude - currentStop.latitude) * Math.PI) / 180;
-                        const Δλ = ((nextStop.longitude - currentStop.longitude) * Math.PI) / 180;
-
-                        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                                Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-                        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                        journeyDistance += R * c;
-                      }
-                      
-                      // Convert to km if > 1000m, otherwise show in meters
-                      if (journeyDistance > 1000) {
-                        return (journeyDistance / 1000).toFixed(1);
-                      } else {
-                        return Math.round(journeyDistance).toString();
-                      }
-                    })()}
+                    {transport.journeyDistance === undefined
+                      ? "-"
+                      : transport.journeyDistance >= 1000
+                        ? (transport.journeyDistance / 1000).toFixed(1)
+                        : transport.journeyDistance}
                   </p>
                   <p className="text-sm text-slate-500 mt-1">
-                    {(() => {
-                      if (!stops || stops.length === 0) return "km";
-                      
-                      const userParagemIndex = stops.findIndex(stop => stop.latitude === paragemLat && stop.longitude === paragemLng);
-                      if (userParagemIndex === -1) return "km";
-                      
-                      const R = 6371e3;
-                      let journeyDistance = 0;
-                      
-                      for (let i = userParagemIndex; i < stops.length - 1; i++) {
-                        const currentStop = stops[i];
-                        const nextStop = stops[i + 1];
-                        
-                        const φ1 = (currentStop.latitude * Math.PI) / 180;
-                        const φ2 = (nextStop.latitude * Math.PI) / 180;
-                        const Δφ = ((nextStop.latitude - currentStop.latitude) * Math.PI) / 180;
-                        const Δλ = ((nextStop.longitude - currentStop.longitude) * Math.PI) / 180;
-
-                        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                                Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-                        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                        journeyDistance += R * c;
-                      }
-                      
-                      return journeyDistance > 1000 ? "km" : "metros";
-                    })()}
+                    {(transport.journeyDistance ?? 0) >= 1000 ? "km" : "metros"}
                   </p>
                 </div>
               </div>
@@ -717,12 +486,12 @@ function TrackTransportContent() {
                   <TransportMap
                     transportLat={transport.latitude}
                     transportLng={transport.longitude}
-                    paragemLat={paragemLat}
-                    paragemLng={paragemLng}
+                    paragemLat={paragem?.lat ?? transport.latitude}
+                    paragemLng={paragem?.lng ?? transport.longitude}
                     transportMatricula={transport.matricula}
                     routeCoords={routeCoords}
                     stops={stops}
-                    paragemNome={paragemNome}
+                    paragemNome={paragem?.nome ?? "Sua Paragem"}
                   />
                 </div>
               </div>
@@ -740,7 +509,8 @@ function TrackTransportContent() {
           {/* Footer Info */}
           <div className="mt-6 text-center">
             <p className="text-sm text-neutral-600">
-              Atualização automática a cada 5 segundos
+              Atualização automática a cada {REFRESH_MS / 1000} segundos
+              {lastUpdate && ` · última às ${lastUpdate.toLocaleTimeString('pt-PT')}`}
             </p>
           </div>
         </div>

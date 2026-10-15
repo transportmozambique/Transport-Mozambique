@@ -3,8 +3,10 @@ export interface Transport {
   matricula: string;
   via: string;
   direcao: string;
-  distancia: number; // em metros
-  tempoEstimado: number; // em minutos
+  distancia: number; // distância da viagem (origem → destino) em metros
+  tempoEstimado: number; // minutos até o autocarro chegar à origem
+  tempoViagem?: number; // minutos a bordo (origem → destino)
+  jaPassou?: boolean; // o autocarro já passou a origem e volta na próxima volta
   velocidade: number;
   latitude: number;
   longitude: number;

@@ -590,7 +590,7 @@ function UserInfoContent() {
                                       );
                                       
                                       if (busWithStop) {
-                                        router.push(`/track/${busWithStop.id}?paragem=${mission.paragem.geoLocation}`);
+                                        router.push(`/track/${busWithStop.id}?paragem=${mission.paragemId}`);
                                       } else {
                                         setModal({
                                           show: true,

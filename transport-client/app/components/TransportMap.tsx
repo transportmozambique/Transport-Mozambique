@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
-interface Stop {
+export interface Stop {
   id: string;
   nome: string;
   latitude: number;
@@ -25,6 +25,18 @@ interface TransportMapProps {
   paragemNome?: string;
 }
 
+const GLIDE_MS = 1000;
+
+/** Compass bearing in degrees from `start` to `end`, both [lng, lat]. */
+function bearingBetween(start: [number, number], end: [number, number]): number {
+  const toRad = Math.PI / 180;
+  const dLng = (end[0] - start[0]) * toRad;
+  const y = Math.sin(dLng) * Math.cos(end[1] * toRad);
+  const x = Math.cos(start[1] * toRad) * Math.sin(end[1] * toRad) -
+    Math.sin(start[1] * toRad) * Math.cos(end[1] * toRad) * Math.cos(dLng);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+
 export default function TransportMap({
   transportLat,
   transportLng,
@@ -40,7 +52,7 @@ export default function TransportMap({
   const transportMarkerRef = useRef<maplibregl.Marker | null>(null);
   const paragemMarkerRef = useRef<maplibregl.Marker | null>(null);
   const stopMarkersRef = useRef<maplibregl.Marker[]>([]); // Store all stop markers
-  const actualRouteRef = useRef<[number, number][]>([]); // Store the actual OSRM route coordinates
+  const actualRouteRef = useRef<[number, number][]>([]); // Route line as drawn
   const stopsAddedRef = useRef(false); // Track if stops have been added to prevent duplicates
   const [isMaximized, setIsMaximized] = useState(false);
   const [mapInitialized, setMapInitialized] = useState(false); // Track if map is initialized
@@ -155,62 +167,9 @@ export default function TransportMap({
 
       console.log('Route coordinates:', defaultRouteCoordinates);
       
-      // Always use OSRM to ensure routes follow roads
-      if (routeCoords && routeCoords.length > 1) {
-        console.log('Using OSRM to refine provided route coordinates');
-        
-        // Use OSRM to get road-following route
-        // Limit waypoints to avoid OSRM errors (max 100 waypoints)
-        const maxWaypoints = 100;
-        const limitedCoords = routeCoords.length > maxWaypoints 
-          ? routeCoords.filter((_, i) => i % Math.ceil(routeCoords.length / maxWaypoints) === 0)
-          : routeCoords;
-        
-        const waypointsString = limitedCoords.map(w => `${w[0]},${w[1]}`).join(';');
-        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${waypointsString}?overview=full&geometries=geojson&steps=true`;
-
-        fetch(osrmUrl)
-          .then(response => {
-            console.log('OSRM response status:', response.status);
-            if (!response.ok) {
-              console.warn(`OSRM returned status ${response.status}, using direct route`);
-              drawRoute(routeCoords);
-              return null;
-            }
-            return response.json();
-          })
-          .then(data => {
-            if (!data) return; // Already handled in previous then
-            
-            console.log('OSRM response data:', data);
-            
-            if (data.code !== 'Ok') {
-              console.warn('OSRM code not OK:', data.code, data.message);
-              drawRoute(routeCoords);
-              return;
-            }
-            
-            if (!data.routes || data.routes.length === 0) {
-              console.warn('No routes returned from OSRM');
-              drawRoute(routeCoords);
-              return;
-            }
-
-            // Use the route geometry from OSRM (follows roads)
-            const routeGeometry = data.routes[0].geometry;
-            console.log('✓ OSRM route received with', routeGeometry.coordinates.length, 'coordinates');
-            
-            drawRoute(routeGeometry.coordinates);
-          })
-          .catch(error => {
-            console.warn('OSRM routing unavailable, using direct route:', error.message);
-            drawRoute(routeCoords);
-          });
-      } else {
-        // No route provided, use default
-        console.log('No route provided, using default coordinates');
-        drawRoute(defaultRouteCoordinates);
-      }
+      // Stored routes already follow the roads (they were generated from road geometry),
+      // so draw them directly instead of re-routing through the public OSRM demo server
+      drawRoute(routeCoords && routeCoords.length > 1 ? routeCoords : defaultRouteCoordinates);
 
       // Function to draw route
       function drawRoute(coordinates: [number, number][]) {
@@ -476,8 +435,8 @@ export default function TransportMap({
             
         } else {
           // Regular stop markers (gray or black for terminals)
-          let markerColor = stop.isTerminal ? "#1f2937" : "#6b7280";
-          let markerSize = stop.isTerminal ? "18px" : "14px";
+          const markerColor = stop.isTerminal ? "#1f2937" : "#6b7280";
+          const markerSize = stop.isTerminal ? "18px" : "14px";
           
           const el = document.createElement("div");
           el.style.cssText = `
@@ -522,10 +481,15 @@ export default function TransportMap({
         return (bearing + 360) % 360; // Normalize to 0-360
       }
 
-      // Start position on the route - USE OSRM ROUTE COORDINATES
-      const startPos = actualRouteCoords[0];
-      const nextPos = actualRouteCoords[1];
-      const initialBearing = calculateBearing(startPos, nextPos);
+      // The bus's real position (from the server), facing along the route
+      const startPos: [number, number] = [transportLng, transportLat];
+      let nearest = 0;
+      actualRouteCoords.forEach((c, i) => {
+        const best = actualRouteCoords[nearest];
+        if ((c[0] - startPos[0]) ** 2 + (c[1] - startPos[1]) ** 2 < (best[0] - startPos[0]) ** 2 + (best[1] - startPos[1]) ** 2) nearest = i;
+      });
+      const nextPos = actualRouteCoords[Math.min(nearest + 1, actualRouteCoords.length - 1)];
+      const initialBearing = nextPos ? calculateBearing(startPos, nextPos) : 0;
       
       // Log bus animation setup
       console.log('\n🚌 === BUS ANIMATION SETUP ===');
@@ -650,86 +614,6 @@ export default function TransportMap({
 
       transportMarkerRef.current = transportMarker;
 
-      // Simulate bus movement along the route
-      let currentSegment = 0;
-      let progress = 0;
-      const busSpeed = 0.002; // Adjust speed
-      let currentBearingValue = initialBearing;
-      
-      // Track if bus has passed pickup and destination (for logging)
-      let passedPickup = false;
-      let passedDestination = false;
-      const pickupStopIndex = stops?.findIndex(s => s.isPickup) ?? -1;
-      const destinationStopIndex = stops?.findIndex(s => s.isDestination) ?? -1;
-
-      // Animate bus along the route - USE OSRM ROUTE COORDINATES
-      function animateBus() {
-        if (currentSegment >= actualRouteCoords.length - 1) {
-          // Reset to start
-          currentSegment = 0;
-          progress = 0;
-          passedPickup = false;
-          passedDestination = false;
-          console.log('🔄 Bus completed route, restarting from beginning');
-        }
-
-        const start = actualRouteCoords[currentSegment];
-        const end = actualRouteCoords[currentSegment + 1];
-
-        // Interpolate position
-        const lng = start[0] + (end[0] - start[0]) * progress;
-        const lat = start[1] + (end[1] - start[1]) * progress;
-
-        // Check if bus is passing pickup or destination stops
-        if (stops && stops.length > 0) {
-          // Rough check: if current segment is near a stop index
-          const currentStopApprox = Math.floor((currentSegment / actualRouteCoords.length) * stops.length);
-          
-          if (!passedPickup && pickupStopIndex !== -1 && currentStopApprox >= pickupStopIndex) {
-            passedPickup = true;
-            console.log('🔴 Bus is now passing PICKUP stop:', stops[pickupStopIndex].nome);
-            console.log('   Segment:', currentSegment, 'of', actualRouteCoords.length);
-          }
-          
-          if (!passedDestination && destinationStopIndex !== -1 && currentStopApprox >= destinationStopIndex) {
-            passedDestination = true;
-            console.log('🔵 Bus is now passing DESTINATION stop:', stops[destinationStopIndex].nome);
-            console.log('   Segment:', currentSegment, 'of', actualRouteCoords.length);
-            
-            // Check if this is correct order
-            if (passedPickup) {
-              console.log('   ✅ CORRECT: Bus passed pickup BEFORE destination');
-            } else {
-              console.error('   ❌ WRONG: Bus passed destination BEFORE pickup!');
-            }
-          }
-        }
-
-        // Calculate bearing for this segment
-        const bearing = calculateBearing(start, end);
-
-        // Update rotation using MapLibre's setRotation method
-        if (Math.abs(bearing - currentBearingValue) > 2) {
-          currentBearingValue = bearing;
-          transportMarker.setRotation(bearing);
-        }
-
-        // Update bus position
-        transportMarker.setLngLat([lng, lat]);
-
-        // Update progress
-        progress += busSpeed;
-
-        if (progress >= 1) {
-          progress = 0;
-          currentSegment++;
-        }
-
-        requestAnimationFrame(animateBus);
-      }
-
-      // Start animation
-      animateBus();
 
       // Only add fallback paragem marker if no stops were provided
       // (When stops are provided, pickup/destination markers are already rendered in the loop above)
@@ -808,9 +692,25 @@ export default function TransportMap({
     }
   }, [isMaximized]);
 
-  // Note: Bus position is now animated along the route automatically
-  // If you need to update based on real GPS data, you can modify the animation logic
-  // to use transportLat/transportLng props instead of the simulated route animation
+  // Move the bus marker to each new position from the server, gliding over GLIDE_MS
+  useEffect(() => {
+    const marker = transportMarkerRef.current;
+    if (!marker) return;
+    const from = marker.getLngLat();
+    const to: [number, number] = [transportLng, transportLat];
+    if (Math.abs(from.lng - to[0]) < 1e-7 && Math.abs(from.lat - to[1]) < 1e-7) return;
+
+    marker.setRotation(bearingBetween([from.lng, from.lat], to));
+    const t0 = performance.now();
+    let frame = 0;
+    const step = (now: number) => {
+      const k = Math.min(1, (now - t0) / GLIDE_MS);
+      marker.setLngLat([from.lng + (to[0] - from.lng) * k, from.lat + (to[1] - from.lat) * k]);
+      if (k < 1) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [transportLat, transportLng]);
 
   return (
     <>
