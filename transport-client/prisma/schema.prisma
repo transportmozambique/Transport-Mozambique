@@ -50,6 +50,7 @@ model Municipio {
   id              String         @id @default(cuid())
   nome            String
   codigo          String         @unique
+  geoLocation     String? // Coordenadas do centro do município (lat,lng)
   endereco        String?
   contacto1       Int?
   codigoCidade    String?
@@ -225,6 +226,7 @@ model MISSION {
   geoLocationParagem String
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  notificadoEm       DateTime? // último SMS de chegada enviado
   utenteId           String
   paragemId          String
   paragem            Paragem  @relation(fields: [paragemId], references: [id])
