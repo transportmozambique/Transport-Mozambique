@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getFareRule, fareFor, arrivalMinutes, travelMinutes, orderStopsAlongRoute } from '@/lib/fares';
 
 export async function GET(
   request: NextRequest,
@@ -62,6 +63,9 @@ export async function GET(
     }
 
     const { via } = transporte;
+
+    // Stops in travel order (their id order is not)
+    via.paragens = orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation);
 
     // Get current location
     let currentLat: number;
@@ -136,7 +140,8 @@ export async function GET(
     let distanciaAteOrigem = 1000; // Default
     let tempoViagem = 10; // Default
     let distanciaViagem = 2000; // Default
-    let fare = 10; // Default minimum
+    const rule = await getFareRule();
+    let fare = rule.tarifaMinima; // Default minimum
 
     if (paragemId && destinoId) {
       // Find origem and destino indices in the route
@@ -198,7 +203,7 @@ export async function GET(
           distanciaAteOrigem = 0;
         }
 
-        tempoChegada = Math.max(1, Math.ceil(distanciaAteOrigem / 1000 / 45 * 60)); // 45 km/h
+        tempoChegada = arrivalMinutes(distanciaAteOrigem, rule);
 
         // Calculate user's journey distance (origem → destino)
         distanciaViagem = 0;
@@ -211,11 +216,10 @@ export async function GET(
           );
         }
 
-        tempoViagem = Math.ceil(distanciaViagem / 1000 / 30 * 60); // 30 km/h city speed
+        tempoViagem = travelMinutes(distanciaViagem, rule);
 
         // Calculate fare based on user's journey
-        const distanciaViagemKm = distanciaViagem / 1000;
-        fare = Math.max(10, Math.ceil(distanciaViagemKm * 10)); // 10 MT per km
+        fare = fareFor(distanciaViagem, rule);
 
         console.log(`   ⏱️  Tempo chegada: ${tempoChegada} min`);
         console.log(`   📏 Distância até origem: ${(distanciaAteOrigem / 1000).toFixed(1)} km`);
@@ -231,7 +235,7 @@ export async function GET(
       via: via.nome,
       viaId: via.id,
       direcao: `${via.terminalPartida} → ${via.terminalChegada}`,
-      velocidade: 45,
+      velocidade: rule.velocidadeChegadaKmh,
       latitude: currentLat,
       longitude: currentLng,
       status: 'Em Circulação',

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendSMS } from '@/lib/notifications';
+import {
+  getFareRule, fareFor, arrivalMinutes, travelMinutes,
+  estimatedRoadMeters, pathLengthMeters, parseLatLng, orderStopsAlongRoute, type LatLng,
+} from '@/lib/fares';
+import { findDriverByPhone, isValidDriverPassword, startTrip, endTrip } from '@/lib/driverTrips';
 import { waitUntil } from '@vercel/functions';
 
 // Africa's Talking USSD format
@@ -1034,17 +1039,18 @@ async function findNearestStop(locationName: string) {
 async function findTransportInfo(from: string, to: string) {
   try {
     console.log(`\n🔍 USSD: Finding transport from "${from}" to "${to}"`);
+    const rule = await getFareRule();
 
     // 1. Find origem paragem
     const origemParagem = await prisma.paragem.findFirst({
       where: { nome: { contains: from, mode: 'insensitive' } },
-      select: { nome: true, geoLocation: true }
+      select: { id: true, nome: true, geoLocation: true }
     });
 
     // 2. Find destino paragem
     const destinoParagem = await prisma.paragem.findFirst({
       where: { nome: { contains: to, mode: 'insensitive' } },
-      select: { nome: true, geoLocation: true }
+      select: { id: true, nome: true, geoLocation: true }
     });
 
     if (!origemParagem || !destinoParagem) return null;
@@ -1065,7 +1071,16 @@ async function findTransportInfo(from: string, to: string) {
         marca: true,
         modelo: true,
         currGeoLocation: true,
-        via: { select: { nome: true } },
+        via: {
+          select: {
+            nome: true,
+            geoLocationPath: true,
+            paragens: {
+              orderBy: { id: 'asc' },
+              select: { paragemId: true, paragem: { select: { geoLocation: true } } }
+            }
+          }
+        },
         geoLocations: { orderBy: { createdAt: 'desc' }, take: 1, select: { geoLocationTransporte: true } }
       },
       take: 1,
@@ -1074,51 +1089,40 @@ async function findTransportInfo(from: string, to: string) {
     if (transports.length === 0) return null;
     const transport = transports[0];
 
-    // Helper function to calculate distance
-    const calculateDistanceCoords = (lat1: number, lng1: number, lat2: number, lng2: number) => {
-      const R = 6371e3;
-      const φ1 = (lat1 * Math.PI) / 180;
-      const φ2 = (lat2 * Math.PI) / 180;
-      const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-      const Δλ = ((lng2 - lng1) * Math.PI) / 180;
-      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    };
+    const origem = parseLatLng(origemParagem.geoLocation);
+    const destino = parseLatLng(destinoParagem.geoLocation);
+    if (!origem || !destino) return null;
 
-    if (!origemParagem.geoLocation || !origemParagem.geoLocation.includes(',')) return null;
-    if (!destinoParagem.geoLocation || !destinoParagem.geoLocation.includes(',')) return null;
+    // Current bus position, defaulting to the origin when unknown
+    const busPosition =
+      parseLatLng(transport.currGeoLocation) ??
+      parseLatLng(transport.geoLocations[0]?.geoLocationTransporte) ??
+      origem;
 
-    const [origemLat, origemLng] = origemParagem.geoLocation.split(',').map(Number);
-    const [destinoLat, destinoLng] = destinoParagem.geoLocation.split(',').map(Number);
-    
-    if (isNaN(origemLat) || isNaN(origemLng) || isNaN(destinoLat) || isNaN(destinoLng)) return null;
+    let distanciaAteOrigem = estimatedRoadMeters(busPosition, origem, rule);
 
-    // Get current bus position
-    let currentLat = origemLat, currentLng = origemLng; // default to origin if unknown
-    
-    if (transport.currGeoLocation && transport.currGeoLocation.includes(',')) {
-      [currentLat, currentLng] = transport.currGeoLocation.split(',').map(Number);
-    } else if (transport.geoLocations && transport.geoLocations.length > 0 && transport.geoLocations[0].geoLocationTransporte) {
-      const geoLoc = transport.geoLocations[0].geoLocationTransporte;
-      if (geoLoc && geoLoc.includes(',')) {
-        [currentLat, currentLng] = geoLoc.split(',').map(Number);
-      }
-    }
-    
-    // Calculate straight-line distances (multiplied by 1.3 to approximate road distance)
-    const roadFactor = 1.3;
-    let distanciaAteOrigem = calculateDistanceCoords(currentLat, currentLng, origemLat, origemLng) * roadFactor;
-    
     // If distance is super short, assume bus is there
     if (distanciaAteOrigem < 500) distanciaAteOrigem = 1000;
-    
-    const tempoChegada = Math.max(1, Math.ceil(distanciaAteOrigem / 1000 / 45 * 60)); // 45 km/h
-    
-    const distanciaViagem = calculateDistanceCoords(origemLat, origemLng, destinoLat, destinoLng) * roadFactor;
-    const tempoViagem = Math.ceil(distanciaViagem / 1000 / 30 * 60); // 30 km/h
+
+    const tempoChegada = arrivalMinutes(distanciaAteOrigem, rule);
+
+    // Journey distance along the route's stops when both places are on it (as the web app does),
+    // otherwise an estimate from the straight line
+    const stops = transport.via
+      ? orderStopsAlongRoute(transport.via.paragens, transport.via.geoLocationPath, (vp) => vp.paragem.geoLocation)
+      : [];
+    const origemIndex = stops.findIndex((vp) => vp.paragemId === origemParagem.id);
+    const destinoIndex = stops.findIndex((vp) => vp.paragemId === destinoParagem.id);
+    const routePoints = origemIndex !== -1 && destinoIndex > origemIndex
+      ? stops.slice(origemIndex, destinoIndex + 1).map((vp) => parseLatLng(vp.paragem.geoLocation))
+      : [];
+    const distanciaViagem = routePoints.length > 1 && routePoints.every((pt) => pt !== null)
+      ? pathLengthMeters(routePoints as LatLng[])
+      : estimatedRoadMeters(origem, destino, rule);
+
+    const tempoViagem = travelMinutes(distanciaViagem, rule);
     const distanciaViagemKm = distanciaViagem / 1000;
-    const fare = Math.max(10, Math.ceil(distanciaViagemKm * 10)); // 10 MT per km
+    const fare = fareFor(distanciaViagem, rule);
 
     // Calculate arrival time
     const now = new Date();
@@ -1172,104 +1176,71 @@ function getBusLocationName(from: string, to: string, currentDistance: number, t
 }
 
 
-// NEW: Calculate fare between two locations
+// Calculate fare between two terminals with the shared fare rule (same formula as the web app)
 async function calculateFare(origin: string, destination: string) {
   try {
-    // Map common location names to actual terminal names
-    const locationMap: { [key: string]: string[] } = {
-      'Matola': ['Matola', 'Tchumene', 'Malhampsene', 'Machava'],
-      'Baixa': ['Baixa', 'Praça', 'Albert', 'Laurentina'],
-      'Museu': ['Museu'],
-      'Zimpeto': ['Zimpeto'],
-      'Costa do Sol': ['Costa do Sol', 'Praia'],
-      'Portagem': ['Portagem'],
-      'Machava': ['Machava'],
-    };
+    const rule = await getFareRule();
 
-    // Get search terms
-    const originTerms = locationMap[origin] || [origin];
-    const destTerms = locationMap[destination] || [destination];
-    
-    // Build OR conditions
-    const originConditions = originTerms.flatMap(term => [
-      { terminalPartida: { contains: term } },
-      { nome: { contains: term } }
-    ]);
-    
-    const destConditions = destTerms.flatMap(term => [
-      { terminalChegada: { contains: term } },
-      { nome: { contains: term } }
-    ]);
-
-    // Find routes between origin and destination
-    const routes = await prisma.via.findMany({
+    // Same route match as getAvailableDestinations()
+    const vias = await prisma.via.findMany({
       where: {
-        AND: [
-          { OR: originConditions },
-          { OR: destConditions }
-        ]
+        OR: [{ terminalPartida: { contains: origin } }, { nome: { contains: origin } }],
+        terminalChegada: destination,
+        transportes: { some: {} },
+      },
+      select: {
+        geoLocationPath: true,
+        paragens: {
+          orderBy: { id: 'asc' },
+          select: { paragem: { select: { geoLocation: true } } }
+        }
       }
     });
 
-    const distance = calculateDistance(origin, destination);
-    const fare = calculateFareAmount(distance);
-    const duration = Math.ceil(distance / 30 * 60); // 30km/h average
+    // Prefer the real route: distance along its stops, terminal to terminal (shortest if several)
+    let distanceMeters: number | null = null;
+    for (const via of vias) {
+      const points = orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation)
+        .map((vp) => parseLatLng(vp.paragem.geoLocation))
+        .filter((pt): pt is LatLng => pt !== null);
+      if (points.length > 1) {
+        const meters = pathLengthMeters(points);
+        distanceMeters = distanceMeters === null ? meters : Math.min(distanceMeters, meters);
+      }
+    }
+
+    // Otherwise estimate from the two places' coordinates
+    if (distanceMeters === null) {
+      const [from, to] = await Promise.all([findPlaceCoords(origin), findPlaceCoords(destination)]);
+      if (from && to) distanceMeters = estimatedRoadMeters(from, to, rule);
+    }
+
+    if (distanceMeters === null) return null;
 
     return {
-      distance: distance.toFixed(1),
-      fare: fare.toString(),
-      duration: `${duration} min`,
-      routeCount: routes.length
+      distance: (distanceMeters / 1000).toFixed(1),
+      fare: fareFor(distanceMeters, rule).toString(),
+      duration: `${travelMinutes(distanceMeters, rule)} min`,
+      routeCount: vias.length
     };
   } catch (error) {
     console.error('Error calculating fare:', error);
-    return {
-      distance: '10.0',
-      fare: '25',
-      duration: '20 min',
-      routeCount: 0
-    };
+    return null;
   }
 }
 
-// Helper: Calculate distance between two locations (simplified)
-function calculateDistance(from: string, to: string): number {
-  // Simplified distance calculation based on common routes
-  const distances: { [key: string]: number } = {
-    'Matola-Baixa': 12,
-    'Baixa-Matola': 12,
-    'Matola-Museu': 10,
-    'Museu-Matola': 10,
-    'Baixa-Zimpeto': 15,
-    'Zimpeto-Baixa': 15,
-    'Baixa-Costa do Sol': 8,
-    'Costa do Sol-Baixa': 8,
-    'Matola-Zimpeto': 18,
-    'Zimpeto-Matola': 18,
-    'Portagem-Baixa': 8,
-    'Baixa-Portagem': 8,
-    'Machava-Museu': 9,
-    'Museu-Machava': 9
-  };
-
-  const key = `${from}-${to}`;
-  return distances[key] || 10; // Default 10km
-}
-
-// Helper: Calculate fare based on distance
-function calculateFareAmount(distance: number): number {
-  // Fare structure:
-  // 0-5km: 15 MT
-  // 5-10km: 20 MT
-  // 10-15km: 25 MT
-  // 15-20km: 30 MT
-  // 20+km: 35 MT
-  
-  if (distance <= 5) return 15;
-  if (distance <= 10) return 20;
-  if (distance <= 15) return 25;
-  if (distance <= 20) return 30;
-  return 35;
+// Coordinates of the stop named `name` (exact match first, then partial)
+async function findPlaceCoords(name: string): Promise<LatLng | null> {
+  const stop =
+    (await prisma.paragem.findFirst({
+      where: { nome: { equals: name, mode: 'insensitive' } },
+      select: { geoLocation: true }
+    })) ??
+    (await prisma.paragem.findFirst({
+      where: { nome: { contains: name, mode: 'insensitive' } },
+      select: { geoLocation: true }
+    }));
+  return parseLatLng(stop?.geoLocation);
 }
 
 // NEW: Create mission for user tracking
@@ -1328,16 +1299,9 @@ async function createMissionForUser(phoneNumber: string, from: string, to: strin
 
 // ─── STATELESS DRIVER SYSTEM ──────────────────────────────────────────────────
 
-function normalizePhone(phone: string): string {
-  return phone.replace(/\s+/g, '').replace('+258', '').replace(/^258/, '');
-}
-
 async function handleDriverMenuStateless(sessionId: string, phoneNumber: string, inputs: string[]): Promise<string> {
-  const normalizedPhone = normalizePhone(phoneNumber);
-
   // Check if driver exists with this phone number
-  const allDrivers = await prisma.motorista.findMany();
-  const driver = allDrivers.find(d => normalizePhone(d.telefone) === normalizedPhone || normalizePhone(d.telefone).endsWith(normalizedPhone));
+  const driver = await findDriverByPhone(phoneNumber);
 
   if (!driver) {
     const msg = `Ola! O numero ${phoneNumber} nao esta registado como motorista. Contacte o administrador para se registrar.`;
@@ -1355,10 +1319,8 @@ Senha:`;
 
   // From Level 2 onwards, we have the password in inputs[1]
   const password = inputs[1] || '';
-  const driverData = driver as any;
-  const validPassword = driverData.password === password || password === '123456' || driverData.password === null;
 
-  if (!validPassword) {
+  if (!isValidDriverPassword(driver.password, password)) {
     return `END Senha incorreta. Por favor, disque novamente para tentar de novo.`;
   }
 
@@ -1383,10 +1345,10 @@ Senha:`;
 
   const t = driverInfo?.transporte;
   const v = t?.via;
+  const statusLabel = driverInfo?.emViagem ? 'ONLINE' : 'OFFLINE';
 
   // Level 2: Show driver main menu
   if (level === 2) {
-    const statusLabel = driverInfo?.status === 'ONLINE' || driverInfo?.status === 'active' ? 'ONLINE' : 'OFFLINE';
     const actionLabel = statusLabel === 'ONLINE' ? '1. Encerrar Viagem' : '1. Iniciar Viagem';
 
     let dashboard = `CON BEM-VINDO, ${driver.nome.toUpperCase().split(' ')[0]}
@@ -1424,7 +1386,6 @@ ${actionLabel}
     switch (subChoice) {
       case '1': {
         // Start / End ride confirmation screen
-        const statusLabel = driverInfo?.status === 'ONLINE' || driverInfo?.status === 'active' ? 'ONLINE' : 'OFFLINE';
         if (statusLabel === 'OFFLINE') {
           return `CON INICIAR VIAGEM
 
@@ -1452,7 +1413,7 @@ BI: ${driverInfo?.bi || 'N/A'}
 Telefone: ${driverInfo?.telefone || 'N/A'}
 Carta: ${driverInfo?.categoriaCarta || 'N/A'}
 Experiencia: ${driverInfo?.experienciaAnos || 0} anos
-Status: ${driverInfo?.status || 'OFFLINE'}
+Status: ${statusLabel}
 Autocarro: ${t?.matricula || 'N/A'}
 Rota: ${v?.nome || 'N/A'}`;
 
@@ -1463,7 +1424,7 @@ BI: ${driverInfo?.bi || 'N/A'}
 Telefone: ${driverInfo?.telefone || 'N/A'}
 Carta: ${driverInfo?.categoriaCarta || 'N/A'}
 Experiencia: ${driverInfo?.experienciaAnos || 0} anos
-Status: ${driverInfo?.status || 'OFFLINE'}
+Status: ${statusLabel}
 Autocarro: ${t?.matricula || 'N/A'}
 Rota: ${v?.nome || 'N/A'}
 
@@ -1472,7 +1433,7 @@ Detalhes enviados por SMS.`;
 
       case '3': {
         // Route Info
-        const stops = v?.paragens?.map((p: any) => p.paragem.nome).join(', ') || 'N/A';
+        const stops = v ? orderStopsAlongRoute(v.paragens, v.geoLocationPath, (vp) => vp.paragem.geoLocation).map((vp) => vp.paragem.nome).join(', ') || 'N/A' : 'N/A';
         const routeMsg = `ROTA: ${v?.nome || 'N/A'}
 Origem: ${v?.terminalPartida || 'N/A'}
 Destino: ${v?.terminalChegada || 'N/A'}
@@ -1521,14 +1482,11 @@ Detalhes enviados por SMS.`;
 
     if (subChoice === '1') {
       if (confirmChoice === '1') {
-        const currentIsOnline = driverInfo?.status === 'ONLINE' || driverInfo?.status === 'active';
-        const newStatus = currentIsOnline ? 'OFFLINE' : 'ONLINE';
+        const newStatus = driverInfo?.emViagem ? 'OFFLINE' : 'ONLINE';
 
         try {
-          await prisma.motorista.update({
-            where: { id: driver.id },
-            data: { status: newStatus }
-          });
+          if (newStatus === 'ONLINE') await startTrip(driver.id);
+          else await endTrip(driver.id);
 
           if (newStatus === 'ONLINE') {
             const msg = `Viagem iniciada com sucesso! Veiculo: ${t?.matricula || 'N/A'}. Bons trabalhos!`;
@@ -1556,7 +1514,7 @@ Veiculo: ${t?.matricula || 'N/A'}
 Ate proxima viagem!`;
           }
         } catch (error) {
-          console.error('Error updating driver status:', error);
+          console.error('Error updating driver trip:', error);
           return `END Erro ao atualizar status da viagem. Tente novamente.`;
         }
       }

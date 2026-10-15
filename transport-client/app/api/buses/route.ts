@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getFareRule, fareFor, arrivalMinutes, travelMinutes, orderStopsAlongRoute } from '@/lib/fares';
 
 /**
  * API to find buses that go from user's origin to user's destination
@@ -14,7 +15,7 @@ import { prisma } from '@/lib/prisma';
  * - Tempo de Chegada: Time for bus to reach user's origem
  * - Distância Viagem: Distance from user's origem to user's destino
  * - Tempo de Viagem: Time user spends in bus (origem → destino)
- * - Preço: Based on user's journey distance (10 MT/km)
+ * - Preço: Based on user's journey distance, using the active Tarifa rule (lib/fares.ts)
  */
 
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -39,6 +40,7 @@ export async function GET(request: NextRequest) {
     const destinoId = searchParams.get('destinoId'); // User's destination
     const viaId = searchParams.get('viaId'); // Single via (legacy)
     const viaIds = searchParams.get('viaIds'); // Multiple vias (new)
+    const rule = await getFareRule();
 
     // If no parameters, return all buses
     if (!paragemId && !viaId && !viaIds && !destinoId) {
@@ -70,6 +72,8 @@ export async function GET(request: NextRequest) {
         .filter((t): t is typeof t & { via: NonNullable<typeof t.via> } => t.via != null)
         .map((transporte) => {
         const { via } = transporte;
+        // Stops in travel order (their id order is not)
+        via.paragens = orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation);
         let currentLat, currentLng;
         
         if (transporte.currGeoLocation) {
@@ -111,7 +115,7 @@ export async function GET(request: NextRequest) {
         });
 
         const defaultDistanceKm = 5;
-        const fare = Math.max(10, Math.ceil(defaultDistanceKm * 10));
+        const fare = fareFor(defaultDistanceKm * 1000, rule);
 
         return {
           id: transporte.id,
@@ -194,6 +198,8 @@ export async function GET(request: NextRequest) {
       .map((transporte) => {
         if (!transporte.via) return null;
         const { via } = transporte;
+        // Stops in travel order (their id order is not)
+        via.paragens = orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation);
 
         // Find origem and destino indices in bus route
         const origemIndex = via.paragens.findIndex((vp) => vp.paragem.id === paragemId);
@@ -282,7 +288,7 @@ export async function GET(request: NextRequest) {
           }
         }
 
-        const tempoChegada = Math.max(1, Math.ceil(distanciaAteOrigem / 1000 / 45 * 60)); // 45 km/h
+        const tempoChegada = arrivalMinutes(distanciaAteOrigem, rule);
 
         // Calculate: 2. User's journey distance (origem → destino)
         let distanciaViagem = 0;
@@ -293,11 +299,10 @@ export async function GET(request: NextRequest) {
           distanciaViagem += calculateDistance(lat1, lng1, lat2, lng2);
         }
 
-        const tempoViagem = Math.ceil(distanciaViagem / 1000 / 30 * 60); // 30 km/h city speed
+        const tempoViagem = travelMinutes(distanciaViagem, rule);
 
         // Calculate fare based on user's journey distance
-        const distanciaViagemKm = distanciaViagem / 1000;
-        const fare = Math.max(10, Math.ceil(distanciaViagemKm * 10)); // 10 MT per km
+        const fare = fareFor(distanciaViagem, rule);
 
         // Get route path
         let routeCoords: [number, number][] = [];
@@ -317,7 +322,7 @@ export async function GET(request: NextRequest) {
           distancia: Math.round(distanciaViagem), // User's journey distance
           tempoEstimado: tempoChegada, // Time for bus to reach origem
           tempoViagem: tempoViagem, // Time user spends in bus
-          velocidade: 45,
+          velocidade: rule.velocidadeChegadaKmh,
           latitude: currentLat,
           longitude: currentLng,
           status: 'Em Circulação',

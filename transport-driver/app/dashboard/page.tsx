@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { API_BASE, type TripState } from "@/lib/api";
 
 interface MotoristaData {
   id: string;
@@ -25,7 +26,10 @@ export default function DashboardPage() {
   const [isActive, setIsActive] = useState(false);
   const [speed, setSpeed] = useState(0);
   const [clients, setClients] = useState(0);
-  const [rideTime, setRideTime] = useState(0);
+  const [tripStart, setTripStart] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const [tripBusy, setTripBusy] = useState(false);
+  const [tripError, setTripError] = useState("");
   const [showInfo, setShowInfo] = useState(false);
   const [showClientsModal, setShowClientsModal] = useState(false);
   const [showRideInfoModal, setShowRideInfoModal] = useState(false);
@@ -194,11 +198,52 @@ export default function DashboardPage() {
     };
   }, [motorista]);
 
+  // Trip state is stored on the server and shared with the USSD driver menu
+  const applyTrip = useCallback((trip: TripState) => {
+    setIsActive(trip.emViagem);
+    setTripStart(trip.emViagem && trip.viagemIniciadaEm ? new Date(trip.viagemIniciadaEm).getTime() : null);
+    if (!trip.emViagem) setClients(0);
+  }, []);
+
+  // Load it on open and re-check every 30s, so a trip started or ended by USSD shows up here
+  const motoristaId = motorista?.id;
+  useEffect(() => {
+    if (!motoristaId) return;
+    let cancelled = false;
+    const load = () => fetch(`${API_BASE}/api/driver/trip?motoristaId=${encodeURIComponent(motoristaId)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((trip: TripState | null) => { if (trip && !cancelled) applyTrip(trip); })
+      .catch(() => {});
+    load();
+    const i = setInterval(load, 30000);
+    return () => { cancelled = true; clearInterval(i); };
+  }, [motoristaId, applyTrip]);
+
   const handleLogout = () => { localStorage.removeItem('motorista'); router.push('/'); };
-  const toggleRide = () => { setIsActive(!isActive); if (isActive) { setClients(0); setRideTime(0); } };
+  const toggleRide = async () => {
+    if (!motorista || tripBusy) return;
+    setTripBusy(true);
+    setTripError("");
+    try {
+      const res = await fetch(`${API_BASE}/api/driver/trip`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ motoristaId: motorista.id, action: isActive ? 'encerrar' : 'iniciar' }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setTripError(data.error || 'Erro ao atualizar a viagem'); return; }
+      setNow(Date.now());
+      applyTrip(data);
+    } catch {
+      setTripError('Erro de conexão. Tente novamente.');
+    } finally {
+      setTripBusy(false);
+    }
+  };
   const formatTime = (s: number) => `${Math.floor(s/3600).toString().padStart(2,'0')}:${Math.floor((s%3600)/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
 
-  useEffect(() => { if (isActive) { const i = setInterval(() => setRideTime(t => t + 1), 1000); return () => clearInterval(i); } }, [isActive]);
+  useEffect(() => { if (isActive) { const i = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(i); } }, [isActive]);
+  const rideTime = isActive && tripStart !== null ? Math.max(0, Math.floor((now - tripStart) / 1000)) : 0;
 
   if (!motorista) return <div className="min-h-screen bg-gray-900 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-500 border-t-white"></div></div>;
 
@@ -222,8 +267,9 @@ export default function DashboardPage() {
         </div>}
       </div>
 
-      <div className="absolute top-4 right-4 z-20">
-        <button onClick={toggleRide} className={`px-6 py-3 rounded-xl font-semibold bg-black text-white border border-gray-600 ${isActive ? 'bg-gray-800' : ''}`}>{isActive ? 'Finalizar' : 'Iniciar'}</button>
+      <div className="absolute top-4 right-4 z-20 flex flex-col items-end">
+        <button onClick={toggleRide} disabled={tripBusy} className={`px-6 py-3 rounded-xl font-semibold bg-black text-white border border-gray-600 disabled:opacity-60 ${isActive ? 'bg-gray-800' : ''}`}>{tripBusy ? '...' : isActive ? 'Finalizar' : 'Iniciar'}</button>
+        {tripError && <p className="mt-2 max-w-48 rounded-lg bg-gray-900/90 px-3 py-2 text-right text-xs text-red-400">{tripError}</p>}
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 z-20 bg-gray-900/95 p-4 border-t border-gray-700">
