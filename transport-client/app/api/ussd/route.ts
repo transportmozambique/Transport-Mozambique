@@ -26,12 +26,14 @@ export async function POST(request: NextRequest) {
     const phoneNumber = formData.get('phoneNumber') as string || '';
     const text = formData.get('text') as string || '';
 
-    // Log for debugging
+    // Log for debugging; the second input of option 6 is the driver's password
+    const parts = text.split('*');
+    if (parts[0] === '6' && parts.length > 1) parts[1] = '***';
     console.log('📱 USSD Request:', {
       sessionId,
       serviceCode,
       phoneNumber,
-      text,
+      text: parts.join('*'),
       timestamp: new Date().toISOString()
     });
 
