@@ -273,7 +273,7 @@ export default function TransporteDetalhes() {
             'line-width': 8,
             'line-opacity': 0.4
           }
-        });
+        }, 'route');
 
         // Add stops if available
         if (transporte && transporte.stops && transporte.stops.length > 0) {

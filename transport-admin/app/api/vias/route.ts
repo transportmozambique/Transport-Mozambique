@@ -93,6 +93,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (await prisma.via.findUnique({ where: { codigo }, select: { id: true } })) {
+      return NextResponse.json(
+        { error: `Já existe uma via com o código "${codigo}"` },
+        { status: 400 }
+      );
+    }
+
     console.log('Attempting to connect to database...');
     
     // Test database connection
