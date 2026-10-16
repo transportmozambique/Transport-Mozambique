@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface Motorista {
   id: string;
@@ -41,6 +41,30 @@ interface Posicao {
   atualizadoEm: string;
   proximaParagem: string | null;
   minutosAteProxima: number | null;
+}
+
+// The vehicle's service day by its timetable (GET /api/transportes/[id]/operacao)
+interface Operacao {
+  comprimentoKm: number;
+  minutosPorSentido: number;
+  paragens: number;
+  horasHoje: number;
+  kmHoje: number;
+  kmPlaneado: number;
+  viagensHoje: number;
+  viagensPlaneadas: number;
+  porHora: { hora: string; km: number; kmAcumulado: number; viagens: number }[];
+  passagens: { nome: string; km: number; ida: string; volta: string }[];
+  ida: string;
+  volta: string;
+}
+
+// "HH:MM" in Maputo, with "amanhã" when it is not today
+function horaMaputo(iso: string): string {
+  const at = new Date(iso);
+  const day = (d: Date) => d.toLocaleDateString('pt-PT', { timeZone: 'Africa/Maputo' });
+  const clock = at.toLocaleTimeString('pt-PT', { timeZone: 'Africa/Maputo', hour: '2-digit', minute: '2-digit' });
+  return day(at) === day(new Date()) ? clock : `amanhã ${clock}`;
 }
 
 // Short waits in minutes; long ones (at night the first bus is at 05:00) as the Maputo clock time
@@ -104,64 +128,20 @@ export default function TransporteDetalhes() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Verificar se o transporte foi criado hoje (é novo)
-  const isNewTransport = (createdAt: string) => {
-    const created = new Date(createdAt);
-    const today = new Date();
-    return created.toDateString() === today.toDateString();
-  };
-
-  // Dados simulados para gráficos (em produção viriam do banco de dados)
-  // Se o transporte for novo, todos os valores começam em 0
-  const consumoSemanalData = transporte && isNewTransport(transporte.createdAt) ? [
-    { dia: 'Seg', litros: 0 },
-    { dia: 'Ter', litros: 0 },
-    { dia: 'Qua', litros: 0 },
-    { dia: 'Qui', litros: 0 },
-    { dia: 'Sex', litros: 0 },
-    { dia: 'Sáb', litros: 0 },
-    { dia: 'Dom', litros: 0 },
-  ] : [
-    { dia: 'Seg', litros: 42 },
-    { dia: 'Ter', litros: 48 },
-    { dia: 'Qua', litros: 45 },
-    { dia: 'Qui', litros: 50 },
-    { dia: 'Sex', litros: 47 },
-    { dia: 'Sáb', litros: 38 },
-    { dia: 'Dom', litros: 35 },
-  ];
-
-  const quilometrosDiariosData = transporte && isNewTransport(transporte.createdAt) ? [
-    { hora: '06:00', km: 0 },
-    { hora: '08:00', km: 0 },
-    { hora: '10:00', km: 0 },
-    { hora: '12:00', km: 0 },
-    { hora: '14:00', km: 0 },
-    { hora: '16:00', km: 0 },
-    { hora: '18:00', km: 0 },
-  ] : [
-    { hora: '06:00', km: 0 },
-    { hora: '08:00', km: 45 },
-    { hora: '10:00', km: 92 },
-    { hora: '12:00', km: 138 },
-    { hora: '14:00', km: 185 },
-    { hora: '16:00', km: 220 },
-    { hora: '18:00', km: 247 },
-  ];
-
-  const zonasFrequentesData = transporte && isNewTransport(transporte.createdAt) ? [
-    { nome: 'Baixa de Maputo', tempo: 0, cor: '#1e293b' },
-    { nome: 'Costa do Sol', tempo: 0, cor: '#475569' },
-    { nome: 'Matola', tempo: 0, cor: '#64748b' },
-    { nome: 'Sommerschield', tempo: 0, cor: '#94a3b8' },
-    { nome: 'Outras', tempo: 0, cor: '#cbd5e1' },
-  ] : [
-    { nome: 'Baixa de Maputo', tempo: 35, cor: '#1e293b' },
-    { nome: 'Costa do Sol', tempo: 25, cor: '#475569' },
-    { nome: 'Matola', tempo: 20, cor: '#64748b' },
-    { nome: 'Sommerschield', tempo: 12, cor: '#94a3b8' },
-    { nome: 'Outras', tempo: 8, cor: '#cbd5e1' },
-  ];
+  // Kilometres, trips and stop times of the day (timetable), refreshed every minute
+  const [operacao, setOperacao] = useState<Operacao | null>(null);
+  useEffect(() => {
+    if (!params.id) return;
+    let alive = true;
+    const load = () =>
+      fetch(`/api/transportes/${params.id}/operacao`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((o: Operacao | null) => { if (alive) setOperacao(o); })
+        .catch(() => {});
+    load();
+    const timer = setInterval(load, 60000);
+    return () => { alive = false; clearInterval(timer); };
+  }, [params.id]);
 
   useEffect(() => {
     if (params.id) {
@@ -811,25 +791,14 @@ export default function TransporteDetalhes() {
           </div>
         )}
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Statistics Cards: the day by the vehicle's timetable */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-testid="operacao-cards">
           <div className="bg-white rounded-xl border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-black font-medium mb-1">Quilômetros Percorridos</p>
-                <p className="text-3xl font-bold text-black">{transporte && isNewTransport(transporte.createdAt) ? '0' : '247'} km</p>
-                <div className="mt-2 flex items-center text-xs text-gray-600">
-                  {transporte && isNewTransport(transporte.createdAt) ? (
-                    <span>Transporte novo</span>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                      </svg>
-                      <span>+12% vs ontem</span>
-                    </>
-                  )}
-                </div>
+                <p className="text-sm text-black font-medium mb-1">Quilómetros Hoje</p>
+                <p className="text-3xl font-bold text-black">{operacao ? `${operacao.kmHoje} km` : '—'}</p>
+                <p className="mt-2 text-xs text-gray-600">{operacao ? `de ${operacao.kmPlaneado} km no dia (horário)` : 'Sem rota atribuída'}</p>
               </div>
               <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
                 <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -838,24 +807,12 @@ export default function TransporteDetalhes() {
               </div>
             </div>
           </div>
-
           <div className="bg-white rounded-xl border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-black font-medium mb-1">Tempo de Operação</p>
-                <p className="text-3xl font-bold text-black">{transporte && isNewTransport(transporte.createdAt) ? '0' : '8.5'}h</p>
-                <div className="mt-2 flex items-center text-xs text-gray-600">
-                  {transporte && isNewTransport(transporte.createdAt) ? (
-                    <span>Transporte novo</span>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span>Normal</span>
-                    </>
-                  )}
-                </div>
+                <p className="text-3xl font-bold text-black">{operacao ? `${operacao.horasHoje.toLocaleString('pt-PT')} h` : '—'}</p>
+                <p className="mt-2 text-xs text-gray-600">Serviço das 05:00 às 21:00</p>
               </div>
               <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
                 <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -864,54 +821,30 @@ export default function TransporteDetalhes() {
               </div>
             </div>
           </div>
-
           <div className="bg-white rounded-xl border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-black font-medium mb-1">Consumo de Combustível</p>
-                <p className="text-3xl font-bold text-black">{transporte && isNewTransport(transporte.createdAt) ? '0' : '45'} L</p>
-                <div className="mt-2 flex items-center text-xs text-gray-600">
-                  {transporte && isNewTransport(transporte.createdAt) ? (
-                    <span>Transporte novo</span>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                      </svg>
-                      <span>-5% vs ontem</span>
-                    </>
-                  )}
-                </div>
+                <p className="text-sm text-black font-medium mb-1">Viagens Hoje</p>
+                <p className="text-3xl font-bold text-black">{operacao ? operacao.viagensHoje : '—'}</p>
+                <p className="mt-2 text-xs text-gray-600">{operacao ? `de ${operacao.viagensPlaneadas} no dia · ${operacao.minutosPorSentido} min por sentido` : 'Sem rota atribuída'}</p>
               </div>
               <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
                 <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                 </svg>
               </div>
             </div>
           </div>
-
           <div className="bg-white rounded-xl border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-black font-medium mb-1">Passageiros Transportados</p>
-                <p className="text-3xl font-bold text-black">{transporte && isNewTransport(transporte.createdAt) ? '0' : '342'}</p>
-                <div className="mt-2 flex items-center text-xs text-gray-600">
-                  {transporte && isNewTransport(transporte.createdAt) ? (
-                    <span>Transporte novo</span>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                      </svg>
-                      <span>+8% vs ontem</span>
-                    </>
-                  )}
-                </div>
+                <p className="text-sm text-black font-medium mb-1">Rota</p>
+                <p className="text-3xl font-bold text-black">{operacao ? `${operacao.comprimentoKm.toLocaleString('pt-PT')} km` : '—'}</p>
+                <p className="mt-2 text-xs text-gray-600">{operacao ? `${operacao.paragens} paragens` : 'Sem rota atribuída'}</p>
               </div>
               <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
                 <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
               </div>
             </div>
@@ -1152,162 +1085,101 @@ export default function TransporteDetalhes() {
             </div>
             <div>
               <p className="text-xs text-black uppercase tracking-wide font-medium mb-2">Estado</p>
-              <span className="px-2.5 py-0.5 bg-green-100 text-green-800 rounded-full text-xs font-semibold inline-block">
-                Ativo
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold inline-block ${
+                !transporte.via ? 'bg-amber-100 text-amber-800' : posicao?.foraDeServico ? 'bg-slate-100 text-slate-800' : 'bg-green-100 text-green-800'
+              }`}>
+                {!transporte.via ? 'Sem rota' : posicao?.foraDeServico ? 'Fora de serviço' : 'Em serviço'}
               </span>
             </div>
             <div>
-              <p className="text-xs text-black uppercase tracking-wide font-medium mb-2">Manutenção</p>
-              <p className="text-sm font-semibold text-black">15/04/2026</p>
-            </div>
-            <div>
-              <p className="text-xs text-black uppercase tracking-wide font-medium mb-2">Revisão</p>
-              <p className="text-sm font-semibold text-black">15/07/2026</p>
-            </div>
-            <div>
-              <p className="text-xs text-black uppercase tracking-wide font-medium mb-2">Km Total</p>
-              <p className="text-sm font-semibold text-black">45,230 km</p>
-            </div>
-            <div>
-              <p className="text-xs text-black uppercase tracking-wide font-medium mb-2">Ano</p>
-              <p className="text-sm font-semibold text-black">2020</p>
+              <p className="text-xs text-black uppercase tracking-wide font-medium mb-2">Registado em</p>
+              <p className="text-sm font-semibold text-black">{new Date(transporte.createdAt).toLocaleDateString('pt-PT')}</p>
             </div>
           </div>
         </div>
 
-        {/* Charts and Analytics */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Quilômetros Diários */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-bold text-black">Quilômetros Percorridos</h3>
-                <p className="text-sm text-black">Evolução durante o dia</p>
-              </div>
-              <div className="px-3 py-1 bg-slate-100 text-black rounded-lg text-xs font-semibold">
-                Hoje
-              </div>
-            </div>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={quilometrosDiariosData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="hora" stroke="#64748b" style={{ fontSize: '12px' }} />
-                <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="km" 
-                  stroke="#1e293b" 
-                  strokeWidth={3}
-                  dot={{ fill: '#1e293b', r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Consumo Semanal */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-bold text-black">Consumo de Combustível</h3>
-                <p className="text-sm text-black">Litros por dia (última semana)</p>
-              </div>
-              <div className="px-3 py-1 bg-slate-100 text-black rounded-lg text-xs font-semibold">
-                7 dias
-              </div>
-            </div>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={consumoSemanalData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="dia" stroke="#64748b" style={{ fontSize: '12px' }} />
-                <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Bar dataKey="litros" fill="#475569" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Zonas Mais Frequentadas - Single Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <div className="mb-6">
-            <h3 className="text-lg font-bold text-black">Zonas Mais Frequentadas</h3>
-            <p className="text-sm text-black">Tempo médio gasto em cada zona (% do dia)</p>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Progress Bars */}
-            <div className="lg:col-span-2 space-y-4">
-              {zonasFrequentesData.map((zona, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div 
-                        className="w-4 h-4 rounded-full" 
-                        style={{ backgroundColor: zona.cor }}
-                      />
-                      <span className="text-sm font-semibold text-black">{zona.nome}</span>
-                    </div>
-                    <span className="text-sm font-bold text-black">{zona.tempo}%</span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
-                    <div 
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{ 
-                        width: `${zona.tempo}%`,
-                        backgroundColor: zona.cor
-                      }}
-                    />
-                  </div>
+        {/* Charts: the day by the vehicle's timetable */}
+        {operacao && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-bold text-black">Quilómetros ao Longo do Dia</h3>
+                  <p className="text-sm text-black">Acumulado por hora, pelo horário da rota</p>
                 </div>
-              ))}
+                <div className="px-3 py-1 bg-slate-100 text-black rounded-lg text-xs font-semibold">Hoje</div>
+              </div>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={operacao.porHora}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="hora" stroke="#64748b" style={{ fontSize: '12px' }} />
+                  <YAxis stroke="#64748b" style={{ fontSize: '12px' }} unit=" km" width={70} />
+                  <Tooltip
+                    formatter={(v) => [`${v} km`, 'Acumulado']}
+                    contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                  />
+                  <Line type="monotone" dataKey="kmAcumulado" stroke="#1e293b" strokeWidth={3} dot={{ fill: '#1e293b', r: 3 }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
 
-            {/* Pie Chart */}
-            <div className="flex flex-col items-center justify-center">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-bold text-black">Viagens por Hora</h3>
+                  <p className="text-sm text-black">Chegadas a um terminal, pelo horário da rota</p>
+                </div>
+                <div className="px-3 py-1 bg-slate-100 text-black rounded-lg text-xs font-semibold">Hoje</div>
+              </div>
               <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={zonasFrequentesData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry: any) => `${entry.tempo}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="tempo"
-                  >
-                    {zonasFrequentesData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.cor} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#fff', 
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    }}
+                <BarChart data={operacao.porHora}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="hora" stroke="#64748b" style={{ fontSize: '12px' }} />
+                  <YAxis stroke="#64748b" style={{ fontSize: '12px' }} allowDecimals={false} />
+                  <Tooltip
+                    formatter={(v) => [v, 'Viagens']}
+                    contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                   />
-                </PieChart>
+                  <Bar dataKey="viagens" fill="#475569" radius={[8, 8, 0, 0]} />
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Next pass at each stop, both directions */}
+        {operacao && operacao.passagens.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-testid="passagens">
+            <div className="mb-6">
+              <h3 className="text-lg font-bold text-black">Próximas Passagens nas Paragens</h3>
+              <p className="text-sm text-black">Pelo horário da rota; com GPS ativo o autocarro pode estar adiantado ou atrasado</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wide text-slate-600 border-b border-slate-200">
+                    <th className="py-2 pr-4 font-medium">#</th>
+                    <th className="py-2 pr-4 font-medium">Paragem</th>
+                    <th className="py-2 pr-4 font-medium">Km</th>
+                    <th className="py-2 pr-4 font-medium">Sentido {operacao.ida}</th>
+                    <th className="py-2 font-medium">Sentido {operacao.volta}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {operacao.passagens.map((p, i) => (
+                    <tr key={`${p.nome}-${i}`} className="border-b border-slate-100 last:border-0">
+                      <td className="py-2 pr-4 text-slate-500">{i + 1}</td>
+                      <td className="py-2 pr-4 font-medium text-black">{p.nome}</td>
+                      <td className="py-2 pr-4 text-slate-600">{p.km.toLocaleString('pt-PT')}</td>
+                      <td className="py-2 pr-4 text-black">{horaMaputo(p.ida)}</td>
+                      <td className="py-2 text-black">{horaMaputo(p.volta)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
       </div>
 

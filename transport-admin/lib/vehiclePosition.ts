@@ -214,3 +214,107 @@ export async function positionSummary(vehicle: PositionedVehicle, via: { geoLoca
     minutosAteProxima: next?.minutos ?? null,
   };
 }
+
+const SERVICE_S = (SERVICE_END_MIN - SERVICE_START_MIN) * 60;
+
+/** Timetable state at a time of the service day (seconds since 05:00). */
+function timetableAt(serviceS: number, g: Geometry, speedMps: number, phase: number) {
+  const legS = g.length / speedMps;
+  const cycleS = 2 * legS + 2 * TERMINAL_STOP_S;
+  const t = (((serviceS + phase * cycleS) % cycleS) + cycleS) % cycleS;
+  if (t < legS) return { progress: t * speedMps, moving: true };
+  if (t < legS + TERMINAL_STOP_S) return { progress: g.length, moving: false };
+  if (t < 2 * legS + TERMINAL_STOP_S) return { progress: g.length - (t - legS - TERMINAL_STOP_S) * speedMps, moving: true };
+  return { progress: 0, moving: false };
+}
+
+/**
+ * A vehicle's service day by its timetable: kilometres and trips so far and planned, per hour,
+ * and the next times it passes each stop in each direction. Real GPS history is not stored,
+ * so these are the timetable figures.
+ */
+export async function operationSummary(
+  vehicle: { id: string },
+  via: { geoLocationPath: string | null; terminalPartida: string; terminalChegada: string; paragens: { paragem: { nome: string; geoLocation: string | null } }[] } | null,
+  now = new Date(),
+) {
+  const g = routeGeometry(via?.geoLocationPath);
+  if (!via || g.path.length < 2 || g.length < 1) return null;
+  const speed = await travelSpeedMps();
+  const phase = unitHash(vehicle.id);
+  const legS = g.length / speed;
+  const cycleS = 2 * legS + 2 * TERMINAL_STOP_S;
+
+  const dayMs = 86400000;
+  const msOfDay = (((now.getTime() + MAPUTO_UTC_OFFSET_MIN * 60000) % dayMs) + dayMs) % dayMs;
+  const serviceStart = now.getTime() - msOfDay + SERVICE_START_MIN * 60000; // today 05:00 Maputo
+  const nowS = Math.min(Math.max((now.getTime() - serviceStart) / 1000, 0), SERVICE_S);
+
+  // Walk the service day in 30 s steps
+  const STEP = 30;
+  const porHora = Array.from({ length: SERVICE_S / 3600 }, (_, h) => ({
+    hora: `${String(SERVICE_START_MIN / 60 + h).padStart(2, "0")}h`,
+    km: 0,
+    viagens: 0,
+  }));
+  let kmHoje = 0;
+  let kmDia = 0;
+  let viagensHoje = 0;
+  let prev = timetableAt(0, g, speed, phase);
+  for (let s = STEP; s <= SERVICE_S; s += STEP) {
+    const cur = timetableAt(s, g, speed, phase);
+    const km = Math.abs(cur.progress - prev.progress) / 1000;
+    const arrived = prev.moving && !cur.moving ? 1 : 0; // reached a terminal
+    const bucket = porHora[Math.min(porHora.length - 1, Math.floor((s - STEP) / 3600))];
+    bucket.km += km;
+    bucket.viagens += arrived;
+    kmDia += km;
+    if (s <= nowS) {
+      kmHoje += km;
+      viagensHoje += arrived;
+    }
+    prev = cur;
+  }
+  let acumulado = 0;
+  const porHoraOut = porHora.map((h) => {
+    acumulado += h.km;
+    return { hora: h.hora, km: Math.round(h.km), kmAcumulado: Math.round(acumulado), viagens: h.viagens };
+  });
+
+  // Next pass at each stop: going towards the last point of the path (ida) and back (volta)
+  const nextPass = (cycleT: number) => {
+    const from = Math.max((now.getTime() - serviceStart) / 1000, 0);
+    const base = cycleT - phase * cycleS; // service seconds of the passes: base + k * cycle
+    const today = base + Math.ceil((from - base) / cycleS) * cycleS;
+    if (today < SERVICE_S) return new Date(serviceStart + today * 1000).toISOString();
+    const tomorrow = base + Math.ceil(-base / cycleS) * cycleS; // first pass after 05:00 tomorrow
+    return new Date(serviceStart + dayMs + tomorrow * 1000).toISOString();
+  };
+  const passagens = via.paragens
+    .map((vp) => ({ nome: vp.paragem.nome, at: parseLatLng(vp.paragem.geoLocation) }))
+    .filter((s): s is { nome: string; at: LatLng } => s.at !== null)
+    .map((s) => ({ nome: s.nome, progress: g.cumulative[nearestIndex(g, s.at)] }))
+    .sort((a, b) => a.progress - b.progress)
+    .map((s) => ({
+      nome: s.nome,
+      km: Math.round(s.progress / 100) / 10,
+      ida: nextPass(s.progress / speed),
+      volta: nextPass(legS + TERMINAL_STOP_S + (g.length - s.progress) / speed),
+    }));
+
+  return {
+    comprimentoKm: Math.round(g.length / 100) / 10,
+    minutosPorSentido: Math.round(legS / 60),
+    paragens: passagens.length,
+    horasHoje: Math.round((nowS / 3600) * 10) / 10,
+    kmHoje: Math.round(kmHoje),
+    kmPlaneado: Math.round(kmDia),
+    viagensHoje,
+    viagensPlaneadas: porHora.reduce((sum, h) => sum + h.viagens, 0),
+    porHora: porHoraOut,
+    passagens,
+    // Direction names: the path goes from its first point to its last
+    ida: via.terminalChegada,
+    volta: via.terminalPartida,
+  };
+}
