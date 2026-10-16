@@ -91,14 +91,16 @@ export default function LoginPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Senha
+                PIN
               </label>
               <input
                 type="password"
+                inputMode="numeric"
+                autoComplete="current-password"
                 required
                 value={formData.senha}
                 onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
-                placeholder="Digite sua senha"
+                placeholder="PIN de 6 dígitos dado pelo administrador"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900"
               />
             </div>
@@ -114,8 +116,8 @@ export default function LoginPage() {
 
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-sm text-gray-600 text-center">
-              Esqueceu a senha?{" "}
-              <a href="#" className="text-gray-900 hover:underline font-medium">
+              Não tem PIN ou esqueceu-o?{" "}
+              <a href="/support" className="text-gray-900 hover:underline font-medium">
                 Contactar Administrador
               </a>
             </p>
