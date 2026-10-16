@@ -4,7 +4,8 @@ import { orderStopsAlongRoute } from '@/lib/fares';
 import { driverIdFromRequest } from '@/lib/driverSession';
 
 // Passengers waiting along the driver's route: alerts asked for (web or USSD) in the last
-// 3 hours at a stop of the route, not yet answered by an arrival SMS. Driver portal only.
+// 3 hours at a stop of the route. Alerts already answered by an arrival SMS still count: that SMS
+// goes out when a bus is 1 km away, which is when the driver most needs the number. Driver portal only.
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -48,7 +49,6 @@ export async function GET(request: Request) {
       by: ['paragemId'],
       where: {
         paragemId: { in: stops.map((s) => s.id) },
-        notificadoEm: null,
         createdAt: { gte: new Date(Date.now() - WAITING_WINDOW_MS) },
       },
       _count: { _all: true },
