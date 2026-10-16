@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { createUserToken } from '@/lib/userSession';
 
 export async function POST(request: Request) {
   try {
@@ -55,12 +56,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // Remover senha do retorno
+    // Remover senha do retorno; o token de sessão vai com o utente (guardado no browser)
     const { senha: _, ...utenteData } = utente;
+    const token = createUserToken(utente.id);
+    if (!token) {
+      console.error('USER_SESSION_SECRET is not set');
+      return NextResponse.json({ error: 'Sessão indisponível. Tente mais tarde.' }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
-      utente: utenteData,
+      utente: { ...utenteData, token },
     });
   } catch (error) {
     console.error('Erro ao fazer login:', error);
