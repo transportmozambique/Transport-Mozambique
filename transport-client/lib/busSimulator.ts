@@ -197,14 +197,21 @@ async function updateBusPosition(busPosition: BusPosition) {
 /**
  * Verificar e notificar usuários sobre autocarros próximos
  */
+// Minimum time between two arrival SMS for the same mission (the check runs every cycle)
+const NOTIFY_COOLDOWN_MS = 30 * 60 * 1000;
+
 async function checkAndNotifyUsers() {
   try {
-    // Buscar todas as missions ativas (criadas nas últimas 24 horas)
+    // Missions from the last 24 hours that were not notified recently
     const missions = await prisma.mISSION.findMany({
       where: {
         createdAt: {
           gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
         },
+        OR: [
+          { notificadoEm: null },
+          { notificadoEm: { lt: new Date(Date.now() - NOTIFY_COOLDOWN_MS) } },
+        ],
       },
       include: {
         utente: true,
@@ -256,6 +263,12 @@ async function checkAndNotifyUsers() {
 
           console.log(`🔔 Notificação: Autocarro ${transporte.matricula} está a ${tempoEstimado} min da ${mission.paragem.nome} para usuário ${mission.utente.telefone}`);
 
+          // Mark first, so a slow or failing SMS is not retried every cycle
+          await prisma.mISSION.update({
+            where: { id: mission.id },
+            data: { notificadoEm: new Date() },
+          });
+
           // Enviar SMS via Africa's Talking
           try {
             const { notifyBusArrival } = await import('./notifications');
@@ -268,6 +281,7 @@ async function checkAndNotifyUsers() {
           } catch (error) {
             console.error('Erro ao enviar notificação SMS:', error);
           }
+          break;
         }
       }
     }

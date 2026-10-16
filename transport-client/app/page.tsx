@@ -22,6 +22,9 @@ interface Bus {
   }[];
 }
 
+// How often bus positions are refreshed on the map
+const BUS_REFRESH_MS = 15000;
+
 export default function LandingPage() {
   const router = useRouter();
   const mapRef = useRef<HTMLDivElement>(null);
@@ -81,6 +84,22 @@ export default function LandingPage() {
       setUserLocation([32.5892, -25.9655]);
     }
   }, []);
+
+  // The server moves the buses (simulator / GPS): re-read their positions periodically
+  useEffect(() => {
+    if (loading) return;
+    const interval = setInterval(async () => {
+      try {
+        const data = await fetch('/api/buses?fields=position').then((res) => res.json());
+        for (const bus of data.buses ?? []) {
+          busMarkersRef.current.get(bus.id)?.setLngLat([bus.longitude, bus.latitude]);
+        }
+      } catch (error) {
+        console.error('Error refreshing bus positions:', error);
+      }
+    }, BUS_REFRESH_MS);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current || loading) return;
@@ -241,43 +260,8 @@ export default function LandingPage() {
 
         console.log('Drawing route for bus:', bus.matricula, 'with', bus.routePath.length, 'waypoints');
 
-        // Use OSRM to get road-following route
-        // Limit waypoints to avoid OSRM errors (max 100 waypoints)
-        const maxWaypoints = 100;
-        const limitedPath = bus.routePath.length > maxWaypoints 
-          ? bus.routePath.filter((_, i) => i % Math.ceil(bus.routePath.length / maxWaypoints) === 0)
-          : bus.routePath;
-        
-        const waypointsString = limitedPath.map(w => `${w[0]},${w[1]}`).join(';');
-        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${waypointsString}?overview=full&geometries=geojson`;
-
-        fetch(osrmUrl)
-          .then(response => {
-            if (!response.ok) {
-              console.warn(`OSRM returned status ${response.status}, using direct route`);
-              drawRoute(bus.routePath);
-              return null;
-            }
-            return response.json();
-          })
-          .then(data => {
-            if (!data) return; // Already handled in previous then
-            
-            if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
-              console.warn('OSRM failed, using direct waypoints');
-              drawRoute(bus.routePath);
-              return;
-            }
-
-            // Use the route geometry from OSRM (follows roads)
-            const routeGeometry = data.routes[0].geometry;
-            console.log('✓ OSRM route received with', routeGeometry.coordinates.length, 'coordinates');
-            drawRoute(routeGeometry.coordinates);
-          })
-          .catch(error => {
-            console.warn('OSRM routing unavailable, using direct route:', error.message);
-            drawRoute(bus.routePath);
-          });
+        // Stored routes already follow the roads, so draw them directly
+        drawRoute(bus.routePath);
 
         // Function to draw the route on map
         function drawRoute(coordinates: [number, number][]) {

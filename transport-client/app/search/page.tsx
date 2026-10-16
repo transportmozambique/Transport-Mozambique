@@ -254,6 +254,25 @@ function SearchContent() {
       ) || []
     : [];
 
+  // Stop names repeat along a route (e.g. several stops on the same avenue), so show
+  // each stop's position on the route: it tells them apart and shows the direction
+  const stopOrder = (p: { orderByVia?: Record<string, number> }) =>
+    selectedVia ? p.orderByVia?.[selectedVia] : undefined;
+  const stopLabel = (p: { nome: string; orderByVia?: Record<string, number> }) => {
+    const name = p.nome.length > 35 ? p.nome.substring(0, 35) + '...' : p.nome;
+    const order = stopOrder(p);
+    return order !== undefined ? `${order + 1}. ${name}` : name;
+  };
+
+  // Destinations: stops after the origin on the selected route
+  const origemOrder = paragensFiltered.find(pg => pg.id === selectedParagem);
+  const destinosDisponiveis = selectedParagem && origemOrder && stopOrder(origemOrder) !== undefined
+    ? paragensFiltered.filter(p => {
+        const order = stopOrder(p);
+        return p.id !== selectedParagem && order !== undefined && order > stopOrder(origemOrder)!;
+      })
+    : [];
+
   const isStepComplete = (step: number) => {
     switch (step) {
       case 1: return !!selectedMunicipio;
@@ -456,7 +475,7 @@ function SearchContent() {
                   </div>
                   {!loadingVias && selectedMunicipio && routeOptions.length > 0 && (
                     <p className="text-xs text-green-600 mt-1">
-                      {routeOptions.length} rota{routeOptions.length !== 1 ? 's' : ''} disponível{routeOptions.length !== 1 ? 'eis' : ''}
+                      {routeOptions.length} rota{routeOptions.length !== 1 ? 's' : ''} disponíve{routeOptions.length !== 1 ? 'is' : 'l'}
                     </p>
                   )}
 
@@ -478,18 +497,11 @@ function SearchContent() {
                       <option value="">
                         {loadingParagens ? 'Carregando paragens...' : 'Onde você está?'}
                       </option>
-                      {!loadingParagens && paragensFiltered.map((paragem) => {
-                        // Truncate long stop names for mobile
-                        const maxLength = 35;
-                        const displayName = paragem.nome.length > maxLength 
-                          ? paragem.nome.substring(0, maxLength) + '...'
-                          : paragem.nome;
-                        return (
-                          <option key={paragem.id} value={paragem.id}>
-                            {displayName}
-                          </option>
-                        );
-                      })}
+                      {!loadingParagens && paragensFiltered.map((paragem) => (
+                        <option key={paragem.id} value={paragem.id}>
+                          {stopLabel(paragem)}
+                        </option>
+                      ))}
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                       {loadingParagens ? (
@@ -503,7 +515,7 @@ function SearchContent() {
                   </div>
                   {!loadingParagens && selectedVia && paragensFiltered.length > 0 && (
                     <p className="text-xs text-green-600 mt-1">
-                      {paragensFiltered.length} paragen{paragensFiltered.length !== 1 ? 's' : 's'} disponível{paragensFiltered.length !== 1 ? 'eis' : ''}
+                      {paragensFiltered.length} parage{paragensFiltered.length !== 1 ? 'ns' : 'm'} disponíve{paragensFiltered.length !== 1 ? 'is' : 'l'}
                     </p>
                   )}
                 </div>
@@ -524,41 +536,11 @@ function SearchContent() {
                       <option value="">
                         {loadingParagens ? 'Carregando destinos...' : 'Para onde você vai?'}
                       </option>
-                      {!loadingParagens && paragensFiltered
-                        .filter(p => {
-                          // Don't show origem as destino
-                          if (p.id === selectedParagem) return false;
-                          
-                          // Filter to show only stops that come AFTER origem in the route
-                          if (selectedParagem && p.orderByVia && selectedVia) {
-                            const origemParagem = paragensFiltered.find(pg => pg.id === selectedParagem);
-                            if (origemParagem && origemParagem.orderByVia) {
-                              // Get order for the selected via
-                              const origemOrder = origemParagem.orderByVia[selectedVia];
-                              const destinoOrder = p.orderByVia[selectedVia];
-                              
-                              // Only show if destino comes AFTER origem
-                              if (origemOrder !== undefined && destinoOrder !== undefined) {
-                                return destinoOrder > origemOrder;
-                              }
-                            }
-                          }
-                          
-                          // If no order info, don't show (prevents wrong direction)
-                          return false;
-                        })
-                        .map((paragem) => {
-                          // Truncate long stop names for mobile
-                          const maxLength = 35;
-                          const displayName = paragem.nome.length > maxLength 
-                            ? paragem.nome.substring(0, maxLength) + '...'
-                            : paragem.nome;
-                          return (
-                            <option key={paragem.id} value={paragem.id}>
-                              {displayName}
-                            </option>
-                          );
-                        })}
+                      {!loadingParagens && destinosDisponiveis.map((paragem) => (
+                        <option key={paragem.id} value={paragem.id}>
+                          {stopLabel(paragem)}
+                        </option>
+                      ))}
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                       {loadingParagens ? (
@@ -570,28 +552,11 @@ function SearchContent() {
                       )}
                     </div>
                   </div>
-                  {!loadingParagens && selectedParagem && (() => {
-                    const availableDestinos = paragensFiltered.filter(p => {
-                      if (p.id === selectedParagem) return false;
-                      if (selectedParagem && p.orderByVia && selectedVia) {
-                        const origemParagem = paragensFiltered.find(pg => pg.id === selectedParagem);
-                        if (origemParagem && origemParagem.orderByVia) {
-                          const origemOrder = origemParagem.orderByVia[selectedVia];
-                          const destinoOrder = p.orderByVia[selectedVia];
-                          if (origemOrder !== undefined && destinoOrder !== undefined) {
-                            return destinoOrder > origemOrder;
-                          }
-                        }
-                      }
-                      // If no order info, don't show (prevents wrong direction)
-                      return false;
-                    });
-                    return availableDestinos.length > 0 && (
-                      <p className="text-xs text-green-600 mt-1">
-                        {availableDestinos.length} destino{availableDestinos.length !== 1 ? 's' : ''} disponível{availableDestinos.length !== 1 ? 'eis' : ''}
-                      </p>
-                    );
-                  })()}
+                  {!loadingParagens && destinosDisponiveis.length > 0 && (
+                    <p className="text-xs text-green-600 mt-1">
+                      {destinosDisponiveis.length} destino{destinosDisponiveis.length !== 1 ? 's' : ''} disponíve{destinosDisponiveis.length !== 1 ? 'is' : 'l'}
+                    </p>
+                  )}
                 </div>
 
                 <button
@@ -705,26 +670,26 @@ function SearchContent() {
 
                   {/* Metrics */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        {/* Existing: Tempo Estimado */}
+                        {/* Wait until the bus reaches the origin */}
                         <div className="bg-slate-50 rounded-lg p-3">
                           <div className="flex items-center space-x-2 mb-1">
                             <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span className="text-xs text-slate-600 font-medium">Tempo Estimado</span>
+                            <span className="text-xs text-slate-600 font-medium">Chega em</span>
                           </div>
                           <p className="text-lg font-bold text-slate-900">
                             {transport.tempoEstimado} min
                           </p>
                         </div>
 
-                        {/* Existing: Distância */}
+                        {/* Trip length, origin to destination */}
                         <div className="bg-slate-50 rounded-lg p-3">
                           <div className="flex items-center space-x-2 mb-1">
                             <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             </svg>
-                            <span className="text-xs text-slate-600 font-medium">Distância</span>
+                            <span className="text-xs text-slate-600 font-medium">Distância da viagem</span>
                           </div>
                           <p className="text-lg font-bold text-slate-900">
                             {transport.distancia > 1000
@@ -733,20 +698,20 @@ function SearchContent() {
                           </p>
                         </div>
 
-                        {/* Existing: Velocidade */}
+                        {/* Time on board */}
                         <div className="bg-slate-50 rounded-lg p-3">
                           <div className="flex items-center space-x-2 mb-1">
                             <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
-                            <span className="text-xs text-slate-600 font-medium">Velocidade</span>
+                            <span className="text-xs text-slate-600 font-medium">Duração da viagem</span>
                           </div>
                           <p className="text-lg font-bold text-slate-900">
-                            {transport.velocidade} km/h
+                            {transport.tempoViagem ?? "-"} min
                           </p>
                         </div>
 
-                        {/* New: Preço da viagem - Same gray background */}
+                        {/* Fare for this trip */}
                         <div className="bg-slate-50 rounded-lg p-3">
                           <div className="flex items-center space-x-2 mb-1">
                             <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

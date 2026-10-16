@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { orderStopsAlongRoute } from '@/lib/fares';
 
 /**
  * API to get only routes and stops that have buses available
@@ -82,73 +83,56 @@ export async function GET(request: NextRequest) {
     );
     const viaIdsForRoute = viasForRoute.map(v => v.id);
 
+    // Position of each stop on each via, following the drawn route
+    // (ViaParagem id order is not the travel order)
+    const routeVias = await prisma.via.findMany({
+      where: { id: { in: viaIdsForRoute } },
+      select: {
+        id: true,
+        geoLocationPath: true,
+        paragens: { select: { paragemId: true, paragem: { select: { geoLocation: true } } } },
+      },
+    });
+    const orderByViaId = new Map(
+      routeVias.map((via) => [
+        via.id,
+        new Map(
+          orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation)
+            .map((vp, index) => [vp.paragemId, index] as const)
+        ),
+      ])
+    );
+
     // Get paragens that belong to these vias AND have buses passing through
     const paragensWithBuses = await prisma.paragem.findMany({
-      where: {
-        vias: {
-          some: {
-            viaId: {
-              in: viaIdsForRoute
-            }
-          }
-        }
-      },
+      where: { vias: { some: { viaId: { in: viaIdsForRoute } } } },
       select: {
         id: true,
         nome: true,
         codigo: true,
         geoLocation: true,
-        vias: {
-          where: {
-            viaId: {
-              in: viaIdsForRoute
-            }
-          },
-          select: {
-            viaId: true,
-            id: true, // This gives us the order
-            via: {
-              select: {
-                id: true,
-                paragens: {
-                  select: {
-                    id: true,
-                    paragemId: true
-                  },
-                  orderBy: {
-                    id: 'asc'
-                  }
-                }
-              }
-            }
-          }
+        vias: { where: { viaId: { in: viaIdsForRoute } }, select: { viaId: true } },
+      },
+    });
+
+    const formattedParagens = paragensWithBuses
+      .map((p) => {
+        const orderByVia: Record<string, number> = {};
+        for (const vp of p.vias) {
+          const order = orderByViaId.get(vp.viaId)?.get(p.id);
+          if (order !== undefined) orderByVia[vp.viaId] = order;
         }
-      }
-    });
-
-    // Format paragens with viaIds array and order information
-    const formattedParagens = paragensWithBuses.map(p => {
-      // Calculate the minimum order index across all vias
-      const orderInfo = p.vias.map(vp => {
-        const orderIndex = vp.via.paragens.findIndex(viaParagem => viaParagem.paragemId === p.id);
         return {
-          viaId: vp.viaId,
-          order: orderIndex
+          id: p.id,
+          nome: p.nome,
+          codigo: p.codigo,
+          geoLocation: p.geoLocation,
+          viaIds: p.vias.map((vp) => vp.viaId),
+          orderByVia,
         };
-      });
-
-      return {
-        id: p.id,
-        nome: p.nome,
-        codigo: p.codigo,
-        geoLocation: p.geoLocation,
-        viaIds: p.vias.map(vp => vp.viaId),
-        orderByVia: orderInfo.reduce((acc, info) => {
-          acc[info.viaId] = info.order;
-          return acc;
-        }, {} as Record<string, number>)
-      };
-    });
+      })
+      // Travel order on the selected via
+      .sort((x, y) => (x.orderByVia[viaId] ?? Number.MAX_SAFE_INTEGER) - (y.orderByVia[viaId] ?? Number.MAX_SAFE_INTEGER));
 
     return NextResponse.json({
       municipios: municipiosWithBuses,

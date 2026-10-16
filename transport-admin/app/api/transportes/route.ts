@@ -15,11 +15,11 @@ export async function GET(request: NextRequest) {
       if (includeTransportId) {
         // Show available transportes OR the specific transport (even if it has a motorista)
         whereClause.OR = [
-          { motoristaId: null },
+          { motorista: { is: null } },
           { id: includeTransportId }
         ];
       } else {
-        whereClause.motoristaId = null;
+        whereClause.motorista = { is: null };
       }
     }
 

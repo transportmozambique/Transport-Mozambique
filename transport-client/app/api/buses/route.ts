@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getFareRule, fareFor, arrivalMinutes, travelMinutes, orderStopsAlongRoute } from '@/lib/fares';
+import {
+  getFareRule,
+  fareFor,
+  estimateTrip,
+  orderStopsAlongRoute,
+  parseLatLng,
+  parseRoutePath,
+  type LatLng,
+} from '@/lib/fares';
 
 /**
  * API to find buses that go from user's origin to user's destination
@@ -18,21 +26,6 @@ import { getFareRule, fareFor, arrivalMinutes, travelMinutes, orderStopsAlongRou
  * - Preço: Based on user's journey distance, using the active Tarifa rule (lib/fares.ts)
  */
 
-function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371e3; // Earth radius in meters
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lng2 - lng1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  
-  return R * c;
-}
-
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -41,6 +34,19 @@ export async function GET(request: NextRequest) {
     const viaId = searchParams.get('viaId'); // Single via (legacy)
     const viaIds = searchParams.get('viaIds'); // Multiple vias (new)
     const rule = await getFareRule();
+
+    // Positions only (live map refresh): one light query
+    if (searchParams.get('fields') === 'position') {
+      const rows = await prisma.transporte.findMany({
+        where: { viaId: { not: null } },
+        select: { id: true, currGeoLocation: true },
+      });
+      const buses = rows.flatMap((t) => {
+        const pos = parseLatLng(t.currGeoLocation);
+        return pos ? [{ id: t.id, latitude: pos[0], longitude: pos[1] }] : [];
+      });
+      return NextResponse.json({ buses, total: buses.length });
+    }
 
     // If no parameters, return all buses
     if (!paragemId && !viaId && !viaIds && !destinoId) {
@@ -198,120 +204,21 @@ export async function GET(request: NextRequest) {
       .map((transporte) => {
         if (!transporte.via) return null;
         const { via } = transporte;
+
         // Stops in travel order (their id order is not)
-        via.paragens = orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation);
+        const stops = orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation)
+          .map((vp) => ({ vp, point: parseLatLng(vp.paragem.geoLocation) }))
+          .filter((s): s is { vp: typeof s.vp; point: LatLng } => s.point !== null);
 
-        // Find origem and destino indices in bus route
-        const origemIndex = via.paragens.findIndex((vp) => vp.paragem.id === paragemId);
-        const destinoIndex = via.paragens.findIndex((vp) => vp.paragem.id === destinoId);
+        const bus =
+          parseLatLng(transporte.currGeoLocation) ??
+          parseLatLng(transporte.geoLocations[0]?.geoLocationTransporte) ??
+          stops[0]?.point;
+        if (!bus) return null;
 
-        // Bus must pass through both stops
-        if (origemIndex === -1 || destinoIndex === -1) {
-          return null;
-        }
-
-        // Origem must come BEFORE destino
-        if (origemIndex >= destinoIndex) {
-          return null;
-        }
-
-        // Get current bus position
-        let currentLat, currentLng;
-        
-        if (transporte.currGeoLocation) {
-          [currentLat, currentLng] = transporte.currGeoLocation.split(',').map(Number);
-        } else if (transporte.geoLocations.length > 0) {
-          [currentLat, currentLng] = transporte.geoLocations[0].geoLocationTransporte.split(',').map(Number);
-        } else {
-          const firstStop = via.paragens[0];
-          if (firstStop) {
-            [currentLat, currentLng] = firstStop.paragem.geoLocation.split(',').map(Number);
-          } else {
-            return null;
-          }
-        }
-
-        // Find closest stop to current bus position
-        let closestStopIndex = 0;
-        let minDistance = Infinity;
-
-        via.paragens.forEach((vp, index) => {
-          const [stopLat, stopLng] = vp.paragem.geoLocation.split(',').map(Number);
-          const dist = calculateDistance(currentLat, currentLng, stopLat, stopLng);
-          
-          if (dist < minDistance) {
-            minDistance = dist;
-            closestStopIndex = index;
-          }
-        });
-
-        // Check if bus already passed origem
-        const alreadyPassedOrigem = closestStopIndex > origemIndex;
-
-        // Calculate: 1. Time for bus to reach origem (Tempo de Chegada)
-        let distanciaAteOrigem = 0;
-        let isNextCycle = false;
-        
-        if (alreadyPassedOrigem) {
-          // Bus already passed - calculate time for full route + distance to origem
-          isNextCycle = true;
-          
-          // Distance from current position to end of route
-          distanciaAteOrigem = minDistance;
-          for (let i = closestStopIndex; i < via.paragens.length - 1; i++) {
-            const [lat1, lng1] = via.paragens[i].paragem.geoLocation.split(',').map(Number);
-            const [lat2, lng2] = via.paragens[i + 1].paragem.geoLocation.split(',').map(Number);
-            distanciaAteOrigem += calculateDistance(lat1, lng1, lat2, lng2);
-          }
-          
-          // Add distance from start to origem (next cycle)
-          for (let i = 0; i < origemIndex; i++) {
-            const [lat1, lng1] = via.paragens[i].paragem.geoLocation.split(',').map(Number);
-            const [lat2, lng2] = via.paragens[i + 1].paragem.geoLocation.split(',').map(Number);
-            distanciaAteOrigem += calculateDistance(lat1, lng1, lat2, lng2);
-          }
-          
-          // Add 10 minutes for turnaround time
-          distanciaAteOrigem += 10000; // 10 km equivalent for 10 min wait
-          
-        } else if (closestStopIndex === origemIndex) {
-          // Bus is at origem
-          distanciaAteOrigem = calculateDistance(currentLat, currentLng, origemLat, origemLng);
-        } else {
-          // Bus hasn't reached origem yet - sum distances along route
-          distanciaAteOrigem = minDistance; // Distance to closest stop
-          
-          for (let i = closestStopIndex; i < origemIndex; i++) {
-            const [lat1, lng1] = via.paragens[i].paragem.geoLocation.split(',').map(Number);
-            const [lat2, lng2] = via.paragens[i + 1].paragem.geoLocation.split(',').map(Number);
-            distanciaAteOrigem += calculateDistance(lat1, lng1, lat2, lng2);
-          }
-        }
-
-        const tempoChegada = arrivalMinutes(distanciaAteOrigem, rule);
-
-        // Calculate: 2. User's journey distance (origem → destino)
-        let distanciaViagem = 0;
-        
-        for (let i = origemIndex; i < destinoIndex; i++) {
-          const [lat1, lng1] = via.paragens[i].paragem.geoLocation.split(',').map(Number);
-          const [lat2, lng2] = via.paragens[i + 1].paragem.geoLocation.split(',').map(Number);
-          distanciaViagem += calculateDistance(lat1, lng1, lat2, lng2);
-        }
-
-        const tempoViagem = travelMinutes(distanciaViagem, rule);
-
-        // Calculate fare based on user's journey distance
-        const fare = fareFor(distanciaViagem, rule);
-
-        // Get route path
-        let routeCoords: [number, number][] = [];
-        if (via.geoLocationPath) {
-          routeCoords = via.geoLocationPath.split(';').map((coord) => {
-            const [lng, lat] = coord.split(',').map(Number);
-            return [lng, lat];
-          });
-        }
+        // Bus must pass through origem and then destino
+        const trip = estimateTrip(stops.map((s) => ({ id: s.vp.paragem.id, point: s.point })), bus, paragemId, destinoId, rule);
+        if (!trip) return null;
 
         return {
           id: transporte.id,
@@ -319,25 +226,22 @@ export async function GET(request: NextRequest) {
           via: via.nome,
           viaId: via.id,
           direcao: `${via.terminalPartida} → ${via.terminalChegada}`,
-          distancia: Math.round(distanciaViagem), // User's journey distance
-          tempoEstimado: tempoChegada, // Time for bus to reach origem
-          tempoViagem: tempoViagem, // Time user spends in bus
+          distancia: Math.round(trip.distanciaViagem), // User's journey distance
+          tempoEstimado: trip.tempoChegada, // Time for bus to reach origem
+          tempoViagem: trip.tempoViagem, // Time user spends in bus
           velocidade: rule.velocidadeChegadaKmh,
-          latitude: currentLat,
-          longitude: currentLng,
+          latitude: bus[0],
+          longitude: bus[1],
           status: 'Em Circulação',
-          fare,
-          routeCoords,
-          stops: via.paragens.map((vp) => {
-            const [lat, lng] = vp.paragem.geoLocation.split(',').map(Number);
-            return {
-              id: vp.paragem.id,
-              nome: vp.paragem.nome,
-              latitude: lat,
-              longitude: lng,
-              isTerminal: vp.terminalBoolean,
-            };
-          }),
+          fare: trip.fare,
+          routeCoords: parseRoutePath(via.geoLocationPath).map(([lat, lng]) => [lng, lat]),
+          stops: stops.map(({ vp, point }) => ({
+            id: vp.paragem.id,
+            nome: vp.paragem.nome,
+            latitude: point[0],
+            longitude: point[1],
+            isTerminal: vp.terminalBoolean,
+          })),
         };
       })
       .filter((bus) => bus !== null);

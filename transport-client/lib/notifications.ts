@@ -1,37 +1,54 @@
 import AfricasTalking from 'africastalking';
 
-// Inicializar Africa's Talking
-const africastalking = AfricasTalking({
-  apiKey: process.env.AFRICASTALKING_API_KEY || '',
-  username: process.env.AFRICASTALKING_USERNAME || 'sandbox',
-});
+type SmsClient = ReturnType<typeof AfricasTalking>['SMS'];
 
-const sms = africastalking.SMS;
+// Created on first use: the SDK throws when the API key is empty, and doing that
+// at import time took the whole USSD route down instead of only skipping SMS.
+let sms: SmsClient | null = null;
+
+function smsClient(): SmsClient | null {
+  if (sms) return sms;
+  const apiKey = process.env.AFRICASTALKING_API_KEY;
+  if (!apiKey) return null;
+  sms = AfricasTalking({
+    apiKey,
+    username: process.env.AFRICASTALKING_USERNAME || 'sandbox',
+  }).SMS;
+  return sms;
+}
+
+/** "+258 84 123 4567", "258841234567", "0841234567" or "841234567" -> "+258841234567" */
+export function toInternationalPhone(to: string): string {
+  const digits = to.replace(/[^\d+]/g, '');
+  if (digits.startsWith('+')) return digits;
+  if (digits.startsWith('258') && digits.length === 12) return `+${digits}`;
+  return `+258${digits.replace(/^0/, '')}`;
+}
 
 /**
- * Enviar SMS de notificação
+ * Enviar SMS de notificação. Nunca lança erro: o SMS é secundário ao fluxo
+ * (USSD, notificações), por isso falhas são apenas registadas.
  */
 export async function sendSMS(to: string, message: string) {
-  try {
-    // Garantir que o número tem o formato correto (+258...)
-    const phoneNumber = to.startsWith('+') ? to : `+258${to.replace(/^0/, '')}`;
+  const client = smsClient();
+  const phoneNumber = toInternationalPhone(to);
 
-    const sendOptions: any = {
+  if (!client) {
+    console.warn(`SMS não enviado para ${phoneNumber}: AFRICASTALKING_API_KEY não configurada`);
+    return null;
+  }
+
+  try {
+    const result = await client.send({
       to: [phoneNumber],
       message,
-    };
-    
-    if (process.env.AFRICASTALKING_SHORTCODE) {
-      sendOptions.from = process.env.AFRICASTALKING_SHORTCODE;
-    }
-
-    const result = await sms.send(sendOptions);
-
+      ...(process.env.AFRICASTALKING_SHORTCODE ? { from: process.env.AFRICASTALKING_SHORTCODE } : {}),
+    });
     console.log(`✅ SMS enviado para ${phoneNumber}:`, result);
     return result;
   } catch (error) {
-    console.error(`❌ Erro ao enviar SMS para ${to}:`, error);
-    throw error;
+    console.error(`❌ Erro ao enviar SMS para ${phoneNumber}:`, error);
+    return null;
   }
 }
 
@@ -45,7 +62,7 @@ export async function notifyBusArrival(
   tempoEstimado: number
 ) {
   const message = `🚌 Autocarro ${busMatricula} está a ${tempoEstimado} minutos da ${paragemNome}!`;
-  
+
   return sendSMS(phoneNumber, message);
 }
 
@@ -57,6 +74,6 @@ export async function notifyMissionCreated(
   paragemNome: string
 ) {
   const message = `✅ Missão criada! Você será notificado quando um autocarro estiver chegando na ${paragemNome}.`;
-  
+
   return sendSMS(phoneNumber, message);
 }

@@ -6,12 +6,7 @@ const nextConfig: NextConfig = {
   
   // Optimize for production (compress is enabled by default in Next.js 16)
   compress: true,
-  
-  // Ensure proper CSS handling for Tailwind v4
-  experimental: {
-    optimizeCss: true,
-  },
-  
+
   // Image optimization
   images: {
     formats: ['image/webp'],
