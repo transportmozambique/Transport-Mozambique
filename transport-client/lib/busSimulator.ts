@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import { parseRoutePath } from './fares';
 
 /**
  * Simulador de Movimento de Autocarros
@@ -67,20 +68,11 @@ export async function initializeBusPositions() {
     if (!transporte.via) continue;
     const { via } = transporte;
 
-    // Parsear rota do autocarro
-    let routePath: [number, number][] = [];
-    
-    if (transporte.routePath) {
-      routePath = transporte.routePath.split(';').map((coord) => {
-        const [lng, lat] = coord.split(',').map(Number);
-        return [lng, lat] as [number, number];
-      });
-    } else if (via.geoLocationPath) {
-      routePath = via.geoLocationPath.split(';').map((coord) => {
-        const [lng, lat] = coord.split(',').map(Number);
-        return [lng, lat] as [number, number];
-      });
-    }
+    // Percurso da via ([lng, lat]); o routePath próprio do autocarro está desatualizado na
+    // maioria dos autocarros, por isso só serve quando a via não tem percurso.
+    const routePath = parseRoutePath(via.geoLocationPath || transporte.routePath).map(
+      ([lat, lng]) => [lng, lat] as [number, number]
+    );
 
     if (routePath.length > 0) {
       busPositions.set(transporte.id, {

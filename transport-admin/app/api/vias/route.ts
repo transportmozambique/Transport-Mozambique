@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { toStoredPath } from '@/lib/routeOrder';
 
 export async function GET(request: Request) {
   try {
@@ -93,6 +94,16 @@ export async function POST(request: Request) {
       );
     }
 
+    // Stored as "lng,lat;lng,lat;..." whatever the form sent: the client apps, the bus
+    // simulator and fares only read that format.
+    const storedPath = toStoredPath(geoLocationPath);
+    if (!storedPath) {
+      return NextResponse.json(
+        { error: 'O percurso da via precisa de pelo menos dois pontos válidos' },
+        { status: 400 }
+      );
+    }
+
     if (await prisma.via.findUnique({ where: { codigo }, select: { id: true } })) {
       return NextResponse.json(
         { error: `Já existe uma via com o código "${codigo}"` },
@@ -143,7 +154,7 @@ export async function POST(request: Request) {
         cor: cor || '#3B82F6',
         terminalPartida: terminalPartida || '',
         terminalChegada: terminalChegada || '',
-        geoLocationPath,
+        geoLocationPath: storedPath,
         municipioId,
         codigoMunicipio: municipio.codigo,
       },
