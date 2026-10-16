@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getTripState, startTrip, endTrip } from '@/lib/driverTrips';
+import { driverIdFromRequest } from '@/lib/driverSession';
 
-// Trip state shared with the USSD driver menu (*6). Called from the driver portal.
+// Trip state shared with the USSD driver menu (*6). Called from the driver portal with the
+// session token it got at login ("Authorization: Bearer"); a driver only changes their own trip.
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 function json(body: unknown, status = 200) {
@@ -16,10 +18,12 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS });
 }
 
-// GET /api/driver/trip?motoristaId=...
+const UNAUTHORIZED = { error: 'Sessão inválida ou expirada. Entre de novo.' };
+
+// GET /api/driver/trip
 export async function GET(request: Request) {
-  const motoristaId = new URL(request.url).searchParams.get('motoristaId');
-  if (!motoristaId) return json({ error: 'motoristaId é obrigatório' }, 400);
+  const motoristaId = driverIdFromRequest(request);
+  if (!motoristaId) return json(UNAUTHORIZED, 401);
 
   try {
     const state = await getTripState(motoristaId);
@@ -31,12 +35,15 @@ export async function GET(request: Request) {
   }
 }
 
-// POST { motoristaId, action: 'iniciar' | 'encerrar' }
+// POST { action: 'iniciar' | 'encerrar' }
 export async function POST(request: Request) {
+  const motoristaId = driverIdFromRequest(request);
+  if (!motoristaId) return json(UNAUTHORIZED, 401);
+
   try {
-    const { motoristaId, action } = await request.json();
-    if (!motoristaId || (action !== 'iniciar' && action !== 'encerrar')) {
-      return json({ error: "motoristaId e action ('iniciar' ou 'encerrar') são obrigatórios" }, 400);
+    const { action } = await request.json();
+    if (action !== 'iniciar' && action !== 'encerrar') {
+      return json({ error: "action ('iniciar' ou 'encerrar') é obrigatória" }, 400);
     }
 
     const state = action === 'iniciar' ? await startTrip(motoristaId) : await endTrip(motoristaId);

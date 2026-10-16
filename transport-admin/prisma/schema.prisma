@@ -2,7 +2,8 @@
 // Baseado no Modelo de Domínio fornecido
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["omitApi"] // lib/prisma.ts hides Motorista.password from every query
 }
 
 datasource db {
@@ -237,6 +238,7 @@ model Motorista {
   dataValidadeCarta DateTime
   categoriaCarta  String   @default("B") // A, B, C, D, E
   experienciaAnos Int      @default(0) // Anos de experiência como motorista
+  password        String?  // bcrypt hash of the driver PIN (generated in the dashboard, never returned)
   observacoes     String?  @db.Text
   status          String   @default("ativo") // ativo, inativo, suspenso
   emViagem        Boolean  @default(false)    // Viagem em curso (USSD e portal do motorista)

@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
 
 /**
@@ -25,10 +26,13 @@ export async function findDriverByPhone(phone: string) {
   return match ? prisma.motorista.findUnique({ where: { id: match.id } }) : null;
 }
 
-// Same rule USSD already applied: drivers without a password, and the default
-// password 123456, are accepted.
-export function isValidDriverPassword(stored: string | null, input: string): boolean {
-  return stored === null || stored === input || input === '123456';
+/**
+ * Drivers sign in (portal and USSD *6) with the PIN the admin generated for them. Only its
+ * bcrypt hash is stored; a driver without a PIN cannot sign in until the admin creates one.
+ */
+export async function verifyDriverPin(stored: string | null, input: string): Promise<boolean> {
+  if (!stored || !input || !/^\$2[aby]\$/.test(stored)) return false;
+  return bcrypt.compare(input, stored);
 }
 
 export interface TripState {

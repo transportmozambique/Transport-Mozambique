@@ -5,7 +5,7 @@ import {
   getFareRule, fareFor, travelMinutes,
   estimatedRoadMeters, pathLengthMeters, parseLatLng, haversineMeters, orderStopsAlongRoute, type LatLng,
 } from '@/lib/fares';
-import { findDriverByPhone, isValidDriverPassword, startTrip, endTrip } from '@/lib/driverTrips';
+import { findDriverByPhone, verifyDriverPin, startTrip, endTrip } from '@/lib/driverTrips';
 import { waitUntil } from '@vercel/functions';
 import { POSITION_FIELDS, estimateBusTrip, vehiclePosition } from '@/lib/vehiclePosition';
 import { formatEta, maputoClock } from '@/lib/eta';
@@ -825,14 +825,17 @@ async function handleDriverMenuStateless(sessionId: string, phoneNumber: string,
   // Level 1: Ask for password
   if (level === 1) {
     return `CON Area do Motorista
-Senha:`;
+PIN:`;
   }
 
   // From Level 2 onwards, we have the password in inputs[1]
   const password = inputs[1] || '';
 
-  if (!isValidDriverPassword(driver.password, password)) {
-    return `END Senha incorreta. Por favor, disque novamente para tentar de novo.`;
+  if (!driver.password) {
+    return `END Ainda nao tem PIN. Peca ao administrador para gerar o seu PIN.`;
+  }
+  if (!(await verifyDriverPin(driver.password, password))) {
+    return `END PIN incorreto. Por favor, disque novamente para tentar de novo.`;
   }
 
   // Load complete driver info with relations for menus
