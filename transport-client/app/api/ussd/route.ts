@@ -81,6 +81,12 @@ function cutText(text: string, max: number): string {
   return text.length > max ? text.slice(0, Math.max(1, max - 2)) + '..' : text;
 }
 
+/** An END screen ending with `note` on its own line; the body is shortened so the screen fits USSD_MAX. */
+function endWithNote(body: string, note: string): string {
+  return `END ${cutText(body, USSD_MAX - note.length - 1)}
+${note}`;
+}
+
 /** A page of `list` with numbered items, shortened so the screen fits USSD_MAX. */
 function paginateList(title: string, list: string[], currentPage: number): string {
   const totalPages = Math.ceil(list.length / PAGE_SIZE);
@@ -928,8 +934,7 @@ Viagem: ${statusLabel}
 Autocarro: ${t?.matricula || 'N/A'}
 Rota: ${v?.nome || 'N/A'}`;
         sms(phoneNumber, `SUA INFORMACAO:\n${info}\nTelefone: ${driverInfo?.telefone || 'N/A'}`);
-        return `END ${cutText(info, USSD_MAX - 22)}
-Detalhes enviados por SMS.`;
+        return endWithNote(info, 'Detalhes enviados por SMS.');
       }
 
       case '3': {
@@ -939,11 +944,11 @@ Detalhes enviados por SMS.`;
           if (names[names.length - 1] !== vp.paragem.nome) names.push(vp.paragem.nome);
         }
         sms(phoneNumber, `ROTA ${v?.nome || 'N/A'}: ${names.join(' > ') || 'sem paragens'}`);
-        return `END ${cutText(`Rota: ${v?.nome || 'N/A'}
-${v?.terminalPartida || 'N/A'} -> ${v?.terminalChegada || 'N/A'}
+        // Long names are shortened one by one, so the number of stops always shows
+        return endWithNote(`Rota: ${cutText(v?.nome || 'N/A', 40)}
+${cutText(v?.terminalPartida || 'N/A', 30)} -> ${cutText(v?.terminalChegada || 'N/A', 30)}
 Paragens: ${v?.paragens?.length || 0}
-${names.slice(0, 4).join(' > ')}${names.length > 4 ? ' > ...' : ''}`, USSD_MAX - 30)}
-Lista completa enviada por SMS.`;
+${names.slice(0, 4).join(' > ')}${names.length > 4 ? ' > ...' : ''}`, 'Lista completa enviada por SMS.');
       }
 
       case '4': {
@@ -960,8 +965,7 @@ Perto de: ${near || 'N/A'}`;
         sms(phoneNumber, `AUTOCARRO
 ${tInfo}
 ${position?.source === 'gps' ? 'GPS' : 'Posicao estimada'}: ${geo || 'N/A'}`);
-        return `END ${cutText(tInfo, USSD_MAX - 26)}
-Detalhes enviados por SMS.`;
+        return endWithNote(tInfo, 'Detalhes enviados por SMS.');
       }
 
       default:
