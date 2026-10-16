@@ -96,7 +96,7 @@ function TrackTransportContent() {
           const utenteData = localStorage.getItem("utente");
           if (utenteData && paragemId) {
             const utente = JSON.parse(utenteData);
-            fetch(`/api/user/missions?utenteId=${utente.id}`)
+            fetch("/api/user/missions", { headers: { Authorization: `Bearer ${utente.token}` } })
               .then(res => res.json())
               .then(missionsData => {
                 if (!cancelled && missionsData.missions?.some((m: { paragemId: string }) => m.paragemId === paragemId)) {
@@ -151,13 +151,21 @@ function TrackTransportContent() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${utente.token}`,
         },
         body: JSON.stringify({
-          utenteId: utente.id,
           transporteId: transportId,
           paragemId: paragemId,
         }),
       });
+
+      // Session from before sessions were signed, or expired: sign in again
+      if (response.status === 401) {
+        localStorage.removeItem("utente");
+        setSaveStatus("error");
+        setSaveMessage("A sua sessão expirou. Entre de novo para guardar transportes.");
+        return;
+      }
 
       const data = await response.json();
 

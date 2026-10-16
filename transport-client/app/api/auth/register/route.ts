@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { createUserToken } from '@/lib/userSession';
 
 export async function POST(request: Request) {
   try {
@@ -66,6 +67,12 @@ export async function POST(request: Request) {
       ? await prisma.utente.update({ where: { id: existingUtente.id }, data: dados })
       : await prisma.utente.create({ data: { ...dados, telefone, mISSION: `USER-${Date.now()}` } });
 
+    const token = createUserToken(utente.id);
+    if (!token) {
+      console.error('USER_SESSION_SECRET is not set');
+      return NextResponse.json({ error: 'Sessão indisponível. Tente mais tarde.' }, { status: 500 });
+    }
+
     return NextResponse.json({
       success: true,
       utente: {
@@ -73,6 +80,7 @@ export async function POST(request: Request) {
         nome: utente.nome,
         email: utente.email,
         telefone: utente.telefone,
+        token,
       },
     });
   } catch (error) {

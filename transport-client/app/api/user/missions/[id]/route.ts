@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { utenteIdFromRequest, unauthorized } from '@/lib/userSession';
 
 export async function DELETE(
   request: NextRequest,
@@ -7,6 +8,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    const utenteId = utenteIdFromRequest(request);
+    if (!utenteId) return unauthorized();
 
     if (!id) {
       return NextResponse.json(
@@ -20,7 +23,8 @@ export async function DELETE(
       where: { id },
     });
 
-    if (!mission) {
+    // Only the passenger's own alerts can be removed
+    if (!mission || mission.utenteId !== utenteId) {
       return NextResponse.json(
         { error: "Missão não encontrada" },
         { status: 404 }

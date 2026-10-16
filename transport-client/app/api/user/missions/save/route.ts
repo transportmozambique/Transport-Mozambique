@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { utenteIdFromRequest, unauthorized } from '@/lib/userSession';
 
 export async function POST(request: NextRequest) {
   try {
+    // The alert is saved for the passenger of the session token
+    const utenteId = utenteIdFromRequest(request);
+    if (!utenteId) return unauthorized();
     const body = await request.json();
-    const { utenteId, transporteId, paragemId } = body;
+    const { transporteId, paragemId } = body;
 
-    if (!utenteId || !transporteId || !paragemId) {
+    if (!transporteId || !paragemId) {
       return NextResponse.json(
-        { error: 'utenteId, transporteId e paragemId são obrigatórios' },
+        { error: 'transporteId e paragemId são obrigatórios' },
         { status: 400 }
       );
     }
@@ -46,9 +50,16 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingMission) {
+      // Asking again starts the alert over: alerts older than 24 h or already answered by an
+      // arrival SMS are not checked any more
+      const missao = await prisma.mISSION.update({
+        where: { id: existingMission.id },
+        data: { createdAt: new Date(), notificadoEm: null },
+        include: { paragem: true },
+      });
       return NextResponse.json({
         message: 'Transporte já está nos seus favoritos',
-        missao: existingMission,
+        missao,
       });
     }
 
@@ -64,7 +75,6 @@ export async function POST(request: NextRequest) {
       },
       include: {
         paragem: true,
-        utente: true,
       },
     });
 

@@ -32,6 +32,24 @@ interface Mission {
 
 type TabType = "profile" | "missions" | "security";
 
+// The session token saved with the passenger at login, for the /api/user endpoints
+function storedToken(): string {
+  try {
+    return JSON.parse(localStorage.getItem("utente") || "{}").token ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function authHeader(): Record<string, string> {
+  return { Authorization: `Bearer ${storedToken()}` };
+}
+
+// Saves fresh passenger data without losing the session token
+function saveUtente(data: object) {
+  localStorage.setItem("utente", JSON.stringify({ ...data, token: storedToken() }));
+}
+
 interface ModalState {
   show: boolean;
   type: 'confirm' | 'alert';
@@ -90,17 +108,24 @@ function UserInfoContent() {
     
     // Fetch fresh data from API
     Promise.all([
-      fetch(`/api/user/${parsedUtente.id}`).then(res => res.json()),
-      fetch(`/api/user/missions?utenteId=${parsedUtente.id}`).then(res => res.json())
+      fetch(`/api/user/${parsedUtente.id}`, { headers: authHeader() }),
+      fetch(`/api/user/missions`, { headers: authHeader() }),
     ])
-      .then(([userData, missionsData]) => {
+      .then(async ([userRes, missionsRes]) => {
+        // Session from before sessions were signed, or expired: sign in again
+        if (userRes.status === 401) {
+          localStorage.removeItem("utente");
+          router.push("/auth");
+          return;
+        }
+        const [userData, missionsData] = await Promise.all([userRes.json(), missionsRes.json()]);
         if (userData.error) {
           console.error('Error fetching user:', userData.error);
           setUtente(parsedUtente);
         } else {
           setUtente(userData);
           setNewNome(userData.nome);
-          localStorage.setItem("utente", JSON.stringify(userData));
+          saveUtente(userData);
         }
         
         if (!missionsData.error) {
@@ -127,7 +152,7 @@ function UserInfoContent() {
     try {
       const response = await fetch(`/api/user/${utente.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader() },
         body: JSON.stringify({ nome: newNome.trim() }),
       });
 
@@ -140,7 +165,7 @@ function UserInfoContent() {
       }
 
       setUtente(data);
-      localStorage.setItem("utente", JSON.stringify(data));
+      saveUtente(data);
       setProfileSuccess("Perfil atualizado com sucesso!");
       setEditingProfile(false);
       
@@ -179,7 +204,7 @@ function UserInfoContent() {
     try {
       const response = await fetch(`/api/user/${utente.id}/change-password`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader() },
         body: JSON.stringify({
           currentPassword,
           newPassword,
@@ -220,6 +245,7 @@ function UserInfoContent() {
         try {
           const response = await fetch(`/api/user/missions/${missionId}`, {
             method: 'DELETE',
+            headers: authHeader(),
           });
 
           const data = await response.json();

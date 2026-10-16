@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { utenteIdFromRequest, unauthorized } from '@/lib/userSession';
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const utenteId = searchParams.get('utenteId');
-
-    if (!utenteId) {
-      return NextResponse.json(
-        { error: "utenteId é obrigatório" },
-        { status: 400 }
-      );
-    }
+    // The passenger's own alerts; a utenteId in the query must be theirs
+    const utenteId = utenteIdFromRequest(request);
+    const asked = request.nextUrl.searchParams.get('utenteId');
+    if (!utenteId || (asked && asked !== utenteId)) return unauthorized();
 
     const missions = await prisma.mISSION.findMany({
       where: { utenteId },

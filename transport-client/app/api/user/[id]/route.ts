@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { utenteIdFromRequest, unauthorized } from '@/lib/userSession';
+
+// A passenger reads and changes only their own profile (session token from the login)
 
 export async function GET(
   request: Request,
@@ -7,7 +10,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    
+    if (utenteIdFromRequest(request) !== id) return unauthorized();
+
     const utente = await prisma.utente.findUnique({
       where: { id },
       select: {
@@ -45,6 +49,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
+    if (utenteIdFromRequest(request) !== id) return unauthorized();
     const { nome } = await request.json();
 
     if (!nome || !nome.trim()) {

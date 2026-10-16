@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { utenteIdFromRequest, unauthorized } from '@/lib/userSession';
 
 export async function POST(
   request: Request,
@@ -8,6 +9,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+    if (utenteIdFromRequest(request) !== id) return unauthorized();
     const { currentPassword, newPassword } = await request.json();
 
     if (!currentPassword || !newPassword) {
