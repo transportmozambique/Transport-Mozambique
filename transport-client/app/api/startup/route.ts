@@ -1,57 +1,20 @@
 import { NextResponse } from 'next/server';
-import {
-  initializeBusPositions,
-  startBusSimulation,
-  getSimulationStatus,
-} from '@/lib/busSimulator';
+import { waitUntil } from '@vercel/functions';
+import { getSimulationStatus, maybeCheckArrivals } from '@/lib/busSimulator';
 
 /**
- * Startup API - Auto-inicializa e inicia a simulação de autocarros
- * Chamado automaticamente quando o servidor inicia
+ * Called by the home page when it opens. Positions need no start-up any more (they are
+ * computed on read, see lib/vehiclePosition.ts); this only triggers the arrival SMS check and
+ * reports how positions are produced.
  */
-
-let startupComplete = false;
-
 export async function GET() {
   try {
-    // Evitar múltiplas inicializações
-    if (startupComplete) {
-      const status = getSimulationStatus();
-      return NextResponse.json({
-        success: true,
-        message: 'Sistema já inicializado',
-        status,
-      });
-    }
-
-    console.log('🚀 Iniciando sistema de rastreamento...');
-
-    // Inicializar posições dos autocarros
-    await initializeBusPositions();
-
-    // Iniciar simulação (atualiza a cada 30 segundos)
-    startBusSimulation(30000);
-
-    startupComplete = true;
-
-    const status = getSimulationStatus();
-
-    console.log('✅ Sistema de rastreamento iniciado com sucesso!');
-    console.log(`   - ${status.busCount} autocarros em circulação`);
-    console.log(`   - Atualização a cada 30 segundos`);
-
-    return NextResponse.json({
-      success: true,
-      message: 'Sistema de rastreamento iniciado',
-      status,
-    });
-  } catch (error: any) {
-    console.error('❌ Erro ao iniciar sistema:', error);
+    waitUntil(maybeCheckArrivals());
+    return NextResponse.json({ success: true, status: await getSimulationStatus() });
+  } catch (error) {
+    console.error('❌ Erro no startup:', error);
     return NextResponse.json(
-      {
-        success: false,
-        error: error.message,
-      },
+      { success: false, error: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

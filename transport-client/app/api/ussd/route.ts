@@ -3,10 +3,12 @@ import { prisma } from '@/lib/prisma';
 import { sendSMS } from '@/lib/notifications';
 import {
   getFareRule, fareFor, travelMinutes,
-  estimatedRoadMeters, pathLengthMeters, parseLatLng, haversineMeters, orderStopsAlongRoute, estimateTrip, type LatLng,
+  estimatedRoadMeters, pathLengthMeters, parseLatLng, haversineMeters, orderStopsAlongRoute, type LatLng,
 } from '@/lib/fares';
 import { findDriverByPhone, isValidDriverPassword, startTrip, endTrip } from '@/lib/driverTrips';
 import { waitUntil } from '@vercel/functions';
+import { POSITION_FIELDS, estimateBusTrip, vehiclePosition } from '@/lib/vehiclePosition';
+import { formatEta, maputoClock } from '@/lib/eta';
 
 // Africa's Talking USSD format
 interface USSDRequest {
@@ -194,7 +196,8 @@ const INVALID = 'END Opcao invalida. Tente novamente.';
 
 function sms(phoneNumber: string, text: string) {
   try {
-    waitUntil(sendSMS(phoneNumber, text));
+    // Without accents: one accented letter makes the whole SMS Unicode (70 characters per part)
+    waitUntil(sendSMS(phoneNumber, toGsm(text)));
   } catch (e) {
     console.error('SMS Error:', e);
   }
@@ -249,9 +252,11 @@ async function findTransportMenu(phoneNumber: string, inputs: string[], pages: n
     } catch (error) {
       console.error('Error creating mission:', error);
     }
+    // Long waits (the first bus of the morning) as a clock time
+    const eta = formatEta(info.timeUntilBusArrives);
     return `CON TRANSPORTE ENCONTRADO
 Autocarro: ${info.busId}
-Chega em: ${info.timeUntilBusArrives} min
+Chega ${eta.isClock ? eta.text : `em: ${eta.text}`}
 Viagem: ${info.travelTime} min
 Tarifa: ${info.fare} MT
 
@@ -260,7 +265,8 @@ Tarifa: ${info.fare} MT
   }
 
   if (inputs[3] === '1') {
-    sms(phoneNumber, `Autocarro ${info.busId}: chega em ${info.timeUntilBusArrives} min a ${info.from}. Viagem ate ${info.to}: ${info.travelTime} min, ${info.distance} km. Tarifa: ${info.fare} MT. Chegada prevista: ${info.arrivalTime}.`);
+    const eta = formatEta(info.timeUntilBusArrives);
+    sms(phoneNumber, `Autocarro ${info.busId}: chega ${eta.isClock ? eta.text : `em ${eta.text}`} a ${info.from}. Viagem ate ${info.to}: ${info.travelTime} min, ${info.distance} km. Tarifa: ${info.fare} MT. Chegada prevista: ${info.arrivalTime}.`);
     return 'END Detalhes enviados por SMS.';
   }
   return INVALID;
@@ -380,13 +386,14 @@ async function trackBusMenu(phoneNumber: string, inputs: string[]) {
   const matches = await prisma.transporte.findMany({
     where: { matricula: { contains: matricula, mode: 'insensitive' } },
     select: {
+      ...POSITION_FIELDS,
       matricula: true,
       marca: true,
       modelo: true,
-      currGeoLocation: true,
       via: {
         select: {
           nome: true,
+          geoLocationPath: true,
           paragens: { select: { paragem: { select: { nome: true, geoLocation: true } } } },
         },
       },
@@ -405,11 +412,12 @@ async function trackBusMenu(phoneNumber: string, inputs: string[]) {
   const transport = matches.length === 1 ? matches[0] : pickFromList(matches.slice(0, PAGE_SIZE), 0, inputs[2]);
   if (!transport) return INVALID;
 
-  const near = nearestStopName(transport.currGeoLocation, transport.via?.paragens.map((vp) => vp.paragem) ?? []);
+  const position = vehiclePosition(transport, transport.via?.geoLocationPath, new Date(), await getFareRule());
+  const near = position && nearestStopName(position.point.join(','), transport.via?.paragens.map((vp) => vp.paragem) ?? []);
   const details = `AUTOCARRO ${transport.matricula}
 ${transport.marca || ''} ${transport.modelo || ''}
 Rota: ${transport.via?.nome || 'Sem rota atribuida'}
-${near ? `Perto de: ${near}` : parseLatLng(transport.currGeoLocation) ? 'Em circulacao' : 'Localizacao indisponivel'}`;
+${near ? `Perto de: ${near}` : position ? 'Em circulacao' : 'Localizacao indisponivel'}`;
   sms(phoneNumber, details);
   return `END ${details}`;
 }
@@ -614,11 +622,10 @@ async function findTransportInfo(from: string, to: string) {
         }
       },
       select: {
-        id: true,
+        ...POSITION_FIELDS,
         matricula: true,
         marca: true,
         modelo: true,
-        currGeoLocation: true,
         via: {
           select: {
             geoLocationPath: true,
@@ -628,13 +635,12 @@ async function findTransportInfo(from: string, to: string) {
             }
           }
         },
-        geoLocations: { orderBy: { createdAt: 'desc' }, take: 1, select: { geoLocationTransporte: true } }
       },
     });
 
     let best: {
       transport: (typeof transports)[number];
-      trip: NonNullable<ReturnType<typeof estimateTrip>>;
+      trip: NonNullable<ReturnType<typeof estimateBusTrip>>;
       origem: { id: string; nome: string; geoLocation: string };
       destino: { nome: string };
     } | null = null;
@@ -645,20 +651,26 @@ async function findTransportInfo(from: string, to: string) {
         .filter((vp) => parseLatLng(vp.paragem.geoLocation) !== null);
       if (route.length < 2) continue;
 
-      const named = route.findIndex((vp) => sameName(vp.paragem.nome, from));
-      const o = named === -1 ? 0 : named;
-      let d = route.length - 1;
-      while (d > o && !sameName(route[d].paragem.nome, to)) d--;
-      if (d === o) d = route.length - 1;
-      if (d <= o) continue;
+      // Stops named like the chosen places; otherwise the terminal at the other end. The path
+      // can run either way, and buses serve both directions.
+      const last = route.length - 1;
+      let o = route.findIndex((vp) => sameName(vp.paragem.nome, from));
+      let d = route.findLastIndex((vp) => sameName(vp.paragem.nome, to));
+      if (o === -1 && d === -1) [o, d] = [0, last];
+      else if (o === -1) o = d < last / 2 ? last : 0;
+      else if (d === -1) d = o < last / 2 ? last : 0;
+      if (o === d) continue;
 
       const stops = route.map((vp) => ({ id: vp.paragemId, point: parseLatLng(vp.paragem.geoLocation)! }));
-      // Current bus position, defaulting to the origin when unknown
-      const busPosition =
-        parseLatLng(transport.currGeoLocation) ??
-        parseLatLng(transport.geoLocations[0]?.geoLocationTransporte) ??
-        stops[o].point;
-      const trip = estimateTrip(stops, busPosition, stops[o].id, stops[d].id, rule);
+      // Real GPS when fresh, otherwise the timetable position
+      const trip = estimateBusTrip({
+        vehicle: transport,
+        path: transport.via.geoLocationPath,
+        stops,
+        origemId: stops[o].id,
+        destinoId: stops[d].id,
+        rule,
+      });
       if (trip && (!best || trip.tempoChegada < best.trip.tempoChegada)) {
         best = {
           transport,
@@ -672,8 +684,8 @@ async function findTransportInfo(from: string, to: string) {
     if (!best) return null;
     const { transport, trip, origem, destino } = best;
 
-    const arrivalTime = new Date(Date.now() + (trip.tempoChegada + trip.tempoViagem) * 60000);
-    const arrivalTimeStr = `${arrivalTime.getHours().toString().padStart(2, '0')}:${arrivalTime.getMinutes().toString().padStart(2, '0')}`;
+    // In Maputo time: the server runs in UTC
+    const arrivalTimeStr = maputoClock(new Date(Date.now() + (trip.tempoChegada + trip.tempoViagem) * 60000));
 
     return {
       busId: `${transport.marca || 'N/A'} ${transport.modelo || 'N/A'} - ${transport.matricula || 'N/A'}`,
@@ -933,7 +945,9 @@ Lista completa enviada por SMS.`;
 
       case '4': {
         // Autocarro Info
-        const near = nearestStopName(t?.currGeoLocation, v?.paragens.map((vp) => vp.paragem) ?? []);
+        const position = t ? vehiclePosition(t, v?.geoLocationPath, new Date(), await getFareRule()) : null;
+        const geo = position ? `${position.point[0].toFixed(5)},${position.point[1].toFixed(5)}` : null;
+        const near = nearestStopName(geo, v?.paragens.map((vp) => vp.paragem) ?? []);
         const tInfo = `Matricula: ${t?.matricula || 'N/A'}
 ${t?.marca || ''} ${t?.modelo || ''}
 Cor: ${colorName(t?.cor)}
@@ -942,7 +956,7 @@ Perto de: ${near || 'N/A'}`;
 
         sms(phoneNumber, `AUTOCARRO
 ${tInfo}
-GPS: ${t?.currGeoLocation || 'N/A'}`);
+${position?.source === 'gps' ? 'GPS' : 'Posicao estimada'}: ${geo || 'N/A'}`);
         return `END ${cutText(tInfo, USSD_MAX - 26)}
 Detalhes enviados por SMS.`;
       }

@@ -3,12 +3,14 @@ import { prisma } from '@/lib/prisma';
 import {
   getFareRule,
   fareFor,
-  estimateTrip,
   orderStopsAlongRoute,
   parseLatLng,
   parseRoutePath,
   type LatLng,
 } from '@/lib/fares';
+import { POSITION_FIELDS, estimateBusTrip, routePaths, vehiclePosition } from '@/lib/vehiclePosition';
+import { maybeCheckArrivals } from '@/lib/busSimulator';
+import { waitUntil } from '@vercel/functions';
 
 /**
  * API to find buses that go from user's origin to user's destination
@@ -35,16 +37,24 @@ export async function GET(request: NextRequest) {
     const viaIds = searchParams.get('viaIds'); // Multiple vias (new)
     const rule = await getFareRule();
 
-    // Positions only (live map refresh): one light query
+    // Positions only (live map refresh): one light query, route paths cached per instance
     if (searchParams.get('fields') === 'position') {
-      const rows = await prisma.transporte.findMany({
-        where: { viaId: { not: null } },
-        select: { id: true, currGeoLocation: true },
-      });
+      const [rows, paths] = await Promise.all([
+        prisma.transporte.findMany({
+          where: { viaId: { not: null } },
+          select: { ...POSITION_FIELDS, viaId: true },
+        }),
+        routePaths(),
+      ]);
+      const now = new Date();
       const buses = rows.flatMap((t) => {
-        const pos = parseLatLng(t.currGeoLocation);
-        return pos ? [{ id: t.id, latitude: pos[0], longitude: pos[1] }] : [];
+        const pos = vehiclePosition(t, paths.get(t.viaId!), now, rule);
+        return pos
+          ? [{ id: t.id, latitude: pos.point[0], longitude: pos.point[1], fonte: pos.source, direcao: pos.heading }]
+          : [];
       });
+      // The live map polls this every few seconds: a good moment to check arrival SMS
+      waitUntil(maybeCheckArrivals());
       return NextResponse.json({ buses, total: buses.length });
     }
 
@@ -65,36 +75,20 @@ export async function GET(request: NextRequest) {
               },
             },
           },
-          geoLocations: {
-            orderBy: {
-              createdAt: 'desc',
-            },
-            take: 1,
-          },
         },
       });
 
+      const now = new Date();
       const allBuses = allTransportes
         .filter((t): t is typeof t & { via: NonNullable<typeof t.via> } => t.via != null)
         .map((transporte) => {
         const { via } = transporte;
         // Stops in travel order (their id order is not)
         via.paragens = orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation);
-        let currentLat, currentLng;
-        
-        if (transporte.currGeoLocation) {
-          [currentLat, currentLng] = transporte.currGeoLocation.split(',').map(Number);
-        } else if (transporte.geoLocations.length > 0) {
-          [currentLat, currentLng] = transporte.geoLocations[0].geoLocationTransporte.split(',').map(Number);
-        } else {
-          const firstStop = via.paragens[0];
-          if (firstStop) {
-            [currentLat, currentLng] = firstStop.paragem.geoLocation.split(',').map(Number);
-          } else {
-            currentLat = -25.9655;
-            currentLng = 32.5892;
-          }
-        }
+        // Real GPS when fresh, otherwise the timetable position on the route
+        const position = vehiclePosition(transporte, via.geoLocationPath || transporte.routePath, now, rule);
+        const [currentLat, currentLng] =
+          position?.point ?? parseLatLng(via.paragens[0]?.paragem.geoLocation) ?? [-25.9655, 32.5892];
 
         // The route's path comes first: the bus's own routePath is stale on most buses
         // (it was copied from other routes), so it is only a fallback.
@@ -122,7 +116,8 @@ export async function GET(request: NextRequest) {
           via: via.nome,
           latitude: currentLat,
           longitude: currentLng,
-          status: 'Em Circulação',
+          fonte: position?.source ?? 'horario',
+          status: position && !position.moving && position.source === 'horario' ? 'No terminal' : 'Em Circulação',
           fare,
           routePath: routePath,
           stops: stops,
@@ -181,15 +176,10 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        geoLocations: {
-          orderBy: {
-            createdAt: 'desc',
-          },
-          take: 1,
-        },
       },
     });
 
+    const now = new Date();
     const [origemLat, origemLng] = origem.geoLocation.split(',').map(Number);
     const [destinoLat, destinoLng] = destino.geoLocation.split(',').map(Number);
 
@@ -203,28 +193,36 @@ export async function GET(request: NextRequest) {
           .map((vp) => ({ vp, point: parseLatLng(vp.paragem.geoLocation) }))
           .filter((s): s is { vp: typeof s.vp; point: LatLng } => s.point !== null);
 
-        const bus =
-          parseLatLng(transporte.currGeoLocation) ??
-          parseLatLng(transporte.geoLocations[0]?.geoLocationTransporte) ??
-          stops[0]?.point;
-        if (!bus) return null;
-
-        // Bus must pass through origem and then destino
-        const trip = estimateTrip(stops.map((s) => ({ id: s.vp.paragem.id, point: s.point })), bus, paragemId, destinoId, rule);
+        // Bus must serve both stops; trips can go either way along the route
+        const trip = estimateBusTrip({
+          vehicle: transporte,
+          path: via.geoLocationPath,
+          stops: stops.map((s) => ({ id: s.vp.paragem.id, point: s.point })),
+          origemId: paragemId,
+          destinoId: destinoId,
+          rule,
+          now,
+        });
         if (!trip) return null;
+        const position = trip.position;
+        const bus = position?.point ?? stops[0].point;
 
         return {
           id: transporte.id,
           matricula: transporte.matricula,
           via: via.nome,
           viaId: via.id,
-          direcao: `${via.terminalPartida} → ${via.terminalChegada}`,
+          // Direction of this trip, named by the route's first and last stops along its path
+          direcao: trip.sentido === 1
+            ? `${stops[0].vp.paragem.nome} → ${stops[stops.length - 1].vp.paragem.nome}`
+            : `${stops[stops.length - 1].vp.paragem.nome} → ${stops[0].vp.paragem.nome}`,
           distancia: Math.round(trip.distanciaViagem), // User's journey distance
           tempoEstimado: trip.tempoChegada, // Time for bus to reach origem
           tempoViagem: trip.tempoViagem, // Time user spends in bus
           velocidade: rule.velocidadeChegadaKmh,
           latitude: bus[0],
           longitude: bus[1],
+          fonte: position?.source ?? 'horario',
           status: 'Em Circulação',
           fare: trip.fare,
           routeCoords: parseRoutePath(via.geoLocationPath).map(([lat, lng]) => [lng, lat]),

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { findDriverByPhone, isValidDriverPassword } from '@/lib/driverTrips';
-import { orderStopsAlongRoute } from '@/lib/fares';
+import { getFareRule, orderStopsAlongRoute } from '@/lib/fares';
+import { vehicleGeo } from '@/lib/vehiclePosition';
 
 // Called from the driver portal, which runs on another domain
 const CORS = {
@@ -70,7 +71,8 @@ export async function POST(request: Request) {
             modelo: transporte.modelo,
             cor: transporte.cor,
             lotacao: transporte.lotacao,
-            currGeoLocation: transporte.currGeoLocation,
+            // Real GPS when fresh, otherwise the timetable position on the route
+            currGeoLocation: vehicleGeo(transporte, via?.geoLocationPath, new Date(), await getFareRule()) ?? transporte.currGeoLocation,
           }
         : null,
       via: via
