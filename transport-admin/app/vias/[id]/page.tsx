@@ -11,6 +11,7 @@ interface Via {
   nome: string;
   codigo: string;
   cor: string;
+  velocidadeViagemKmh: number; // travel speed of the active fare rule
   terminalPartida: string;
   terminalChegada: string;
   geoLocationPath: string;
@@ -374,7 +375,8 @@ export default function ViaDetalhes() {
 
   async function fetchAllParagens() {
     try {
-      const response = await fetch('/api/paragens?limit=1000');
+      // Every stop (there are more than 1000)
+      const response = await fetch('/api/paragens?limit=10000');
       if (!response.ok) {
         throw new Error('Failed to fetch paragens');
       }
@@ -712,10 +714,8 @@ export default function ViaDetalhes() {
     const distance = parseFloat(calculateRouteLength());
     if (distance === 0) return 0;
     
-    // Calculate time at 45 km/h
-    // Time = Distance / Speed
-    // Convert to minutes: (distance / 45) * 60
-    const timeInMinutes = (distance / 45) * 60;
+    // One direction at the fare rule's travel speed, as in the timetable
+    const timeInMinutes = (distance / (via?.velocidadeViagemKmh || 30)) * 60;
     
     return Math.round(timeInMinutes);
   }
@@ -1100,7 +1100,7 @@ export default function ViaDetalhes() {
               <div>
                 <p className="text-sm text-black font-medium mb-1">Tempo Médio</p>
                 <p className="text-3xl font-bold text-black">{calculateAverageTime()} min</p>
-                <p className="text-xs text-gray-600 mt-1">a 45 km/h</p>
+                <p className="text-xs text-gray-600 mt-1">por sentido, a {via.velocidadeViagemKmh || 30} km/h</p>
               </div>
               <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
                 <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">

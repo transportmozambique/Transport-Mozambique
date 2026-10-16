@@ -366,7 +366,8 @@ export default function EditarVia() {
 
   async function fetchAllParagens() {
     try {
-      const response = await fetch('/api/paragens?limit=1000');
+      // Every stop (there are more than 1000)
+      const response = await fetch('/api/paragens?limit=10000');
       if (!response.ok) {
         throw new Error('Failed to fetch paragens');
       }
@@ -713,18 +714,6 @@ export default function EditarVia() {
     }
     
     return totalDistance.toFixed(2);
-  }
-
-  function calculateAverageTime(): number {
-    const distance = parseFloat(calculateRouteLength());
-    if (distance === 0) return 0;
-    
-    // Calculate time at 45 km/h
-    // Time = Distance / Speed
-    // Convert to minutes: (distance / 45) * 60
-    const timeInMinutes = (distance / 45) * 60;
-    
-    return Math.round(timeInMinutes);
   }
 
   if (loading) {

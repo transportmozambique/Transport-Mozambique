@@ -78,7 +78,10 @@ export async function GET(
     // Stops in travel order (their id order is not)
     via.paragens = orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation);
 
-    return NextResponse.json(via, {
+    // Travel speed of the active fare rule: the timetable and every time estimate use it
+    const tarifa = await prisma.tarifa.findFirst({ where: { ativa: true }, orderBy: { updatedAt: 'desc' } });
+
+    return NextResponse.json({ ...via, velocidadeViagemKmh: tarifa?.velocidadeViagemKmh ?? 30 }, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
         'Pragma': 'no-cache',
