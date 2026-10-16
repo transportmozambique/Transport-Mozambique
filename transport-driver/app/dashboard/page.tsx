@@ -35,6 +35,12 @@ export default function DashboardPage() {
   const [showRideInfoModal, setShowRideInfoModal] = useState(false);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
+  // Real GPS: during a trip the phone's position goes to /api/gps with the vehicle's device code
+  // (created in the admin, Transporte → Rastreador GPS), saved once on this phone.
+  const [gpsCode, setGpsCode] = useState("");
+  const [gpsInput, setGpsInput] = useState("");
+  const [gpsStatus, setGpsStatus] = useState("");
+  const gpsRef = useRef({ active: false, code: "", lastSent: 0 });
 
   const clientInfo: ClientInfo = {
     total: clients,
@@ -49,12 +55,49 @@ export default function DashboardPage() {
     const stored = localStorage.getItem('motorista');
     if (!stored) { router.push('/'); return; }
     setMotorista(JSON.parse(stored));
+    try {
+      const code = localStorage.getItem('gpsCodigo') || '';
+      setGpsCode(code);
+      setGpsInput(code);
+    } catch {}
 
     if (navigator.geolocation) {
-      const watchId = navigator.geolocation.watchPosition((p) => setSpeed(Math.round((p.coords.speed || 0) * 3.6)), () => {}, { enableHighAccuracy: true });
+      const watchId = navigator.geolocation.watchPosition((p) => {
+        setSpeed(Math.round((p.coords.speed || 0) * 3.6));
+        const g = gpsRef.current;
+        if (!g.active || !g.code || Date.now() - g.lastSent < 15000) return;
+        g.lastSent = Date.now();
+        fetch(`${API_BASE}/api/gps`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${g.code}` },
+          body: JSON.stringify({
+            latitude: p.coords.latitude,
+            longitude: p.coords.longitude,
+            speed: p.coords.speed == null ? null : p.coords.speed * 3.6,
+            heading: p.coords.heading,
+            accuracy: p.coords.accuracy,
+            timestamp: p.timestamp,
+          }),
+        })
+          .then((r) => setGpsStatus(r.ok ? `GPS enviado às ${new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}` : r.status === 401 ? 'Código GPS inválido' : 'Erro ao enviar GPS'))
+          .catch(() => setGpsStatus('Sem ligação: GPS não enviado'));
+      }, () => setGpsStatus('Localização do telemóvel indisponível'), { enableHighAccuracy: true, maximumAge: 5000 });
       return () => navigator.geolocation.clearWatch(watchId);
     }
   }, [router]);
+
+  useEffect(() => {
+    gpsRef.current.active = isActive;
+    gpsRef.current.code = gpsCode;
+  }, [isActive, gpsCode]);
+
+  const saveGpsCode = () => {
+    const code = gpsInput.trim();
+    try { localStorage.setItem('gpsCodigo', code); } catch {}
+    setGpsCode(code);
+    gpsRef.current.lastSent = 0;
+    setGpsStatus(code ? 'Código guardado: a posição é enviada durante a viagem' : 'Código removido');
+  };
 
   // Initialize MapLibre map with 3D tilting
   useEffect(() => {
@@ -263,6 +306,12 @@ export default function DashboardPage() {
           <p className="text-gray-400 text-xs">Telefone: <span className="text-white">{motorista.telefone}</span></p>
           {motorista.transporte && <><p className="text-gray-400 text-xs">Veiculo: <span className="text-white">{motorista.transporte.marca}</span></p><p className="text-gray-400 text-xs">Matricula: <span className="text-white">{motorista.transporte.matricula}</span></p></>}
           {motorista.via && <p className="text-gray-400 text-xs">Rota: <span className="text-white">{motorista.via.nome}</span></p>}
+          <label className="mt-3 block text-gray-400 text-xs" htmlFor="gps-code">Código GPS do veículo</label>
+          <div className="mt-1 flex gap-2">
+            <input id="gps-code" value={gpsInput} onChange={(e) => setGpsInput(e.target.value)} placeholder="Do painel de administração" className="min-w-0 flex-1 rounded-lg bg-gray-800 px-2 py-1 text-xs text-white" />
+            <button onClick={saveGpsCode} className="rounded-lg bg-gray-700 px-2 py-1 text-xs text-white">Guardar</button>
+          </div>
+          {gpsStatus && <p className="mt-1 text-xs text-gray-300">{gpsStatus}</p>}
           <button onClick={handleLogout} className="mt-3 w-full py-2 bg-gray-800 text-white rounded-lg">Sair</button>
         </div>}
       </div>
