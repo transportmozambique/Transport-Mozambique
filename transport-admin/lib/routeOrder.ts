@@ -1,4 +1,32 @@
 /**
+ * Converts a route path to the stored format "lng,lat;lng,lat;...", which every app reads.
+ * Accepts that format, a JSON array of [lng, lat] pairs (as a string or already parsed), and
+ * returns null when there are fewer than two valid points.
+ */
+export function toStoredPath(input: unknown): string | null {
+  let points: unknown = input;
+  if (typeof input === "string") {
+    const text = input.trim();
+    if (text.startsWith("[")) {
+      try {
+        points = JSON.parse(text);
+      } catch {
+        return null;
+      }
+    } else {
+      points = text.split(";").map((pair) => pair.split(",").map(Number));
+    }
+  }
+  if (!Array.isArray(points)) return null;
+  const valid = points.filter(
+    (p): p is [number, number] =>
+      Array.isArray(p) && p.length >= 2 && Number.isFinite(Number(p[0])) && Number.isFinite(Number(p[1])),
+  );
+  if (valid.length < 2) return null;
+  return valid.map(([lng, lat]) => `${Number(lng).toFixed(6)},${Number(lat).toFixed(6)}`).join(";");
+}
+
+/**
  * Orders a route's stops by where they fall on its drawn path (Via.geoLocationPath,
  * "lng,lat;lng,lat;..."). ViaParagem rows have no sequence column and their id order
  * is not the travel order on most routes. Keeps the given order when there is no path.

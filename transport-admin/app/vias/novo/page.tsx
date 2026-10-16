@@ -14,6 +14,7 @@ export default function NovaVia() {
   const markersRef = useRef<maplibregl.Marker[]>([]);
   const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
   const [routedPath, setRoutedPath] = useState<[number, number][]>([]); // Road-following path
+  const [routingFailed, setRoutingFailed] = useState(false);
   const [municipios, setMunicipios] = useState<any[]>([]);
   const [allParagens, setAllParagens] = useState<any[]>([]);
   const [nearbyParagens, setNearbyParagens] = useState<any[]>([]);
@@ -39,6 +40,7 @@ export default function NovaVia() {
   useEffect(() => {
     if (routeCoordinates.length < 2) {
       setRoutedPath([]);
+      setRoutingFailed(false);
       return;
     }
 
@@ -54,14 +56,16 @@ export default function NovaVia() {
         if (data.code === 'Ok' && data.routes && data.routes[0]) {
           const routeGeometry = data.routes[0].geometry.coordinates;
           setRoutedPath(routeGeometry);
+          setRoutingFailed(false);
         } else {
-          // Fallback to straight lines if routing fails
+          // Show the clicked points, but do not save them: straight lines cut across the map.
           setRoutedPath(routeCoordinates);
+          setRoutingFailed(true);
         }
       } catch (error) {
         console.error('Error fetching route:', error);
-        // Fallback to straight lines if routing fails
         setRoutedPath(routeCoordinates);
+        setRoutingFailed(true);
       }
     }
 
@@ -455,10 +459,15 @@ export default function NovaVia() {
       return;
     }
 
+    if (routingFailed || routedPath.length < 2) {
+      showNotification('Não foi possível calcular o percurso pelas estradas. Verifique a ligação e clique de novo no mapa.', 'error');
+      return;
+    }
+
     setLoading(true);
     try {
-      // Save the routed path (follows roads) instead of just the clicked points
-      const geoLocationPath = JSON.stringify(routedPath.length > 0 ? routedPath : routeCoordinates);
+      // Save the road-following path in the stored "lng,lat;lng,lat" format
+      const geoLocationPath = routedPath.map(([lng, lat]) => `${lng},${lat}`).join(';');
       
       console.log('Creating via with data:', {
         ...formData,
