@@ -14,9 +14,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Buscar utente pelo telefone
-    const utente = await prisma.utente.findUnique({
-      where: { telefone },
+    // Buscar utente pelo telefone, com ou sem o prefixo +258 (contas do USSD têm o prefixo)
+    const digits = String(telefone).replace(/\s+/g, '');
+    const local = digits.replace(/^\+?258/, '');
+    const utente = await prisma.utente.findFirst({
+      where: { telefone: { in: [digits, local, `+258${local}`, `258${local}`] } },
       select: {
         id: true,
         nome: true,
@@ -31,6 +33,14 @@ export async function POST(request: Request) {
     if (!utente) {
       return NextResponse.json(
         { error: 'Telefone ou senha incorretos' },
+        { status: 401 }
+      );
+    }
+
+    // Conta criada pelo USSD, ainda sem senha
+    if (!/^\$2[aby]\$/.test(utente.senha)) {
+      return NextResponse.json(
+        { error: 'Este número ainda não tem senha. Faça o registo para criar uma.' },
         { status: 401 }
       );
     }

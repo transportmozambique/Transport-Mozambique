@@ -22,12 +22,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verificar se o telefone já existe
-    const existingUtente = await prisma.utente.findUnique({
-      where: { telefone },
+    // Verificar se o telefone já existe. Números vindos do USSD estão gravados com +258;
+    // o formulário pode não ter o prefixo.
+    const digits = String(telefone).replace(/\s+/g, '');
+    const local = digits.replace(/^\+?258/, '');
+    const existingUtente = await prisma.utente.findFirst({
+      where: { telefone: { in: [digits, local, `+258${local}`, `258${local}`] } },
     });
+    // Quem só usou o USSD tem uma conta sem senha: o registo completa essa conta
+    const contaUssd = existingUtente && !/^\$2[aby]\$/.test(existingUtente.senha);
 
-    if (existingUtente) {
+    if (existingUtente && !contaUssd) {
       return NextResponse.json(
         { error: 'Este número de telefone já está registado' },
         { status: 400 }
@@ -39,7 +44,7 @@ export async function POST(request: Request) {
       where: { email },
     });
 
-    if (existingEmail) {
+    if (existingEmail && existingEmail.id !== existingUtente?.id) {
       return NextResponse.json(
         { error: 'Este email já está registado' },
         { status: 400 }
@@ -49,18 +54,17 @@ export async function POST(request: Request) {
     // Hash da senha
     const senhaHash = await bcrypt.hash(senha, 10);
 
-    // Criar novo utente
-    const utente = await prisma.utente.create({
-      data: {
-        nome,
-        email,
-        telefone,
-        senha: senhaHash,
-        mISSION: `USER-${Date.now()}`,
-        subscrito: true,
-        dataSubscricao: new Date(),
-      },
-    });
+    // Criar novo utente (ou completar a conta criada pelo USSD, mantendo os alertas)
+    const dados = {
+      nome,
+      email,
+      senha: senhaHash,
+      subscrito: true,
+      dataSubscricao: new Date(),
+    };
+    const utente = contaUssd && existingUtente
+      ? await prisma.utente.update({ where: { id: existingUtente.id }, data: dados })
+      : await prisma.utente.create({ data: { ...dados, telefone, mISSION: `USER-${Date.now()}` } });
 
     return NextResponse.json({
       success: true,
