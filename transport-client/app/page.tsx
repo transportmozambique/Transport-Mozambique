@@ -22,8 +22,28 @@ interface Bus {
   }[];
 }
 
-// How often bus positions are refreshed on the map
-const BUS_REFRESH_MS = 15000;
+// How often bus positions are refreshed on the map; markers then glide to the new position
+const BUS_REFRESH_MS = 5000;
+const GLIDE_MS = 1500;
+
+// Moves a marker smoothly instead of jumping (a bus at 30 km/h covers about 40 m in 5 s)
+function glideMarker(marker: maplibregl.Marker, to: [number, number]) {
+  const from = marker.getLngLat();
+  const dLng = to[0] - from.lng;
+  const dLat = to[1] - from.lat;
+  // Far jumps (a bus reappearing at the other terminal, a GPS fix) are not animated
+  if (Math.abs(dLng) + Math.abs(dLat) > 0.02) {
+    marker.setLngLat(to);
+    return;
+  }
+  const start = performance.now();
+  const step = (t: number) => {
+    const k = Math.min(1, (t - start) / GLIDE_MS);
+    marker.setLngLat([from.lng + dLng * k, from.lat + dLat * k]);
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
 
 export default function LandingPage() {
   const router = useRouter();
@@ -85,14 +105,15 @@ export default function LandingPage() {
     }
   }, []);
 
-  // The server moves the buses (simulator / GPS): re-read their positions periodically
+  // The server gives each bus its position (real GPS, else its timetable): re-read them periodically
   useEffect(() => {
     if (loading) return;
     const interval = setInterval(async () => {
       try {
         const data = await fetch('/api/buses?fields=position').then((res) => res.json());
         for (const bus of data.buses ?? []) {
-          busMarkersRef.current.get(bus.id)?.setLngLat([bus.longitude, bus.latitude]);
+          const marker = busMarkersRef.current.get(bus.id);
+          if (marker) glideMarker(marker, [bus.longitude, bus.latitude]);
         }
       } catch (error) {
         console.error('Error refreshing bus positions:', error);
