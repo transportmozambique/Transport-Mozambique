@@ -1,5 +1,6 @@
 "use client";
 import LoadingScreen from "../../components/LoadingScreen";
+import GpsTrackerCard from "../../components/GpsTrackerCard";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -30,6 +31,27 @@ interface Stop {
   isTerminal: boolean;
 }
 
+interface Posicao {
+  latitude: number;
+  longitude: number;
+  fonte: "gps" | "horario";
+  emMovimento: boolean;
+  foraDeServico: boolean;
+  velocidadeKmh: number;
+  atualizadoEm: string;
+  proximaParagem: string | null;
+  minutosAteProxima: number | null;
+}
+
+// Short waits in minutes; long ones (at night the first bus is at 05:00) as the Maputo clock time
+function formatMinutos(minutos: number): string {
+  if (minutos < 60) return `${minutos} min`;
+  const at = new Date(Date.now() + minutos * 60000);
+  const day = (d: Date) => d.toLocaleDateString('pt-PT', { timeZone: 'Africa/Maputo' });
+  const clock = at.toLocaleTimeString('pt-PT', { timeZone: 'Africa/Maputo', hour: '2-digit', minute: '2-digit' });
+  return `${day(at) !== day(new Date()) ? 'amanhã às' : 'às'} ${clock}`;
+}
+
 interface Transporte {
   id: string;
   matricula: string;
@@ -43,6 +65,7 @@ interface Transporte {
   longitude?: number;
   routeCoords?: [number, number][];
   stops?: Stop[];
+  posicao?: Posicao | null;
   via: {
     id: string;
     nome: string;
@@ -61,6 +84,9 @@ export default function TransporteDetalhes() {
   const mapInstanceRef = useRef<maplibregl.Map | null>(null);
   
   const [transporte, setTransporte] = useState<Transporte | null>(null);
+  // Live position (real GPS or timetable), refreshed while the page is open
+  const [posicao, setPosicao] = useState<Posicao | null>(null);
+  const busMarkerRef = useRef<maplibregl.Marker | null>(null);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
   const [showMotoristaModal, setShowMotoristaModal] = useState(false);
@@ -141,6 +167,20 @@ export default function TransporteDetalhes() {
     if (params.id) {
       fetchTransporte(params.id as string);
     }
+  }, [params.id]);
+
+  useEffect(() => {
+    if (!params.id) return;
+    const load = async () => {
+      const r = await fetch(`/api/transportes/${params.id}/posicao`);
+      if (!r.ok) return;
+      const p: Posicao | null = await r.json();
+      setPosicao(p);
+      if (p) busMarkerRef.current?.setLngLat([p.longitude, p.latitude]);
+    };
+    load();
+    const timer = setInterval(load, 15000);
+    return () => clearInterval(timer);
   }, [params.id]);
 
   useEffect(() => {
@@ -354,7 +394,7 @@ export default function TransporteDetalhes() {
           `;
           el.textContent = '🚌';
 
-          new maplibregl.Marker({ element: el })
+          busMarkerRef.current = new maplibregl.Marker({ element: el })
             .setLngLat([transporte.longitude, transporte.latitude])
             .setPopup(
               new maplibregl.Popup({ offset: 30 }).setHTML(
@@ -887,31 +927,40 @@ export default function TransporteDetalhes() {
                 <p className="text-sm text-black">Posição em tempo real com visualização 3D</p>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="px-3 py-1 bg-slate-100 text-black rounded-full text-xs font-semibold flex items-center">
-                  <span className="w-2 h-2 bg-slate-600 rounded-full mr-2 animate-pulse"></span>
-                  Em Movimento
+                <span className="px-3 py-1 bg-slate-100 text-black rounded-full text-xs font-semibold flex items-center" data-testid="position-status">
+                  <span className={`w-2 h-2 rounded-full mr-2 ${posicao?.emMovimento ? 'bg-green-600 animate-pulse' : 'bg-slate-500'}`}></span>
+                  {!posicao
+                    ? 'Sem localização'
+                    : posicao.foraDeServico
+                      ? 'Fora de serviço (05:00–21:00)'
+                      : posicao.emMovimento
+                        ? 'Em movimento'
+                        : 'Parado no terminal'}
+                  {posicao && ` · ${posicao.fonte === 'gps' ? 'GPS real' : 'estimado pelo horário'}`}
                 </span>
               </div>
             </div>
           </div>
           <div ref={mapRef} className="h-[600px]" />
           <div className="p-4 bg-slate-50 border-t border-slate-200">
-            <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-3 gap-4 text-center" data-testid="position-footer">
               <div>
                 <p className="text-xs text-black mb-1 font-medium">Velocidade Atual</p>
-                <p className="text-lg font-bold text-black">45 km/h</p>
+                <p className="text-lg font-bold text-black">{posicao ? `${Math.round(posicao.velocidadeKmh)} km/h` : '—'}</p>
               </div>
               <div>
                 <p className="text-xs text-black mb-1 font-medium">Próxima Paragem</p>
-                <p className="text-lg font-bold text-black">Costa do Sol</p>
+                <p className="text-lg font-bold text-black">{posicao?.proximaParagem ?? '—'}</p>
               </div>
               <div>
                 <p className="text-xs text-black mb-1 font-medium">Tempo Estimado</p>
-                <p className="text-lg font-bold text-black">5 min</p>
+                <p className="text-lg font-bold text-black">{posicao?.minutosAteProxima != null ? formatMinutos(posicao.minutosAteProxima) : '—'}</p>
               </div>
             </div>
           </div>
         </div>
+
+        <GpsTrackerCard transporteId={transporte.id} />
 
         {/* Pessoas Associadas - Motorista e Proprietário lado a lado */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" style={{ transition: 'none' }}>

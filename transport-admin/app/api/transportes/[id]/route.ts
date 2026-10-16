@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { positionSummary } from '@/lib/vehiclePosition';
 
 export async function GET(
   request: NextRequest,
@@ -19,6 +20,7 @@ export async function GET(
             terminalPartida: true,
             terminalChegada: true,
             geoLocationPath: true,
+            paragens: { select: { paragem: { select: { nome: true, geoLocation: true } } } },
           },
         },
         motorista: {
@@ -56,20 +58,10 @@ export async function GET(
       );
     }
 
-    // Parse currGeoLocation to latitude/longitude
-    let latitude = -25.9655;
-    let longitude = 32.5892;
-    if (transporte.currGeoLocation) {
-      try {
-        const [lat, lng] = transporte.currGeoLocation.split(',').map(Number);
-        if (!isNaN(lat) && !isNaN(lng)) {
-          latitude = lat;
-          longitude = lng;
-        }
-      } catch (e) {
-        // Use default values if parsing fails
-      }
-    }
+    // Where it is now: real GPS when fresh, otherwise its timetable position on the route
+    const posicao = await positionSummary(transporte, transporte.via);
+    const latitude = posicao?.latitude ?? -25.9655;
+    const longitude = posicao?.longitude ?? 32.5892;
 
     // Parse via's geoLocationPath to routeCoords
     let routeCoords: [number, number][] | undefined;
@@ -112,10 +104,14 @@ export async function GET(
       }
     }
 
+    // The device code's hash stays on the server
+    const { gpsDispositivoHash, ...publico } = transporte;
     return NextResponse.json({
-      ...transporte,
+      ...publico,
+      gpsConfigurado: Boolean(gpsDispositivoHash),
       latitude,
       longitude,
+      posicao,
       routeCoords,
     });
   } catch (error: any) {
