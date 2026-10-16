@@ -1,9 +1,80 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useReducer, useRef } from "react";
 import { useRouter } from "next/navigation";
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { orderStopsAlongRoute } from "@/lib/routeOrder";
+
+type Point = [number, number]; // [lng, lat]
+
+interface Municipio {
+  id: string;
+  nome: string;
+}
+
+interface Paragem {
+  id: string;
+  nome: string;
+  codigo: string;
+  geoLocation: string | null; // "lat,lng"
+}
+
+// The points clicked on the map, with undo/redo history (every change can be undone, also "Limpar")
+interface Drawing {
+  points: Point[];
+  past: Point[][];
+  future: Point[][];
+}
+
+type DrawAction =
+  | { type: 'add'; point: Point }
+  | { type: 'move'; index: number; point: Point }
+  | { type: 'remove'; index: number }
+  | { type: 'clear' }
+  | { type: 'undo' }
+  | { type: 'redo' };
+
+function drawingReducer(s: Drawing, a: DrawAction): Drawing {
+  const commit = (points: Point[]): Drawing => ({ points, past: [...s.past, s.points], future: [] });
+  switch (a.type) {
+    case 'add':
+      return commit([...s.points, a.point]);
+    case 'move':
+      return commit(s.points.map((p, i) => (i === a.index ? a.point : p)));
+    case 'remove':
+      return commit(s.points.filter((_, i) => i !== a.index));
+    case 'clear':
+      return s.points.length ? commit([]) : s;
+    case 'undo':
+      return s.past.length
+        ? { points: s.past[s.past.length - 1], past: s.past.slice(0, -1), future: [s.points, ...s.future] }
+        : s;
+    case 'redo':
+      return s.future.length
+        ? { points: s.future[0], past: [...s.past, s.points], future: s.future.slice(1) }
+        : s;
+  }
+}
+
+const NEAR_ROUTE_M = 50;
+
+function parseLatLng(geo: string | null): [number, number] | null {
+  const [lat, lng] = (geo || '').split(',').map(Number);
+  return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
+}
+
+// Distance in metres from a stop to the closest vertex of a road path (OSRM paths are dense)
+function distanceToPath([lat, lng]: [number, number], path: Point[]): number {
+  const k = Math.cos((lat * Math.PI) / 180);
+  let best = Infinity;
+  for (const [pLng, pLat] of path) {
+    const dLat = pLat - lat;
+    const dLng = (pLng - lng) * k;
+    best = Math.min(best, dLat * dLat + dLng * dLng);
+  }
+  return Math.sqrt(best) * 111320;
+}
 
 export default function NovaVia() {
   const router = useRouter();
@@ -11,17 +82,16 @@ export default function NovaVia() {
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
-  const markersRef = useRef<maplibregl.Marker[]>([]);
-  const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
-  const [routedPath, setRoutedPath] = useState<[number, number][]>([]); // Road-following path
-  const [routingFailed, setRoutingFailed] = useState(false);
-  const [municipios, setMunicipios] = useState<any[]>([]);
-  const [allParagens, setAllParagens] = useState<any[]>([]);
-  const [nearbyParagens, setNearbyParagens] = useState<any[]>([]);
-  const [selectedParagensIds, setSelectedParagensIds] = useState<string[]>([]);
-  const [useParagens, setUseParagens] = useState(false); // Toggle between manual and paragens mode - default to Manual
-  const paragensMarkersRef = useRef<maplibregl.Marker[]>([]);
-  
+  const [mapReady, setMapReady] = useState(false);
+  const pointMarkersRef = useRef<maplibregl.Marker[]>([]);
+  const paragemMarkersRef = useRef(new Map<string, maplibregl.Marker>());
+  const [drawing, dispatch] = useReducer(drawingReducer, { points: [], past: [], future: [] });
+  const [route, setRoute] = useState<{ key: string; path: Point[]; failed: boolean } | null>(null);
+  const [routeAttempt, setRouteAttempt] = useState(0); // "Tentar de novo" asks OSRM again
+  const [municipios, setMunicipios] = useState<Municipio[]>([]);
+  const [allParagens, setAllParagens] = useState<Paragem[]>([]);
+  const [excludedParagens, setExcludedParagens] = useState<string[]>([]); // stops near the route the user unticked
+
   const [formData, setFormData] = useState({
     nome: '',
     codigo: '',
@@ -31,46 +101,70 @@ export default function NovaVia() {
     municipioId: '',
   });
 
+  const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
   useEffect(() => {
-    fetchMunicipios();
-    fetchParagens();
+    fetch('/api/municipios?limit=1000')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((result) => setMunicipios(result.data || []))
+      .catch((error) => {
+        console.error('Erro ao carregar municípios:', error);
+        setNotification({ message: 'Erro ao carregar municípios', type: 'error' });
+      });
+    fetch('/api/paragens?limit=1000')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((result) => setAllParagens(result.data || []))
+      .catch((error) => console.error('Erro ao carregar paragens:', error));
   }, []);
 
-  // Fetch road-following route when coordinates change
+  // Road-following path for the clicked points. Each answer is tied to the points it was asked
+  // for, so a slow answer for older points never replaces the path of the current ones.
+  const pointsKey = drawing.points.map(([lng, lat]) => `${lng},${lat}`).join(';');
   useEffect(() => {
-    if (routeCoordinates.length < 2) {
-      setRoutedPath([]);
-      setRoutingFailed(false);
-      return;
-    }
-
-    async function fetchRoute() {
-      try {
-        // Build OSRM API URL with all coordinates
-        const coords = routeCoordinates.map(c => `${c[0]},${c[1]}`).join(';');
-        const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
-        
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.code === 'Ok' && data.routes && data.routes[0]) {
-          const routeGeometry = data.routes[0].geometry.coordinates;
-          setRoutedPath(routeGeometry);
-          setRoutingFailed(false);
+    const points = pointsKey ? pointsKey.split(';').map((p) => p.split(',').map(Number) as Point) : [];
+    if (points.length < 2) return;
+    let cancelled = false;
+    fetch(`https://router.project-osrm.org/route/v1/driving/${pointsKey}?overview=full&geometries=geojson`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (data.code === 'Ok' && data.routes?.[0]) {
+          setRoute({ key: pointsKey, path: data.routes[0].geometry.coordinates, failed: false });
         } else {
-          // Show the clicked points, but do not save them: straight lines cut across the map.
-          setRoutedPath(routeCoordinates);
-          setRoutingFailed(true);
+          setRoute({ key: pointsKey, path: points, failed: true });
         }
-      } catch (error) {
+      })
+      .catch((error) => {
         console.error('Error fetching route:', error);
-        setRoutedPath(routeCoordinates);
-        setRoutingFailed(true);
-      }
-    }
+        if (!cancelled) setRoute({ key: pointsKey, path: points, failed: true });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pointsKey, routeAttempt]);
 
-    fetchRoute();
-  }, [routeCoordinates]);
+  const hasRoute = drawing.points.length >= 2;
+  const routeReady = hasRoute && route?.key === pointsKey;
+  const routingFailed = routeReady && route.failed;
+  // While a new path is being computed the previous one stays on the map
+  const routedPath: Point[] = useMemo(() => (hasRoute && route ? route.path : []), [hasRoute, route]);
+
+  // Stops close to the route, in travel order
+  const nearbyParagens = useMemo(() => {
+    if (routedPath.length < 2) return [];
+    const near = allParagens.filter((p) => {
+      const at = parseLatLng(p.geoLocation);
+      return at !== null && distanceToPath(at, routedPath) <= NEAR_ROUTE_M;
+    });
+    const stored = routedPath.map(([lng, lat]) => `${lng},${lat}`).join(';');
+    return orderStopsAlongRoute(near, stored, (p) => p.geoLocation);
+  }, [routedPath, allParagens]);
+  const selectedParagens = nearbyParagens.filter((p) => !excludedParagens.includes(p.id));
+  const terminalPartida = formData.terminalPartida.trim() || selectedParagens[0]?.nome || '';
+  const terminalChegada = formData.terminalChegada.trim() || selectedParagens[selectedParagens.length - 1]?.nome || '';
 
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
@@ -112,15 +206,12 @@ export default function NovaVia() {
 
       // Handle tile loading errors gracefully
       map.current.on('error', (e) => {
-        // Suppress tile loading errors from console
         if (e.error?.message?.includes('Failed to fetch') || e.error?.message?.includes('tile')) {
-          // Silently ignore tile loading errors
           return;
         }
         console.error('Map error:', e);
       });
 
-      // Add 3D buildings
       map.current.on('load', () => {
         if (!map.current) return;
 
@@ -143,36 +234,12 @@ export default function NovaVia() {
           },
         });
 
-        // Add paragens to map after it's loaded
-        if (allParagens.length > 0) {
-          addParagensToMap(allParagens);
-        }
+        setMapReady(true);
       });
 
-      // Click to add route points
+      // Click to add a route point
       map.current.on('click', (e) => {
-        const coords: [number, number] = [e.lngLat.lng, e.lngLat.lat];
-        setRouteCoordinates(prev => [...prev, coords]);
-        
-        // Create custom marker element
-        const el = document.createElement("div");
-        el.style.cssText = `
-          width: 14px;
-          height: 14px;
-          background: ${formData.cor};
-          border: 3px solid white;
-          border-radius: 50%;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-          cursor: pointer;
-        `;
-        
-        // Add marker
-        const marker = new maplibregl.Marker({ element: el })
-          .setLngLat(coords)
-          .addTo(map.current!);
-        
-        // Store marker reference
-        markersRef.current.push(marker);
+        dispatch({ type: 'add', point: [e.lngLat.lng, e.lngLat.lat] });
       });
     };
 
@@ -184,135 +251,118 @@ export default function NovaVia() {
     return () => {
       clearTimeout(timeoutId);
       map.current?.remove();
+      map.current = null;
     };
   }, []);
 
-  // Update route line when routed path changes
+  // Undo / redo from the keyboard (not while typing in a field: those have their own undo)
   useEffect(() => {
-    if (!map.current || !map.current.isStyleLoaded()) return;
-    
-    if (routedPath.length < 2) {
-      // Remove route if no path
-      if (map.current.getLayer('route')) {
-        map.current.removeLayer('route');
-        map.current.removeSource('route');
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName))) return;
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const key = e.key.toLowerCase();
+      if (key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        dispatch({ type: 'undo' });
+      } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
+        e.preventDefault();
+        dispatch({ type: 'redo' });
       }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // Numbered markers for the clicked points: drag one to move it, click one to remove it
+  useEffect(() => {
+    const m = map.current;
+    pointMarkersRef.current.forEach((marker) => marker.remove());
+    pointMarkersRef.current = [];
+    if (!m || !mapReady) return;
+
+    drawing.points.forEach((point, index) => {
+      const el = document.createElement('div');
+      el.textContent = String(index + 1);
+      el.title = 'Arraste para mover · clique para remover';
+      el.dataset.testid = 'route-point';
+      el.style.cssText = `
+        min-width: 20px;
+        height: 20px;
+        padding: 0 4px;
+        background: ${formData.cor};
+        color: white;
+        font: 600 11px/14px system-ui, sans-serif;
+        text-align: center;
+        border: 3px solid white;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        cursor: pointer;
+      `;
+      const marker = new maplibregl.Marker({ element: el, draggable: true }).setLngLat(point).addTo(m);
+      let dragged = false;
+      marker.on('dragstart', () => {
+        dragged = true;
+      });
+      marker.on('dragend', () => {
+        const { lng, lat } = marker.getLngLat();
+        dispatch({ type: 'move', index, point: [lng, lat] });
+      });
+      el.addEventListener('click', (ev) => {
+        ev.stopPropagation(); // not a new point on the map
+        if (dragged) {
+          dragged = false;
+          return;
+        }
+        dispatch({ type: 'remove', index });
+      });
+      pointMarkersRef.current.push(marker);
+    });
+  }, [drawing.points, formData.cor, mapReady]);
+
+  // Road path line
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !mapReady) return;
+
+    if (routedPath.length < 2) {
+      if (m.getLayer('route')) m.removeLayer('route');
+      if (m.getSource('route')) m.removeSource('route');
       return;
     }
 
-    if (map.current.getSource('route')) {
-      (map.current.getSource('route') as maplibregl.GeoJSONSource).setData({
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: routedPath,
-        },
-      });
+    const data: GeoJSON.Feature = { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: routedPath } };
+    const source = m.getSource('route') as maplibregl.GeoJSONSource | undefined;
+    if (source) {
+      source.setData(data);
     } else {
-      map.current.addSource('route', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: routedPath,
-          },
-        },
-      });
-
-      map.current.addLayer({
+      m.addSource('route', { type: 'geojson', data });
+      // Below the 3D buildings would hide it; add it on top of the base map
+      m.addLayer({
         id: 'route',
         type: 'line',
         source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round',
-        },
-        paint: {
-          'line-color': formData.cor,
-          'line-width': 4,
-        },
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: { 'line-color': formData.cor, 'line-width': 4 },
       });
     }
-  }, [routedPath, formData.cor]);
+    m.setPaintProperty('route', 'line-color', formData.cor);
+    m.setPaintProperty('route', 'line-dasharray', routingFailed ? [2, 2] : [1, 0]);
+  }, [routedPath, routingFailed, formData.cor, mapReady]);
 
-  // Update marker colors when color changes
+  // Every stop on the map. Clicking one adds a route point exactly on it.
   useEffect(() => {
-    markersRef.current.forEach(marker => {
-      const el = marker.getElement();
-      if (el) {
-        el.style.background = formData.cor;
-      }
-    });
-  }, [formData.cor]);
+    const m = map.current;
+    if (!m || !mapReady) return;
+    const markers = paragemMarkersRef.current;
+    markers.forEach((marker) => marker.remove());
+    markers.clear();
 
-  async function fetchMunicipios() {
-    try {
-      console.log('Fetching municipios from /api/municipios');
-      // Fetch all municipios for the dropdown (no pagination needed)
-      const response = await fetch('/api/municipios?limit=1000');
-      console.log('Response status:', response.status, response.statusText);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Response error text:', errorText);
-        try {
-          const errorData = JSON.parse(errorText);
-          console.error('Parsed error data:', errorData);
-          throw new Error(errorData.details || errorData.error || 'Failed to fetch municipios');
-        } catch (parseError) {
-          throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
-        }
-      }
-      
-      const result = await response.json();
-      console.log('Municipios result:', result);
-      setMunicipios(result.data || []);
-    } catch (error) {
-      console.error('Erro ao carregar municípios:', error);
-      showNotification(
-        error instanceof Error ? error.message : 'Erro ao carregar municípios',
-        'error'
-      );
-    }
-  }
-
-  async function fetchParagens() {
-    try {
-      const response = await fetch('/api/paragens?limit=1000');
-      if (!response.ok) {
-        throw new Error('Failed to fetch paragens');
-      }
-      const result = await response.json();
-      const paragens = result.data || [];
-      setAllParagens(paragens);
-      
-      // Add paragens to map if map is ready
-      if (map.current && map.current.isStyleLoaded()) {
-        addParagensToMap(paragens);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar paragens:', error);
-    }
-  }
-
-  function addParagensToMap(paragens: any[]) {
-    if (!map.current || !map.current.isStyleLoaded()) return;
-    
-    // Clear existing paragens markers
-    paragensMarkersRef.current.forEach(marker => marker.remove());
-    paragensMarkersRef.current = [];
-    
-    paragens.forEach(paragem => {
-      if (!paragem.geoLocation) return;
-      
-      const [lat, lng] = paragem.geoLocation.split(',').map(Number);
-      if (isNaN(lng) || isNaN(lat)) return;
-      
-      // Create custom marker element for paragem
-      const el = document.createElement("div");
+    allParagens.forEach((paragem) => {
+      const at = parseLatLng(paragem.geoLocation);
+      if (!at) return;
+      const [lat, lng] = at;
+      const el = document.createElement('div');
       el.style.cssText = `
         width: 10px;
         height: 10px;
@@ -322,145 +372,65 @@ export default function NovaVia() {
         box-shadow: 0 1px 4px rgba(0,0,0,0.3);
         cursor: pointer;
       `;
-      
-      const marker = new maplibregl.Marker({ element: el })
-        .setLngLat([lng, lat])
-        .setPopup(
-          new maplibregl.Popup({ offset: 10 }).setHTML(
-            `<div style="color: black; font-size: 12px;"><strong>${paragem.nome}</strong><br/><span style="font-family: monospace; font-size: 10px;">${paragem.codigo}</span></div>`
-          )
-        )
-        .addTo(map.current!);
-      
-      paragensMarkersRef.current.push(marker);
+      const popup = new maplibregl.Popup({ offset: 10 });
+      const box = document.createElement('div');
+      box.style.cssText = 'color: black; font-size: 12px;';
+      const name = document.createElement('strong');
+      name.textContent = paragem.nome;
+      const code = document.createElement('span');
+      code.style.cssText = 'font-family: monospace; font-size: 10px;';
+      code.textContent = paragem.codigo;
+      box.append(name, document.createElement('br'), code);
+      popup.setDOMContent(box);
+
+      const marker = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).setPopup(popup).addTo(m);
+      el.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        dispatch({ type: 'add', point: [lng, lat] });
+        marker.togglePopup();
+      });
+      markers.set(paragem.id, marker);
     });
-  }
+  }, [allParagens, mapReady]);
 
-  // Calculate distance between two points using Haversine formula
-  function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371e3; // Earth's radius in meters
-    const φ1 = lat1 * Math.PI / 180;
-    const φ2 = lat2 * Math.PI / 180;
-    const Δφ = (lat2 - lat1) * Math.PI / 180;
-    const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c; // Distance in meters
-  }
-
-  // Check if a paragem is near the route
-  function isParagemNearRoute(paragem: any, routePath: [number, number][], threshold: number = 50): number {
-    if (!paragem.geoLocation || routePath.length === 0) return Infinity;
-    
-    const [lat, lng] = paragem.geoLocation.split(',').map(Number);
-    if (isNaN(lng) || isNaN(lat)) return Infinity;
-    
-    let minDistance = Infinity;
-    for (const [routeLng, routeLat] of routePath) {
-      const distance = calculateDistance(lat, lng, routeLat, routeLng);
-      minDistance = Math.min(minDistance, distance);
-    }
-    
-    return minDistance;
-  }
-
-  // Add paragens to map when they're loaded and map is ready
+  // Highlight the stops along the route
   useEffect(() => {
-    if (allParagens.length > 0 && map.current && map.current.isStyleLoaded()) {
-      addParagensToMap(allParagens);
-    }
-  }, [allParagens]);
-
-  // Update nearby paragens when route changes
-  useEffect(() => {
-    if (routedPath.length < 2) {
-      setNearbyParagens([]);
-      setSelectedParagensIds([]);
-      return;
-    }
-    
-    console.log('Checking nearby paragens for route with', routedPath.length, 'points');
-    console.log('Total paragens to check:', allParagens.length);
-    
-    const results = allParagens.map(paragem => ({
-      paragem,
-      distance: isParagemNearRoute(paragem, routedPath, 50)
-    })).filter(r => r.distance <= 50)
-      .sort((a, b) => a.distance - b.distance);
-    
-    console.log('Found', results.length, 'nearby paragens');
-    if (results.length > 0) {
-      console.log('Closest paragem:', results[0].paragem.nome, 'at', results[0].distance.toFixed(1), 'm');
-    }
-    
-    const nearbyParagensList = results.map(r => r.paragem);
-    setNearbyParagens(nearbyParagensList);
-    
-    // Auto-select all nearby paragens
-    setSelectedParagensIds(nearbyParagensList.map(p => p.id));
-    
-    // Highlight nearby paragens on map
-    paragensMarkersRef.current.forEach((marker, index) => {
-      const paragem = allParagens[index];
-      if (!paragem) return;
-      
+    const nearIds = new Set(nearbyParagens.map((p) => p.id));
+    paragemMarkersRef.current.forEach((marker, id) => {
       const el = marker.getElement();
-      const isNearby = results.some(r => r.paragem.id === paragem.id);
-      
-      if (isNearby) {
-        el.style.background = formData.cor;
-        el.style.width = '12px';
-        el.style.height = '12px';
-        el.style.border = '3px solid white';
-      } else {
-        el.style.background = '#6b7280';
-        el.style.width = '10px';
-        el.style.height = '10px';
-        el.style.border = '2px solid white';
-      }
+      const near = nearIds.has(id);
+      el.style.background = near ? formData.cor : '#6b7280';
+      el.style.width = near ? '12px' : '10px';
+      el.style.height = near ? '12px' : '10px';
+      el.style.border = near ? '3px solid white' : '2px solid white';
     });
-  }, [routedPath, allParagens, formData.cor]);
-
-  const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
-  };
-
-  const handleClearRoute = () => {
-    setRouteCoordinates([]);
-    
-    // Remove all markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
-    
-    if (map.current) {
-      // Remove route layer
-      if (map.current.getLayer('route')) {
-        map.current.removeLayer('route');
-        map.current.removeSource('route');
-      }
-    }
-  };
+  }, [nearbyParagens, formData.cor, allParagens, mapReady]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.nome || !formData.codigo || !formData.municipioId) {
       showNotification('Preencha todos os campos obrigatórios', 'error');
       return;
     }
 
-    if (routeCoordinates.length < 2) {
+    if (!hasRoute) {
       showNotification('Desenhe a rota no mapa (clique para adicionar pontos)', 'error');
       return;
     }
 
+    if (!routeReady) {
+      showNotification('Aguarde: o percurso pelas estradas ainda está a ser calculado.', 'info');
+      return;
+    }
+
     if (routingFailed || routedPath.length < 2) {
-      showNotification('Não foi possível calcular o percurso pelas estradas. Verifique a ligação e clique de novo no mapa.', 'error');
+      showNotification('Não foi possível calcular o percurso pelas estradas. Verifique a ligação e mova ou adicione um ponto.', 'error');
+      return;
+    }
+
+    if (!terminalPartida || !terminalChegada) {
+      showNotification('Indique os terminais de partida e de chegada', 'error');
       return;
     }
 
@@ -468,29 +438,20 @@ export default function NovaVia() {
     try {
       // Save the road-following path in the stored "lng,lat;lng,lat" format
       const geoLocationPath = routedPath.map(([lng, lat]) => `${lng},${lat}`).join(';');
-      
-      console.log('Creating via with data:', {
-        ...formData,
-        geoLocationPath: geoLocationPath.substring(0, 100) + '...',
-        routePointsCount: routedPath.length || routeCoordinates.length,
-        paragensIds: selectedParagensIds,
-      });
-      
+
       const response = await fetch('/api/vias', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          terminalPartida,
+          terminalChegada,
           geoLocationPath,
-          paragensIds: selectedParagensIds,
+          paragensIds: selectedParagens.map((p) => p.id),
         }),
       });
 
-      console.log('Response status:', response.status, response.statusText);
-
       if (response.ok) {
-        const result = await response.json();
-        console.log('Via created successfully:', result);
         showNotification('Via criada com sucesso!', 'success');
         setTimeout(() => router.push('/vias'), 1500);
       } else {
@@ -498,9 +459,8 @@ export default function NovaVia() {
         console.error('Error response:', errorText);
         try {
           const error = JSON.parse(errorText);
-          console.error('Parsed error:', error);
           showNotification(error.details || error.error || 'Erro ao criar via', 'error');
-        } catch (parseError) {
+        } catch {
           showNotification(`Erro ao criar via: ${response.status} ${response.statusText}`, 'error');
         }
       }
@@ -514,6 +474,14 @@ export default function NovaVia() {
       setLoading(false);
     }
   };
+
+  const routeKm = routedPath.length > 1
+    ? routedPath.slice(1).reduce((sum, [lng, lat], i) => {
+        const [pLng, pLat] = routedPath[i];
+        const k = Math.cos((lat * Math.PI) / 180);
+        return sum + Math.hypot(lat - pLat, (lng - pLng) * k) * 111.32;
+      }, 0)
+    : 0;
 
   return (
     <div className="bg-white min-h-screen">
@@ -554,6 +522,7 @@ export default function NovaVia() {
           <button
             onClick={() => router.push('/vias')}
             className="p-2 rounded-lg hover:bg-gray-100 flex-shrink-0"
+            aria-label="Voltar às vias"
           >
             <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -568,175 +537,81 @@ export default function NovaVia() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Form */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Informações da Via</h3>
-              <div className="flex items-center space-x-2">
-                <span className={`text-xs font-medium ${!useParagens ? 'text-gray-900' : 'text-gray-500'}`}>
-                  Manual
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setUseParagens(!useParagens)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    useParagens ? 'bg-gray-900' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      useParagens ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-                <span className={`text-xs font-medium ${useParagens ? 'text-gray-900' : 'text-gray-500'}`}>
-                  Paragens
-                </span>
-              </div>
-            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Informações da Via</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Show basic fields only in Manual mode */}
-              {!useParagens && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">
-                      Nome da Via *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.nome}
-                      onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
-                      placeholder="Ex: Via Principal Centro"
-                      required
-                    />
-                  </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Nome da Via *
+                </label>
+                <input
+                  type="text"
+                  value={formData.nome}
+                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                  placeholder="Ex: Via Principal Centro"
+                  required
+                />
+              </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">
-                      Código *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.codigo}
-                      onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
-                      placeholder="Ex: VP-001"
-                      required
-                    />
-                  </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Código *
+                </label>
+                <input
+                  type="text"
+                  value={formData.codigo}
+                  onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                  placeholder="Ex: VP-001"
+                  required
+                />
+              </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">
-                      Município *
-                    </label>
-                    <select
-                      value={formData.municipioId}
-                      onChange={(e) => setFormData({ ...formData, municipioId: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
-                      required
-                    >
-                      <option value="">Selecione um município</option>
-                      {municipios.map((m) => (
-                        <option key={m.id} value={m.id}>{m.nome}</option>
-                      ))}
-                    </select>
-                  </div>
-                </>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Município *
+                </label>
+                <select
+                  value={formData.municipioId}
+                  onChange={(e) => setFormData({ ...formData, municipioId: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                  required
+                >
+                  <option value="">Selecione um município</option>
+                  {municipios.map((m) => (
+                    <option key={m.id} value={m.id}>{m.nome}</option>
+                  ))}
+                </select>
+              </div>
 
-              {/* Terminal Fields or Paragens List */}
-              {!useParagens ? (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">
-                      Terminal de Partida *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.terminalPartida}
-                      onChange={(e) => setFormData({ ...formData, terminalPartida: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
-                      placeholder="Ex: Terminal Central"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">
-                      Terminal de Chegada *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.terminalChegada}
-                      onChange={(e) => setFormData({ ...formData, terminalChegada: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
-                      placeholder="Ex: Terminal Norte"
-                      required
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Paragens List - Only show in Paragens mode when there are nearby paragens */}
-                  {nearbyParagens.length > 0 && (
-                    <div className="pt-4 border-t border-gray-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-semibold text-gray-900">
-                          Paragens da Rota ({nearbyParagens.length})
-                        </h4>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (selectedParagensIds.length === nearbyParagens.length) {
-                              setSelectedParagensIds([]);
-                            } else {
-                              setSelectedParagensIds(nearbyParagens.map(p => p.id));
-                            }
-                          }}
-                          className="text-xs font-medium text-gray-900 hover:text-gray-700 px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50"
-                        >
-                          {selectedParagensIds.length === nearbyParagens.length ? 'Desmarcar Todas' : 'Selecionar Todas'}
-                        </button>
-                      </div>
-                      <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                        {nearbyParagens.map((paragem) => (
-                          <div
-                            key={paragem.id}
-                            onClick={() => {
-                              setSelectedParagensIds(prev =>
-                                prev.includes(paragem.id)
-                                  ? prev.filter(id => id !== paragem.id)
-                                  : [...prev, paragem.id]
-                              );
-                            }}
-                            className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all ${
-                              selectedParagensIds.includes(paragem.id)
-                                ? 'border-gray-900 bg-gray-50'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            <div className="flex items-center space-x-3">
-                              <input
-                                type="checkbox"
-                                checked={selectedParagensIds.includes(paragem.id)}
-                                onChange={() => {}}
-                                className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
-                              />
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">{paragem.nome}</p>
-                                <p className="text-xs text-gray-600 font-mono">{paragem.codigo}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      {selectedParagensIds.length > 0 && (
-                        <p className="text-xs text-gray-600 mt-3">
-                          {selectedParagensIds.length} paragem{selectedParagensIds.length !== 1 ? 'ns' : ''} selecionada{selectedParagensIds.length !== 1 ? 's' : ''}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                    Terminal de Partida *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.terminalPartida}
+                    onChange={(e) => setFormData({ ...formData, terminalPartida: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                    placeholder={selectedParagens[0] ? `${selectedParagens[0].nome} (1.ª paragem)` : 'Ex: Terminal Central'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                    Terminal de Chegada *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.terminalChegada}
+                    onChange={(e) => setFormData({ ...formData, terminalChegada: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                    placeholder={selectedParagens.length > 1 ? `${selectedParagens[selectedParagens.length - 1].nome} (última paragem)` : 'Ex: Terminal Norte'}
+                  />
+                </div>
+              </div>
+              {selectedParagens.length > 0 && (
+                <p className="text-xs text-gray-600 -mt-2">Em branco: usa a primeira e a última paragem da rota.</p>
               )}
 
               <div>
@@ -754,14 +629,65 @@ export default function NovaVia() {
                 </div>
               </div>
 
-              <div className="pt-4 space-y-3">
-                <button
-                  type="button"
-                  onClick={handleClearRoute}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium text-gray-900"
-                >
-                  Limpar Rota
-                </button>
+              {/* Stops along the drawn route, in travel order */}
+              {nearbyParagens.length > 0 && (
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-gray-900">
+                      Paragens da Rota ({selectedParagens.length} de {nearbyParagens.length})
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExcludedParagens(
+                          selectedParagens.length === nearbyParagens.length ? nearbyParagens.map((p) => p.id) : [],
+                        )
+                      }
+                      className="text-xs font-medium text-gray-900 hover:text-gray-700 px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      {selectedParagens.length === nearbyParagens.length ? 'Desmarcar Todas' : 'Selecionar Todas'}
+                    </button>
+                  </div>
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {nearbyParagens.map((paragem, i) => {
+                      const selected = !excludedParagens.includes(paragem.id);
+                      return (
+                        <label
+                          key={paragem.id}
+                          className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-all ${
+                            selected ? 'border-gray-900 bg-gray-50' : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() =>
+                              setExcludedParagens((prev) =>
+                                prev.includes(paragem.id) ? prev.filter((id) => id !== paragem.id) : [...prev, paragem.id],
+                              )
+                            }
+                            className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
+                          />
+                          <span className="text-xs text-gray-500 w-5 text-right">{i + 1}</span>
+                          <span>
+                            <span className="block text-sm font-medium text-gray-900">{paragem.nome}</span>
+                            <span className="block text-xs text-gray-600 font-mono">{paragem.codigo}</span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-4 border-t border-gray-200 space-y-3">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-gray-700" data-testid="route-counts">
+                  <span>Pontos na rota: <strong className="text-gray-900">{drawing.points.length}</strong></span>
+                  <span>Paragens próximas: <strong className="text-gray-900">{nearbyParagens.length}</strong></span>
+                </div>
+                <p className="text-xs text-gray-600">
+                  * Campos obrigatórios. Clique no mapa para desenhar a rota.
+                </p>
                 <button
                   type="submit"
                   disabled={loading}
@@ -770,26 +696,66 @@ export default function NovaVia() {
                   {loading ? 'Criando...' : 'Criar Via'}
                 </button>
               </div>
-
-              <p className="text-xs text-gray-600">
-                * Campos obrigatórios. Clique no mapa para desenhar a rota.
-              </p>
-              <p className="text-xs text-gray-600">
-                Pontos na rota: {routeCoordinates.length}
-              </p>
-              {nearbyParagens.length > 0 && (
-                <p className="text-xs text-gray-600">
-                  Paragens próximas: {nearbyParagens.length}
-                </p>
-              )}
             </form>
           </div>
 
           {/* Map */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Desenhar Rota no Mapa</h3>
-              <p className="text-sm text-gray-600 mt-1">Clique no mapa para adicionar pontos à rota</p>
+            <div className="p-4 border-b border-gray-200 space-y-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Desenhar Rota no Mapa</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Clique no mapa ou numa paragem para adicionar um ponto. Arraste um ponto para o mover; clique nele para o remover.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => dispatch({ type: 'undo' })}
+                    disabled={!drawing.past.length}
+                    title="Desfazer (Ctrl+Z)"
+                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    ↶ Desfazer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => dispatch({ type: 'redo' })}
+                    disabled={!drawing.future.length}
+                    title="Refazer (Ctrl+Y)"
+                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    ↷ Refazer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => dispatch({ type: 'clear' })}
+                    disabled={!drawing.points.length}
+                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Limpar Rota
+                  </button>
+                </div>
+              </div>
+              <p className={`text-xs ${routingFailed ? 'text-red-700' : 'text-gray-600'}`} data-testid="route-status">
+                {!hasRoute && 'Adicione pelo menos dois pontos.'}
+                {hasRoute && !routeReady && 'A calcular o percurso pelas estradas…'}
+                {routeReady && !routingFailed && `Percurso pelas estradas: ${routeKm.toFixed(1)} km`}
+                {routingFailed && 'Não foi possível calcular o percurso pelas estradas (linha tracejada). '}
+                {routingFailed && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRoute(null);
+                      setRouteAttempt((n) => n + 1);
+                    }}
+                    className="underline font-medium"
+                  >
+                    Tentar de novo
+                  </button>
+                )}
+              </p>
             </div>
             <div ref={mapContainer} className="w-full h-[600px]" />
           </div>
