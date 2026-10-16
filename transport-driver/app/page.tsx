@@ -117,9 +117,7 @@ export default function LoginPage() {
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-sm text-gray-600 text-center">
               Não tem PIN ou esqueceu-o?{" "}
-              <a href="/support" className="text-gray-900 hover:underline font-medium">
-                Contactar Administrador
-              </a>
+              <span className="text-gray-900 font-medium">Peça um novo PIN ao administrador.</span>
             </p>
           </div>
         </div>
