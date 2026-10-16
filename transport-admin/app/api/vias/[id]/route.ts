@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { orderStopsAlongRoute } from '@/lib/routeOrder';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -74,11 +75,9 @@ export async function GET(
       );
     }
 
-    console.log('Via found:', via.codigo, 'with', via.paragens?.length || 0, 'paragens');
-    console.log('Transportes count from _count:', via._count.transportes);
-    console.log('Transportes array length:', via.transportes?.length || 0);
-    console.log('First 3 transportes:', via.transportes?.slice(0, 3).map(t => t.codigo));
-    
+    // Stops in travel order (their id order is not)
+    via.paragens = orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation);
+
     return NextResponse.json(via, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',

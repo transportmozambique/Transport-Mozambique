@@ -31,7 +31,8 @@ interface StatsData {
   utentesSubscritos?: number;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
+// Most records a report loads (the table shows the first 100)
+const REPORT_LIMIT = 5000;
 
 export default function Relatorios() {
   const router = useRouter();
@@ -140,7 +141,7 @@ export default function Relatorios() {
 
     if (report.entity === 'estatisticas') {
       try {
-        const statsRes = await fetch(`${API_BASE}/api/admin/stats`);
+        const statsRes = await fetch('/api/relatorios/stats');
         if (!statsRes.ok) {
           throw new Error(`HTTP error! status: ${statsRes.status}`);
         }
@@ -157,26 +158,16 @@ export default function Relatorios() {
       return;
     }
 
-    const url = `${API_BASE}/api/${report.entity === 'transportes' ? 'buses' : report.entity === 'paragens' ? 'locations/paragens' : report.entity === 'vias' ? 'locations/vias' : 'admin/' + report.entity}`;
+    // This dashboard's own API (the session cookie authorises it); every list returns { data }
+    const url = `/api/${report.entity}?limit=${REPORT_LIMIT}`;
 
     try {
-      let data: any[] = [];
-
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const jsonData = await response.json();
-
-      if (report.entity === 'transportes') {
-        data = Array.isArray(jsonData) ? jsonData : jsonData.buses || [];
-      } else if (report.entity === 'vias') {
-        data = jsonData.vias || [];
-      } else if (report.entity === 'paragens') {
-        data = jsonData.paragens || [];
-      } else {
-        data = Array.isArray(jsonData) ? jsonData : [];
-      }
+      const data: any[] = Array.isArray(jsonData.data) ? jsonData.data : [];
 
       setReportData({ [report.entity]: data });
       setShowReportModal(true);

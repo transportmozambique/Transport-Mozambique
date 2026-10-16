@@ -179,7 +179,7 @@ export default function ViaDetalhes() {
             }
           });
 
-          // Add route outline
+          // Add route outline beneath the route line (on top it washes the route out)
           map.addLayer({
             id: 'route-outline',
             type: 'line',
@@ -193,7 +193,7 @@ export default function ViaDetalhes() {
               'line-width': 8,
               'line-opacity': 0.4
             }
-          });
+          }, 'route');
 
           console.log('Route layers added successfully');
 

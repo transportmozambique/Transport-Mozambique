@@ -50,6 +50,7 @@ model Municipio {
   id              String         @id @default(cuid())
   nome            String
   codigo          String         @unique
+  geoLocation     String? // Coordenadas do centro do município (lat,lng)
   endereco        String?
   contacto1       Int?
   codigoCidade    String?
@@ -189,8 +190,11 @@ model Motorista {
   dataValidadeCarta DateTime
   categoriaCarta    String      @default("B")
   experienciaAnos   Int         @default(0)
+  password          String?
   observacoes       String?
   status            String      @default("ativo")
+  emViagem          Boolean     @default(false)
+  viagemIniciadaEm  DateTime?
   transporteId      String?     @unique
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
@@ -222,6 +226,7 @@ model MISSION {
   geoLocationParagem String
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  notificadoEm       DateTime? // último SMS de chegada enviado
   utenteId           String
   paragemId          String
   paragem            Paragem  @relation(fields: [paragemId], references: [id])
@@ -247,4 +252,18 @@ model GeoLocation {
   transporte            Transporte @relation(fields: [transporteId], references: [id])
 
   @@index([transporteId])
+}
+
+// Regra de tarifa partilhada pela web e pelo USSD (uma linha ativa)
+model Tarifa {
+  id                   String   @id @default(cuid())
+  nome                 String   @unique
+  tarifaMinima         Int      @default(10) // MT
+  precoPorKm           Float    @default(10) // MT por km
+  fatorEstrada         Float    @default(1.3) // linha reta -> distância por estrada quando o percurso não é conhecido
+  velocidadeViagemKmh  Float    @default(30) // tempo de viagem do utente
+  velocidadeChegadaKmh Float    @default(45) // tempo até o autocarro chegar à paragem
+  ativa                Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }
