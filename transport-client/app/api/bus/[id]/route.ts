@@ -50,7 +50,7 @@ export async function GET(
       [-25.9692, 32.5732];
 
     // Path drawn on the map: the bus's own route if it has one, else the via's ([lng, lat] pairs)
-    const routeCoords = parseRoutePath(transporte.routePath || via.geoLocationPath).map(([lat, lng]) => [lng, lat]);
+    const routeCoords = parseRoutePath(via.geoLocationPath || transporte.routePath).map(([lat, lng]) => [lng, lat]);
 
     const trip = paragemId && destinoId
       ? estimateTrip(stops.map((s) => ({ id: s.vp.paragem.id, point: s.point })), bus, paragemId, destinoId, rule)

@@ -80,12 +80,19 @@ export function pathLengthMeters(points: LatLng[]): number {
 /** Parses a route path stored as "lng,lat;lng,lat;..." (Via.geoLocationPath). */
 export function parseRoutePath(path: string | null | undefined): LatLng[] {
   if (!path) return [];
-  return path
-    .split(';')
-    .map((coord) => {
-      const [lng, lat] = coord.split(',').map(Number);
-      return [lat, lng] as LatLng;
-    })
+  let pairs: number[][];
+  if (path.trim().startsWith('[')) {
+    // Older admin versions saved the path as a JSON array of [lng, lat]
+    try {
+      pairs = (JSON.parse(path) as unknown[]).map((p) => (Array.isArray(p) ? p.map(Number) : []));
+    } catch {
+      return [];
+    }
+  } else {
+    pairs = path.split(';').map((coord) => coord.split(',').map(Number));
+  }
+  return pairs
+    .map(([lng, lat]) => [lat, lng] as LatLng)
     .filter(([lat, lng]) => Number.isFinite(lat) && Number.isFinite(lng));
 }
 

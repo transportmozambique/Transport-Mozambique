@@ -96,18 +96,11 @@ export async function GET(request: NextRequest) {
           }
         }
 
-        let routePath: [number, number][] = [];
-        if (transporte.routePath) {
-          routePath = transporte.routePath.split(';').map((coord) => {
-            const [lng, lat] = coord.split(',').map(Number);
-            return [lng, lat];
-          });
-        } else if (via.geoLocationPath) {
-          routePath = via.geoLocationPath.split(';').map((coord) => {
-            const [lng, lat] = coord.split(',').map(Number);
-            return [lng, lat];
-          });
-        }
+        // The route's path comes first: the bus's own routePath is stale on most buses
+        // (it was copied from other routes), so it is only a fallback.
+        const routePath = parseRoutePath(via.geoLocationPath || transporte.routePath).map(
+          ([lat, lng]) => [lng, lat] as [number, number]
+        );
 
         const stops = via.paragens.map((vp) => {
           const [lat, lng] = vp.paragem.geoLocation.split(',').map(Number);
