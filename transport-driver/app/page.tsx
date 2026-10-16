@@ -65,7 +65,7 @@ export default function LoginPage() {
         {/* Login Card */}
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            Iniciar Sessao
+            Iniciar Sessão
           </h2>
 
           {error && (
@@ -77,7 +77,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Numero de Telefone
+                Número de Telefone
               </label>
               <input
                 type="tel"
@@ -125,7 +125,7 @@ export default function LoginPage() {
         {/* Info */}
         <div className="mt-6 bg-gray-800/50 rounded-lg p-4">
           <p className="text-xs text-gray-400 text-center">
-            O motor deve estar registado pelo administrador do sistema
+            O motorista deve estar registado pelo administrador do sistema
           </p>
         </div>
       </div>
