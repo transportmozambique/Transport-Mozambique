@@ -1,70 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  initializeBusPositions,
-  startBusSimulation,
-  stopBusSimulation,
-  getSimulationStatus,
-} from '@/lib/busSimulator';
+import { checkAndNotifyUsers, getSimulationStatus } from '@/lib/busSimulator';
 
-// Inicializar posições ao carregar o módulo
-let initialized = false;
-
-async function ensureInitialized() {
-  if (!initialized) {
-    await initializeBusPositions();
-    initialized = true;
-  }
-}
-
-export async function GET(request: NextRequest) {
+// GET: how positions are produced (real GPS or timetable) and the last arrival check.
+export async function GET() {
   try {
-    await ensureInitialized();
-    const status = getSimulationStatus();
-
-    return NextResponse.json({
-      success: true,
-      status,
-    });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, status: await getSimulationStatus() });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
 
+// POST {"action": "check"}: run the arrival SMS check now. Positions need no start or stop:
+// they come from real GPS or from the timetable on every read.
 export async function POST(request: NextRequest) {
   try {
-    const { action, interval } = await request.json();
-
-    await ensureInitialized();
-
-    if (action === 'start') {
-      const intervalMs = interval || 30000; // 30 segundos por padrão
-      startBusSimulation(intervalMs);
-
-      return NextResponse.json({
-        success: true,
-        message: 'Simulação iniciada',
-        interval: intervalMs,
-      });
-    } else if (action === 'stop') {
-      stopBusSimulation();
-
-      return NextResponse.json({
-        success: true,
-        message: 'Simulação parada',
-      });
-    } else {
+    const { action } = await request.json().catch(() => ({ action: null }));
+    if (action !== 'check') {
       return NextResponse.json(
-        { error: 'Ação inválida. Use "start" ou "stop"' },
+        { error: 'Ação inválida. Use "check". As posições são calculadas em cada pedido (GPS real ou horário).' },
         { status: 400 }
       );
     }
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    const notified = await checkAndNotifyUsers();
+    return NextResponse.json({ success: true, notified, status: await getSimulationStatus() });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }

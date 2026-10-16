@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Transport } from "../types";
 import LoadingScreen from "../components/LoadingScreen";
 import UserAvatar from "../components/UserAvatar";
+import { formatEta } from "@/lib/eta";
 
 interface Municipio {
   id: string;
@@ -679,7 +680,7 @@ function SearchContent() {
                             <span className="text-xs text-slate-600 font-medium">Chega em</span>
                           </div>
                           <p className="text-lg font-bold text-slate-900">
-                            {transport.tempoEstimado} min
+                            {formatEta(transport.tempoEstimado).text}
                           </p>
                         </div>
 

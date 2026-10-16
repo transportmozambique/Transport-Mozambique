@@ -1,331 +1,101 @@
 import { prisma } from './prisma';
-import { parseRoutePath } from './fares';
+import { getFareRule, haversineMeters, parseLatLng } from './fares';
+import { GPS_FRESH_MS, vehiclePosition } from './vehiclePosition';
 
 /**
- * Simulador de Movimento de Autocarros
- * Atualiza a posição dos autocarros seguindo suas rotas
+ * Bus positions are no longer written by a loop: lib/vehiclePosition.ts gives each bus's
+ * position on read (fresh real GPS, otherwise the timetable). A loop could not run on
+ * serverless anyway, and writing currGeoLocation would overwrite the vehicles' real GPS.
+ *
+ * What remains here is the arrival SMS: a passenger who asked for a bus (a MISSION) gets one
+ * message when a bus on a route through their stop is less than 1 km away.
  */
 
-interface BusPosition {
-  transporteId: string;
-  currentIndex: number;
-  routePath: [number, number][];
-  direction: 'forward' | 'backward';
-}
-
-// Armazenar posição atual de cada autocarro
-const busPositions = new Map<string, BusPosition>();
-
-/**
- * Calcular distância entre dois pontos (em metros)
- */
-function calculateDistance(
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number
-): number {
-  const R = 6371e3; // Raio da Terra em metros
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lng2 - lng1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c;
-}
-
-/**
- * Interpolar posição entre dois pontos
- */
-function interpolatePosition(
-  start: [number, number],
-  end: [number, number],
-  progress: number
-): [number, number] {
-  const lng = start[0] + (end[0] - start[0]) * progress;
-  const lat = start[1] + (end[1] - start[1]) * progress;
-  return [lng, lat];
-}
-
-/**
- * Inicializar posições dos autocarros
- */
-export async function initializeBusPositions() {
-  console.log('🚌 Inicializando posições dos autocarros...');
-
-  const transportes = await prisma.transporte.findMany({
-    include: {
-      via: true,
-    },
-  });
-
-  for (const transporte of transportes) {
-    if (!transporte.via) continue;
-    const { via } = transporte;
-
-    // Percurso da via ([lng, lat]); o routePath próprio do autocarro está desatualizado na
-    // maioria dos autocarros, por isso só serve quando a via não tem percurso.
-    const routePath = parseRoutePath(via.geoLocationPath || transporte.routePath).map(
-      ([lat, lng]) => [lng, lat] as [number, number]
-    );
-
-    if (routePath.length > 0) {
-      busPositions.set(transporte.id, {
-        transporteId: transporte.id,
-        currentIndex: 0,
-        routePath,
-        direction: 'forward',
-      });
-    }
-  }
-
-  console.log(`✅ ${busPositions.size} autocarros inicializados`);
-}
-
-/**
- * Atualizar posição de um autocarro
- */
-async function updateBusPosition(busPosition: BusPosition) {
-  const { transporteId, currentIndex, routePath, direction } = busPosition;
-
-  // Fetch transport codigo for geoLocation
-  const transport = await prisma.transporte.findUnique({
-    where: { id: transporteId },
-    select: { codigo: true }
-  });
-  
-  if (!transport) {
-    console.error(`Transport ${transporteId} not found`);
-    return;
-  }
-
-  // Calcular próximo índice
-  let nextIndex = currentIndex;
-  if (direction === 'forward') {
-    nextIndex = currentIndex + 1;
-    if (nextIndex >= routePath.length) {
-      // Chegou ao fim, inverter direção
-      busPosition.direction = 'backward';
-      nextIndex = routePath.length - 2;
-    }
-  } else {
-    nextIndex = currentIndex - 1;
-    if (nextIndex < 0) {
-      // Chegou ao início, inverter direção
-      busPosition.direction = 'forward';
-      nextIndex = 1;
-    }
-  }
-
-  busPosition.currentIndex = nextIndex;
-
-  // Obter nova posição
-  const [lng, lat] = routePath[nextIndex];
-  const newPosition = `${lat},${lng}`;
-
-  // Obter posições anteriores para histórico
-  const prevIndex1 = Math.max(0, nextIndex - 1);
-  const prevIndex2 = Math.max(0, nextIndex - 2);
-  const prevIndex3 = Math.max(0, nextIndex - 3);
-
-  const [lng1, lat1] = routePath[prevIndex1];
-  const [lng2, lat2] = routePath[prevIndex2];
-  const [lng3, lat3] = routePath[prevIndex3];
-
-  try {
-    // Remove transaction to avoid timeout issues - use individual queries
-    // Atualizar posição do transporte
-    await prisma.transporte.update({
-      where: { id: transporteId },
-      data: { currGeoLocation: newPosition },
-    });
-
-    // Atualizar ou criar GeoLocation
-    const existingGeoLocation = await prisma.geoLocation.findFirst({
-      where: { transporteId },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (existingGeoLocation) {
-      await prisma.geoLocation.update({
-        where: { id: existingGeoLocation.id },
-        data: {
-          geoLocationTransporte: newPosition,
-          geoDirection: direction === 'forward' ? 'Indo' : 'Voltando',
-          geoLocationHist1: `${lat1},${lng1}`,
-          geoLocationHist2: `${lat2},${lng2}`,
-          geoLocationHist3: `${lat3},${lng3}`,
-          geoDateTime1: new Date(Date.now() - 5 * 60000),
-          geoDateTime2: new Date(Date.now() - 10 * 60000),
-          geoDateTime3: new Date(Date.now() - 15 * 60000),
-        },
-      });
-    } else {
-      await prisma.geoLocation.create({
-        data: {
-          transporteId,
-          codigoTransporte: (await prisma.transporte.findUnique({ where: { id: transporteId }, select: { codigo: true } }))?.codigo || 0,
-          geoLocationTransporte: newPosition,
-          geoDirection: direction === 'forward' ? 'Indo' : 'Voltando',
-          geoLocationHist1: `${lat1},${lng1}`,
-          geoLocationHist2: `${lat2},${lng2}`,
-          geoLocationHist3: `${lat3},${lng3}`,
-          geoDateTime1: new Date(Date.now() - 5 * 60000),
-          geoDateTime2: new Date(Date.now() - 10 * 60000),
-          geoDateTime3: new Date(Date.now() - 15 * 60000),
-        },
-      });
-    }
-  } catch (error) {
-    console.error(`Erro ao atualizar posição do autocarro ${transporteId}:`, error);
-  }
-}
-
-/**
- * Verificar e notificar usuários sobre autocarros próximos
- */
-// Minimum time between two arrival SMS for the same mission (the check runs every cycle)
+// Minimum time between two arrival SMS for the same mission
 const NOTIFY_COOLDOWN_MS = 30 * 60 * 1000;
+// Minimum time between two checks in the same server instance (they are triggered by visits)
+const CHECK_INTERVAL_MS = 30 * 1000;
 
-async function checkAndNotifyUsers() {
+let lastCheck = 0;
+let lastResult: { checkedAt: string; missions: number; notified: number } | null = null;
+
+/** Sends arrival SMS for pending missions. Returns how many were sent. */
+export async function checkAndNotifyUsers(now: Date = new Date()): Promise<number> {
+  let notified = 0;
   try {
     // Missions from the last 24 hours that were not notified recently
     const missions = await prisma.mISSION.findMany({
       where: {
-        createdAt: {
-          gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
-        },
+        createdAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) },
         OR: [
           { notificadoEm: null },
-          { notificadoEm: { lt: new Date(Date.now() - NOTIFY_COOLDOWN_MS) } },
+          { notificadoEm: { lt: new Date(now.getTime() - NOTIFY_COOLDOWN_MS) } },
         ],
       },
-      include: {
-        utente: true,
-        paragem: true,
-      },
+      include: { utente: true, paragem: true },
     });
+    if (missions.length === 0) {
+      lastResult = { checkedAt: now.toISOString(), missions: 0, notified: 0 };
+      return 0;
+    }
 
-    // Buscar todos os transportes
     const transportes = await prisma.transporte.findMany({
-      include: {
-        via: {
-          include: {
-            paragens: {
-              include: {
-                paragem: true,
-              },
-            },
-          },
-        },
-      },
+      where: { via: { paragens: { some: { paragemId: { in: missions.map((m) => m.paragemId) } } } } },
+      include: { via: { select: { geoLocationPath: true, paragens: { select: { paragemId: true } } } } },
     });
 
-    // Para cada mission
+    const rule = await getFareRule();
     for (const mission of missions) {
-      const [paragemLat, paragemLng] = mission.geoLocationParagem
-        .split(',')
-        .map(Number);
+      const stop = parseLatLng(mission.geoLocationParagem);
+      if (!stop) continue;
 
-      // Verificar cada transporte
       for (const transporte of transportes) {
-        if (!transporte.via) continue;
-        // Verificar se o transporte passa por esta paragem
-        const passaPorParagem = transporte.via.paragens.some(
-          (vp) => vp.paragemId === mission.paragemId
-        );
+        if (!transporte.via?.paragens.some((vp) => vp.paragemId === mission.paragemId)) continue;
+        const position = vehiclePosition(transporte, transporte.via.geoLocationPath, now, rule);
+        if (!position?.moving) continue;
 
-        if (!passaPorParagem || !transporte.currGeoLocation) continue;
+        const distance = haversineMeters(position.point, stop);
+        if (distance >= 1000) continue;
 
-        const [busLat, busLng] = transporte.currGeoLocation
-          .split(',')
-          .map(Number);
+        const tempoEstimado = Math.max(1, Math.ceil((distance / 1000 / rule.velocidadeViagemKmh) * 60));
+        console.log(`🔔 Autocarro ${transporte.matricula} a ${tempoEstimado} min da ${mission.paragem.nome} (${position.source})`);
 
-        // Calcular distância
-        const distance = calculateDistance(busLat, busLng, paragemLat, paragemLng);
-
-        // Se autocarro está a menos de 1km (1000 metros)
-        if (distance < 1000) {
-          const tempoEstimado = Math.ceil(distance / 1000 / 45 * 60); // 45 km/h média
-
-          console.log(`🔔 Notificação: Autocarro ${transporte.matricula} está a ${tempoEstimado} min da ${mission.paragem.nome} para usuário ${mission.utente.telefone}`);
-
-          // Mark first, so a slow or failing SMS is not retried every cycle
-          await prisma.mISSION.update({
-            where: { id: mission.id },
-            data: { notificadoEm: new Date() },
-          });
-
-          // Enviar SMS via Africa's Talking
-          try {
-            const { notifyBusArrival } = await import('./notifications');
-            await notifyBusArrival(
-              mission.utente.telefone,
-              transporte.matricula,
-              mission.paragem.nome,
-              tempoEstimado
-            );
-          } catch (error) {
-            console.error('Erro ao enviar notificação SMS:', error);
-          }
-          break;
+        // Mark first, so a slow or failing SMS is not retried on every check
+        await prisma.mISSION.update({ where: { id: mission.id }, data: { notificadoEm: new Date() } });
+        try {
+          const { notifyBusArrival } = await import('./notifications');
+          await notifyBusArrival(mission.utente.telefone, transporte.matricula, mission.paragem.nome, tempoEstimado);
+          notified++;
+        } catch (error) {
+          console.error('Erro ao enviar notificação SMS:', error);
         }
+        break;
       }
     }
+    lastResult = { checkedAt: now.toISOString(), missions: missions.length, notified };
   } catch (error) {
     console.error('Erro ao verificar notificações:', error);
   }
+  return notified;
 }
 
-/**
- * Loop principal - atualiza posições a cada intervalo
- */
-let simulationInterval: NodeJS.Timeout | null = null;
-
-export function startBusSimulation(intervalMs: number = 30000) {
-  if (simulationInterval) {
-    console.log('⚠️ Simulação já está rodando');
-    return;
-  }
-
-  console.log(`🚀 Iniciando simulação de autocarros (intervalo: ${intervalMs}ms)`);
-
-  simulationInterval = setInterval(async () => {
-    console.log(`🔄 Atualizando posições de ${busPositions.size} autocarros...`);
-
-    // Atualizar posição de cada autocarro
-    const updates = Array.from(busPositions.values()).map((busPosition) =>
-      updateBusPosition(busPosition)
-    );
-
-    await Promise.all(updates);
-
-    // Verificar e notificar usuários
-    await checkAndNotifyUsers();
-
-    console.log('✅ Posições atualizadas');
-  }, intervalMs);
+/** Runs the arrival check at most once per CHECK_INTERVAL_MS in this server instance. */
+export async function maybeCheckArrivals(): Promise<void> {
+  if (Date.now() - lastCheck < CHECK_INTERVAL_MS) return;
+  lastCheck = Date.now();
+  await checkAndNotifyUsers();
 }
 
-export function stopBusSimulation() {
-  if (simulationInterval) {
-    clearInterval(simulationInterval);
-    simulationInterval = null;
-    console.log('🛑 Simulação parada');
-  }
-}
-
-/**
- * Obter status da simulação
- */
-export function getSimulationStatus() {
+/** How positions are produced, and the last arrival check of this instance. */
+export async function getSimulationStatus() {
+  const [busCount, withFreshGps] = await Promise.all([
+    prisma.transporte.count({ where: { viaId: { not: null } } }),
+    prisma.transporte.count({ where: { gpsAtualizadoEm: { gte: new Date(Date.now() - GPS_FRESH_MS) } } }),
+  ]);
   return {
-    running: simulationInterval !== null,
-    busCount: busPositions.size,
+    mode: 'gps-or-timetable',
+    busCount,
+    withFreshGps,
+    lastArrivalCheck: lastResult,
   };
 }

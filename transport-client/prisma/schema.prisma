@@ -143,6 +143,10 @@ model Transporte {
   codigoVia       String
   currGeoLocation String?
   routePath       String?
+  gpsDispositivoHash String?   @unique // SHA-256 do código do dispositivo GPS (o código só é mostrado uma vez)
+  gpsAtualizadoEm    DateTime? // Hora da última posição GPS real (currGeoLocation)
+  gpsVelocidade      Float?    // km/h na última posição GPS
+  gpsDirecao         Float?    // Graus (0 = norte) na última posição GPS
   createdAt       DateTime                 @default(now())
   updatedAt       DateTime                 @updatedAt
   viaId           String?

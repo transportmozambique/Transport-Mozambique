@@ -7,6 +7,7 @@ import { Transport } from "../../types";
 import type { Stop } from "../../components/TransportMap";
 import LoadingScreen from "../../components/LoadingScreen";
 import UserAvatar from "../../components/UserAvatar";
+import { formatEta, maputoClock } from "@/lib/eta";
 
 // How often the bus position and estimates are re-read
 const REFRESH_MS = 10000;
@@ -208,12 +209,13 @@ function TrackTransportContent() {
 
   // The API reports a bus past the stop as jaPassou, with the wait until its next pass
   const hasDeparted = !!transport.jaPassou;
-  const hasArrived = !hasDeparted && transport.distancia < 100;
-  const isArriving = !hasDeparted && !hasArrived && transport.distancia < 500;
-  // Estimates are minutes from when they were read
+  // At the stop and leaving soon (a bus parked there overnight has not "arrived")
+  const hasArrived = !hasDeparted && transport.distancia < 100 && transport.tempoEstimado <= 5;
+  const isArriving = !hasDeparted && !hasArrived && transport.distancia < 500 && transport.tempoEstimado <= 5;
+  const eta = formatEta(transport.tempoEstimado, lastUpdate ?? undefined);
+  // Estimates are minutes from when they were read; clock in Maputo time
   const chegadaDestino = lastUpdate
-    ? new Date(lastUpdate.getTime() + (transport.tempoEstimado + (transport.tempoViagem ?? 0)) * 60000)
-        .toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })
+    ? maputoClock(new Date(lastUpdate.getTime() + (transport.tempoEstimado + (transport.tempoViagem ?? 0)) * 60000))
     : '--:--';
 
   return (
@@ -245,7 +247,7 @@ function TrackTransportContent() {
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">Transporte já passou</h2>
-                  <p className="text-sm text-slate-600">Volta à sua paragem na próxima volta, em cerca de {transport.tempoEstimado} min</p>
+                  <p className="text-sm text-slate-600">Volta à sua paragem na próxima volta, {eta.isClock ? eta.text : `em cerca de ${eta.text}`}</p>
                 </div>
               </div>
             </div>
@@ -388,9 +390,9 @@ function TrackTransportContent() {
                     <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">Tempo de Chegada</p>
                   </div>
                   <p className="text-3xl font-bold text-slate-900">
-                    {hasArrived ? "0" : transport.tempoEstimado}
+                    {hasArrived ? "0" : eta.value}
                   </p>
-                  <p className="text-sm text-slate-500 mt-1">minutos</p>
+                  <p className="text-sm text-slate-500 mt-1">{hasArrived ? "minutos" : eta.unit}</p>
                 </div>
 
                 {/* Distância até Autocarro */}

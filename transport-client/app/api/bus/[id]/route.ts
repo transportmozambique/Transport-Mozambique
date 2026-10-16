@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import {
   getFareRule,
-  estimateTrip,
   orderStopsAlongRoute,
   parseLatLng,
   parseRoutePath,
   type LatLng,
 } from '@/lib/fares';
+import { estimateBusTrip, vehiclePosition } from '@/lib/vehiclePosition';
 
 // GET /api/bus/[id]?paragem=<origem>&destino=<destino>
 export async function GET(
@@ -24,7 +24,6 @@ export async function GET(
       where: { id: busId },
       include: {
         via: { include: { paragens: { include: { paragem: true } } } },
-        geoLocations: { orderBy: { createdAt: 'desc' }, take: 1 },
       },
     });
 
@@ -43,17 +42,25 @@ export async function GET(
       .map((vp) => ({ vp, point: parseLatLng(vp.paragem.geoLocation) }))
       .filter((s): s is { vp: typeof s.vp; point: LatLng } => s.point !== null);
 
-    const bus: LatLng =
-      parseLatLng(transporte.currGeoLocation) ??
-      parseLatLng(transporte.geoLocations[0]?.geoLocationTransporte) ??
-      stops[0]?.point ??
-      [-25.9692, 32.5732];
+    // Real GPS when fresh, otherwise the timetable position on the route
+    const now = new Date();
+    const position = vehiclePosition(transporte, via.geoLocationPath || transporte.routePath, now, rule);
+    const bus: LatLng = position?.point ?? stops[0]?.point ?? [-25.9692, 32.5732];
 
-    // Path drawn on the map: the bus's own route if it has one, else the via's ([lng, lat] pairs)
+    // Path drawn on the map: the via's, else the bus's own ([lng, lat] pairs)
     const routeCoords = parseRoutePath(via.geoLocationPath || transporte.routePath).map(([lat, lng]) => [lng, lat]);
 
+    // Trips can go either way along the route (a destination before the origin is the return leg)
     const trip = paragemId && destinoId
-      ? estimateTrip(stops.map((s) => ({ id: s.vp.paragem.id, point: s.point })), bus, paragemId, destinoId, rule)
+      ? estimateBusTrip({
+          vehicle: transporte,
+          path: via.geoLocationPath || transporte.routePath,
+          stops: stops.map((s) => ({ id: s.vp.paragem.id, point: s.point })),
+          origemId: paragemId,
+          destinoId,
+          rule,
+          now,
+        })
       : null;
 
     return NextResponse.json({
@@ -61,11 +68,19 @@ export async function GET(
       matricula: transporte.matricula,
       via: via.nome,
       viaId: via.id,
-      direcao: `${via.terminalPartida} → ${via.terminalChegada}`,
+      // Direction of the passenger's trip (or of the route), by its first and last stops
+      direcao: stops.length
+        ? trip?.sentido === -1
+          ? `${stops[stops.length - 1].vp.paragem.nome} → ${stops[0].vp.paragem.nome}`
+          : `${stops[0].vp.paragem.nome} → ${stops[stops.length - 1].vp.paragem.nome}`
+        : `${via.terminalPartida} → ${via.terminalChegada}`,
       velocidade: rule.velocidadeChegadaKmh,
       latitude: bus[0],
       longitude: bus[1],
-      status: 'Em Circulação',
+      fonte: position?.source ?? 'horario',
+      direcaoGraus: position?.heading ?? null,
+      posicaoEm: (position?.at ?? new Date()).toISOString(),
+      status: position && !position.moving && position.source === 'horario' ? 'No terminal' : 'Em Circulação',
       routeCoords,
       stops: stops.map(({ vp, point }) => ({
         id: vp.paragem.id,
