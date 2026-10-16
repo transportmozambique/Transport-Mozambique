@@ -944,8 +944,9 @@ Rota: ${v?.nome || 'N/A'}`;
           if (names[names.length - 1] !== vp.paragem.nome) names.push(vp.paragem.nome);
         }
         sms(phoneNumber, `ROTA ${v?.nome || 'N/A'}: ${names.join(' > ') || 'sem paragens'}`);
-        return endWithNote(`Rota: ${v?.nome || 'N/A'}
-${v?.terminalPartida || 'N/A'} -> ${v?.terminalChegada || 'N/A'}
+        // Long names are shortened one by one, so the number of stops always shows
+        return endWithNote(`Rota: ${cutText(v?.nome || 'N/A', 40)}
+${cutText(v?.terminalPartida || 'N/A', 30)} -> ${cutText(v?.terminalChegada || 'N/A', 30)}
 Paragens: ${v?.paragens?.length || 0}
 ${names.slice(0, 4).join(' > ')}${names.length > 4 ? ' > ...' : ''}`, 'Lista completa enviada por SMS.');
       }
