@@ -14,18 +14,20 @@ interface MotoristaData {
   status: string;
   categoriaCarta: string;
   experienciaAnos: number;
+  token?: string; // session token from the login, sent as "Authorization: Bearer"
   transporte?: { id: string; matricula: string; marca: string; modelo: string; cor: string; lotacao: number; currGeoLocation?: string; };
   via?: { id: string; nome: string; codigo: string; terminalPartida: string; terminalChegada: string; geoLocationPath: string; municipio: string; paragens: Array<{ id: string; nome: string; geoLocation: string; isTerminal: boolean; }>; };
 }
 
-interface ClientInfo { total: number; stops: Array<{ stopName: string; clients: number; money: number; }>; }
+// Passengers waiting along the route (stop alerts asked for in the last 3 hours)
+interface Waiting { total: number; paragens: Array<{ nome: string; aEspera: number; }>; }
 
 export default function DashboardPage() {
   const router = useRouter();
   const [motorista, setMotorista] = useState<MotoristaData | null>(null);
   const [isActive, setIsActive] = useState(false);
   const [speed, setSpeed] = useState(0);
-  const [clients, setClients] = useState(0);
+  const [waiting, setWaiting] = useState<Waiting>({ total: 0, paragens: [] });
   const [tripStart, setTripStart] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [tripBusy, setTripBusy] = useState(false);
@@ -41,15 +43,6 @@ export default function DashboardPage() {
   const [gpsInput, setGpsInput] = useState("");
   const [gpsStatus, setGpsStatus] = useState("");
   const gpsRef = useRef({ active: false, code: "", lastSent: 0 });
-
-  const clientInfo: ClientInfo = {
-    total: clients,
-    stops: motorista?.via?.paragens.map((stop, idx) => ({
-      stopName: stop.nome,
-      clients: Math.floor(clients * (idx + 1) / (motorista?.via?.paragens.length || 1)),
-      money: Math.floor(clients * (idx + 1) / (motorista?.via?.paragens.length || 1) * 15)
-    })) || []
-  };
 
   useEffect(() => {
     const stored = localStorage.getItem('motorista');
@@ -245,24 +238,42 @@ export default function DashboardPage() {
   const applyTrip = useCallback((trip: TripState) => {
     setIsActive(trip.emViagem);
     setTripStart(trip.emViagem && trip.viagemIniciadaEm ? new Date(trip.viagemIniciadaEm).getTime() : null);
-    if (!trip.emViagem) setClients(0);
   }, []);
 
-  // Load it on open and re-check every 30s, so a trip started or ended by USSD shows up here
-  const motoristaId = motorista?.id;
+  const handleLogout = useCallback(() => { localStorage.removeItem('motorista'); router.push('/'); }, [router]);
+
+  // Load it on open and re-check every 30s, so a trip started or ended by USSD shows up here.
+  // The session token from the login identifies the driver; without a valid one, sign in again.
+  const sessionToken: string | undefined = motorista?.token;
   useEffect(() => {
-    if (!motoristaId) return;
+    if (!motorista) return;
+    if (!sessionToken) { handleLogout(); return; }
     let cancelled = false;
-    const load = () => fetch(`${API_BASE}/api/driver/trip?motoristaId=${encodeURIComponent(motoristaId)}`)
-      .then((r) => (r.ok ? r.json() : null))
+    const load = () => fetch(`${API_BASE}/api/driver/trip`, { headers: { Authorization: `Bearer ${sessionToken}` } })
+      .then((r) => {
+        if (r.status === 401 && !cancelled) handleLogout();
+        return r.ok ? r.json() : null;
+      })
       .then((trip: TripState | null) => { if (trip && !cancelled) applyTrip(trip); })
       .catch(() => {});
     load();
     const i = setInterval(load, 30000);
     return () => { cancelled = true; clearInterval(i); };
-  }, [motoristaId, applyTrip]);
+  }, [motorista, sessionToken, applyTrip, handleLogout]);
 
-  const handleLogout = () => { localStorage.removeItem('motorista'); router.push('/'); };
+  // Passengers waiting at the route's stops, refreshed every minute
+  useEffect(() => {
+    if (!sessionToken) return;
+    let cancelled = false;
+    const load = () => fetch(`${API_BASE}/api/driver/seguidores`, { headers: { Authorization: `Bearer ${sessionToken}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((w: Waiting | null) => { if (w && !cancelled) setWaiting(w); })
+      .catch(() => {});
+    load();
+    const i = setInterval(load, 60000);
+    return () => { cancelled = true; clearInterval(i); };
+  }, [sessionToken]);
+
   const toggleRide = async () => {
     if (!motorista || tripBusy) return;
     setTripBusy(true);
@@ -270,9 +281,10 @@ export default function DashboardPage() {
     try {
       const res = await fetch(`${API_BASE}/api/driver/trip`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ motoristaId: motorista.id, action: isActive ? 'encerrar' : 'iniciar' }),
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionToken}` },
+        body: JSON.stringify({ action: isActive ? 'encerrar' : 'iniciar' }),
       });
+      if (res.status === 401) { handleLogout(); return; }
       const data = await res.json();
       if (!res.ok) { setTripError(data.error || 'Erro ao atualizar a viagem'); return; }
       setNow(Date.now());
@@ -324,15 +336,17 @@ export default function DashboardPage() {
       <div className="absolute bottom-0 left-0 right-0 z-20 bg-gray-900/95 p-4 border-t border-gray-700">
         <div className="flex justify-around">
           <div className="text-center"><div className="w-16 h-16 bg-gray-800 rounded-xl flex items-center justify-center mb-2"><span className="text-2xl font-bold text-white">{speed}</span></div><p className="text-gray-400 text-xs">km/h</p></div>
-          <button onClick={() => setShowClientsModal(true)} className="text-center"><div className="w-16 h-16 bg-gray-800 rounded-xl flex items-center justify-center mb-2"><span className="text-2xl font-bold text-white">{clients}</span></div><p className="text-gray-400 text-xs">Seguidores</p></button>
+          <button onClick={() => setShowClientsModal(true)} className="text-center"><div className="w-16 h-16 bg-gray-800 rounded-xl flex items-center justify-center mb-2"><span className="text-2xl font-bold text-white">{waiting.total}</span></div><p className="text-gray-400 text-xs">À espera</p></button>
           <button onClick={() => setShowRideInfoModal(true)} className="text-center"><div className="w-16 h-16 bg-gray-800 rounded-xl flex items-center justify-center mb-2"><span className="text-xl font-bold text-white">{formatTime(rideTime)}</span></div></button>
         </div>
       </div>
 
       {showClientsModal && <div className="fixed inset-0 bg-black/70 z-30 flex items-end"><div className="bg-gray-900 w-full rounded-t-2xl p-6 max-h-[70vh] overflow-y-auto">
-        <div className="flex justify-between mb-4"><h2 className="text-xl font-bold text-white">Passageiros</h2><button onClick={() => setShowClientsModal(false)} className="text-white">X</button></div>
-        <div className="bg-gray-700 p-4 rounded-xl mb-4 flex justify-between"><span className="text-white font-bold">Total</span><span className="text-2xl font-bold text-white">{clientInfo.stops.reduce((s, i) => s + i.money, 0)} MT</span></div>
-        {clientInfo.stops.map((s, i) => <div key={i} className="bg-gray-800 p-4 rounded-xl mb-2 flex justify-between"><span className="text-white">{s.stopName}</span><span className="text-white">{s.money} MT</span></div>)}
+        <div className="flex justify-between mb-4"><h2 className="text-xl font-bold text-white">Passageiros à espera</h2><button onClick={() => setShowClientsModal(false)} className="text-white">X</button></div>
+        <p className="text-gray-400 text-sm mb-4">Pedidos de alerta feitos nas últimas 3 horas (app ou USSD) nas paragens da sua rota.</p>
+        <div className="bg-gray-700 p-4 rounded-xl mb-4 flex justify-between"><span className="text-white font-bold">Total</span><span className="text-2xl font-bold text-white">{waiting.total}</span></div>
+        {waiting.paragens.map((s, i) => <div key={i} className="bg-gray-800 p-4 rounded-xl mb-2 flex justify-between"><span className="text-white">{s.nome}</span><span className={s.aEspera ? 'text-white font-semibold' : 'text-gray-500'}>{s.aEspera}</span></div>)}
+        {waiting.paragens.length === 0 && <p className="text-gray-400 text-sm">Sem rota atribuída.</p>}
       </div></div>}
 
       {showRideInfoModal && <div className="fixed inset-0 bg-black/70 z-30 flex items-end"><div className="bg-gray-900 w-full rounded-t-2xl p-6 max-h-[70vh] overflow-y-auto">

@@ -20,6 +20,13 @@ test('Transporte: posição em tempo real e código do dispositivo GPS', async (
   const nextStop = (await footer.locator('p').nth(3).innerText()).trim();
   expect(['—', ...stopNames]).toContain(nextStop);
 
+  // Day figures come from the route's timetable; no invented fuel, passengers or maintenance
+  await expect(page.getByTestId('operacao-cards')).toContainText('Quilómetros Hoje');
+  await expect(page.getByTestId('passagens')).toContainText(stopNames[0] ?? '');
+  for (const fake of ['Consumo de Combustível', 'Passageiros Transportados', '45,230 km', 'Manutenção', 'vs ontem']) {
+    await expect(page.getByText(fake)).toHaveCount(0);
+  }
+
   // Create a device code: shown once, with the Traccar Client settings
   await card.getByRole('button', { name: /Gerar (novo )?código/ }).click();
   const code = card.getByTestId('gps-code');

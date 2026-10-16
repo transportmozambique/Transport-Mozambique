@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { findDriverByPhone, isValidDriverPassword } from '@/lib/driverTrips';
+import { findDriverByPhone, verifyDriverPin } from '@/lib/driverTrips';
+import { createDriverToken } from '@/lib/driverSession';
 import { getFareRule, orderStopsAlongRoute } from '@/lib/fares';
 import { vehicleGeo } from '@/lib/vehiclePosition';
 
@@ -32,8 +33,17 @@ export async function POST(request: Request) {
       return json({ error: 'Motorista não encontrado. Contacte o administrador.' }, 401);
     }
 
-    if (!isValidDriverPassword(driver.password, String(password))) {
-      return json({ error: 'Senha incorreta' }, 401);
+    if (!driver.password) {
+      return json({ error: 'Ainda não tem PIN. Peça ao administrador para gerar o seu PIN.' }, 401);
+    }
+    if (!(await verifyDriverPin(driver.password, String(password)))) {
+      return json({ error: 'PIN incorreto' }, 401);
+    }
+
+    const token = createDriverToken(driver.id);
+    if (!token) {
+      console.error('DRIVER_SESSION_SECRET is not set');
+      return json({ error: 'Sessão indisponível. Contacte o administrador.' }, 500);
     }
 
     const transporte = driver.transporteId
@@ -52,6 +62,7 @@ export async function POST(request: Request) {
     const via = transporte?.via ?? null;
 
     return json({
+      token,
       id: driver.id,
       nome: driver.nome,
       bi: driver.bi,

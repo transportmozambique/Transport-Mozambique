@@ -143,6 +143,22 @@ test('Via: criar (desenhada no mapa), listar, ver, editar, eliminar', async ({ p
   await page.waitForTimeout(2000); // map style and click handler
   await canvas.click({ position: { x: box.width * 0.4, y: box.height * 0.5 } });
   await canvas.click({ position: { x: box.width * 0.6, y: box.height * 0.5 } });
+  const counts = page.getByTestId('route-counts');
+  await expect(counts).toContainText('Pontos na rota: 2');
+
+  // A wrong click can be undone (button or Ctrl+Z) and redone, one step at a time
+  await canvas.click({ position: { x: box.width * 0.5, y: box.height * 0.3 } });
+  await expect(counts).toContainText('Pontos na rota: 3');
+  await page.getByRole('button', { name: /Desfazer/ }).click();
+  await expect(counts).toContainText('Pontos na rota: 2');
+  await page.getByRole('button', { name: /Refazer/ }).click();
+  await expect(counts).toContainText('Pontos na rota: 3');
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur()); // Ctrl+Z in a field undoes typing
+  await page.keyboard.press('Control+z');
+  await expect(counts).toContainText('Pontos na rota: 2');
+  await expect(page.getByTestId('route-point')).toHaveCount(2);
+  await expect(page.getByTestId('route-status')).toContainText('Percurso pelas estradas');
+
   const vid = await submitCreate(page, '/api/vias', 'Criar Via');
 
   await expectInList(page, '/vias', `E2E Via ${id}`);

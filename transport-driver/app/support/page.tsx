@@ -162,11 +162,11 @@ export default function SupportPage() {
 
                 <details className="group">
                   <summary className="flex items-center justify-between cursor-pointer p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <span className="font-medium text-gray-900">Como altero minha senha?</span>
+                    <span className="font-medium text-gray-900">Como obtenho ou altero o meu PIN?</span>
                     <span className="text-gray-500 group-open:rotate-180 transition-transform">▼</span>
                   </summary>
                   <div className="p-4 text-sm text-gray-600">
-                    Entre em contato com o suporte através deste formulário ou ligue para a central para solicitar a alteração de senha.
+                    O PIN é criado pelo administrador na página do motorista. Peça um novo PIN através deste formulário ou ligue para a central.
                   </div>
                 </details>
               </div>

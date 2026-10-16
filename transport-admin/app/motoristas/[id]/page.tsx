@@ -1,5 +1,6 @@
 "use client";
 import LoadingScreen from "../../components/LoadingScreen";
+import DriverPinCard from "../../components/DriverPinCard";
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -251,6 +252,8 @@ export default function MotoristaDetalhes() {
                 </div>
               </div>
             </div>
+
+            <DriverPinCard motoristaId={motorista.id} />
           </div>
 
           {/* Informações Detalhadas - Colunas Direita */}
