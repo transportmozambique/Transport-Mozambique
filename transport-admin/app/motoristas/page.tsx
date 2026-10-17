@@ -371,16 +371,27 @@ export default function MotoristasPage() {
             </div>
           </div>
 
-          {/* Right - Action Button */}
-          <button 
-            onClick={() => router.push('/motoristas/novo')}
-            className="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 whitespace-nowrap"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Novo Motorista</span>
-          </button>
+          {/* Right - Action Buttons */}
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => router.push('/motoristas/atribuir')}
+              className="bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 px-6 py-3 rounded-lg font-medium flex items-center space-x-2 whitespace-nowrap"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              <span>Atribuir Motoristas</span>
+            </button>
+            <button
+              onClick={() => router.push('/motoristas/novo')}
+              className="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 whitespace-nowrap"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Novo Motorista</span>
+            </button>
+          </div>
         </div>
 
         {/* Filter Badge */}
