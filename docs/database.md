@@ -2,7 +2,7 @@
 
 The whole platform uses one PostgreSQL database: Neon in production, running PostgreSQL 18. The schema is defined once, in `prisma/schema.prisma` at the repository root, and accessed through Prisma 5.22. This page describes every table and the storage conventions you need to read the data correctly. It also shows how to connect and gives example queries that were run against a copy of the production data.
 
-**On this page:** [Entity diagram](#entity-diagram) · [Tables](#tables) · [Conventions](#conventions-read-this-before-querying) · [Connecting](#connecting) · [Example queries](#example-queries) · [Changing data](#changing-data) · [Schema changes and migrations](#schema-changes-and-migrations) · [Size](#size-at-the-time-of-writing)
+**On this page:** [Entity diagram](#entity-diagram) · [Tables](#tables) · [Conventions](#conventions-read-this-before-querying) · [Connecting](#connecting) · [Example queries](#example-queries) · [Changing data](#changing-data) · [Importing from OpenStreetMap](#importing-stops-and-routes-from-openstreetmap) · [Schema changes and migrations](#schema-changes-and-migrations) · [Size](#size-at-the-time-of-writing)
 
 ---
 
@@ -457,6 +457,44 @@ A USSD-only account becomes a full account when the same phone number registers 
 
 - **Never run a seed script against production.** Every seed starts by deleting every row of every table.
 - Wrap manual multi-statement changes in `BEGIN; … COMMIT;` and check the row counts before committing.
+
+## Importing stops and routes from OpenStreetMap
+
+The original network left much of central Maputo out. For example, it had one stop within 2 km of Av. Eduardo Mondlane. OpenStreetMap maps the city's buses and chapas: the Chapas, EMTPM, Corujas, REM and RCM networks. `transport-client/scripts/import-osm.js` brings them in.
+
+```bash
+cd transport-client
+node scripts/import-osm.js --fetch                       # download from Overpass into osm-data/ (git-ignored)
+DATABASE_URL=… node scripts/import-osm.js --verbose       # dry run: lists what it would add, writes nothing
+DATABASE_URL=… node scripts/import-osm.js --apply --buses 2                 # local databases only
+DATABASE_URL=… node scripts/import-osm.js --apply --buses 2 --production    # a remote database
+```
+
+What it does:
+
+- **Area.** The Maputo, Matola, Boane and Marracuene box (−26.10, 32.30 to −25.70, 32.75).
+- **Stops.** Every `highway=bus_stop`, bus platform and bus station.
+  - A `stop_position` (the point on the road) becomes the stop beside it, within 35 m.
+  - Same-name stops within 30 m are one stop.
+  - A stop already in the database is reused: the same name within 30 m, or any stop within 15 m.
+  - New stops get the code `OSM-<node id>`.
+  - Only stops some route serves are imported.
+- **Routes.** OSM has one relation per direction, for example `X12i` and `X12v`. Both become one `Via`, coded with the route's number (`X12`, `37-0`, `C8`), because the network runs every route both ways.
+  - The path is the first direction's ways, joined in order.
+  - The stops are the relations' stops near that path, plus any stop within 20 m of it, ordered along the path.
+  - The municipality is where the route starts.
+- **No duplicates.** A route whose path runs within 60 m of an existing route's path is not added again: 85% of its length one way, 70% the other. Its stops are attached to the existing route instead. Existing routes also get the imported stops within 20 m of their path.
+- **Vehicles.** The journey planner only uses routes that have a vehicle. `--buses N` gives each new route N vehicles with plates `SIM-0001`, `SIM-0002`, …, model "Simulado (horário)". They follow the timetable model like every other vehicle without GPS ([GPS tracking](gps-tracking.md#how-a-position-is-chosen)). Replace them with the real vehicles as operators join.
+- **Idempotent.** A second run adds nothing.
+
+On a copy of production (2026-10-18), the OSM data had 1,529 stops after folding:
+
+- 1,455 on a route: 823 new and 632 already in the database;
+- 74 on no route, which were skipped.
+
+It added 170 routes (4,421 km) with 340 simulated vehicles, and 651 stops to 35 existing routes. The network went from 91 to 261 routes and from 1,004 to 1,855 served stops. A destination list from Av. Eduardo Mondlane went from nothing to 1,095 places. On a warm server it takes about 0.3 s, as does a journey; the first request after a cold start takes 2.5 s.
+
+**Licence.** OpenStreetMap data is © OpenStreetMap contributors, under the [Open Database License](https://www.openstreetmap.org/copyright) (ODbL). The map already credits OpenStreetMap at the bottom right. Under the ODbL's share-alike terms, the imported stops and routes stay under the ODbL; this script and the OSM data it reads are the way to rebuild them.
 
 ## Schema changes and migrations
 

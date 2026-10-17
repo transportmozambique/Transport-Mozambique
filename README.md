@@ -269,4 +269,6 @@ The UI is in Portuguese; code comments and documentation are in English.
 
 ---
 
+Stops and routes include data from [OpenStreetMap](https://www.openstreetmap.org/copyright), © OpenStreetMap contributors, under the ODbL ([import](docs/database.md#importing-stops-and-routes-from-openstreetmap)).
+
 Transport Mozambique © 2026 · [Documentation →](docs/README.md)
