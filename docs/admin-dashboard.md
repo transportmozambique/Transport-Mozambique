@@ -12,6 +12,8 @@ The interface is in Portuguese. Screenshots on this page were taken on a local c
 
 ## Sign-in and session
 
+<img src="images/admin-login.png" alt="Admin sign-in page: email, password, Entrar" width="560">
+
 `/login` asks for email and password. `POST /api/auth/admin/login` checks the bcrypt hash in `Administrador.senha` and sets the `admin_session` cookie: `HttpOnly`, valid 12 hours, signed with `ADMIN_SESSION_SECRET`.
 
 - `proxy.ts` answers **401** to every `/api/*` request without a valid cookie, except sign-in and sign-out. The browser app treats any 401 from the admin API as an expired session: it signs out and opens `/login`.
@@ -39,6 +41,8 @@ The sidebar lists every section: Dashboard, Transportes, Vias, Paragens, Proprie
 | Motoristas | name, ID number (BI), licence number, phone | `/motoristas/{id}` |
 
 Case does not matter. Enter opens the first match and Esc closes the list. Phones are matched as stored, with their spaces (`87 183`).
+
+![Header search for "mat": vehicles on Matola routes, then Matola's routes](images/admin-header-search.png)
 
 Every list page also has its own search box and pagination.
 

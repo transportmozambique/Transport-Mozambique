@@ -145,11 +145,26 @@ The connection strings are in the Vercel projects' environment variables (`DATAB
 | Pooled | `ep-…-pooler.<region>.aws.neon.tech` | the apps (serverless functions open many short connections) |
 | Direct | `ep-….<region>.aws.neon.tech` (no `-pooler`) | `psql` sessions, `pg_dump`, schema changes (`prisma db execute`), anything that uses session state |
 
-Three ways in:
+Four ways in:
 
-1. **Neon console → SQL Editor.** Runs queries in the browser against a chosen branch. Good for quick reads.
+1. **Neon console → SQL Editor.** Runs SQL in the browser against a chosen branch, with nothing to install. Good for quick reads.
 2. **`psql "<direct connection string>"`.** Neon requires TLS, and the string already contains `sslmode=require`.
-3. **Prisma Studio.** A table browser (below) pointed at the database through `DATABASE_URL`.
+3. **Prisma Studio.** A table browser pointed at the database through `DATABASE_URL` ([below](#prisma-studio)).
+4. **Prisma Client in a script.** Ready-made lists that join tables, or your own ([below](#prisma-client-in-a-script)).
+
+#### Neon console
+
+Sign in at https://console.neon.tech, open the **TransportMZ** project, and check the branch at the top left (`production` is the live data).
+
+- **SQL Editor** (left menu): choose the database `neondb`, paste a query from [Example queries](#example-queries), press **Run**. The editor opens with Neon's own sample `CREATE TABLE … INSERT …`; replace it rather than running it, or it creates a table in production.
+
+  ![Neon SQL Editor: the busiest stops](images/neon-sql-editor.png)
+
+- **Tables** (left menu): browse a table page by page, with filters and sorting, without SQL. It can also edit and add rows: on `production`, prefer the admin dashboard, which keeps the related rows consistent.
+
+  ![Neon Tables view: the Paragem table](images/neon-tables.png)
+
+- **Branches**: create a branch of `production` to try a change on a copy. **Connect** shows the connection strings, including the password: do not screenshot or share it.
 
 For people who only need to read, create a read-only role (Neon console → Roles, or SQL as the owner) instead of sharing the owner's credentials:
 
@@ -184,9 +199,67 @@ Opening a model shows its rows; relation columns link to the related rows:
 
 ![Prisma Studio: the Transporte table](images/studio-transporte.png)
 
+### Prisma Client in a script
+
+Prisma Studio shows one table at a time. For a list that combines tables (routes with their number of stops, a route's stops in travel order, vehicles with their driver), use Prisma Client, the library the apps themselves query with. `transport-client/scripts/queries.ts` has ready-made lists. It only reads.
+
+Run it from `transport-client`. It takes `DATABASE_URL` from `transport-client/.env`, or from the environment:
+
+```bash
+cd transport-client
+npx tsx scripts/queries.ts routes matola
+DATABASE_URL="<connection string>" npx tsx scripts/queries.ts drivers    # another database, without editing .env
+```
+
+| Command | Lists |
+|---|---|
+| `npx tsx scripts/queries.ts counts` | Rows in the main tables |
+| `npx tsx scripts/queries.ts routes [municipality]` | Routes with their number of stops and vehicles; `routes matola` lists Matola's only |
+| `npx tsx scripts/queries.ts stops <route code>` | A route's stops in travel order, ordered the way the apps order them (`stops V034`) |
+| `npx tsx scripts/queries.ts vehicles [route code]` | Vehicles with their route, driver, trip state and GPS state (`sem dispositivo`, `ativo`, `sem sinal`) |
+| `npx tsx scripts/queries.ts drivers` | Drivers: account state, whether they have a PIN, trip, vehicle and route |
+| `npx tsx scripts/queries.ts alerts` | Arrival alerts of the last 24 hours, by stop, without passenger data |
+
+Output of `npx tsx scripts/queries.ts stops V034` on a copy of production (first rows):
+
+```text
+Av. das Indústrias - Rua da Igreja
+┌─────────┬───────┬────────────┬──────────────────────────┬──────────────────────────────────────────┐
+│ (index) │ ordem │ codigo     │ nome                     │ coordenadas                              │
+├─────────┼───────┼────────────┼──────────────────────────┼──────────────────────────────────────────┤
+│ 0       │ 1     │ 'PAR-0792' │ 'Av. das Indústrias'     │ '-25.8889299,32.4342488'                 │
+│ 1       │ 2     │ 'PAR-0791' │ 'Av. das Indústrias'     │ '-25.8888211,32.4342692'                 │
+│ 2       │ 3     │ 'PAR-0301' │ 'Avenida das Indústrias' │ '-25.893347300000002,32.442886200000004' │
+```
+
+**Adding a list.** Each list is a function in the `lists` object of `scripts/queries.ts`. A Prisma query names the model (`prisma.via`, `prisma.paragem`, `prisma.transporte`, `prisma.motorista`, `prisma.mISSION`, …), and then:
+
+- `where` filters, including through relations;
+- `select` picks columns and related rows;
+- `_count` counts related rows;
+- `orderBy` sorts.
+
+For example, the routes of a municipality that have at least one vehicle:
+
+```ts
+async busyRoutes(municipio) {
+  const vias = await prisma.via.findMany({
+    where: {
+      municipio: { nome: { contains: municipio ?? '', mode: 'insensitive' } },
+      transportes: { some: {} },
+    },
+    select: { codigo: true, nome: true, _count: { select: { transportes: true } } },
+    orderBy: { codigo: 'asc' },
+  });
+  console.table(vias.map((v) => ({ codigo: v.codigo, nome: v.nome, autocarros: v._count.transportes })));
+},
+```
+
+Model and field names are those of `prisma/schema.prisma` ([Tables](#tables)). The query syntax is documented in [Prisma's CRUD reference](https://www.prisma.io/docs/orm/prisma-client/queries/crud). Keep these scripts read-only: changes to network data belong in the admin dashboard ([Changing data](#changing-data)).
+
 ## Example queries
 
-Every query below was run with `psql` against a copy of the production data on 2026-10-17, and the outputs are real. Outputs that would show passengers' names or phone numbers are left out. Start the session with:
+Every query below was run with `psql` against a copy of the production data on 2026-10-17, and the outputs are real. Paste them into the Neon SQL Editor or a `psql` session ([Connecting](#connecting)). Outputs that would show passengers' names or phone numbers are left out. Start the session with:
 
 ```sql
 SET TIME ZONE 'UTC';
