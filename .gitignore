@@ -66,10 +66,9 @@ ngrok.zip
 
 # Exceptions for markdown files we want to keep
 !README.md
-!docs/getting-started.md
-!docs/architecture.md
-!docs/database.md
+!docs/*.md
 !transport-admin/README.md
+!transport-admin/e2e/README.md
 !transport-client/README.md
 !transport-driver/README.md
 

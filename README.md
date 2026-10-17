@@ -1,78 +1,74 @@
-# 🚀 Sistema de Transportes de Moçambique
+# Transport Mozambique
 
-Bem-vindo ao repositório do **Sistema de Transportes de Moçambique**, uma plataforma completa de gestão, planeamento e rastreamento de transportes públicos urbanos (chapas, autocarros e frotas privadas) em tempo real.
+A public-transport information platform for the Maputo–Matola area. Passengers find buses, fares and arrival times on the web or by USSD on any phone, and can ask for an SMS when their bus is close. Drivers start and end trips from their phone. Administrators manage routes, stops, vehicles, drivers and GPS trackers from a back office.
 
----
+The network in production has 91 routes, about 1,080 stops and 111 vehicles in two municipalities (October 2026).
 
-## 🗺️ Navegação da Documentação
-* 🏠 **[Página Principal (Home)](README.md)**
-* 🏁 **[Guia de Início Rápido](docs/getting-started.md)**
-* 🏗️ **[Arquitetura do Sistema](docs/architecture.md)**
-* 🗄️ **[Estrutura da Base de Dados](docs/database.md)**
+<img src="docs/images/passenger-home.png" alt="Passenger web app: live map of Maputo with buses on their routes" width="720">
 
----
+## Live apps
 
-## 📋 Sobre o Projeto
+| App | URL | Who uses it |
+|---|---|---|
+| Passenger web app | https://transport-mz.vercel.app | anyone; an account is only needed for arrival alerts |
+| USSD service | `*384*848080#` in the [Africa's Talking simulator](https://developers.africastalking.com/simulator) (sandbox) | passengers without a smartphone; drivers (option 6) |
+| Driver portal | https://transport-mz-driver.vercel.app | drivers, with their phone number and the PIN an administrator generated |
+| Admin dashboard | https://transport-mz-admin.vercel.app | administrators |
 
-Este projeto foi desenhado para modernizar a experiência de transporte público em Moçambique, fornecendo ferramentas digitais tanto para passageiros como para motoristas e reguladores.
+USSD and SMS run on the Africa's Talking **sandbox**: they reach the simulator, not real phones ([Going live](docs/africas-talking.md#going-live)). Bus positions come from GPS where a vehicle reports one and from a timetable model otherwise ([GPS tracking](docs/gps-tracking.md)).
 
-### Componentes Principais:
-1. 🔧 **[Transport-Admin (Painel Administrativo)](transport-admin/README.md)**: Aplicação web para gestores do sistema visualizarem dashboards, monitorizarem frotas e cadastrarem rotas, paragens, municípios e viaturas.
-2. 📱 **[Transport-Client (Aplicação do Passageiro)](transport-client/README.md)**: Aplicação móvel/web para passageiros subscreverem ao serviço, pesquisarem autocarros e acompanharem o tempo estimado de chegada (ETA) no mapa em tempo real.
-3. 🚐 **[Transport-Driver (Portal do Motorista)](transport-driver/README.md)**: Portal móvel otimizado para os condutores transmitirem as suas coordenadas de GPS, gerirem o estado da viatura (Online/Offline) e o fluxo de passageiros.
+## How it fits together
 
----
+Three Next.js apps share one PostgreSQL database (Neon) through Prisma, and each is its own Vercel project:
 
-## 📦 Estrutura do Repositório
+| Folder | Vercel project | What it serves |
+|---|---|---|
+| [`transport-client`](transport-client) | `transport-mz` | passenger web app, the USSD callback, the driver API, GPS intake, all SMS |
+| [`transport-driver`](transport-driver) | `transport-mz-driver` | driver portal; calls the passenger app's driver API |
+| [`transport-admin`](transport-admin) | `transport-mz-admin` | back office and its own API |
+
+There is no message bus and no background worker: vehicle positions are computed when they are read, and the arrival-SMS check runs while the web app is in use. Details and diagrams: [Architecture](docs/architecture.md) and [Data flow](docs/data-flow.md).
 
 ```
-Transports-Aplication/
-├── docs/                     # Documentação Geral do Sistema
-│   ├── getting-started.md    # Instruções de setup e credenciais
-│   ├── architecture.md       # Diagrama de blocos e fluxos do sistema
-│   └── database.md           # Modelos do Prisma e comandos do SQLite/Postgres
-├── transport-admin/          # Next.js App - Administração (Porta 3001)
-├── transport-client/         # Next.js App - Passageiro (Porta 3000)
-├── transport-driver/         # Next.js App - Motorista (Porta 3002)
-├── start-all.bat            # Script para iniciar as 3 apps em simultâneo
-└── package.json             # Ficheiro de configuração raiz
+.
+├── transport-client/    passenger app + USSD + driver API + GPS intake
+├── transport-driver/    driver portal
+├── transport-admin/     admin dashboard (with the Jest and Playwright suites)
+├── prisma/              schema.prisma: source of truth for the database
+├── docs/                documentation
+├── start-all.bat        starts the three apps on Windows (ports 3000, 3001, 3002)
+└── app/, lib/, *.js     legacy root app and one-off scripts: not deployed
 ```
 
----
+## Run it locally
 
-## 🚀 Como Executar
-
-Para começar rapidamente com o projeto, siga as etapas descritas no **[Guia de Início Rápido](docs/getting-started.md)**. O comando padrão para iniciar todos os módulos locais ao mesmo tempo é:
+You need Node.js 20 or newer and PostgreSQL 16 or newer. [Getting started](docs/getting-started.md) goes from an empty database to all three apps running, with demo data, sign-ins, a USSD session and a GPS position sent with `curl`. In short, after creating each app's `.env` ([Configuration](docs/configuration.md)):
 
 ```bash
-# Executa as 3 aplicações em simultâneo (Windows)
-start-all.bat
+cd transport-client && npm install && npm run dev            # http://localhost:3000
+cd transport-driver && npm install && npm run dev            # http://localhost:3001
+cd transport-admin  && npm install && npm run dev -- -p 3002 # http://localhost:3002
 ```
 
----
+On Windows, `start-all.bat` opens the three in their own windows.
 
-## 🗄️ Base de Dados e Modelação
+## Documentation
 
-A aplicação usa o Prisma ORM ligado a uma base de dados local SQLite em desenvolvimento. Para instruções detalhadas de como redefinir, migrar ou semear dados de demonstração, consulte a página da **[Estrutura da Base de Dados](docs/database.md)**.
+The [documentation index](docs/README.md) lists every page with reading paths. Most used:
 
----
+- [Architecture](docs/architecture.md) · [Data flow](docs/data-flow.md) · [Database](docs/database.md)
+- [Passenger web app](docs/passenger-web.md) · [USSD service](docs/ussd.md) · [Driver portal](docs/driver-portal.md) · [Admin dashboard](docs/admin-dashboard.md)
+- [API reference](docs/api-reference.md) · [Deployment](docs/deployment.md) · [Testing](docs/testing.md) · [Security](docs/security.md)
+- [Troubleshooting](docs/troubleshooting.md) · [Known limitations](docs/known-limitations.md)
 
-## 🎨 Arquitetura do Sistema e Tecnologias
+## Contributing
 
-Para compreender como as aplicações Next.js partilham o mesmo backend de dados e comunicam o tráfego GPS dos veículos em tempo real para o mapa do passageiro, consulte a **[Arquitetura do Sistema](docs/architecture.md)**.
+1. Branch from `main`. Every push builds a preview of the three apps on Vercel; merging to `main` deploys production ([Deployment](docs/deployment.md)).
+2. Before pushing, run `npx tsc --noEmit` in each app you changed, and the admin suites when you touch the admin ([Testing](docs/testing.md)). The suites refuse to run against anything but a local database.
+3. Schema changes go into all three `schema.prisma` copies. **Never run `prisma migrate deploy` on production**: it has no migration history. Apply changes as described in [Deployment → Database changes](docs/deployment.md#database-changes-in-production).
 
----
-
-## 🤝 Como Contribuir
-
-1. Faça um Fork do projeto
-2. Crie uma Branch para a sua funcionalidade (`git checkout -b feature/minha-funcionalidade`)
-3. Efetue o Commit das suas alterações (`git commit -m 'Adiciona funcionalidade X'`)
-4. Faça o Push para a branch (`git push origin feature/minha-funcionalidade`)
-5. Abra um Pull Request
+The UI is in Portuguese; code comments and documentation are in English.
 
 ---
 
-## 📄 Licença
-
-Sistema de Transportes de Moçambique © 2026. Desenvolvido para modernizar e melhorar a mobilidade urbana nacional.
+Transport Mozambique © 2026 · [Documentation →](docs/README.md)
