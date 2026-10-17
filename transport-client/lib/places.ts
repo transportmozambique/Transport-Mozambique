@@ -3,7 +3,8 @@
  *
  * Stop names repeat: both sides of a street, or several stops along one avenue, have the same
  * name. A "place" is a group of stops with the same name within PLACE_RADIUS_M of each other,
- * which is what a passenger means by "Museu" or "Padaria".
+ * which is what a passenger means by "Museu" or "Padaria". A route number in brackets at the end
+ * ("Museu (X39)", one bay of the Museu terminal per route) does not count: every bay is "Museu".
  */
 
 export type Point = [number, number]; // [lat, lng]
@@ -34,6 +35,18 @@ export function normalizeName(text: string): string {
     .trim();
 }
 
+/** A route number in brackets at the end of a stop name: "(X39)", "(109)", "(C1)", "(34-1)" */
+const ROUTE_SUFFIX = /\s*\([A-Za-z]?\d[\d-]{0,4}[A-Za-z]?\)\s*$/;
+
+/**
+ * The name a stop shares with the other stops of its place: without a route number in brackets
+ * at the end ("Museu (X39)" → "Museu"). Other brackets stay: "Rua do Cajueiro (Fedel Castro)".
+ */
+export function placeName(nome: string): string {
+  const base = nome.replace(ROUTE_SUFFIX, '').trim();
+  return base || nome;
+}
+
 export function distanceMeters([lat1, lng1]: Point, [lat2, lng2]: Point): number {
   const R = 6371e3;
   const φ1 = (lat1 * Math.PI) / 180;
@@ -59,11 +72,14 @@ export function matchScore(name: string, query: string): number {
   return n.startsWith(q) ? 3 : 2;
 }
 
-/** Groups stops into places: same name, within PLACE_RADIUS_M of another stop of the group. */
+/**
+ * Groups stops into places: same name (route numbers in brackets aside, see placeName), within
+ * PLACE_RADIUS_M of another stop of the group. The place is named without the route number.
+ */
 export function groupPlaces<S extends NamedStop>(stops: S[]): Place<S>[] {
   const byName = new Map<string, S[]>();
   for (const s of stops) {
-    const k = normalizeName(s.nome);
+    const k = normalizeName(placeName(s.nome));
     const list = byName.get(k);
     if (list) list.push(s);
     else byName.set(k, [s]);
@@ -81,7 +97,7 @@ export function groupPlaces<S extends NamedStop>(stops: S[]): Place<S>[] {
       }
       const lat = members.reduce((sum, s) => sum + s.point[0], 0) / members.length;
       const lng = members.reduce((sum, s) => sum + s.point[1], 0) / members.length;
-      places.push({ key: members[0].id, nome: members[0].nome, stops: members, point: [lat, lng] });
+      places.push({ key: members[0].id, nome: placeName(members[0].nome), stops: members, point: [lat, lng] });
     }
   }
   return places;

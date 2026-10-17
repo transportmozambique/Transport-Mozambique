@@ -90,7 +90,7 @@ On a phone, the panel is a bottom sheet over the map:
 The top of the panel has two fields:
 
 - **Partida** is where the journey starts. It is "A sua localização" when the position is known. Tapping it lets you type a stop or place instead; the list says how far each result is. "A sua localização" puts your position back, and "Cancelar" keeps the current start. The start you pick is marked on the map, and the map moves to it.
-- **"Para onde quer ir?"** searches every stop by name, without accents or capitals. Every typed word must start a word of the name: "av ind" finds "Av. das Indústrias". Stops with the same name within 400 m count as one place. Each result shows how far it is from the start, and the route name when two places share a name.
+- **"Para onde quer ir?"** searches every stop by name, without accents or capitals. Every typed word must start a word of the name: "av ind" finds "Av. das Indústrias". Stops with the same name within 400 m count as one place. A route number in brackets at the end of the name does not count, so the 41 bays of the Museu terminal ("Museu (X39)", "Museu (109)", …) are one "Museu"; the journey still names the bay to board at. Each result shows how far it is from the start, and the route name when two places share a name.
 
 Below them, the **"Para onde ir"** tab lists every place reachable from the start, with up to 4 buses, earliest arrival first. Each row has:
 
