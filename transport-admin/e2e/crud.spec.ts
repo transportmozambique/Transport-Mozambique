@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
+import { PrismaClient } from '@prisma/client';
 import {
-  uid, digits, field, selectFirstOption,
+  uid, digits, field, selectFirstOption, E2E_DATABASE_URL,
   submitCreate, submitEdit, expectDetail, expectInList, deleteFromDetail,
 } from './helpers';
 
@@ -116,6 +117,39 @@ test('Paragem: criar, listar, ver, editar, eliminar', async ({ page }) => {
   await expectDetail(page, `/paragens/${sid}`, `E2E Paragem ${id} editada`);
 
   await deleteFromDetail(page, `/paragens/${sid}`, `/api/paragens/${sid}`);
+});
+
+test('Paragem com alerta de passageiro: eliminar remove também o alerta', async ({ page }) => {
+  const id = uid();
+  const via = (await (await page.request.get('/api/vias?limit=1')).json()).data[0];
+  const created = await page.request.post('/api/paragens', {
+    data: { nome: `E2E Paragem ${id}`, codigo: `PAR-E2E-${id}`, geoLocation: '-25.9692,32.5732', viaIds: [via.id] },
+  });
+  expect(created.ok()).toBeTruthy();
+  const pid = (await created.json()).id as string;
+  const utente = await (await page.request.post('/api/utentes', {
+    data: { nome: `E2E Utente ${id}`, email: `e2e.${id.toLowerCase()}@local.test`, telefone: `+25886${digits(7)}`, senha: 'e2e-utente-pass', mISSION: `E2E-${id}` },
+  })).json();
+
+  // Arrival alerts are created by the passenger app; insert one directly
+  const prisma = new PrismaClient({ datasources: { db: { url: E2E_DATABASE_URL } } });
+  try {
+    await prisma.mISSION.create({
+      data: {
+        mISSIONUtente: `E2E-${id}`, codigoParagem: `PAR-E2E-${id}`, geoLocationUtente: '',
+        geoLocationParagem: '-25.9692,32.5732', utenteId: utente.id, paragemId: pid,
+      },
+    });
+
+    const deleted = await page.request.delete(`/api/paragens/${pid}`);
+    expect(deleted.status()).toBe(200);
+    expect((await deleted.json()).alertasRemovidos).toBe(1);
+    expect(await prisma.mISSION.count({ where: { paragemId: pid } })).toBe(0);
+  } finally {
+    await prisma.mISSION.deleteMany({ where: { utenteId: utente.id } });
+    await prisma.$disconnect();
+    await page.request.delete(`/api/utentes/${utente.id}`);
+  }
 });
 
 test('Via: criar (desenhada no mapa), listar, ver, editar, eliminar', async ({ page }) => {
