@@ -52,7 +52,7 @@ sequenceDiagram
 6. **Ranking**: candidates are ranked on ride time at the fare rule's speed, walking, and 10 minutes per bus. When a direct bus exists, journeys with changes are only kept if they are at least 10 minutes better on these estimates. The best 8 are **timed**: for each leg, every bus of the route is asked when it reaches the stop *at the moment the passenger gets there* (`estimateBusTrip` with that time), and the first one is taken.
 7. **Result**: earliest arrival first. An option with the same number of buses, less walking and an arrival at most 2 minutes later moves to the top, which matches the list of destinations. Options that no other beats on both arrival and number of changes come first, then other routes, up to 3.
 
-About 60 ms per journey on the production network (1,004 stops, 91 routes). 86 of the 91 routes are connected through shared or nearby stops; two small groups (4 routes, and 1 route) are not, and journeys between them and the rest do not exist.
+The production network has 1,855 served stops and 261 routes. A journey or a list of destinations takes about 0.3 s on a warm local server; against production, measured from outside, it takes 1 to 1.5 s. 256 of the 261 routes are connected through shared or nearby stops. Two small groups (4 routes, and 1 route) are not, and journeys between them and the rest do not exist.
 
 ## Arrival time
 

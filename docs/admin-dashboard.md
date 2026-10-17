@@ -60,7 +60,7 @@ Everything on this page comes from one request, `GET /api/dashboard/stats`, **ca
 | Paragens por Município | Distinct stops on each municipality's routes, as a share of all stops. A stop served by routes of both municipalities counts in both, and a stop on no route counts in neither. |
 | Top Vias | The routes with the most vehicles. |
 | Mapa de Vias | Every route's stored road path, in the route's colour. |
-| Vias (91) | Every route with its terminals and vehicle count, most vehicles first. |
+| Vias (261) | Every route with its terminals and vehicle count, most vehicles first. |
 | Estado dos Transportes | Vehicles with and without a driver. |
 | Estado dos Motoristas | "Activos" as above; "Disponíveis" = active drivers without a vehicle. |
 | Distribuição de Vias | Routes with and without vehicles. |

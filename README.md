@@ -2,7 +2,7 @@
 
 A public-transport information platform for the Maputo–Matola area. Passengers see the stops near them and plan journeys, with changes of bus when needed, on the web or by USSD on any phone, and can ask for an SMS when their bus is close. Drivers start and end trips from their phone. Administrators manage routes, stops, vehicles, drivers and GPS trackers from a back office.
 
-The network in production has 91 routes, about 1,080 stops and 111 vehicles in two municipalities (October 2026).
+The network in production has 261 routes, about 1,900 stops and 451 vehicles in two municipalities (October 2026). 170 of the routes and 823 of the stops come from [OpenStreetMap](docs/database.md#importing-stops-and-routes-from-openstreetmap).
 
 Like a ride-hailing app, but for public transport. The start is your position or a place you pick. The app lists every place you can reach from there, earliest arrival first, and says which stop to walk to for the first bus. Pick a destination C and the journey reads A → B → C: walk from where you are (A) to the stop (B), then the bus, or buses, to C.
 

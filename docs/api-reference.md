@@ -39,13 +39,13 @@ Starts an arrival-SMS check in the background ([Data flow → Arrival alert](dat
 
 #### `GET /api/stops`
 
-Every stop served by a bus, with the routes through it, for the map and the name search. Each stop lists its routes as indexes into `vias`. `semAutocarro` lists the other stops (none of their routes has a vehicle), as `{"id", "nome", "lat", "lng"}`, so the map can still show them. Cached 5 minutes (`Cache-Control: public, s-maxage=300`), about 120 KB before compression.
+Every stop served by a bus, with the routes through it, for the map and the name search. Each stop lists its routes as indexes into `vias`. `semAutocarro` lists the other stops (none of their routes has a vehicle), as `{"id", "nome", "lat", "lng"}`, so the map can still show them. Cached 5 minutes (`Cache-Control: public, s-maxage=300`), about 280 KB (70 KB compressed).
 
 ```json
 {
- "vias": [{"id": "cmoveu8as00yr14lnpndpwdqj", "codigo": "V086", "nome": "Rua Dos Bons Amigos - Antena", "cor": "#F7DC6F"}, "… (91 items)"],
+ "vias": [{"id": "cmoveu8as00yr14lnpndpwdqj", "codigo": "V086", "nome": "Rua Dos Bons Amigos - Antena", "cor": "#F7DC6F"}, "… (261 items)"],
  "paragens": [{"id": "cmoveoy8l00d214lnk8uwxf8t", "nome": "Portão", "lat": -25.784395699999997, "lng": 32.58930225,
-               "v": [0, 3, 12, 13, "…"]}, "… (1004 items)"]
+               "v": [0, 3, 12, 13, "…"]}, "… (1855 items)"]
 }
 ```
 

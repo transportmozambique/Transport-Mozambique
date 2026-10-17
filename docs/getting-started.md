@@ -124,7 +124,7 @@ The demo data is small but complete:
 | Passengers (`Utente`) | 3 (`+258840000001`, `+258850000002`, `+258860000003`, password `123456`) |
 | Owners (`Proprietario`) | 2 |
 
-These accounts exist only in your local database. Production data is much larger (91 routes that follow the roads, 1,079 stops, 111 vehicles). To work with it, see [Working with a copy of production data](#working-with-a-copy-of-production-data).
+These accounts exist only in your local database. Production data is much larger (261 routes that follow the roads, 1,902 stops, 451 vehicles). To work with it, see [Working with a copy of production data](#working-with-a-copy-of-production-data).
 
 ## 7. Run the apps
 
