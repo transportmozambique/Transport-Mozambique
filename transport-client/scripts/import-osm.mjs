@@ -7,6 +7,10 @@
  *   node scripts/import-osm.mjs --apply                # write to DATABASE_URL (local databases only)
  *   node scripts/import-osm.mjs --apply --production   # also allows a remote database
  *
+ * --apply first saves every Paragem, Via, ViaParagem and Transporte row to
+ * osm-data/backup-<time>.json, and afterwards lists what it created in
+ * osm-data/created-<time>.json (to undo the import: delete those rows).
+ *
  * What it does:
  * - Stops: every highway=bus_stop, bus platform and bus station. A stop_position becomes the
  *   bus_stop or platform within 35 m (same name first), or a stop of its own. Same-name stops
@@ -20,8 +24,10 @@
  *   are attached to the existing route instead.
  * - Existing routes also get the imported stops within 20 m of their path.
  * - Only stops some route serves are imported.
- * - With --buses N, each new route gets N timetable-simulated vehicles (plates SIM-0001…),
- *   as the existing routes have. The journey planner only uses routes that have a vehicle.
+ * - With --buses N, each new route gets N vehicles, as the existing routes have: Toyota Hiace
+ *   for chapas, Mercedes-Benz Sprinter for EMTPM and Corujas, with the next free plates from
+ *   the ADA-001M series. They move on the timetable model until a GPS device reports. The
+ *   journey planner only uses routes that have a vehicle.
  *
  * Idempotent: running it again changes nothing. The data is © OpenStreetMap contributors,
  * under the Open Database License (ODbL): https://www.openstreetmap.org/copyright
@@ -441,9 +447,52 @@ async function plan(prisma) {
 
 // ─── Write ───────────────────────────────────────────────────────────────────
 
-async function apply(prisma, p) {
+/** The next free plates, in Maputo's format, from the ADA-001M series on */
+function plates(taken) {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let second = letters.indexOf('D');
+  let third = 0;
+  let n = 1;
+  return () => {
+    for (;;) {
+      const plate = `A${letters[second]}${letters[third]}-${String(n).padStart(3, '0')}M`;
+      if (++n > 999) {
+        n = 1;
+        if (++third === letters.length) {
+          third = 0;
+          second++;
+        }
+      }
+      if (!taken.has(plate)) {
+        taken.add(plate);
+        return plate;
+      }
+    }
+  };
+}
+
+const vehicleFor = (network) =>
+  /EMTPM|Corujas/i.test(network)
+    ? { marca: 'Mercedes-Benz', modelo: 'Sprinter', lotacao: 22 }
+    : { marca: 'Toyota', modelo: 'Hiace', lotacao: 15 };
+
+async function backup(prisma, file) {
+  const [paragens, vias, viaParagens, transportes] = await Promise.all([
+    prisma.paragem.findMany(),
+    prisma.via.findMany(),
+    prisma.viaParagem.findMany(),
+    prisma.transporte.findMany(),
+  ]);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify({ at: new Date().toISOString(), paragens, vias, viaParagens, transportes }));
+  return { paragens: paragens.length, vias: vias.length, viaParagens: viaParagens.length, transportes: transportes.length };
+}
+
+async function apply(prisma, p, log) {
   const code = (s) => (s.existing ? s.existing.codigo : `OSM-${s.osmId}`);
   // Stops
+  const before = new Set((await prisma.paragem.findMany({ where: { codigo: { startsWith: 'OSM-' } }, select: { codigo: true } })).map((x) => x.codigo));
+  log.paragens = p.newStops.map((s) => `OSM-${s.osmId}`).filter((c) => !before.has(c));
   const created = await prisma.paragem.createMany({
     data: p.newStops.map((s) => ({ nome: s.nome || 'Paragem', codigo: `OSM-${s.osmId}`, geoLocation: `${s.point[0]},${s.point[1]}` })),
     skipDuplicates: true,
@@ -456,8 +505,9 @@ async function apply(prisma, p) {
   let links = 0;
   let buses = 0;
   let nextCodigo = ((await prisma.transporte.aggregate({ _max: { codigo: true } }))._max.codigo ?? 0) + 1;
-  let plate = (await prisma.transporte.count({ where: { matricula: { startsWith: 'SIM-' } } })) + 1;
+  const nextPlate = plates(new Set((await prisma.transporte.findMany({ select: { matricula: true } })).map((t) => t.matricula)));
   for (const r of p.newRoutes) {
+    const existed = await prisma.via.findUnique({ where: { codigo: r.codigo }, select: { id: true } });
     const via = await prisma.via.upsert({
       where: { codigo: r.codigo },
       update: {},
@@ -472,7 +522,10 @@ async function apply(prisma, p) {
         municipioId: r.municipio.id,
       },
     });
-    routes++;
+    if (!existed) {
+      routes++;
+      log.vias.push(r.codigo);
+    }
     const res = await prisma.viaParagem.createMany({
       data: r.stops.map((s, i) => ({ viaId: via.id, paragemId: idOf.get(code(s)), codigoParagem: code(s), codigoVia: r.codigo, terminalBoolean: i === 0 || i === r.stops.length - 1 })).filter((x) => x.paragemId),
       skipDuplicates: true,
@@ -481,20 +534,21 @@ async function apply(prisma, p) {
     if (BUSES_PER_ROUTE > 0) {
       const have = await prisma.transporte.count({ where: { viaId: via.id } });
       for (let i = have; i < BUSES_PER_ROUTE; i++) {
+        const matricula = nextPlate();
         await prisma.transporte.create({
-          data: { matricula: `SIM-${String(plate++).padStart(4, '0')}`, modelo: 'Simulado (horário)', marca: 'OSM', cor: '#FFFFFF', lotacao: 15, codigo: nextCodigo++, codigoVia: r.codigo, viaId: via.id },
+          data: { matricula, ...vehicleFor(r.network), cor: '#FFFFFF', codigo: nextCodigo++, codigoVia: r.codigo, viaId: via.id },
         });
+        log.transportes.push(matricula);
         buses++;
       }
     }
   }
   for (const [viaId, set] of p.attach) {
     const v = p.vias.find((x) => x.id === viaId);
-    const res = await prisma.viaParagem.createMany({
-      data: [...set].map((s) => ({ viaId, paragemId: idOf.get(code(s)), codigoParagem: code(s), codigoVia: v.codigo })).filter((x) => x.paragemId),
-      skipDuplicates: true,
-    });
+    const rows = [...set].map((s) => ({ viaId, paragemId: idOf.get(code(s)), codigoParagem: code(s), codigoVia: v.codigo })).filter((x) => x.paragemId);
+    const res = await prisma.viaParagem.createMany({ data: rows, skipDuplicates: true });
     links += res.count;
+    log.ligacoesAVias.push(...rows.map((x) => ({ via: v.codigo, paragem: x.codigoParagem })));
   }
   return { stops: created.count, routes, links, buses };
 }
@@ -529,8 +583,17 @@ async function apply(prisma, p) {
       console.log('\nDry run: nothing written. Add --apply to write.');
       return;
     }
-    const done = await apply(prisma, p);
-    console.log(`\nWritten: ${done.stops} stops, ${done.routes} routes, ${done.links} route-stop links, ${done.buses} simulated buses.`);
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const saved = await backup(prisma, path.join(DATA, `backup-${stamp}.json`));
+    console.log(`\nBackup: ${saved.paragens} stops, ${saved.vias} routes, ${saved.viaParagens} links, ${saved.transportes} vehicles → ${path.join(DATA, `backup-${stamp}.json`)}`);
+    const log = { at: stamp, paragens: [], vias: [], transportes: [], ligacoesAVias: [] };
+    try {
+      const done = await apply(prisma, p, log);
+      console.log(`Written: ${done.stops} stops, ${done.routes} routes, ${done.links} route-stop links, ${done.buses} vehicles.`);
+    } finally {
+      fs.writeFileSync(path.join(DATA, `created-${stamp}.json`), JSON.stringify(log, null, 1));
+      console.log(`Created rows listed in ${path.join(DATA, `created-${stamp}.json`)}`);
+    }
   } finally {
     await prisma.$disconnect();
   }
