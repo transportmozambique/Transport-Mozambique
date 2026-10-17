@@ -150,7 +150,7 @@ Each also has the same four pages: list, detail, new and edit. What differs is b
 | **GET** | List: 10 per page, with `search`. One: with its routes. |
 | **PATCH** `/api/paragens/{id}` | Name, code, position. `viaIds` replaces its route links; on a route it stays on, its terminal flag is kept. |
 | **DELETE** | In one transaction, also removes its route links and the arrival alerts at it. The answer says how many alerts were removed (`alertasRemovidos`). |
-| **Shown** | Passenger map: green dots near you, white dots from zoom 13, the nearby list, the name search, a stop's page with its destinations, every journey step. USSD place lists and SMS. Driver portal: passengers waiting per stop. Admin `/paragens`. A stop with no bus on any of its routes is left out of the passenger map and search. |
+| **Shown** | Passenger map at every zoom: green dots near you, white dots where buses pass, grey dots where none does. The nearby list, the name search, a stop's page with its destinations, every journey step. USSD place lists and SMS. Driver portal: passengers waiting per stop. Admin `/paragens`. A stop with no bus on any of its routes stays grey on the map and is left out of the search and the nearby list. |
 </details>
 
 <details>
