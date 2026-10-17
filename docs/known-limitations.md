@@ -18,7 +18,7 @@ What is incomplete, estimated or legacy on 2026-10-17, so that you do not mistak
 
 - **Journey times are estimates** from the same model as above, for each bus at the moment you reach its stop. A late first bus makes you miss the next one; the planner does not know.
 - **Walks are straight lines**, timed at 4.5 km/h with a quarter added for streets. The planner walks up to 400 m to change buses, 300 m at either end to a stop near the one chosen, and 800 m from your position. A river or a motorway between two stops is not seen.
-- **Some places are not connected.** Two small groups of routes (VIA-071, VIA-073, VIA-075 and VIA-111; and V111 in Manhiça) share no stop within 400 m with the other 86 routes. Journeys between them and the rest answer "Não há ligação" ([Data flow → Journey planning](data-flow.md#journey-planning)).
+- **Some places are not connected.** Two small groups of routes (VIA-071, VIA-073, VIA-075 and VIA-111; and V111 in Manhiça) share no stop within 400 m with the other 256 routes. Journeys between them and the rest answer "Não há ligação" ([Data flow → Journey planning](data-flow.md#journey-planning)).
 - **The network is cached 5 minutes** per server instance: a new stop, route or vehicle appears in the planner within 5 minutes.
 - **The position is sent in the URL** of `/api/journeys` and so lands in Vercel's request logs ([Security → Public endpoints](security.md#public-endpoints)).
 

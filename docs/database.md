@@ -497,7 +497,14 @@ On a copy of production (2026-10-18), the OSM data had 1,529 stops after folding
 - 1,455 on a route: 823 new and 632 already in the database;
 - 74 on no route, which were skipped.
 
-It added 170 routes (4,421 km) with 340 vehicles, and 651 stops to 35 existing routes. The network went from 91 to 261 routes and from 1,004 to 1,855 served stops. A destination list from Av. Eduardo Mondlane went from nothing to 1,095 places. On a warm server it takes about 0.3 s, as does a journey; the first request after a cold start takes 2.5 s.
+It added 170 routes (4,421 km) with 340 vehicles, and 651 stops to 35 existing routes. The network went from 91 to 261 routes and from 1,004 to 1,855 served stops. A destination list from Av. Eduardo Mondlane went from nothing to 1,095 places.
+
+The same import ran on production on 2026-10-18, with the same result: 823 stops, 170 routes, 13,975 route-stop links and 340 vehicles (ADA-001M to ADA-340M). The backup and the list of created rows are in `transport-client/osm-data/` on the machine that ran it; they are not in the repository.
+
+Speed after the import:
+
+- a destination list or a journey takes about 0.3 s on a warm local server;
+- against production, measured from outside, it takes 1 to 1.5 s, and up to 5 s on a cold start.
 
 **Licence.** OpenStreetMap data is © OpenStreetMap contributors, under the [Open Database License](https://www.openstreetmap.org/copyright) (ODbL). The map already credits OpenStreetMap at the bottom right. Under the ODbL's share-alike terms, the imported stops and routes stay under the ODbL; this script and the OSM data it reads are the way to rebuild them.
 
@@ -528,14 +535,14 @@ The migration history lives in `prisma/migrations/` (six migrations, `2026043017
 
 ## Size at the time of writing
 
-Production on 2026-10-17:
+Production on 2026-10-18, after the OpenStreetMap import:
 
 | Table | Rows |
 |---|---|
 | Provincia / Cidade / Municipio | 11 / 0 / 2 |
-| Via / Paragem / ViaParagem | 91 / 1,079 / 3,312 |
-| Transporte / GeoLocation | 111 / 111 |
-| Motorista | 111 (each assigned to a vehicle) |
+| Via / Paragem / ViaParagem | 261 / 1,902 / 17,287 |
+| Transporte / GeoLocation | 451 / 111 |
+| Motorista | 111 (the 340 vehicles of the imported routes have no driver yet) |
 | Proprietario / TransporteProprietario | 11 / 0 (no vehicle has an owner linked yet) |
 | Tarifa | 1 |
 | Administrador | 3 |
