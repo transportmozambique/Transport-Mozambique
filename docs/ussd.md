@@ -44,7 +44,7 @@ When `USSD_CALLBACK_KEY` is set, the request URL must also carry `?key=<that val
 | `8` | previous page ("Anterior") |
 | `0` | back ("Voltar") |
 
-Typed answers (a driver's PIN, a plate number) are not navigation keys. Long names are cut with `..` so the screen stays within **182 characters** (the text after `CON `/`END `). Accents are removed (`toGsm`), because one accented letter would make the message Unicode.
+Typed answers (a place name in option 1, a plate number, a driver's PIN) are not navigation keys; on a typed step only `0` goes back. Long names are cut with `..` so the screen stays within **182 characters** (the text after `CON `/`END `). Accents are removed (`toGsm`), because one accented letter would make the message Unicode.
 
 **SMS.** Options 1 to 6 can send the result by SMS too. The SMS is sent after the response, with `waitUntil`, so the screen never waits for it. Without `AFRICASTALKING_API_KEY` the SMS is only logged.
 
@@ -61,7 +61,9 @@ flowchart TD
   M --> O5["5 Rastrear autocarro"]
   M --> O6["6 Area do motorista"]
   M --> O7["7 Ajuda (END)"]
-  O1 --> O1a["Onde esta agora? (place)"] --> O1b["Para onde vai? (place)"] --> O1c["TRANSPORTE ENCONTRADO<br/>writes Utente + MISSION"] --> O1d["1 Receber por SMS (END + SMS)"]
+  O1 --> O1a["Onde esta? (type a name)"] --> O1b["choose the stop"] --> O1c["Para onde vai? (type a name)"] --> O1d["choose the stop"] --> O1e["journey, with changes if needed<br/>writes Utente + MISSION"]
+  O1e --> O1f["1 Receber por SMS (END + SMS)"]
+  O1e --> O1g["2 Outra opcao"]
   O2 --> O2a["origin place"] --> O2b["routes from there"] --> O2c["route summary (END + SMS)"]
   O3 --> O3a["route start"] --> O3b["route end"] --> O3c["stops in travel order"] --> O3d["stop detail (END + SMS)"]
   O4 --> O4a["origin"] --> O4b["destination"] --> O4c["TARIFA (END + SMS)"]
@@ -74,7 +76,7 @@ flowchart TD
   O6b --> D0["0 Sair (END)"]
 ```
 
-The screens below were recorded with `curl` against a local copy of the production data at 10:30 Maputo time ([Testing](#testing)). The simulator screenshots come from production.
+The screens below were recorded with `curl` against a local copy of the production data, at 10:30 Maputo time (option 1: at 16:50) ([Testing](#testing)). The simulator screenshots come from production.
 
 ### Main menu (`text=""`)
 
@@ -89,39 +91,72 @@ CON Transportes Mocambique
 7. Ajuda
 ```
 
-The places offered by options 1–4 are the start terminals (`Via.terminalPartida`) of routes that have at least one bus, in alphabetical order. Names such as "120" and "60" are real OpenStreetMap stop names.
+The places offered by options 2–4 are the start terminals (`Via.terminalPartida`) of routes that have at least one bus, in alphabetical order. Names such as "120" and "60" are real OpenStreetMap stop names.
 
 ## 1 Encontrar transporte
 
-Find the next bus from where you are to where you are going.
+How to get from one place to another: the next bus, or the buses to change between when no single bus goes there. Both places are typed, so any stop can be the origin or the destination (USSD does not know where the phone is). It uses the same journey planner as the web app ([Passenger web app → Journeys](passenger-web.md#journeys)).
 
 ```text
-text="1"                          text="1*3"
-CON Onde esta agora?              CON Perto de: Av. Metical
-1. 120                            Para onde vai?
-2. 60                             1. Boane (105)
-3. Av. Metical                    0. Voltar
-4. Av. das Industrias
-5. Avenida Eduardo Mo..
-6. Avenida Uniao Afri..
-7. Proximo
+text="1"                                text="1*portao"
+CON Onde esta?                          CON Qual paragem?
+Escreva o nome da paragem ou do         1. Portao
+local (ex: Museu)                       2. Segundo Portao da Radio Marconi
+0. Voltar                               0. Voltar
+
+text="1*portao*1"                       text="1*portao*1*makalela"
+CON De: Portao                          CON Para onde vai?
+Para onde vai? Escreva o nome do        1. Makalela
+destino                                 0. Voltar
 0. Voltar
+```
 
-text="1*3*1"                                  text="1*3*1*1"
-CON TRANSPORTE ENCONTRADO                     END Detalhes enviados por SMS.
-Autocarro: Mercedes-Benz Sprinter - ACK-181M
-Chega as 11:56
-Viagem: 102 min
-Tarifa: 510 MT
+- **Typing a name.** Any part of the name, without accents or capitals; every typed word must start a word of the name (`av ind` finds "Av. das Industrias"). Stops with the same name within 400 m are one place. Nothing found: `CON Nenhuma paragem com "xyz".` and `0` to type again.
+- **Places with the same name** (49 names are used by several places, often along one avenue) are told apart by the nearest place with another name, and the distance to it when that is also shared. These lists show 4 places per page, so the labels have room:
 
+```text
+text="1*av ind"                           text="1*av ind*7"
+CON Qual paragem?                         CON Qual paragem?
+1. Av. das Industrias                     1. Av... - Maputo - Wintbank - ..
+2. Av... - Rua Principal - Rua Do ..      2. Av. Industrias - 120
+3. Av. Industrias - Casa Branca           3. Av. In.. - Machava-Sede 960 m
+4. Av. In.. - Machava-Sede 170 m          4. Av. In.. - Machava-Sede 970 m
+7. Proximo                                7. Proximo
+0. Voltar                                 8. Anterior
+                                          0. Voltar
+```
+
+  When no other place is within 1.5 km, the first route through the place is used instead ("Av... - Rua Principal - …").
+- **The answer** is the best journey, earliest arrival first; the time is from now, waits included. A direct bus:
+
+```text
+text="1*portao*1*makalela*1"            text="1*portao*1*makalela*1*2"
+CON Directo, chega 16:55                CON Directo, chega 16:59
+Apanhe em Portao as 16:51               Apanhe em Portao as 16:55
+Saia em Makalela                        Saia em Makalela
+6 min, 16 MT                            10 min, 16 MT
+1. Receber por SMS                      1. Receber por SMS
+2. Outra opcao                          2. Outra opcao
+0. Voltar                               0. Voltar
+```
+
+  And a journey with changes, where to take each bus, when, and where to get off for the next one (names are shortened to fit the screen; "amanha" marks the next day):
+
+```text
+text="1*portao*1*johane*1"
+CON 2 transbordos, chega amanha 06:33
+1) Portao 18:21 > Rua 15
+2) Rua 15 19:19 > Avenida 4 ..
+3) Avenida 4 .. amanha 06:23 > Johane Mal..
+13 h 44 min, 204 MT
 1. Receber por SMS
 0. Voltar
 ```
 
-- "Perto de" is the stop nearest to the chosen place. The destinations are the other ends of the routes that leave from it.
-- The result picks the bus that reaches the origin first. It uses the same calculation as the web search (`estimateBusTrip`): position by GPS or timetable, then arrival, trip time and fare along the road path. Waits under an hour show as "Chega em: 34 min", longer ones as a clock time, and at night as "Chega amanha as 05:12".
-- **Writes:** this screen registers an arrival alert (`MISSION`) at the origin stop, so the passenger gets an SMS when a bus is under 1 km away. If the phone number has no account, it first creates a passwordless `Utente`. An alert for the same stop from the last 24 h is reused.
-- `1` sends the details by SMS: bus, arrival, trip time, distance, fare and expected arrival time.
+- `2` shows the next option (from the second option on, `2` again shows the one after, and it wraps around); "2. Outra opcao" only appears when there is more than one.
+- `1` sends the option on screen by SMS, with every step: walks ("Caminhe 150 m ate …"), each bus's route and plate, where and when to take it and get off, and each fare. Then `END Detalhes enviados por SMS.`
+- **Writes:** each journey screen registers an arrival alert (`MISSION`) at the stop where the first bus is taken, so the passenger gets an SMS when a bus is under 1 km away. If the phone number has no account, it first creates a passwordless `Utente`. An alert for the same stop from the last 24 h is reused.
+- **No connection:** `END Nao ha autocarro de … para ….` (a few routes form groups with no stop in common with the rest of the network).
 
 ## 2 Procurar rotas
 

@@ -55,7 +55,7 @@ A GPS fix does not change the route's shape or the timetable. When the fix becom
 | Admin vehicle list, vehicle page | `GET /api/transportes/estado`, `/posicao` | "Agora" column, live map, badge |
 | Admin "Próximas Passagens", charts | `GET /api/transportes/{id}/operacao` | timetable only |
 
-Arrival times use the same rules: a bus that already passed your stop, or is heading the other way, first turns around at a terminal (5 minutes there), and a pass after 21:00 becomes the next morning's ([Data flow → Search and arrival time](data-flow.md#search-and-arrival-time)).
+Arrival times use the same rules: a bus that already passed your stop, or is heading the other way, first turns around at a terminal (5 minutes there), and a pass after 21:00 becomes the next morning's ([Data flow → Arrival time](data-flow.md#arrival-time)).
 
 ## Connecting a device
 

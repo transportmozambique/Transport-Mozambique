@@ -93,10 +93,12 @@ Start the passenger app on the local database (`npm run dev`, or `npm run build 
 B=http://localhost:3000
 curl -s "$B/api/simulation"                              # status, busCount
 curl -s "$B/api/buses?fields=position" | head -c 300     # positions
-curl -s "$B/api/available-routes"                        # municipalities with buses
+curl -s "$B/api/stops" | head -c 300                     # stops and routes
+TO=$(curl -s "$B/api/stops" | node -pe 'JSON.parse(require("fs").readFileSync(0)).paragens.find(p => p.nome === "Makalela").id')
+curl -s "$B/api/journeys?lat=-25.7844&lng=32.5893&to=$TO" | head -c 300   # journeys from a position near Portão
 ```
 
-**Web pages.** Open `/`, `/search` (search a trip), "Acompanhar" (tracking page), `/auth` (sign in with a seeded passenger) and `/user-info`. What each screen should show is in [Passenger web app](passenger-web.md).
+**Web pages.** Open `/` (allow the location, or refuse it to see the map-centre list), tap a stop, type a destination, open a journey and "Acompanhar este autocarro" (tracking page), `/auth` (sign in with a seeded passenger) and `/user-info`. What each screen should show is in [Passenger web app](passenger-web.md).
 
 **USSD.** Post the form fields Africa's Talking sends, with the whole answer history in `text`:
 

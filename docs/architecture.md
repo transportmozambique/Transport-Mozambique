@@ -59,8 +59,8 @@ flowchart LR
 | Folder | `transport-client/` | `transport-admin/` | `transport-driver/` |
 | Production URL | https://transport-mz.vercel.app | https://transport-mz-admin.vercel.app | https://transport-mz-driver.vercel.app |
 | Vercel project | `transport-mz` | `transport-mz-admin` | `transport-mz-driver` |
-| Pages | `/`, `/search`, `/track/[id]`, `/auth`, `/user-info`, `/my-transports` (redirect) | 46 pages: list, detail, new and edit for each entity, plus dashboard, reports, profile | `/` (sign-in), `/dashboard` |
-| API routes | 19 (`app/api/**/route.ts`) | 33 | none |
+| Pages | `/` and `/search` (live map and journey planner), `/track/[id]`, `/auth`, `/user-info`, `/my-transports` (redirect) | 46 pages: list, detail, new and edit for each entity, plus dashboard, reports, profile | `/` (sign-in), `/dashboard` |
+| API routes | 20 (`app/api/**/route.ts`) | 33 | none |
 | Database access | Prisma, read/write | Prisma, read/write | none, via the passenger app's API |
 | Who calls it | Browsers, Africa's Talking, the driver portal, GPS devices | Administrators' browsers | Drivers' browsers |
 | Authentication | Passenger and driver: signed Bearer tokens | Admin: signed `HttpOnly` cookie, checked by `proxy.ts` on every `/api/*` | Holds the driver token from the passenger app |
@@ -97,7 +97,7 @@ These choices explain most of the code's shape.
 2. **The USSD service is stateless.** Africa's Talking resends the whole input history in `text` (`1*3*1`). The server rebuilds the menu path from it on every request, so it keeps no session storage. See [USSD](ussd.md#how-a-session-works).
 3. **Sessions are signed tokens, not database rows.** Passengers (90 days) and drivers (30 days) get `id.expiry.signature` tokens, signed with HMAC-SHA256. Admins get the same kind of token in an `HttpOnly` cookie (12 hours). Without the secret in production, sign-in is refused (fails closed). See [Security](security.md).
 4. **Prices and speeds live in the database.** The active `Tarifa` row sets the minimum fare, the price per km, the road factor and the speeds. The web and USSD share it through `getFareRule()`, cached for 60 s. Distances are measured along the route's road path. See [Configuration → Fare rule](configuration.md#fare-rule-tarifa).
-5. **Periodic work rides on traffic.** The arrival SMS check (`checkAndNotifyUsers`) runs when the home page opens (`/api/startup`) and when the live map polls positions (`/api/buses?fields=position`). It runs at most once every 30 s per server instance, so no cron job is needed. See [Data flow → Arrival alert](data-flow.md#arrival-alert-and-sms).
+5. **Periodic work rides on traffic.** The arrival SMS check (`checkAndNotifyUsers`) runs when the live map polls positions (`/api/buses?fields=position`) and when a stop or a journey is requested (`/api/stops/{id}`, `/api/journeys`). It runs at most once every 30 s per server instance, so no cron job is needed. See [Data flow → Arrival alert](data-flow.md#arrival-alert-and-sms).
 6. **Secrets are stored hashed where possible.** Driver PINs and passenger and admin passwords are bcrypt hashes. GPS device codes are stored as SHA-256 hashes. The PIN and the device code are shown once, when the admin creates them.
 
 ## Tech stack
@@ -122,12 +122,14 @@ These choices explain most of the code's shape.
 .
 ├── transport-client/          Passenger app (deployed as transport-mz)
 │   ├── app/                   Pages: / search track/[id] auth user-info my-transports
-│   │   ├── api/               ussd, buses, bus/[id], available-routes, locations, gps,
+│   │   ├── api/               ussd, buses, bus/[id], stops, stops/[id], journeys, gps,
 │   │   │                      auth/*, user/*, driver/*, startup, simulation, ussd-telerivet
-│   │   └── components/        TransportMap, UserAvatar, LoadingScreen, Bus3D*
+│   │   └── components/        TripPlanner (map and planner), TransportMap (tracking map),
+│   │                          UserAvatar, LoadingScreen, Bus3D*
 │   ├── lib/                   vehiclePosition (positions, arrival times), fares (fare rule,
 │   │                          distances), busSimulator (arrival SMS check), notifications (SMS),
-│   │                          signedToken / userSession / driverSession, driverTrips, eta
+│   │                          signedToken / userSession / driverSession, driverTrips, eta,
+│   │                          journeys (journey planner), places (stop names and search)
 │   └── prisma/                schema.prisma (copy of the root schema), seed.ts
 ├── transport-admin/           Admin dashboard (deployed as transport-mz-admin)
 │   ├── app/                   Pages per entity: transportes vias paragens motoristas

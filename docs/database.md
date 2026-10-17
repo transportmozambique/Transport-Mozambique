@@ -270,7 +270,7 @@ JOIN "Via" v     ON v.id = vp."viaId"
 WHERE v.codigo = 'V063';
 ```
 
-The rows come back in no particular order. For the travel order, use the API (`GET /api/available-routes?municipioId=…&viaId=…`), which orders them along the path ([API reference](api-reference.md#get-apiavailable-routes)).
+The rows come back in no particular order. For the travel order, use the API (`GET /api/stops/{id}` lists, for each route through a stop, the stops in both directions in travel order: [API reference](api-reference.md#get-apistopsid)).
 
 ### Stops served by the most routes
 

@@ -12,7 +12,7 @@ Each topic has its own page. The pages assume a technical reader: they cite file
 |---|---|
 | [Getting started](getting-started.md) | Run the whole platform locally from an empty database, sign in to every app, try USSD and GPS with `curl`. |
 | [Architecture](architecture.md) | The three deployed apps, what each one owns, how they talk to each other and to the outside services, the tech stack and the repository layout. |
-| [Data flow](data-flow.md) | Sequence diagrams for every flow: search and arrival time, live map, arrival SMS, USSD session, driver trip, GPS position, admin changes. |
+| [Data flow](data-flow.md) | Sequence diagrams for every flow: journey planning and arrival time, live map, arrival SMS, USSD session, driver trip, GPS position, admin changes. |
 | [Database](database.md) | Entity diagram, every table, storage conventions, how to connect (psql, Prisma Studio, Neon console), tested example queries, migrations. |
 | [Configuration](configuration.md) | Every environment variable of every app, Vercel and Neon settings, the fare rule, timetable constants. |
 
@@ -20,7 +20,7 @@ Each topic has its own page. The pages assume a technical reader: they cite file
 
 | Page | What it covers |
 |---|---|
-| [Passenger web app](passenger-web.md) | Live map, search, tracking page, account and arrival alerts, with the API call behind each screen. |
+| [Passenger web app](passenger-web.md) | Live map with your position, stops near you, a stop's destinations, journeys with changes of bus, tracking page, account and arrival alerts, with the API call behind each screen. |
 | [USSD service](ussd.md) | The full menu tree with real screens, pagination rules, what each option reads, writes and sends by SMS, and how to test it. |
 | [Driver portal](driver-portal.md) | PIN sign-in, starting and ending a trip (shared with USSD), sharing the phone's GPS, passengers waiting along the route. |
 | [Admin dashboard](admin-dashboard.md) | Every back-office page: network data, vehicles with live position, GPS trackers, driver PINs, reports. |
@@ -47,7 +47,7 @@ Each topic has its own page. The pages assume a technical reader: they cite file
 
 ## Language
 
-The documentation is in English. The apps' user interface is in Portuguese; UI labels are quoted as they appear (for example "Pesquisar Transportes", "Gerar PIN"). Database tables and fields keep their Portuguese names (`Via` = route, `Paragem` = stop, `Transporte` = vehicle, `Motorista` = driver, `Utente` = passenger, `Proprietario` = owner, `MISSION` = arrival alert, `Tarifa` = fare rule).
+The documentation is in English. The apps' user interface is in Portuguese; UI labels are quoted as they appear (for example "Para onde quer ir?", "Gerar PIN"). Database tables and fields keep their Portuguese names (`Via` = route, `Paragem` = stop, `Transporte` = vehicle, `Motorista` = driver, `Utente` = passenger, `Proprietario` = owner, `MISSION` = arrival alert, `Tarifa` = fare rule).
 
 ---
 

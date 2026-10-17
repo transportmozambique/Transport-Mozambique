@@ -4,7 +4,7 @@ Every HTTP endpoint of the two apps that have an API. The driver portal has none
 
 The example responses were recorded on a local copy of the production data on 2026-10-17, with long arrays cut to two items (`"… (238 items)"`) and long strings shortened (`…`).
 
-**On this page:** [Conventions](#conventions) · [Passenger app](#passenger-app-transport-client) ([map and search](#map-and-search) · [passenger account](#passenger-account) · [driver](#driver) · [GPS](#gps) · [USSD](#ussd)) · [Admin app](#admin-app-transport-admin) ([session](#session) · [lists and records](#lists-and-records) · [vehicles](#vehicles) · [drivers](#drivers) · [statistics](#statistics))
+**On this page:** [Conventions](#conventions) · [Passenger app](#passenger-app-transport-client) ([map and journeys](#map-and-journeys) · [passenger account](#passenger-account) · [driver](#driver) · [GPS](#gps) · [USSD](#ussd)) · [Admin app](#admin-app-transport-admin) ([session](#session) · [lists and records](#lists-and-records) · [vehicles](#vehicles) · [drivers](#drivers) · [statistics](#statistics))
 
 ---
 
@@ -27,38 +27,83 @@ The example responses were recorded on a local copy of the production data on 20
 
 ## Passenger app (`transport-client`)
 
-### Map and search
+### Map and journeys
 
 #### `GET /api/startup`
 
-Called when the home page opens. Starts an arrival-SMS check in the background ([Data flow → Arrival alert](data-flow.md#arrival-alert-and-sms)) and reports the position mode.
+Starts an arrival-SMS check in the background ([Data flow → Arrival alert](data-flow.md#arrival-alert-and-sms)) and reports the position mode. No page calls it any more (the map's position refresh triggers the same check).
 
 ```json
 {"success": true, "status": {"mode": "gps-or-timetable", "busCount": 111, "withFreshGps": 0, "lastArrivalCheck": null}}
 ```
 
-#### `GET /api/available-routes`
+#### `GET /api/stops`
 
-The search form's choices, narrowed step by step. Only municipalities, routes and stops that have buses are returned.
-
-| Query | Returns |
-|---|---|
-| (none) | `municipios`; `vias` and `paragens` empty |
-| `municipioId` | also that municipality's `vias` that have buses |
-| `municipioId`, `viaId` | also the route's `paragens` in travel order |
+Every stop served by a bus, with the routes through it, for the map and the name search. Each stop lists its routes as indexes into `vias`. Cached 5 minutes (`Cache-Control: public, s-maxage=300`), about 120 KB before compression.
 
 ```json
 {
- "municipios": [{"id": "cmovaprzr000113rkhmw2aazp", "nome": "Matola", "codigo": "MUN-MATOLA"}, "…"],
- "vias": [{"id": "cmoveu8as00yr14lnpndpwdqj", "nome": "Rua Dos Bons Amigos - Antena", "codigo": "V086",
-           "municipioId": "cmovaprzr000113rkhmw2aazp", "terminalPartida": "Rua Dos Bons Amigos", "terminalChegada": "Antena"}, "… (70 items)"],
- "paragens": [{"id": "cmoverp9500p814ln9nwz5p61", "nome": "Rua do Cajueiro (Fedel Castro)", "codigo": "PAR-0907",
-               "geoLocation": "-25.8398116,32.5497614", "viaIds": ["cmoveturn00xh14lnebtzwv1x"],
-               "orderByVia": {"cmoveturn00xh14lnebtzwv1x": 0}}, "… (20 items)"]
+ "vias": [{"id": "cmoveu8as00yr14lnpndpwdqj", "codigo": "V086", "nome": "Rua Dos Bons Amigos - Antena", "cor": "#F7DC6F"}, "… (91 items)"],
+ "paragens": [{"id": "cmoveoy8l00d214lnk8uwxf8t", "nome": "Portão", "lat": -25.784395699999997, "lng": 32.58930225,
+               "v": [0, 3, 12, 13, "…"]}, "… (1004 items)"]
 }
 ```
 
-`orderByVia` is the stop's position along each route's path (0 = first).
+#### `GET /api/stops/{id}`
+
+A stop's routes, and for each direction of each route the next bus and the stops it goes to, in order. `para` names the direction by the stop at that end of the route. `minutos` follows the same rules as everywhere else ([Data flow → Arrival time](data-flow.md#arrival-time)); `proximo` is `null` when no bus of the route can come.
+
+```json
+{
+ "paragem": {"id": "cmoveoy8l00d214lnk8uwxf8t", "nome": "Portão", "lat": -25.784395699999997, "lng": 32.58930225, "codigo": "PAR-0469"},
+ "rotas": [{
+   "via": {"id": "cmoveu8as00yr14lnpndpwdqj", "codigo": "V086", "nome": "Rua Dos Bons Amigos - Antena", "cor": "#F7DC6F"},
+   "sentidos": [{
+     "para": "Antena",
+     "proximo": {"minutos": 10, "matricula": "ACK-145M", "transporteId": "cmozbudx900049ounfhdlny9a"},
+     "paragens": [{"id": "cmoveoy0q00d114lnzprias6n", "nome": "Michafutene", "lat": -25.7843419, "lng": 32.5924715}, "… (27 items)"]
+   }, "… (other direction)"]
+ }, "… (22 routes)"]
+}
+```
+
+Errors: 404 `Paragem não encontrada`.
+
+#### `GET /api/journeys`
+
+Journeys to a destination, with changes of bus when no single bus goes there ([Data flow → Journey planning](data-flow.md#journey-planning)).
+
+| Query | Meaning |
+|---|---|
+| `to` | destination stop id; several, comma-separated, for one place (same-name stops) |
+| `from` | origin stop id, or several for one place |
+| `lat`, `lng` | instead of `from`: the passenger's position; the journey starts with a walk to one of the 8 nearest stops within 800 m |
+
+Up to 3 options, earliest arrival first. Times are ISO dates (UTC). `partida` is when the first bus is boarded, `chegada` the arrival at the destination stop, and `duracaoMin` counts from now, walks and waits included; `esperaMin` is the wait at that stop once the passenger is there. Each bus leg has its own `tarifa`, and `percurso` is its road path as `[lng, lat]` points.
+
+```json
+{
+ "origem": {"id": "cmoveoy8l00d214lnk8uwxf8t", "nome": "Portão", "lat": -25.784395699999997, "lng": 32.58930225},
+ "destino": {"id": "cmoveoxl100cz14lnx9owv74d", "nome": "Makalela", "lat": -25.7798167, "lng": 32.60249235},
+ "opcoes": [{
+   "transbordos": 0, "partida": "2026-10-17T15:07:20.984Z", "chegada": "2026-10-17T15:11:20.984Z",
+   "duracaoMin": 14, "tarifa": 16, "metrosAPe": 0,
+   "etapas": [{
+     "tipo": "autocarro",
+     "via": {"id": "cmoveu8as00yr14lnpndpwdqj", "codigo": "V086", "nome": "Rua Dos Bons Amigos - Antena", "cor": "#F7DC6F"},
+     "transporte": {"id": "cmozbudx900049ounfhdlny9a", "matricula": "ACK-145M"},
+     "sentido": "Antena",
+     "de": {"id": "cmoveoy8l00d214lnk8uwxf8t", "nome": "Portão", "lat": -25.784395699999997, "lng": 32.58930225},
+     "para": {"id": "cmoveoxl100cz14lnx9owv74d", "nome": "Makalela", "lat": -25.7798167, "lng": 32.60249235},
+     "esperaMin": 10, "embarque": "2026-10-17T15:07:20.984Z", "chegada": "2026-10-17T15:11:20.984Z",
+     "viagemMin": 4, "metros": 1510, "paragens": 3, "tarifa": 16,
+     "percurso": [[32.589304, -25.784361], [32.590143, -25.784347], "… (32 items)"]
+   }]
+ }, "… (2 more)"]
+}
+```
+
+A walk is `{"tipo": "pe", "de", "para", "metros", "minutos"}`; from a position, the first walk starts at `{"id": "", "nome": "A sua localização", "lat", "lng"}`. No connection: `"opcoes": []`. Errors: 400 when `to`, or both `from` and `lat`/`lng`, are missing; 404 `Paragem não encontrada`.
 
 #### `GET /api/buses`
 
@@ -140,10 +185,6 @@ One bus, for the tracking page (polled every 10 s). With `?paragem=ORIGIN&destin
 Here `distancia` is the distance the **bus** still drives to reach the origin, `distanciaViagem` the trip's. `jaPassou` is true when the bus has passed the origin and comes back on its next lap. `posicaoEm` is the time of the GPS fix, or of the computation for a timetable position.
 
 Errors: 404 `Bus not found`; 400 `Route (via) not assigned to this transport`.
-
-#### `GET /api/locations`
-
-Every municipality, route and stop (with `viaIds`), in one response. No page calls it any more.
 
 #### `GET /api/simulation`, `POST /api/simulation`
 

@@ -171,20 +171,20 @@ curl -s -X POST http://localhost:3000/api/ussd \
   --data-urlencode "sessionId=test-1" --data-urlencode "serviceCode=*384*848080#" \
   --data-urlencode "phoneNumber=+258840000001" --data-urlencode "text="
 
-# Option 1, "Encontrar transporte": first list of places
+# Option 1: type where you are, pick the stop, type the destination, pick it
 curl -s -X POST http://localhost:3000/api/ussd \
   --data-urlencode "sessionId=test-1" --data-urlencode "phoneNumber=+258840000001" \
-  --data-urlencode "text=1"
+  --data-urlencode "text=1*portao"
 ```
 
 ```text
-CON Onde esta agora?
-1. Albert Lithule
-2. Laurentina
-3. Machava Sede
-4. Praca dos Trabalha..
-...
+CON Qual paragem?
+1. Portao
+2. Segundo Portao da Radio Marconi
+0. Voltar
 ```
+
+`text=1*portao*1*makalela*1` then shows the first journey; [USSD → 1 Encontrar transporte](ussd.md#1-encontrar-transporte) has every screen.
 
 Without `AFRICASTALKING_API_KEY`, the SMS the menus send are logged in the client's terminal (`SMS não enviado para ...`) instead of sent.
 
