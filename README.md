@@ -25,7 +25,7 @@ Dial `*384*848080#` in the [Africa's Talking simulator](https://developers.afric
 
 | Option | What it does |
 |---|---|
-| 1 Encontrar transporte | Where you are and where you are going → the next bus, its arrival time, trip time and fare. It also registers an arrival alert: an SMS comes when a bus is under 1 km away |
+| 1 Encontrar transporte | Type where you are and where you are going → journeys, direct or with changes of bus: where and when to board, where to get off, arrival time and fare; the chosen one by SMS. It also registers an arrival alert: an SMS comes when a bus is under 1 km away |
 | 2 Procurar rotas | The routes leaving from a place, with length, stops and full-route fare |
 | 3 Paragens de uma rota | A route's stops in travel order, then one stop's details |
 | 4 Calcular tarifa | Fare, distance and trip time between two places |
