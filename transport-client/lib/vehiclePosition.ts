@@ -264,6 +264,17 @@ export function vehicleGeo(
   return p ? `${p.point[0].toFixed(6)},${p.point[1].toFixed(6)}` : null;
 }
 
+/** Speed now in km/h: the GPS speed while the GPS is fresh, else the timetable's (0 when parked). */
+export function currentSpeedKmh(
+  vehicle: PositionedVehicle,
+  position: VehiclePosition | null,
+  rule?: Pick<FareRule, 'velocidadeViagemKmh'>,
+): number {
+  if (!position) return 0;
+  if (position.source === 'gps') return Math.round(vehicle.gpsVelocidade ?? 0);
+  return position.moving ? rule?.velocidadeViagemKmh || DEFAULT_SPEED_KMH : 0;
+}
+
 /**
  * Metres a bus at `position` still drives, and how many terminal turnarounds it makes, before
  * it passes `target` metres along the path moving in direction `travel`. Buses go to the end

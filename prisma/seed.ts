@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -26,7 +27,7 @@ async function main() {
     data: {
       nome: 'Administrador Sistema',
       email: 'admin@transportmz.com',
-      senha: 'admin123', // Em produção, usar hash
+      senha: await bcrypt.hash('admin123', 10), // demo local; o login compara com bcrypt
     },
   });
 
@@ -1303,12 +1304,13 @@ async function main() {
   console.log('✅ Motoristas criados');
 
   // Criar Utentes
+  const senhaDemo = await bcrypt.hash('123456', 10);
   const utente1 = await prisma.utente.create({
     data: {
       nome: 'João Pedro Silva',
       email: 'joao.silva@email.com',
       telefone: '+258840000001',
-      senha: '$2a$10$rZ5qH8vK9xJ3yL2wN4pO5.xQ7tR8sU9vW0xY1zA2bC3dE4fG5hI6j', // senha: 123456
+      senha: senhaDemo, // senha: 123456
       mISSION: 'USER-001',
       geoLocation: '-25.9732,32.5632',
       subscrito: true,
@@ -1321,7 +1323,7 @@ async function main() {
       nome: 'Maria Santos Costa',
       email: 'maria.costa@email.com',
       telefone: '+258850000002',
-      senha: '$2a$10$rZ5qH8vK9xJ3yL2wN4pO5.xQ7tR8sU9vW0xY1zA2bC3dE4fG5hI6j', // senha: 123456
+      senha: senhaDemo, // senha: 123456
       mISSION: 'USER-002',
       geoLocation: '-25.9692,32.5732',
       subscrito: true,
@@ -1334,7 +1336,7 @@ async function main() {
       nome: 'Carlos Nhaca',
       email: 'carlos.nhaca@email.com',
       telefone: '+258860000003',
-      senha: '$2a$10$rZ5qH8vK9xJ3yL2wN4pO5.xQ7tR8sU9vW0xY1zA2bC3dE4fG5hI6j', // senha: 123456
+      senha: senhaDemo, // senha: 123456
       mISSION: 'USER-003',
       geoLocation: '-25.9794,32.4589',
       subscrito: true,

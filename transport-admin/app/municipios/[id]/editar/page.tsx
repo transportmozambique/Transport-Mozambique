@@ -113,7 +113,7 @@ export default function EditarMunicipio() {
           },
           'openmaptiles': {
             type: 'vector',
-            url: 'https://api.maptiler.com/tiles/v3/tiles.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL'
+            url: 'https://tiles.openfreemap.org/planet'
           }
         },
         layers: [
@@ -169,7 +169,7 @@ export default function EditarMunicipio() {
         'id': '3d-buildings',
         'source': 'openmaptiles',
         'source-layer': 'building',
-        'filter': ['==', 'extrude', 'true'],
+        'filter': ['!=', ['get', 'hide_3d'], true],
         'type': 'fill-extrusion',
         'minzoom': 15,
         'paint': {
@@ -181,7 +181,7 @@ export default function EditarMunicipio() {
             15,
             0,
             15.05,
-            ['get', 'height']
+            ['get', 'render_height']
           ],
           'fill-extrusion-base': [
             'interpolate',
@@ -190,7 +190,7 @@ export default function EditarMunicipio() {
             15,
             0,
             15.05,
-            ['get', 'min_height']
+            ['get', 'render_min_height']
           ],
           'fill-extrusion-opacity': 0.6
         }

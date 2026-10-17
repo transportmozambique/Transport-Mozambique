@@ -8,7 +8,7 @@ import {
   parseRoutePath,
   type LatLng,
 } from '@/lib/fares';
-import { POSITION_FIELDS, estimateBusTrip, routePaths, vehiclePosition } from '@/lib/vehiclePosition';
+import { POSITION_FIELDS, currentSpeedKmh, estimateBusTrip, routePaths, vehiclePosition } from '@/lib/vehiclePosition';
 import { maybeCheckArrivals } from '@/lib/busSimulator';
 import { waitUntil } from '@vercel/functions';
 
@@ -219,7 +219,7 @@ export async function GET(request: NextRequest) {
           distancia: Math.round(trip.distanciaViagem), // User's journey distance
           tempoEstimado: trip.tempoChegada, // Time for bus to reach origem
           tempoViagem: trip.tempoViagem, // Time user spends in bus
-          velocidade: rule.velocidadeChegadaKmh,
+          velocidade: currentSpeedKmh(transporte, position, rule),
           latitude: bus[0],
           longitude: bus[1],
           fonte: position?.source ?? 'horario',

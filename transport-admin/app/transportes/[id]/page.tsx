@@ -196,7 +196,7 @@ export default function TransporteDetalhes() {
           id: '3d-buildings',
           source: 'openmaptiles',
           'source-layer': 'building',
-          filter: ['==', 'extrude', 'true'],
+          filter: ['!=', ['get', 'hide_3d'], true],
           type: 'fill-extrusion',
           minzoom: 14,
           paint: {
@@ -208,7 +208,7 @@ export default function TransporteDetalhes() {
               15,
               0,
               15.05,
-              ['get', 'height']
+              ['get', 'render_height']
             ],
             'fill-extrusion-base': [
               'interpolate',
@@ -217,7 +217,7 @@ export default function TransporteDetalhes() {
               15,
               0,
               15.05,
-              ['get', 'min_height']
+              ['get', 'render_min_height']
             ],
             'fill-extrusion-opacity': 0.6
           }
@@ -225,25 +225,9 @@ export default function TransporteDetalhes() {
         labelLayerId
       );
 
-      // Add route line if available from database
+      // Route line from the database: the route's stored path already follows the roads
       if (transporte.routeCoords && transporte.routeCoords.length > 0) {
-        // Use OSRM to get road-following route
-        const waypointsString = transporte.routeCoords.map(w => `${w[0]},${w[1]}`).join(';');
-        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${waypointsString}?overview=full&geometries=geojson&steps=true`;
-
-        fetch(osrmUrl)
-          .then(response => response.json())
-          .then(data => {
-            if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-              const routeGeometry = data.routes[0].geometry;
-              drawRoute(routeGeometry.coordinates);
-            } else {
-              drawRoute(transporte.routeCoords!);
-            }
-          })
-          .catch(error => {
-            drawRoute(transporte.routeCoords!);
-          });
+        drawRoute(transporte.routeCoords);
       } else {
         // If no route data, just show the bus marker
         addBusMarker();

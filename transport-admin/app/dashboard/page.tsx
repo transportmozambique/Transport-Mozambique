@@ -263,7 +263,7 @@ function DashboardContent() {
         firstSymbolId
       );
 
-      // Process all routes with OSRM
+      // Draw every route from its stored path ("lng,lat;lng,lat;..."), which already follows the roads
       viasData.forEach((via) => {
         if (!via.path || !map.current || routesProcessed.current.has(via.id)) return;
 
@@ -275,28 +275,8 @@ function DashboardContent() {
 
           if (coordinates.length < 2) return;
 
-          // Use OSRM to get road-following route
-          const waypointsString = coordinates.map(w => `${w[0]},${w[1]}`).join(';');
-          const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${waypointsString}?overview=full&geometries=geojson`;
-
-          fetch(osrmUrl)
-            .then(response => response.json())
-            .then(data => {
-              if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
-                // Fallback to original coordinates
-                addRouteToMap(via.id, coordinates, via.color);
-                return;
-              }
-
-              // Use OSRM route (follows roads)
-              const routeGeometry = data.routes[0].geometry;
-              addRouteToMap(via.id, routeGeometry.coordinates, via.color);
-              routesProcessed.current.add(via.id);
-            })
-            .catch(() => {
-              // Fallback to original coordinates
-              addRouteToMap(via.id, coordinates, via.color);
-            });
+          addRouteToMap(via.id, coordinates, via.color);
+          routesProcessed.current.add(via.id);
         } catch (error) {
           console.error(`Error processing route ${via.name}:`, error);
         }

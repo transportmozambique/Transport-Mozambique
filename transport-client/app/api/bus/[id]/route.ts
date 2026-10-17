@@ -7,7 +7,7 @@ import {
   parseRoutePath,
   type LatLng,
 } from '@/lib/fares';
-import { estimateBusTrip, vehiclePosition } from '@/lib/vehiclePosition';
+import { currentSpeedKmh, estimateBusTrip, vehiclePosition } from '@/lib/vehiclePosition';
 
 // GET /api/bus/[id]?paragem=<origem>&destino=<destino>
 export async function GET(
@@ -74,7 +74,7 @@ export async function GET(
           ? `${stops[stops.length - 1].vp.paragem.nome} → ${stops[0].vp.paragem.nome}`
           : `${stops[0].vp.paragem.nome} → ${stops[stops.length - 1].vp.paragem.nome}`
         : `${via.terminalPartida} → ${via.terminalChegada}`,
-      velocidade: rule.velocidadeChegadaKmh,
+      velocidade: currentSpeedKmh(transporte, position, rule),
       latitude: bus[0],
       longitude: bus[1],
       fonte: position?.source ?? 'horario',
