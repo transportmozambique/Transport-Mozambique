@@ -33,6 +33,8 @@ export default function Vias() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  // Counters over every matching route (the API's totals), not just the page shown
+  const [totals, setTotals] = useState({ transportes: 0, paragens: 0 });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [viaToDelete, setViaToDelete] = useState<Via | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -61,6 +63,7 @@ export default function Vias() {
         setVias(result.data);
         setTotalCount(result.pagination.total);
         setTotalPages(result.pagination.totalPages);
+        if (result.totals) setTotals(result.totals);
       } else if (Array.isArray(result)) {
         // Fallback for old non-paginated response
         setVias(result);
@@ -442,7 +445,7 @@ export default function Vias() {
               </div>
               <div>
                 <p className="text-xs text-gray-600 font-medium">Transportes</p>
-                <p className="text-2xl font-bold text-gray-900">{vias.reduce((sum, v) => sum + (v._count?.transportes || 0), 0)}</p>
+                <p className="text-2xl font-bold text-gray-900">{totals.transportes}</p>
               </div>
             </div>
           </button>
@@ -458,7 +461,7 @@ export default function Vias() {
               </div>
               <div>
                 <p className="text-xs text-gray-600 font-medium">Média Paragens</p>
-                <p className="text-2xl font-bold text-gray-900">{vias.length > 0 ? Math.round(vias.reduce((sum, v) => sum + (v._count?.paragens || 0), 0) / vias.length) : 0}</p>
+                <p className="text-2xl font-bold text-gray-900">{totalCount > 0 ? Math.round(totals.paragens / totalCount) : 0}</p>
               </div>
             </div>
           </button>

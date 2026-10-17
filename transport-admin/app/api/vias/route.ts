@@ -10,30 +10,25 @@ export async function GET(request: Request) {
     const search = searchParams.get('search') || '';
     const countOnly = searchParams.get('countOnly') === 'true';
 
+    // Name, code or municipality, ignoring case (what the list's search box promises)
+    const whereClause = search ? {
+      OR: [
+        { nome: { contains: search, mode: 'insensitive' as const } },
+        { codigo: { contains: search, mode: 'insensitive' as const } },
+        { municipio: { is: { nome: { contains: search, mode: 'insensitive' as const } } } },
+      ],
+    } : {};
+
     // If only count is requested, return just the count
     if (countOnly) {
-      const total = await prisma.via.count({
-        where: search ? {
-          OR: [
-            { nome: { contains: search } },
-            { codigo: { contains: search } },
-          ],
-        } : {},
-      });
-
+      const total = await prisma.via.count({ where: whereClause });
       return NextResponse.json({ total });
     }
 
     const skip = (page - 1) * limit;
 
-    const whereClause = search ? {
-      OR: [
-        { nome: { contains: search } },
-        { codigo: { contains: search } },
-      ],
-    } : {};
-
-    const [vias, total] = await Promise.all([
+    // Totals over every matching route, not just this page (the list page's counters)
+    const [vias, total, totalTransportes, totalParagens] = await Promise.all([
       prisma.via.findMany({
         where: whereClause,
         include: {
@@ -56,6 +51,8 @@ export async function GET(request: Request) {
         take: limit,
       }),
       prisma.via.count({ where: whereClause }),
+      prisma.transporte.count({ where: search ? { via: { is: whereClause } } : { viaId: { not: null } } }),
+      prisma.viaParagem.count({ where: search ? { via: whereClause } : {} }),
     ]);
 
     return NextResponse.json({
@@ -65,6 +62,10 @@ export async function GET(request: Request) {
         limit,
         total,
         totalPages: Math.ceil(total / limit),
+      },
+      totals: {
+        transportes: totalTransportes,
+        paragens: totalParagens,
       },
     });
   } catch (error) {

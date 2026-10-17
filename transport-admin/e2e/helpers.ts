@@ -3,6 +3,9 @@ import { expect, type Page } from '@playwright/test';
 /** Short unique suffix so every run creates its own rows. */
 export const uid = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`.toUpperCase();
 
+/** The local test database (global-setup refuses any other host). */
+export const E2E_DATABASE_URL = process.env.E2E_DATABASE_URL || 'postgresql://postgres@127.0.0.1:55432/transport_test';
+
 /** Digits only, for phone numbers and similar fields. */
 export const digits = (n: number) => Array.from({ length: n }, () => Math.floor(Math.random() * 10)).join('');
 

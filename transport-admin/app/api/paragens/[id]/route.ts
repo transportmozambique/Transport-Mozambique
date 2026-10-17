@@ -130,17 +130,15 @@ export async function DELETE(
     console.log('[DELETE /api/paragens/[id]] Vias count:', paragem._count.vias);
     console.log('[DELETE /api/paragens/[id]] Missoes count:', paragem._count.missoes);
 
-    // Note: ViaParagem has onDelete: Cascade, so they will be deleted automatically
-    // Missoes might need to be handled depending on business logic
-
-    // Delete paragem (cascades to ViaParagem)
-    console.log('[DELETE /api/paragens/[id]] Attempting to delete paragem...');
-    await prisma.paragem.delete({
-      where: { id },
-    });
+    // ViaParagem links cascade. Passengers' arrival alerts (MISSION) at this stop could never
+    // fire again and would block the delete (foreign key), so they go with it.
+    await prisma.$transaction([
+      prisma.mISSION.deleteMany({ where: { paragemId: id } }),
+      prisma.paragem.delete({ where: { id } }),
+    ]);
 
     console.log('[DELETE /api/paragens/[id]] Paragem deleted successfully');
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, alertasRemovidos: paragem._count.missoes });
   } catch (error: any) {
     console.error('[DELETE /api/paragens/[id]] Error deleting paragem:', error);
     return NextResponse.json(

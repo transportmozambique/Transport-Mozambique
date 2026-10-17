@@ -4,28 +4,114 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext";
 
+interface SearchHit {
+  href: string;
+  title: string;
+  subtitle: string;
+}
+
+interface SearchGroup {
+  label: string;
+  hits: SearchHit[];
+}
+
+/** Results for one search term; while the term differs from the box, a search is pending. */
+interface SearchResults {
+  term: string;
+  groups: SearchGroup[];
+}
+
+interface TransporteRow { id: string; matricula: string; marca?: string; modelo?: string; via?: { nome: string } | null }
+interface ViaRow { id: string; nome: string; codigo?: string; municipio?: { nome: string } | null }
+interface MotoristaRow { id: string; nome: string; telefone?: string; transporte?: { matricula: string } | null }
+
+const SEARCH_LIMIT = 5;
+
+// Lists from this dashboard's API; a failed request just contributes no results
+async function fetchList<T>(url: string): Promise<T[]> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return [];
+    const json = await response.json();
+    return Array.isArray(json.data) ? json.data : [];
+  } catch {
+    return [];
+  }
+}
+
+const joinParts = (...parts: (string | null | undefined)[]) => parts.filter(Boolean).join(" · ");
+
 export default function Header() {
   const router = useRouter();
   const { admin, logout } = useAuth();
   const [showProfile, setShowProfile] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchResults | null>(null);
+  const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const term = query.trim();
+  const currentGroups = results?.term === term ? results.groups : null;
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowProfile(false);
       }
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowResults(false);
+      }
     }
 
-    if (showProfile) {
+    if (showProfile || showResults) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showProfile]);
+  }, [showProfile, showResults]);
+
+  // Vehicles, routes and drivers matching the search box, 300 ms after the last keystroke
+  useEffect(() => {
+    if (term.length < 2) return;
+    let alive = true;
+    const timer = setTimeout(async () => {
+      const q = encodeURIComponent(term);
+      const [transportes, vias, motoristas] = await Promise.all([
+        fetchList<TransporteRow>(`/api/transportes?search=${q}&limit=${SEARCH_LIMIT}`),
+        fetchList<ViaRow>(`/api/vias?search=${q}&limit=${SEARCH_LIMIT}`),
+        fetchList<MotoristaRow>(`/api/motoristas?search=${q}&limit=${SEARCH_LIMIT}`),
+      ]);
+      if (!alive) return;
+      const groups: SearchGroup[] = [
+        {
+          label: "Transportes",
+          hits: transportes.map((t) => ({ href: `/transportes/${t.id}`, title: t.matricula, subtitle: joinParts(t.marca, t.modelo, t.via?.nome) })),
+        },
+        {
+          label: "Vias",
+          hits: vias.map((v) => ({ href: `/vias/${v.id}`, title: v.nome, subtitle: joinParts(v.codigo, v.municipio?.nome) })),
+        },
+        {
+          label: "Motoristas",
+          hits: motoristas.map((m) => ({ href: `/motoristas/${m.id}`, title: m.nome, subtitle: joinParts(m.telefone, m.transporte?.matricula) })),
+        },
+      ];
+      setResults({ term, groups: groups.filter((g) => g.hits.length > 0) });
+    }, 300);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [term]);
+
+  const openResult = (href: string) => {
+    setShowResults(false);
+    setQuery("");
+    router.push(href);
+  };
 
   const getInitials = (nome: string) => {
     const names = nome.trim().split(" ");
@@ -45,7 +131,7 @@ export default function Header() {
       <div className="flex justify-between items-center">
         {/* Search Bar */}
         <div className="flex-1 max-w-xl">
-          <div className="relative">
+          <div className="relative" ref={searchRef}>
             <svg
               className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
               fill="none"
@@ -60,10 +146,48 @@ export default function Header() {
               />
             </svg>
             <input
-              type="text"
+              type="search"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setShowResults(true);
+              }}
+              onFocus={() => setShowResults(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setShowResults(false);
+                // Enter opens the first result
+                if (e.key === "Enter" && currentGroups?.[0]?.hits[0]) openResult(currentGroups[0].hits[0].href);
+              }}
               placeholder="Pesquisar transportes, vias, motoristas..."
+              aria-label="Pesquisar transportes, vias e motoristas"
               className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent text-sm text-white placeholder-gray-400"
             />
+
+            {showResults && term.length >= 2 && (
+              <div className="absolute left-0 right-0 mt-2 max-h-[70vh] overflow-y-auto bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-20">
+                {!currentGroups ? (
+                  <p className="px-4 py-3 text-sm text-gray-500">A pesquisar…</p>
+                ) : currentGroups.length === 0 ? (
+                  <p className="px-4 py-3 text-sm text-gray-500">Sem resultados para &quot;{term}&quot;</p>
+                ) : (
+                  currentGroups.map((group) => (
+                    <div key={group.label} role="group" aria-label={group.label} className="py-1">
+                      <p className="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">{group.label}</p>
+                      {group.hits.map((hit) => (
+                        <button
+                          key={hit.href}
+                          onClick={() => openResult(hit.href)}
+                          className="w-full px-4 py-2 text-left hover:bg-gray-50"
+                        >
+                          <p className="text-sm font-medium text-gray-900 truncate">{hit.title}</p>
+                          {hit.subtitle && <p className="text-xs text-gray-500 truncate">{hit.subtitle}</p>}
+                        </button>
+                      ))}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </div>
 

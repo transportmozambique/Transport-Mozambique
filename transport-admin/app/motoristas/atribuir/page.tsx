@@ -137,10 +137,10 @@ export default function AtribuirMotoristasPage() {
               </p>
             </div>
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push('/motoristas')}
               className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
             >
-              ← Voltar ao Dashboard
+              ← Voltar aos Motoristas
             </button>
           </div>
         </div>

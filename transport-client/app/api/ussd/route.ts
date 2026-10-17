@@ -9,6 +9,7 @@ import { findDriverByPhone, verifyDriverPin, startTrip, endTrip } from '@/lib/dr
 import { waitUntil } from '@vercel/functions';
 import { POSITION_FIELDS, distanceAlongPath, estimateBusTrip, vehiclePosition } from '@/lib/vehiclePosition';
 import { formatEta, maputoClock } from '@/lib/eta';
+import { timingSafeEqual } from 'crypto';
 
 // Africa's Talking USSD format
 interface USSDRequest {
@@ -18,7 +19,26 @@ interface USSDRequest {
   text: string;
 }
 
+/**
+ * Africa's Talking does not sign its callbacks, and the menus trust `phoneNumber`: results are
+ * sent to it by SMS and option 6 signs a driver in by it. When USSD_CALLBACK_KEY is set, only
+ * requests whose URL carries ?key=<that value> (the callback URL registered with Africa's
+ * Talking) are answered.
+ */
+function callbackAllowed(request: NextRequest): boolean {
+  const expected = process.env.USSD_CALLBACK_KEY;
+  if (!expected) return true;
+  const given = Buffer.from(request.nextUrl.searchParams.get('key') || '');
+  const wanted = Buffer.from(expected);
+  return given.length === wanted.length && timingSafeEqual(given, wanted);
+}
+
 export async function POST(request: NextRequest) {
+  if (!callbackAllowed(request)) {
+    console.warn('USSD pedido recusado: chave do callback em falta ou errada');
+    return new NextResponse('Forbidden', { status: 403 });
+  }
+
   try {
     // Parse form data from Africa's Talking
     const formData = await request.formData();

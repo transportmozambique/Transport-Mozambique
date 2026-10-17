@@ -1,211 +1,164 @@
-# 🏗️ Arquitetura do Sistema
+# Architecture
 
-Esta página descreve a arquitetura real do **Sistema de Transportes de Moçambique**: as aplicações que o compõem, como comunicam entre si, a stack tecnológica, os fluxos de dados principais, a implantação e os riscos técnicos conhecidos.
+Transport Mozambique is three Next.js applications sharing one PostgreSQL database. There is no message bus and no background worker. Two things connect the apps:
 
-> 📄 Existe uma versão alargada deste documento em PDF: **[architecture.pdf](architecture.pdf)** (em inglês, com diagramas, catálogo de APIs e análise de segurança). Descreve o código no *snapshot* de maio de 2026; a secção 1.2 indica o estado atual de cada problema encontrado.
+- **The shared database.** Every app reads and writes it through Prisma.
+- **One HTTP dependency.** The driver portal calls the passenger app's API.
 
----
+Outside services are Africa's Talking (USSD and SMS), OpenFreeMap (map tiles) and, for drawing new routes in the admin, the public OSRM router.
 
-## 🗺️ Navegação da Documentação
-* 🏠 **[Página Principal (Home)](../README.md)**
-* 🏁 **[Guia de Início Rápido](getting-started.md)**
-* 🏗️ **[Arquitetura do Sistema (Esta Página)](architecture.md)**
-* 🗄️ **[Estrutura da Base de Dados](database.md)**
+**On this page:** [System diagram](#system-diagram) · [Components](#components) · [How the parts connect](#how-the-parts-connect) · [Design decisions](#design-decisions) · [Tech stack](#tech-stack) · [Repository layout](#repository-layout) · [Not deployed](#not-deployed-legacy-code)
 
 ---
 
-## 🧭 Visão Geral
+## System diagram
 
-O repositório contém **quatro aplicações Next.js 16 (App Router)** lado a lado — não é um monorepo com *workspaces*; cada aplicação tem o seu próprio `package.json`, `node_modules` e cópia do `schema.prisma`. Todas apontam para **uma única base de dados PostgreSQL** (Neon em produção, Docker em desenvolvimento) através do **Prisma ORM**.
+```mermaid
+flowchart LR
+  subgraph People
+    P["Passenger<br/>(browser)"]
+    F["Passenger<br/>(any phone, USSD)"]
+    D["Driver<br/>(phone browser)"]
+    A["Administrator<br/>(browser)"]
+    G["GPS device or<br/>Traccar Client"]
+  end
 
-```
-             ┌──────────────────── Serviços Externos ────────────────────┐
-             │ Africa's Talking (USSD + SMS) · Telerivet (USSD)           │
-             │ OSRM (raiz e motorista) · OpenFreeMap (tiles vetoriais)    │
-             └──────┬──────────────────────────────┬──────────────────────┘
-                    │ POST /api/ussd*               │ geometria de rotas / tiles
-┌───────────────────▼───────────────┐  ┌───────────▼────────────────────────┐
-│ transport-client/  (Passageiro)   │  │ app/ na raiz  (Passageiro + hub)   │
-│ Implantado no Vercel              │  │ vercel.json na raiz                │
-│ USSD mais recente (paginação,     │  │ Simulador OSRM, /api/driver/login, │
-│ recibos SMS via waitUntil)        │  │ /api/admin/*, USSD com motorista   │
-└───────────────┬───────────────────┘  └──────▲────────────▲───────┬───────┘
-                │                             │            │       │
-                │          /api/driver/login  │            │ /api/admin/stats
-                │                   ┌─────────┴──────┐ ┌───┴───────┴────────┐
-                │                   │transport-driver│ │ transport-admin    │
-                │                   │ sem API/BD     │ │ API própria + CRUD │
-                │                   │ localStorage   │ │ Recharts · Jest    │
-                │                   └────────────────┘ └─────────┬──────────┘
-                │          Prisma Client                         │ Prisma Client
-                └──────────────────────┬─────────────────────────┘
-                              ┌────────▼─────────┐
-                              │ PostgreSQL 16    │
-                              │ Neon (produção)  │
-                              │ Docker :5433 (dev)│
-                              └──────────────────┘
-```
+  AT["Africa's Talking<br/>USSD gateway + SMS API"]
 
----
+  subgraph Vercel
+    C["transport-client<br/>transport-mz.vercel.app<br/>passenger web · USSD · driver API · GPS intake"]
+    DR["transport-driver<br/>transport-mz-driver.vercel.app<br/>driver portal (no API)"]
+    AD["transport-admin<br/>transport-mz-admin.vercel.app<br/>back office + its own API"]
+  end
 
-## 🧱 Aplicações
+  DB[("Neon PostgreSQL<br/>one database")]
+  T["OpenFreeMap<br/>vector tiles"]
+  O["OSRM public router"]
 
-| Aplicação | Papel | Rotas API | Páginas | Notas |
-|---|---|---|---|---|
-| **`transport-client/`** | Portal do passageiro (web) + USSD + API do motorista | 17 | 6 | Aplicação mais ativa. Implantada no Vercel com *Root Directory* = `transport-client`. Usa `@vercel/functions` (`waitUntil`) para enviar SMS após responder ao USSD. Serve `/api/driver/login` e `/api/driver/trip` ao portal do motorista. |
-| **`app/` + `lib/` + `prisma/` (raiz)** | Variante paralela (legada) do portal do passageiro e *hub* de backend | 28 | 14 | **Não está implantada.** Contém o simulador com OSRM, uma versão antiga de `/api/driver/login`, `/api/admin/*` sem autenticação (já não usado pelo `transport-admin`) e um painel admin legado em `app/admin/*`. `prisma/migrations` (raiz) é a fonte das migrações. |
-| **`transport-admin/`** | Back-office | 27 | 47 | CRUD completo de províncias, municípios, vias, paragens, transportes, motoristas, proprietários, utentes e administradores. Dashboard e relatórios com Recharts, todos sobre a sua própria API, protegida por sessão (`proxy.ts`). Testes Jest em `__tests__/api`. |
-| **`transport-driver/`** | Portal do motorista | 0 | 6 | Não tem API nem acesso à BD. Usa `${NEXT_PUBLIC_API_URL}/api/driver/login` e `/api/driver/trip` do `transport-client`, guarda a sessão em `localStorage`, sincroniza a viagem com `/api/driver/trip` a cada 30 s e desenha a rota com OSRM + MapLibre num mapa 3D inclinado (pitch 60°, edifícios extrudidos). |
-
-> ⚠️ `app/` (raiz) e `transport-client/` partilham a maior parte do código mas **divergiram**: cada uma tem rotas que a outra não tem, e `lib/busSimulator.ts` é diferente nas duas. Correções feitas numa não chegam à outra.
-
----
-
-## 🛠️ Stack Tecnológica
-
-| Camada | Tecnologia | Uso no projeto |
-|---|---|---|
-| Framework | **Next.js 16.2.4** (App Router, Turbopack) | Páginas em `app/**/page.tsx`; backend em *Route Handlers* `app/api/**/route.ts`. |
-| UI | **React 19.2**, **TypeScript 5** (`strict`) | Páginas são maioritariamente *Client Components* (`"use client"`) que chamam a API via `fetch`. |
-| Estilos | **Tailwind CSS v4** (`@tailwindcss/postcss`) | Configuração CSS-first em `globals.css`. |
-| ORM | **Prisma 5.22** | Cliente *singleton* em `lib/prisma.ts` (evita múltiplas ligações em *hot reload*). |
-| Base de dados | **PostgreSQL 18** | Neon (`us-east-2`) em produção, uma única BD para web, USSD, admin e portal do motorista; `docker-compose.yml` expõe Postgres local na porta **5433**. |
-| Mapas | **MapLibre GL 5** + tiles **OpenFreeMap** | Estilo `liberty`, edifícios 3D com camada `fill-extrusion`, `pitch` 45–60°. Leaflet, `mapbox-gl` e o *loader* do Google Maps continuam como dependências residuais. |
-| 3D | **three.js 0.184** | Malha procedimental do autocarro (`Bus3D.tsx`, `Bus3DMarker.tsx`). Atualmente **nenhuma página importa** estes componentes. |
-| Rotas | **OSRM** (servidor público `router.project-osrm.org`) | Usado pelo simulador da raiz e pelo portal do motorista. O `transport-client` desenha o percurso guardado (`Via.geoLocationPath`), que já segue as estradas. |
-| USSD / SMS | **Africa's Talking** (SDK `africastalking`), **Telerivet** | USSD sem estado; SMS de chegada e recibos. |
-| Autenticação | **bcryptjs**, cookie de sessão HMAC | Hash de senhas de utentes e administradores; sessão do admin num cookie `HttpOnly` assinado com `ADMIN_SESSION_SECRET`. |
-| Testes | **Jest 29** + `ts-jest` | Apenas no `transport-admin`, contra a BD real. |
-| Gráficos | **Recharts 3** | Dashboard e relatórios do admin. |
-
----
-
-## 🗄️ Modelo de Dados (resumo)
-
-```
-Provincia ─< Cidade ─< Municipio ─< Via >─< Paragem        (junção: ViaParagem)
-                                     │          │
-                                Transporte      └─< MISSION >─ Utente
-                                 │  │  └── Motorista (1:1, transporteId @unique)
-                                 │  └─< GeoLocation (posição atual + 3 históricos)
-                                 └─< TransporteProprietario >─ Proprietario
-Administrador ── possui ── Provincia / Municipio / Via / Paragem
+  P -->|HTTPS| C
+  F -->|dials the USSD code| AT
+  AT -->|"POST /api/ussd"| C
+  C -->|"SMS (SDK)"| AT
+  AT -->|SMS| F
+  D --> DR
+  DR -->|"/api/driver/*, /api/gps"| C
+  G -->|"/api/gps"| C
+  A --> AD
+  C -->|Prisma| DB
+  AD -->|Prisma| DB
+  P -.->|tiles| T
+  D -.->|tiles| T
+  A -.->|tiles| T
+  A -.->|"snap a new route to roads"| O
 ```
 
-Convenções importantes:
-* Coordenadas são guardadas como **texto**: pontos `"lat,lng"`; percursos (`Via.geoLocationPath`, `Transporte.routePath`) como `"lng,lat;lng,lat;..."` (ordem invertida). Não há índice espacial.
-* `MISSION` = paragem onde um utente espera, usada para notificações de chegada; `notificadoEm` regista o último SMS enviado.
-* `ViaParagem` não tem coluna de ordem e a ordem dos `id` **não** é a ordem de viagem na maioria das vias. As distâncias ordenam as paragens ao longo de `Via.geoLocationPath` (`orderStopsAlongRoute` em `transport-client/lib/fares.ts`).
-* `Tarifa` guarda a regra de preço ativa (tarifa mínima, MT/km, fator de estrada, velocidades), partilhada pela web e pelo USSD.
-* `Motorista.status` é o estado da conta (ativo/inativo/suspenso); a viagem em curso está em `Motorista.emViagem` + `viagemIniciadaEm`, partilhada pelo USSD e pelo portal do motorista.
-* Existem **três cópias** do `schema.prisma`, com diferenças reais:
+## Components
 
-| Campo | raiz `prisma/` | `transport-client` | `transport-admin` |
+| | Passenger app | Admin dashboard | Driver portal |
 |---|---|---|---|
-| `Proprietario.birthDate` | `DateTime` | — | `DateTime` |
-| `Proprietario.dataInicioOperacoes` | — | `DateTime` | — |
-| `Proprietario.foto` / `certificado` | — | `String?` | — |
-| `Motorista.password` | `String?` | `String?` | — |
+| Folder | `transport-client/` | `transport-admin/` | `transport-driver/` |
+| Production URL | https://transport-mz.vercel.app | https://transport-mz-admin.vercel.app | https://transport-mz-driver.vercel.app |
+| Vercel project | `transport-mz` | `transport-mz-admin` | `transport-mz-driver` |
+| Pages | `/`, `/search`, `/track/[id]`, `/auth`, `/user-info`, `/my-transports` (redirect) | 46 pages: list, detail, new and edit for each entity, plus dashboard, reports, profile | `/` (sign-in), `/dashboard` |
+| API routes | 19 (`app/api/**/route.ts`) | 33 | none |
+| Database access | Prisma, read/write | Prisma, read/write | none, via the passenger app's API |
+| Who calls it | Browsers, Africa's Talking, the driver portal, GPS devices | Administrators' browsers | Drivers' browsers |
+| Authentication | Passenger and driver: signed Bearer tokens | Admin: signed `HttpOnly` cookie, checked by `proxy.ts` on every `/api/*` | Holds the driver token from the passenger app |
+| Details | [Passenger web app](passenger-web.md), [USSD](ussd.md), [GPS](gps-tracking.md) | [Admin dashboard](admin-dashboard.md) | [Driver portal](driver-portal.md) |
 
-  A BD segue o schema da raiz. O `transport-client` não consulta `Proprietario`, por isso a diferença não tem efeito em execução, mas o seu `prisma/seed.ts` só funciona com aquela cópia. A ausência de `password` no admin é intencional: `GET /api/motoristas` não a devolve.
-* `prisma/migrations` (raiz) reproduz exatamente `prisma/schema.prisma` desde `20261015130000_assessment_fixes`. A BD de produção não tem a tabela `_prisma_migrations` (as alterações foram aplicadas fora do `migrate`), por isso as migrações são escritas para poderem ser repetidas sem efeito (`IF NOT EXISTS`).
+The passenger app does more than its name says. Besides the passenger web pages it hosts:
 
-Detalhes campo a campo em **[Estrutura da Base de Dados](database.md)**.
+- the **USSD endpoint** (`/api/ussd`);
+- the **driver API** (`/api/driver/login`, `/api/driver/trip`, `/api/driver/seguidores`);
+- **GPS ingestion** (`/api/gps`);
+- the **arrival SMS check**.
 
----
+It is the platform's public backend.
 
-## 🔄 Fluxos Principais
+## How the parts connect
 
-### 1. Simulação de posição dos autocarros
-As posições **não vêm de GPS real** — são geradas por um simulador no servidor.
-1. A página inicial do passageiro chama `GET /api/startup`.
-2. `initializeBusPositions()` lê todos os `Transporte`, converte `routePath` (ou `Via.geoLocationPath`) em *waypoints* e pede ao OSRM a geometria por estrada (com *cache* em memória).
-3. Cada autocarro recebe velocidade aleatória de 25–45 km/h, ponto de partida e sentido aleatórios.
-4. `startBusSimulation()` corre um `setInterval` (30 s na raiz) que interpola a posição ao longo da linha, escreve `Transporte.currGeoLocation` e atualiza/cria o registo `GeoLocation` (sentido `Indo`/`Voltando`).
-5. No mesmo ciclo, `checkAndNotifyUsers()` procura `MISSION` das últimas 24 h e envia SMS quando um autocarro da via está a menos de 1 km da paragem — no máximo um SMS por missão a cada 30 min (`MISSION.notificadoEm`).
+- **One database.** All three schemas map the same tables. The source of truth is `prisma/schema.prisma` at the repository root. The client's copy is identical; the admin's adds `previewFeatures = ["omitApi"]`. The admin writes the network (routes, stops, vehicles, drivers, PINs, GPS device codes). The passenger app reads it and writes passengers, alerts (`MISSION`), trip state and GPS positions. See [Database](database.md).
+- **Driver portal → passenger app.** The portal is a static front end. Its base URL comes from `NEXT_PUBLIC_API_URL`, inlined at build time. Those endpoints answer `Access-Control-Allow-Origin: *` and authenticate with the driver's Bearer token.
+- **Africa's Talking → passenger app.** Each keypress in a USSD session is a `POST /api/ussd` with form fields `sessionId`, `serviceCode`, `phoneNumber`, `text`. The reply is plain text starting with `CON` (continue) or `END`. See [USSD](ussd.md).
+- **Passenger app → Africa's Talking.** SMS go out through the `africastalking` SDK (`lib/notifications.ts`). They are sent after the USSD reply with `waitUntil` from `@vercel/functions`, so the phone never waits for the SMS. See [Africa's Talking](africas-talking.md).
+- **GPS devices → passenger app.** A phone running Traccar Client, any tracker forwarded by a Traccar server, or the driver portal itself posts positions to `/api/gps` with a per-vehicle device code. See [GPS tracking](gps-tracking.md).
+- **Admin → passenger app: none.** The admin computes vehicle positions with its own copy of the position code (`transport-admin/lib/vehiclePosition.ts`). Its only reference to the passenger app is the GPS server URL it shows when a device code is created (`GPS_SERVER_URL`).
+- **Maps.** All three apps draw maps with MapLibre GL and OpenFreeMap vector tiles. Some admin forms use OpenStreetMap raster tiles. The admin's "Nova Via" page asks the public OSRM router to snap the points you click to the road network. Everywhere else, maps draw the stored path, which already follows the roads.
 
-### 2. Pesquisa e ETA (web)
-1. `/search` → `GET /api/available-routes` devolve apenas municípios/vias/paragens que têm autocarros.
-2. `GET /api/buses?paragemId=&viaId=&destinationId=` valida a ligação `ViaParagem`, lê os autocarros da via e calcula cada viagem com `estimateTrip` (`lib/fares.ts`):
-   * distância por **Haversine** somada entre paragens consecutivas, com as paragens ordenadas ao longo do percurso desenhado;
-   * **ETA** e **tarifa** pela regra ativa em `Tarifa`: por omissão chegada a 45 km/h, viagem a 30 km/h, tarifa = máx(10 MT, ⌈km × 10⌉);
-   * um autocarro que já passou a paragem (`jaPassou`) conta o resto da volta + 10 min de retorno.
-3. O resultado é ordenado por ETA e desenhado no MapLibre a partir do percurso guardado. O mapa inicial atualiza os marcadores a cada 15 s com `GET /api/buses?fields=position`.
-4. A página `/track/[id]` relê `GET /api/bus/[id]` a cada 10 s e desliza o marcador até à nova posição; os tempos mostrados são os do servidor. A mesma função serve o USSD, por isso web e USSD dão os mesmos números.
+## Design decisions
 
-### 3. USSD
-1. O operador (Africa's Talking) faz `POST /api/ussd` com `sessionId`, `phoneNumber`, `text`.
-2. O servidor é **sem estado**: reconstrói a navegação dividindo `text` por `*`. As teclas `7`/`8`/`0` são interpretadas como Próximo/Anterior/Voltar pelo motor de paginação (6 itens por página). Cada ecrã é cortado a **182 caracteres** e os acentos são removidos (GSM-7).
-3. Menu principal (`transport-client`): 1 Encontrar transporte · 2 Procurar rotas · 3 Paragens de uma rota · 4 Calcular tarifa · 5 Rastrear autocarro · 6 Área do motorista · 7 Ajuda.
-4. A opção 1 escolhe o autocarro que chega primeiro, com as paragens da sua própria via, e usa `estimateTrip` como a web; regista a `MISSION` na paragem de origem para o SMS de chegada. A opção 4 usa a mesma regra `Tarifa` e a distância ao longo da via; sem percurso conhecido, usa linha reta × `fatorEstrada`.
-5. A opção 5 aceita parte da matrícula (lista as correspondências) e indica a paragem mais próxima do autocarro.
-6. A opção 6 (Área do Motorista) inicia/encerra a viagem em `Motorista.emViagem`, o mesmo estado que o portal do motorista mostra.
-7. Respostas `CON …` mantêm a sessão; `END …` terminam-na. Os resultados são também enviados por SMS com `waitUntil(sendSMS(...))` (na opção 1, a pedido). Sem `AFRICASTALKING_API_KEY`, `sendSMS` regista e não envia.
-8. `/api/ussd-telerivet` implementa o mesmo fluxo para o Telerivet (valida `TELERIVET_SECRET`).
+These choices explain most of the code's shape.
 
-### 4. Portal do Motorista
-1. Login por telefone + senha em `POST /api/driver/login` do `transport-client` (mesma regra de senha do USSD).
-2. A resposta (motorista, transporte, via, paragens e estado da viagem) é guardada em `localStorage['motorista']`.
-3. O botão Iniciar/Finalizar chama `POST /api/driver/trip` (`action: iniciar|encerrar`); o painel lê `GET /api/driver/trip` ao abrir e a cada 30 s, por isso uma viagem iniciada ou encerrada no USSD aparece no portal e vice-versa. O contador conta a partir de `viagemIniciadaEm`.
-4. O painel mostra a rota (OSRM no cliente) e o mapa 3D inclinado. A geolocalização do navegador só alimenta o **velocímetro** — a posição **não é enviada** ao servidor.
+1. **Vehicle positions are computed on read; nothing runs in the background.** `lib/vehiclePosition.ts` gives a vehicle's position for any instant:
+   - a real GPS fix if one arrived in the last 3 minutes;
+   - otherwise a timetable position. Each bus shuttles along its route's path from 05:00 to 21:00 (Maputo time), at the fare rule's travel speed, with a 5-minute stop at each terminal, phase-shifted by a hash of its id.
 
-### 5. Administração
-1. Login em `POST /api/auth/admin/login` (bcrypt) → cookie de sessão `admin_session` (`HttpOnly`, 12 h, assinado com `ADMIN_SESSION_SECRET`). O `AuthContext` pergunta a `GET /api/auth/admin/session` quem está autenticado; `localStorage['admin']` só guarda o perfil mostrado.
-2. `proxy.ts` rejeita com 401 qualquer `/api/*` sem sessão válida (exceto login e logout); um 401 termina a sessão no navegador.
-3. As páginas CRUD e os relatórios chamam apenas a API do próprio `transport-admin` (`/api/relatorios/stats` para as estatísticas gerais).
+   Every endpoint, every serverless instance and the USSD menus get the same answer, and no loop has to keep positions up to date. An in-process loop could not run reliably on serverless anyway. See [GPS tracking](gps-tracking.md#how-a-position-is-chosen).
+2. **The USSD service is stateless.** Africa's Talking resends the whole input history in `text` (`1*3*1`). The server rebuilds the menu path from it on every request, so it keeps no session storage. See [USSD](ussd.md#how-a-session-works).
+3. **Sessions are signed tokens, not database rows.** Passengers (90 days) and drivers (30 days) get `id.expiry.signature` tokens, signed with HMAC-SHA256. Admins get the same kind of token in an `HttpOnly` cookie (12 hours). Without the secret in production, sign-in is refused (fails closed). See [Security](security.md).
+4. **Prices and speeds live in the database.** The active `Tarifa` row sets the minimum fare, the price per km, the road factor and the speeds. The web and USSD share it through `getFareRule()`, cached for 60 s. Distances are measured along the route's road path. See [Configuration → Fare rule](configuration.md#fare-rule-tarifa).
+5. **Periodic work rides on traffic.** The arrival SMS check (`checkAndNotifyUsers`) runs when the home page opens (`/api/startup`) and when the live map polls positions (`/api/buses?fields=position`). It runs at most once every 30 s per server instance, so no cron job is needed. See [Data flow → Arrival alert](data-flow.md#arrival-alert-and-sms).
+6. **Secrets are stored hashed where possible.** Driver PINs and passenger and admin passwords are bcrypt hashes. GPS device codes are stored as SHA-256 hashes. The PIN and the device code are shown once, when the admin creates them.
 
----
+## Tech stack
 
-## 🚀 Implantação e Ambientes
-
-| Item | Valor |
-|---|---|
-| Hospedagem | Vercel (`transport-client` como *Root Directory*; `vercel.json` na raiz constrói a app da raiz) |
-| Base de dados | Neon PostgreSQL (mesma `DATABASE_URL` para raiz, cliente e admin) |
-| Local | `docker compose up -d` → Postgres em `localhost:5433` |
-| Variáveis | Cliente: `DATABASE_URL`, `AFRICASTALKING_USERNAME`, `AFRICASTALKING_API_KEY`, `AFRICASTALKING_SHORTCODE`, `TELERIVET_SECRET`. Admin: `DATABASE_URL`, `ADMIN_SESSION_SECRET` (obrigatória em produção). Motorista: `NEXT_PUBLIC_API_URL`. |
-
-Portas em desenvolvimento — os scripts e o `start-all.bat` **não coincidem**:
-
-| App | `start-all.bat` diz | Script `npm run dev` real |
+| Layer | Technology | Where |
 |---|---|---|
-| `transport-admin` | 3001 | `next dev` (3000 por omissão) |
-| `transport-client` | 3000 | `next dev` (3000 por omissão) |
-| raiz `app/` | — | `next dev -p 3000` |
-| `transport-driver` | 3002 | `next dev -p 3001` |
+| Framework | Next.js 16.2.4 (App Router, Turbopack), React 19.2, TypeScript 5 | all three apps |
+| Styling | Tailwind CSS 4 | all three apps |
+| Database | PostgreSQL 18 on Neon (production); 16+ locally | shared |
+| ORM | Prisma 5.22 | passenger app, admin |
+| Maps | MapLibre GL 5 with OpenFreeMap tiles (`liberty` style, `planet` vector tiles) | all three apps |
+| Charts | Recharts 3 | admin |
+| USSD and SMS | Africa's Talking (`africastalking` SDK 0.7) | passenger app |
+| Background work after a response | `waitUntil` from `@vercel/functions` | passenger app |
+| Hashing | bcryptjs (passwords, PINs), SHA-256 (GPS device codes), HMAC-SHA256 (session tokens) | passenger app, admin |
+| Tests | Jest 29 (API and database), Playwright 1.64 (end-to-end CRUD, PIN, GPS) | admin |
+| Hosting | Vercel, one project per app | all three apps |
+
+## Repository layout
+
+```text
+.
+├── transport-client/          Passenger app (deployed as transport-mz)
+│   ├── app/                   Pages: / search track/[id] auth user-info my-transports
+│   │   ├── api/               ussd, buses, bus/[id], available-routes, locations, gps,
+│   │   │                      auth/*, user/*, driver/*, startup, simulation, ussd-telerivet
+│   │   └── components/        TransportMap, UserAvatar, LoadingScreen, Bus3D*
+│   ├── lib/                   vehiclePosition (positions, arrival times), fares (fare rule,
+│   │                          distances), busSimulator (arrival SMS check), notifications (SMS),
+│   │                          signedToken / userSession / driverSession, driverTrips, eta
+│   └── prisma/                schema.prisma (copy of the root schema), seed.ts
+├── transport-admin/           Admin dashboard (deployed as transport-mz-admin)
+│   ├── app/                   Pages per entity: transportes vias paragens motoristas
+│   │   │                      proprietarios provincias municipios utentes administradores
+│   │   │                      + dashboard relatorios perfil login
+│   │   ├── api/               CRUD per entity, auth/admin/*, dashboard/stats, relatorios/stats,
+│   │   │                      transportes/[id]/{gps,posicao,operacao}, motoristas/[id]/pin
+│   │   └── components/        Sidebar, Header, GpsTrackerCard, DriverPinCard, ConfirmDialog
+│   ├── lib/                   adminSession, vehiclePosition (admin copy), routeOrder, prisma
+│   ├── proxy.ts               Session check on every /api/* call
+│   ├── __tests__/api/         Jest suites
+│   └── e2e/                   Playwright suites (local database only)
+├── transport-driver/          Driver portal (deployed as transport-mz-driver)
+│   ├── app/page.tsx           Sign-in (phone + PIN)
+│   ├── app/dashboard/         Trip, map, GPS sharing, waiting passengers
+│   └── lib/api.ts             API_BASE = NEXT_PUBLIC_API_URL
+├── prisma/                    Source of truth: schema.prisma, migrations/, seed.ts
+├── docs/                      This documentation (images in docs/images)
+├── docker-compose.yml         Local PostgreSQL 16 on port 5433
+├── app/, lib/, vercel.json    Legacy root app, not deployed (see below)
+└── *.js, scripts/             One-off data scripts from the initial data import
+```
+
+## Not deployed (legacy code)
+
+- **Root app (`app/`, `lib/`, root `package.json` and `vercel.json`).** An older variant of the passenger app. No Vercel project builds it. It has diverged from `transport-client`, so fixes made in one do not reach the other.
+- **`transport-client/app/api/ussd-telerivet`.** The USSD flow for the Telerivet gateway. Africa's Talking is the gateway in use. `TELERIVET_SECRET` is still set in Vercel, but no Telerivet service points at the endpoint.
+- **Root `*.js` and `scripts/`, plus 38 scripts in `transport-admin/` root and 84 in `transport-admin/scripts/`.** One-off scripts from the initial data import (`check-*`, `fix-*`, `create-*`, `seed-*`). Several of them write to whatever `DATABASE_URL` points at. Read one before running it.
+
+The full list of known gaps is in [Known limitations](known-limitations.md).
 
 ---
 
-## 🔐 Segurança (estado atual)
-
-* **APIs do admin protegidas por sessão** — `proxy.ts` exige o cookie `admin_session`. Sem `ADMIN_SESSION_SECRET` em produção, nenhuma sessão é aceite (falha fechada).
-* Removidos os endpoints públicos de depuração e escrita em massa (`debug-*`, `test-*`, `create-transportes`, `assign-transportes`, `check-assignments`) e o `/api/admin/seed` do cliente, que apagava e voltava a criar a BD sem autenticação. Na app da raiz, só ficou o `GET` de estado do seed.
-* **Login do motorista** aceita a senha universal `123456` e qualquer senha quando `password` é `null`; as senhas são guardadas e comparadas em texto simples.
-* `Motorista.password` só existe no schema da raiz (nenhuma migração o cria). Por isso:
-  * motoristas criados no `transport-admin` ficam com `password = NULL` e entram no portal web com **qualquer** senha;
-  * o USSD e o `/api/driver/login` do `transport-client` aplicam a mesma regra: senha guardada, `123456`, ou qualquer senha quando `password` é `NULL`.
-* Login de utente devolve dados mas **não emite sessão/token**; as rotas `/api/user/*` do cliente não verificam quem chama.
-* `/api/driver/trip` não tem autenticação: quem souber o `id` de um motorista pode iniciar/encerrar a sua viagem (o mesmo já era possível chamando `/api/ussd` com o telefone do motorista e `123456`).
-* `Access-Control-Allow-Origin: *` em `/api/driver/*` do `transport-client` e em `/api/buses`, `/api/driver/login` e `/api/admin/*` da raiz (não implantada; devolve, sem autenticação, email e telefone de todos os utentes).
-* `/api/ussd-telerivet` só valida o segredo se `TELERIVET_SECRET` estiver definido.
-
----
-
-## ⚠️ Riscos Técnicos Conhecidos
-
-* **Simulador em processo** (`setInterval` em memória) não funciona de forma fiável em *serverless* (Vercel): cada instância tem o seu próprio estado e pode correr simulações concorrentes ou nenhuma.
-* **Código duplicado**: `app/` vs `transport-client/`, tabela de ruas codificada em `lib/busLocationService.ts` e no USSD, três `schema.prisma`.
-* `prisma.$disconnect()` em blocos `finally` sobre o cliente *singleton* ainda existe em algumas rotas do admin (`administradores`, `vias`) e da raiz.
-* Datas de histórico em `GeoLocation` são fictícias (agora − 5/10/15 min).
-* **Dados**: várias paragens repetem o nome da rua (ex.: "ESTRADA NACIONAL NÚMERO 1" 8 vezes na mesma via) e alguns terminais têm nomes como "120" ou "60", que aparecem assim no USSD.
-* O carregamento do certificado do proprietário no admin não é guardado: a API ignora o campo `certificado` (precisa de armazenamento de ficheiros, ex.: Vercel Blob).
-* Páginas do portal do motorista ainda simuladas: `/stats`, `/report`, `/support` e os passageiros/ganhos do painel.
-* Cerca de 230 scripts de manutenção pontuais (`check-*`, `fix-*`, `create-*`) espalhados pela raiz e pelo `transport-admin`.
-
----
-
-## 🗺️ Navegação da Documentação
-* 🏠 **[Página Principal (Home)](../README.md)**
-* 🏁 **[Guia de Início Rápido](getting-started.md)**
-* 🏗️ **[Arquitetura do Sistema (Esta Página)](architecture.md)**
-* 🗄️ **[Estrutura da Base de Dados](database.md)**
+[← Getting started](getting-started.md) · [Documentation index](README.md) · Next: [Data flow →](data-flow.md)

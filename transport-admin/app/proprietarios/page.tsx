@@ -91,7 +91,8 @@ export default function Proprietarios() {
       } else {
         const error = await response.json();
         // Check if error is about transportes associations
-        const hasTransportes = error.details?.includes('transportes') || error.error?.includes('transportes');
+        // "tem 1 transporte associados" or "tem 3 transportes associados"
+        const hasTransportes = response.status === 400 && /transporte/.test(`${error.error ?? ''} ${error.details ?? ''}`);
         setDeleteError({
           message: error.error || 'Erro ao eliminar proprietário',
           details: error.details || 'Este proprietário pode ter transportes associados.',
@@ -112,20 +113,8 @@ export default function Proprietarios() {
   async function handleRemoveAssignments(id: string) {
     setDeleting(true);
     try {
-      // Step 1: Remove all TransporteProprietario associations (not the proprietario itself)
-      const response = await fetch(`/api/proprietarios/${id}/transportes`, {
-        method: 'DELETE',
-      });
-      
-      // It's ok if no associations exist (404), continue anyway
-      if (!response.ok && response.status !== 404) {
-        const error = await response.json();
-        console.log('Erro ao remover associações:', error);
-        // Continue anyway, try to delete proprietario
-      }
-
-      // Step 2: Now delete the proprietario
-      const deleteResponse = await fetch(`/api/proprietarios/${id}`, {
+      // force=true removes the TransporteProprietario links (not the vehicles), then the owner
+      const deleteResponse = await fetch(`/api/proprietarios/${id}?force=true`, {
         method: 'DELETE',
       });
 
