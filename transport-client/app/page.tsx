@@ -133,6 +133,8 @@ export default function LandingPage() {
       zoom: 12,
       pitch: 45,
       bearing: 0,
+      // Map credits as an (i) button: expanded, they cover the "Entrar" button on phones
+      attributionControl: { compact: true },
     });
 
     mapInstanceRef.current = map;
@@ -141,6 +143,9 @@ export default function LandingPage() {
     map.addControl(new maplibregl.NavigationControl(), "top-right");
 
     map.on("load", () => {
+      // Compact credits start open; fold them now instead of on the first drag
+      map.getContainer().querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
+
       // Add 3D buildings
       const layers = map.getStyle().layers;
       let firstSymbolId;
@@ -235,6 +240,18 @@ export default function LandingPage() {
         // Store marker reference for updates
         busMarkersRef.current.set(bus.id, marker);
       });
+
+      // Open on the area most buses serve (most routes are outside the city centre); the
+      // 10th-90th percentiles leave out the few long routes to the south and north
+      if (buses.length > 4) {
+        const pct = (values: number[], p: number) => values.sort((a, b) => a - b)[Math.floor((values.length - 1) * p)];
+        const lngs = buses.map((bus) => bus.longitude);
+        const lats = buses.map((bus) => bus.latitude);
+        map.fitBounds(
+          [[pct(lngs, 0.1), pct(lats, 0.1)], [pct(lngs, 0.9), pct(lats, 0.9)]],
+          { padding: 40, maxZoom: 13, duration: 0 }
+        );
+      }
 
       // Function to show bus route
       function showBusRoute(bus: Bus) {

@@ -7,7 +7,7 @@ import {
 } from '@/lib/fares';
 import { findDriverByPhone, verifyDriverPin, startTrip, endTrip } from '@/lib/driverTrips';
 import { waitUntil } from '@vercel/functions';
-import { POSITION_FIELDS, estimateBusTrip, vehiclePosition } from '@/lib/vehiclePosition';
+import { POSITION_FIELDS, distanceAlongPath, estimateBusTrip, vehiclePosition } from '@/lib/vehiclePosition';
 import { formatEta, maputoClock } from '@/lib/eta';
 
 // Africa's Talking USSD format
@@ -298,7 +298,9 @@ async function routesMenu(phoneNumber: string, inputs: string[], pages: number[]
   const route = pickFromList(routes, pages[2], inputs[2]);
   if (!route) return INVALID;
   const rule = await getFareRule();
-  const meters = pathLengthMeters(route.stops);
+  const meters = route.stops.length > 1
+    ? distanceAlongPath(route.path, route.stops[0], route.stops[route.stops.length - 1]) ?? pathLengthMeters(route.stops)
+    : 0;
   const details = `${route.nome}
 De: ${route.terminalPartida}
 Para: ${route.terminalChegada}
@@ -540,6 +542,7 @@ async function getRoutesFrom(origin: string) {
     terminalPartida: via.terminalPartida,
     terminalChegada: via.terminalChegada,
     buses: via._count.transportes,
+    path: via.geoLocationPath,
     stops: orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation)
       .map((vp) => parseLatLng(vp.paragem.geoLocation))
       .filter((pt): pt is LatLng => pt !== null),
@@ -732,14 +735,15 @@ async function calculateFare(origin: string, destination: string) {
       }
     });
 
-    // Prefer the real route: distance along its stops, terminal to terminal (shortest if several)
+    // Prefer the real route: road distance along its path, terminal to terminal (shortest if
+    // several); without a path, the distance through its stops
     let distanceMeters: number | null = null;
     for (const via of vias) {
       const points = orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation)
         .map((vp) => parseLatLng(vp.paragem.geoLocation))
         .filter((pt): pt is LatLng => pt !== null);
       if (points.length > 1) {
-        const meters = pathLengthMeters(points);
+        const meters = distanceAlongPath(via.geoLocationPath, points[0], points[points.length - 1]) ?? pathLengthMeters(points);
         distanceMeters = distanceMeters === null ? meters : Math.min(distanceMeters, meters);
       }
     }

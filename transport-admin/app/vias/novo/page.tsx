@@ -114,7 +114,8 @@ export default function NovaVia() {
         console.error('Erro ao carregar municípios:', error);
         setNotification({ message: 'Erro ao carregar municípios', type: 'error' });
       });
-    fetch('/api/paragens?limit=1000')
+    // Every stop (there are more than 1000)
+    fetch('/api/paragens?limit=10000')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((result) => setAllParagens(result.data || []))
       .catch((error) => console.error('Erro ao carregar paragens:', error));

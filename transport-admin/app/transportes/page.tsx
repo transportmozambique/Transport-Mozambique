@@ -36,6 +36,8 @@ export default function Transportes() {
   const [loading, setLoading] = useState(true);
   const [listLoading, setListLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  // What each vehicle is doing now (GPS or timetable), from /api/transportes/estado
+  const [estados, setEstados] = useState<Record<string, { estado: string; gps: boolean }>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -47,6 +49,29 @@ export default function Transportes() {
   useEffect(() => {
     fetchTransportes();
   }, [debouncedSearchTerm, statusFilter, currentPage, itemsPerPage]);
+
+  useEffect(() => {
+    const load = () => fetch('/api/transportes/estado')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setEstados(d); })
+      .catch(() => {});
+    load();
+    const timer = setInterval(load, 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const estadoDe = (id: string) => estados[id]?.estado;
+  const contagem = {
+    circulacao: transportes.filter((t) => estadoDe(t.id) === 'circulacao').length,
+    parados: transportes.filter((t) => ['terminal', 'fora-de-servico'].includes(estadoDe(t.id) ?? '')).length,
+    gps: transportes.filter((t) => estados[t.id]?.gps).length,
+  };
+  const ESTADO_LABEL: Record<string, string> = {
+    circulacao: 'Em circulação',
+    terminal: 'No terminal',
+    'fora-de-servico': 'Fora de serviço',
+    'sem-posicao': 'Sem rota',
+  };
 
   async function fetchTransportes() {
     try {
@@ -177,17 +202,13 @@ export default function Transportes() {
       t.via?.nome?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
       t.modelo?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
     
-    // Apply status filter if set
+    // Status filter: what the vehicle is doing now
     if (statusFilter === 'circulacao') {
-      // Assume 70% are in circulation (you can adjust this logic based on actual status field)
-      const index = transportes.indexOf(t);
-      return matchesSearch && index < Math.floor(transportes.length * 0.7);
+      return matchesSearch && estadoDe(t.id) === 'circulacao';
     } else if (statusFilter === 'parados') {
-      const index = transportes.indexOf(t);
-      return matchesSearch && index >= Math.floor(transportes.length * 0.7) && index < Math.floor(transportes.length * 0.9);
-    } else if (statusFilter === 'manutencao') {
-      const index = transportes.indexOf(t);
-      return matchesSearch && index >= Math.floor(transportes.length * 0.9);
+      return matchesSearch && ['terminal', 'fora-de-servico'].includes(estadoDe(t.id) ?? '');
+    } else if (statusFilter === 'gps') {
+      return matchesSearch && Boolean(estados[t.id]?.gps);
     }
     
     return matchesSearch;
@@ -397,7 +418,7 @@ export default function Transportes() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
               <span className="text-sm font-medium text-gray-900">
-                Filtro: {statusFilter === 'circulacao' ? 'Em Circulação' : statusFilter === 'parados' ? 'Parados' : 'Manutenção'}
+                Filtro: {statusFilter === 'circulacao' ? 'Em Circulação' : statusFilter === 'parados' ? 'Parados' : 'GPS ativo'}
               </span>
               <button 
                 onClick={() => setStatusFilter(null)}
@@ -445,7 +466,7 @@ export default function Transportes() {
               </div>
               <div>
                 <p className="text-xs text-gray-600 font-medium">Em Circulação</p>
-                <p className="text-2xl font-bold text-gray-900">{Math.floor(transportes.length * 0.7)}</p>
+                <p className="text-2xl font-bold text-gray-900">{contagem.circulacao}</p>
               </div>
             </div>
           </button>
@@ -463,14 +484,14 @@ export default function Transportes() {
               </div>
               <div>
                 <p className="text-xs text-gray-600 font-medium">Parados</p>
-                <p className="text-2xl font-bold text-gray-900">{Math.floor(transportes.length * 0.2)}</p>
+                <p className="text-2xl font-bold text-gray-900">{contagem.parados}</p>
               </div>
             </div>
           </button>
           <button 
-            onClick={() => setStatusFilter('manutencao')}
+            onClick={() => setStatusFilter('gps')}
             className={`bg-white rounded-lg border p-4 hover:border-gray-900 hover:shadow-md transition-all text-left cursor-pointer ${
-              statusFilter === 'manutencao' ? 'border-gray-900 shadow-md' : 'border-gray-200'
+              statusFilter === 'gps' ? 'border-gray-900 shadow-md' : 'border-gray-200'
             }`}
           >
             <div className="flex items-center space-x-3">
@@ -481,8 +502,8 @@ export default function Transportes() {
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Manutenção</p>
-                <p className="text-2xl font-bold text-gray-900">{Math.floor(transportes.length * 0.1)}</p>
+                <p className="text-xs text-gray-600 font-medium">GPS ativo</p>
+                <p className="text-2xl font-bold text-gray-900">{contagem.gps}</p>
               </div>
             </div>
           </button>
@@ -538,7 +559,7 @@ export default function Transportes() {
                     Lotação
                   </th>
                   <th className="px-3 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">
-                    Status
+                    Agora
                   </th>
                   <th className="px-3 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">
                     Acções
@@ -601,8 +622,8 @@ export default function Transportes() {
                         <div className="text-sm text-black">{transport.lotacao} lugares</div>
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap">
-                        <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-black">
-                          Activo
+                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${estadoDe(transport.id) === 'circulacao' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-black'}`}>
+                          {ESTADO_LABEL[estadoDe(transport.id) ?? ''] ?? '…'}{estados[transport.id]?.gps ? ' · GPS' : ''}
                         </span>
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm font-medium">
@@ -683,8 +704,8 @@ export default function Transportes() {
                           <div className="text-sm text-gray-600">Código: {transport.codigo}</div>
                         </div>
                       </div>
-                      <span className="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-black">
-                        Activo
+                      <span className={`px-3 py-1 text-xs font-semibold rounded-full ${estadoDe(transport.id) === 'circulacao' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-black'}`}>
+                        {ESTADO_LABEL[estadoDe(transport.id) ?? ''] ?? '…'}{estados[transport.id]?.gps ? ' · GPS' : ''}
                       </span>
                     </div>
 

@@ -62,12 +62,10 @@ export async function GET(request: Request) {
     // Get paragens count for each município (through vias)
     const transformedMunicipios = await Promise.all(
       municipios.map(async (m) => {
-        // Count unique paragens associated with vias in this município
-        const paragensCount = await prisma.viaParagem.count({
+        // Unique paragens on the vias of this município (a stop on several vias counts once)
+        const paragensCount = await prisma.paragem.count({
           where: {
-            via: {
-              municipioId: m.id,
-            },
+            vias: { some: { via: { municipioId: m.id } } },
           },
         });
 

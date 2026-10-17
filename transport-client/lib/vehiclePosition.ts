@@ -5,7 +5,6 @@ import {
   haversineMeters,
   parseLatLng,
   parseRoutePath,
-  pathLengthMeters,
   type FareRule,
   type LatLng,
   type RouteStop,
@@ -131,6 +130,16 @@ function nearestIndex(g: RouteGeometry, point: LatLng): number {
 /** Metres along the path to the point nearest `point`. */
 export function progressOf(g: RouteGeometry, point: LatLng): number {
   return g.path.length ? g.cumulative[nearestIndex(g, point)] : 0;
+}
+
+/**
+ * Road distance between two points of a route, along its path (the path follows the roads and
+ * passes by every stop). Null when the route has no path.
+ */
+export function distanceAlongPath(path: LatLng[] | string | null | undefined, a: LatLng, b: LatLng): number | null {
+  const g = routeGeometry(path);
+  if (g.path.length < 2) return null;
+  return Math.abs(progressOf(g, b) - progressOf(g, a));
 }
 
 /** Minutes since local midnight in Maputo. */
@@ -315,15 +324,14 @@ export function estimateBusTrip(args: {
   const v = speedMps(rule);
   const secondsToOrigin = position.waitS + meters / v + turns * TERMINAL_STOP_S;
 
-  const lo = Math.min(o, d);
-  const hi = Math.max(o, d);
-  const distanciaViagem = pathLengthMeters(stops.slice(lo, hi + 1).map((s) => s.point));
+  // Distance, fare and time of the trip all along the road path, as the bus drives it
+  const distanciaViagem = Math.abs(atDestination - atOrigin);
   return {
     distanciaAteOrigem: meters,
     tempoChegada: Math.max(1, Math.ceil(secondsToOrigin / 60)),
     jaPassou: turns > 0,
     distanciaViagem,
-    tempoViagem: Math.max(1, Math.ceil(Math.abs(atDestination - atOrigin) / v / 60)),
+    tempoViagem: Math.max(1, Math.ceil(distanciaViagem / v / 60)),
     fare: fareFor(distanciaViagem, rule),
     position,
     sentido: travel,

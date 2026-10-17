@@ -88,6 +88,7 @@ export default function TransportMap({
       zoom: 14,
       pitch: 60, // Tilt the map for 3D perspective
       bearing: 0, // Will be updated based on vehicle direction
+      attributionControl: { compact: true }, // expanded, it covers the cards on phones
     });
 
     mapInstanceRef.current = map;
@@ -105,6 +106,8 @@ export default function TransportMap({
 
     // Aguardar o mapa carregar
     map.on("load", () => {
+      // Compact credits start open; fold them now instead of on the first drag
+      map.getContainer().querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
 
       // Add 3D building extrusions
       // Check if buildings layer exists, if not add it
