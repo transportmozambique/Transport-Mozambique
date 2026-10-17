@@ -52,26 +52,35 @@ export async function PATCH(
     const body = await request.json();
     const { nome, codigo, geoLocation, viaIds } = body;
 
+    // If viaIds provided, replace the via associations, keeping the codes and terminal flags
+    let vias;
+    if (Array.isArray(viaIds)) {
+      const [current, rows] = await Promise.all([
+        prisma.paragem.findUnique({
+          where: { id },
+          select: { codigo: true, vias: { select: { viaId: true, terminalBoolean: true } } },
+        }),
+        prisma.via.findMany({ where: { id: { in: viaIds } }, select: { id: true, codigo: true } }),
+      ]);
+      if (!current) {
+        return NextResponse.json({ error: 'Paragem não encontrada' }, { status: 404 });
+      }
+      const terminal = new Map(current.vias.map((v) => [v.viaId, v.terminalBoolean]));
+      vias = {
+        deleteMany: {},
+        create: rows.map((via) => ({
+          via: { connect: { id: via.id } },
+          codigoParagem: codigo || current.codigo,
+          codigoVia: via.codigo,
+          terminalBoolean: terminal.get(via.id) ?? false,
+        })),
+      };
+    }
+
     // Update paragem
     const paragem = await prisma.paragem.update({
       where: { id },
-      data: {
-        nome,
-        codigo,
-        geoLocation,
-        // If viaIds provided, update via associations
-        ...(viaIds && {
-          vias: {
-            deleteMany: {}, // Remove all existing associations
-            create: viaIds.map((viaId: string) => ({
-              via: { connect: { id: viaId } },
-              codigoParagem: codigo,
-              codigoVia: '', // Will be filled by trigger or needs to be fetched
-              terminalBoolean: false,
-            })),
-          },
-        }),
-      },
+      data: { nome, codigo, geoLocation, ...(vias && { vias }) },
       include: {
         vias: {
           include: {

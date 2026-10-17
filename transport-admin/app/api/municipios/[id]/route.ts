@@ -136,14 +136,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const { searchParams } = new URL(request.url);
-    const force = searchParams.get('force') === 'true';
-    
+
     // Check if município has associated vias
     const municipio = await prisma.municipio.findUnique({
       where: { id },
@@ -172,23 +170,16 @@ export async function DELETE(
       },
     });
 
-    if (!force && (municipio._count.vias > 0 || paragensCount > 0)) {
+    // Every via must belong to a município (Via.municipioId is required), so `force`
+    // cannot detach them: the vias have to be moved or deleted first
+    if (municipio._count.vias > 0 || paragensCount > 0) {
       return NextResponse.json(
-        { 
+        {
           error: 'Não é possível eliminar município com vias ou paragens associadas',
-          details: `Este município tem ${municipio._count.vias} ${municipio._count.vias === 1 ? 'via' : 'vias'} e ${paragensCount} ${paragensCount === 1 ? 'paragem' : 'paragens'} associadas.`
+          details: `Este município tem ${municipio._count.vias} ${municipio._count.vias === 1 ? 'via' : 'vias'} e ${paragensCount} ${paragensCount === 1 ? 'paragem' : 'paragens'} associadas. Mova as vias para outro município ou elimine-as primeiro.`
         },
         { status: 400 }
       );
-    }
-
-    // If force=true, remove associations first
-    if (force) {
-      // Set municipioId to null for all vias
-      await prisma.via.updateMany({
-        where: { municipioId: id },
-        data: { municipioId: null as any },
-      });
     }
 
     await prisma.municipio.delete({
