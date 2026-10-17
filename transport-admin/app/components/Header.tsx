@@ -15,10 +15,20 @@ interface SearchGroup {
   hits: SearchHit[];
 }
 
+/** Results for one search term; while the term differs from the box, a search is pending. */
+interface SearchResults {
+  term: string;
+  groups: SearchGroup[];
+}
+
+interface TransporteRow { id: string; matricula: string; marca?: string; modelo?: string; via?: { nome: string } | null }
+interface ViaRow { id: string; nome: string; codigo?: string; municipio?: { nome: string } | null }
+interface MotoristaRow { id: string; nome: string; telefone?: string; transporte?: { matricula: string } | null }
+
 const SEARCH_LIMIT = 5;
 
 // Lists from this dashboard's API; a failed request just contributes no results
-async function fetchList(url: string): Promise<any[]> {
+async function fetchList<T>(url: string): Promise<T[]> {
   try {
     const response = await fetch(url);
     if (!response.ok) return [];
@@ -37,10 +47,11 @@ export default function Header() {
   const [showProfile, setShowProfile] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchGroup[] | null>(null);
-  const [searching, setSearching] = useState(false);
+  const [results, setResults] = useState<SearchResults | null>(null);
   const [showResults, setShowResults] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const term = query.trim();
+  const currentGroups = results?.term === term ? results.groups : null;
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -64,20 +75,14 @@ export default function Header() {
 
   // Vehicles, routes and drivers matching the search box, 300 ms after the last keystroke
   useEffect(() => {
-    const term = query.trim();
-    if (term.length < 2) {
-      setResults(null);
-      setSearching(false);
-      return;
-    }
+    if (term.length < 2) return;
     let alive = true;
-    setSearching(true);
     const timer = setTimeout(async () => {
       const q = encodeURIComponent(term);
       const [transportes, vias, motoristas] = await Promise.all([
-        fetchList(`/api/transportes?search=${q}&limit=${SEARCH_LIMIT}`),
-        fetchList(`/api/vias?search=${q}&limit=${SEARCH_LIMIT}`),
-        fetchList(`/api/motoristas?search=${q}&limit=${SEARCH_LIMIT}`),
+        fetchList<TransporteRow>(`/api/transportes?search=${q}&limit=${SEARCH_LIMIT}`),
+        fetchList<ViaRow>(`/api/vias?search=${q}&limit=${SEARCH_LIMIT}`),
+        fetchList<MotoristaRow>(`/api/motoristas?search=${q}&limit=${SEARCH_LIMIT}`),
       ]);
       if (!alive) return;
       const groups: SearchGroup[] = [
@@ -94,14 +99,13 @@ export default function Header() {
           hits: motoristas.map((m) => ({ href: `/motoristas/${m.id}`, title: m.nome, subtitle: joinParts(m.telefone, m.transporte?.matricula) })),
         },
       ];
-      setResults(groups.filter((g) => g.hits.length > 0));
-      setSearching(false);
+      setResults({ term, groups: groups.filter((g) => g.hits.length > 0) });
     }, 300);
     return () => {
       alive = false;
       clearTimeout(timer);
     };
-  }, [query]);
+  }, [term]);
 
   const openResult = (href: string) => {
     setShowResults(false);
@@ -152,21 +156,21 @@ export default function Header() {
               onKeyDown={(e) => {
                 if (e.key === "Escape") setShowResults(false);
                 // Enter opens the first result
-                if (e.key === "Enter" && results?.[0]?.hits[0]) openResult(results[0].hits[0].href);
+                if (e.key === "Enter" && currentGroups?.[0]?.hits[0]) openResult(currentGroups[0].hits[0].href);
               }}
               placeholder="Pesquisar transportes, vias, motoristas..."
               aria-label="Pesquisar transportes, vias e motoristas"
               className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent text-sm text-white placeholder-gray-400"
             />
 
-            {showResults && query.trim().length >= 2 && (
+            {showResults && term.length >= 2 && (
               <div className="absolute left-0 right-0 mt-2 max-h-[70vh] overflow-y-auto bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-20">
-                {searching && !results ? (
+                {!currentGroups ? (
                   <p className="px-4 py-3 text-sm text-gray-500">A pesquisar…</p>
-                ) : results && results.length === 0 ? (
-                  <p className="px-4 py-3 text-sm text-gray-500">Sem resultados para &quot;{query.trim()}&quot;</p>
+                ) : currentGroups.length === 0 ? (
+                  <p className="px-4 py-3 text-sm text-gray-500">Sem resultados para &quot;{term}&quot;</p>
                 ) : (
-                  results?.map((group) => (
+                  currentGroups.map((group) => (
                     <div key={group.label} role="group" aria-label={group.label} className="py-1">
                       <p className="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">{group.label}</p>
                       {group.hits.map((hit) => (
