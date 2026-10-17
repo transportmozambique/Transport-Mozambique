@@ -15,8 +15,11 @@ Passengers see every bus on a live map with their own position and the stops aro
 `/` and `/search` are the same page (`app/components/TripPlanner.tsx`); `/search` is where sign-in and registration lead. The title card shows the number of buses and "Entrar", or the passenger's avatar when signed in.
 
 - **Buses.** Every bus with its position now: a real GPS position when fresh, otherwise the timetable position ([GPS tracking](gps-tracking.md#how-a-position-is-chosen)). Markers glide to their new position every 5 seconds. Tapping a bus draws its route and opens a card with "Acompanhar →".
-- **Your position.** The browser asks for the location when the page opens. With it, the map centres on you once, and the blue dot moves as you move. The round button at the bottom right centres the map on you again, or asks again after a refusal. Positions more than 80 km from Maputo are not used to centre the map.
-- **Stops.** The stops near you are green dots. Every other stop appears as a small white dot from zoom 13; tapping any stop opens its destinations.
+- **Your position.** The browser asks for the location when the page opens. With it, the map centres on you once, and a blue pin follows you: it shows your initials when you are signed in, a person icon otherwise. The round button at the bottom right centres the map on you again, or asks again after a refusal. Positions more than 80 km from Maputo are not used to centre the map.
+- **Stops.** Every stop is on the map at every zoom, and tapping one opens it:
+  - the stops near you are green dots;
+  - stops where buses pass are white dots;
+  - stops no bus serves now (none of their routes has a vehicle) are grey. Their page says so, and they are not offered in the search or the nearby list.
 - **The panel** is a side panel on a computer and a bottom sheet on a phone (the bar at its top folds it away).
 
 | When | Request |
@@ -31,7 +34,7 @@ On a phone:
 
 ## Stops near you
 
-The panel lists up to 8 stops within 1.5 km, nearest first, with the distance, the walking time (4.5 km/h, a quarter added for streets) and the number of routes. With no stop that close, it lists the 3 nearest. Without a position (refused, unavailable, or far from Maputo), the list is about the centre of the map and follows it as you move the map, with a line saying why.
+**"Onde vai apanhar o autocarro?"**: the stops where you can catch a bus. The panel lists up to 8 stops within 1.5 km, nearest first, with the distance, the walking time (4.5 km/h, a quarter added for streets) and the number of routes. With no stop that close, it lists the 3 nearest under "Paragens mais próximas", with a line saying none is within 1.5 km and without walking times. Without a position (refused, unavailable, or far from Maputo), the list is about the centre of the map and follows it as you move the map, with a line saying why.
 
 **"Para onde quer ir?"** on top searches every stop by name, without accents or capitals, and every typed word must start a word of the name ("av ind" finds "Av. das Indústrias"). Stops with the same name within 400 m count as one place. Choosing a result plans the journey **from your position**: a walk to one of the stops within 800 m, then the buses. Without a position, from the nearest stop to the centre of the map.
 
@@ -41,9 +44,14 @@ The panel lists up to 8 stops within 1.5 km, nearest first, with the distance, t
 
 Tapping a stop (in the list or on the map) shows:
 
-- its name, number of routes and, with a position, how far it is from you;
+- its name, number of routes and, with a position, how far it is from you; "Apanhe o autocarro aqui" reminds you this is where you board;
 - the same destination search, where each result says **"Directo"** (a bus from this stop goes there) or **"Com transbordo"** (it needs a change);
-- every route through the stop, and for each direction ("Sentido Antena"): the next bus with its plate and arrival ("próximo autocarro 27 min", "às 17:58", "amanhã às 05:12"), and the stops it goes to in order. Consecutive stops with the same name are shown once; "Ver as N paragens" shows them all.
+- every route through the stop, under a header in the route's colour. For each direction ("Sentido Antena"):
+  - the next bus's arrival ("Próximo autocarro 27 min", "às 17:58", "amanhã às 05:12");
+  - its plate, drawn like a number plate on the right, so it is easy to match with the bus in the street;
+  - the stops it goes to, in order, as a line in the route's colour; each has an "Ir" button.
+
+  Consecutive stops with the same name are shown once; "Ver as N paragens" shows them all.
 
 Tapping one of those stops, or a search result, plans the journey from this stop.
 
@@ -62,7 +70,7 @@ Up to three options, earliest arrival first. Each card shows the arrival ("Chega
 The chosen option lists its steps:
 
 - **Walks**: "Caminhe 100 m (2 min) até Portão", from your position to the first stop, between two stops to change buses (up to 400 m), or from the last stop.
-- **Buses**: the route, its direction and the bus's plate; where and when to take it ("Apanhe em Portão às 16:47 (daqui a 5 min)", and for the next buses the wait at the stop: "espera 35 min"); where and when to get off; the number of stops, time on board, distance and fare. "Acompanhar este autocarro →" opens the tracking page with that bus's two stops.
+- **Buses**: the route and its direction, with the bus's plate as a number-plate badge on the right; where and when to take it ("Apanhe em Portão às 16:47 (daqui a 5 min)", and for the next buses the wait at the stop: "espera 35 min"); where and when to get off; the number of stops, time on board, distance and fare. "Acompanhar este autocarro →" opens the tracking page with that bus's two stops.
 - When the journey only finishes the next morning (buses run 05:00–21:00), a note says so.
 
 Each bus charges its own fare, with the fare rule (max(10 MT, ⌈km × 10 MT⌉) by default, [Configuration](configuration.md#fare-rule-tarifa)). Times use the same model as everywhere else: real GPS when fresh, else the timetable, worked out for the moment you reach each stop. How the options are found is in [Data flow → Journey planning](data-flow.md#journey-planning). When the two places are not connected by any chain of buses (a few routes form separate groups), the panel says "Não há ligação de autocarro entre estes dois locais".

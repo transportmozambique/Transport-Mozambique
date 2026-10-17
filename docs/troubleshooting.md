@@ -63,7 +63,7 @@ Symptoms, their usual causes and the fix, grouped by where you notice them. For 
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| A stop missing from the map or the search | Only stops on a route with at least one bus are shown. | Assign a vehicle to one of its routes. |
+| A stop is grey on the map and missing from the search | None of its routes has a vehicle. | Assign a vehicle to one of its routes. |
 | "Não há ligação de autocarro entre estes dois locais" | No chain of buses joins the two places. A few routes form separate groups with no stop within 400 m of the rest ([Data flow → Journey planning](data-flow.md#journey-planning)). | Choose a stop near the destination, or connect the groups in the admin (a shared stop, or a route between them). |
 | "A localização está desativada…" | The browser's location permission was refused. The list then follows the map centre. | Allow the location in the site settings, then the round button at the bottom right. Browsers only give the location on HTTPS or localhost. |
 | "Está fora da área servida" | The position is more than 80 km from Maputo. | Expected outside the area: move the map or tap a stop. |

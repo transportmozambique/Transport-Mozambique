@@ -39,7 +39,7 @@ Starts an arrival-SMS check in the background ([Data flow → Arrival alert](dat
 
 #### `GET /api/stops`
 
-Every stop served by a bus, with the routes through it, for the map and the name search. Each stop lists its routes as indexes into `vias`. Cached 5 minutes (`Cache-Control: public, s-maxage=300`), about 120 KB before compression.
+Every stop served by a bus, with the routes through it, for the map and the name search. Each stop lists its routes as indexes into `vias`. `semAutocarro` lists the other stops (none of their routes has a vehicle), as `{"id", "nome", "lat", "lng"}`, so the map can still show them. Cached 5 minutes (`Cache-Control: public, s-maxage=300`), about 120 KB before compression.
 
 ```json
 {

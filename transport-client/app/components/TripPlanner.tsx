@@ -97,8 +97,8 @@ function popupContent(lines: { text: string; bold?: boolean; color?: string; hre
     if (line.color) el.style.color = line.color;
     if (el instanceof HTMLAnchorElement) {
       el.href = line.href!;
-      el.style.fontWeight = "600";
-      el.style.textDecoration = "underline";
+      el.style.cssText =
+        "display:inline-block;margin-top:6px;padding:4px 12px;border-radius:9999px;background:#0f172a;color:#fff;font-weight:600;font-size:12px;text-decoration:none";
     }
     div.appendChild(el);
   });
@@ -111,6 +111,45 @@ function textOn(hex: string) {
   if (!m) return "#ffffff";
   const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16));
   return 0.299 * r + 0.587 * g + 0.114 * b > 160 ? "#0f172a" : "#ffffff";
+}
+
+/** Initials of the signed-in passenger ("HG"), or null when nobody is signed in. */
+function myInitials(): string | null {
+  try {
+    const nome: unknown = JSON.parse(localStorage.getItem("utente") ?? "null")?.nome;
+    if (typeof nome !== "string" || !nome.trim()) return null;
+    const words = nome.trim().split(/\s+/);
+    return (words.length > 1 ? words[0][0] + words[words.length - 1][0] : nome.trim().slice(0, 2)).toUpperCase();
+  } catch {
+    return null;
+  }
+}
+
+const PERSON_SVG = `<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 12a4.5 4.5 0 100-9 4.5 4.5 0 000 9zm0 2c-4.4 0-8 2.2-8 5v2h16v-2c0-2.8-3.6-5-8-5z"/></svg>`;
+
+/** The passenger's marker: a pin with their initials (or a person icon), pulsing at its tip. */
+function mePin() {
+  const el = document.createElement("div");
+  el.style.cssText = "position:relative;width:44px;height:52px;cursor:pointer";
+  el.setAttribute("aria-label", "A sua localização");
+  const pulse = document.createElement("div");
+  pulse.style.cssText =
+    "position:absolute;left:10px;bottom:-8px;width:24px;height:16px;border-radius:50%;background:#2563eb;opacity:.35;animation:tp-pulse 2s ease-out infinite";
+  const pin = document.createElement("div");
+  pin.style.cssText =
+    "position:absolute;top:0;left:2px;width:40px;height:40px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#2563eb;border:3px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.35)";
+  const face = document.createElement("div");
+  face.style.cssText =
+    "position:absolute;top:7px;left:9px;width:26px;height:26px;border-radius:50%;background:#0f172a;color:#fff;font:700 11px system-ui,sans-serif;display:flex;align-items:center;justify-content:center";
+  el.append(pulse, pin, face);
+  return { el, face };
+}
+
+/** Puts the passenger's initials in the pin, or the person icon when nobody is signed in. */
+function paintFace(face: HTMLElement) {
+  const initials = myInitials();
+  if (initials) face.textContent = initials;
+  else face.innerHTML = PERSON_SVG;
 }
 
 const isDesktop = () => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches;
@@ -158,11 +197,14 @@ export default function TripPlanner() {
   const [mapReady, setMapReady] = useState(false);
   const busMarkers = useRef(new Map<string, maplibregl.Marker>());
   const meMarker = useRef<maplibregl.Marker | null>(null);
+  const meFace = useRef<HTMLElement | null>(null);
   const centredOnMe = useRef(false);
   const selectStop = useRef<(id: string) => void>(() => {});
 
   const [vias, setVias] = useState<NetVia[]>([]);
   const [stops, setStops] = useState<NetStop[]>([]);
+  // Stops no route with a vehicle passes: shown on the map, not offered as a start or destination
+  const [idleStops, setIdleStops] = useState<NetStop[]>([]);
   const [buses, setBuses] = useState<Bus[]>([]);
   const [netError, setNetError] = useState(false);
   const [me, setMe] = useState<Point | null>(null);
@@ -186,16 +228,17 @@ export default function TripPlanner() {
     () => false,
   );
 
-  const stopById = useMemo(() => new Map(stops.map((s) => [s.id, s])), [stops]);
+  const stopById = useMemo(() => new Map([...stops, ...idleStops].map((s) => [s.id, s])), [stops, idleStops]);
   const places = useMemo(() => groupPlaces(stops), [stops]);
 
   // ── Data ────────────────────────────────────────────────────────────────────
   useEffect(() => {
     fetch("/api/stops")
       .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
-      .then((data: { vias: NetVia[]; paragens: Omit<NetStop, "point">[] }) => {
+      .then((data: { vias: NetVia[]; paragens: Omit<NetStop, "point">[]; semAutocarro?: Omit<NetStop, "point" | "v">[] }) => {
         setVias(data.vias);
         setStops(data.paragens.map((s) => ({ ...s, point: [s.lat, s.lng] as Point })));
+        setIdleStops((data.semAutocarro ?? []).map((s) => ({ ...s, v: [], point: [s.lat, s.lng] as Point })));
       })
       .catch(() => setNetError(true));
     fetch("/api/buses")
@@ -273,7 +316,7 @@ export default function TripPlanner() {
         firstSymbol,
       );
 
-      for (const id of ["bus-route", "journey", "stops", "nearby", "selected"]) m.addSource(id, { type: "geojson", data: EMPTY });
+      for (const id of ["bus-route", "journey", "idle-stops", "stops", "nearby", "selected"]) m.addSource(id, { type: "geojson", data: EMPTY });
       m.addLayer({ id: "bus-route", type: "line", source: "bus-route", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#ef4444", "line-width": 4, "line-opacity": 0.8 } });
       m.addLayer({
         id: "journey-walk",
@@ -306,16 +349,27 @@ export default function TripPlanner() {
         filter: ["==", ["geometry-type"], "Point"],
         paint: { "circle-radius": 7, "circle-color": ["get", "color"], "circle-stroke-color": "#0f172a", "circle-stroke-width": 3 },
       });
+      // Every stop at every zoom: white where buses pass, grey where none does
+      m.addLayer({
+        id: "idle-dot",
+        type: "circle",
+        source: "idle-stops",
+        paint: {
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 9, 2, 13, 3.5, 16, 6],
+          "circle-color": "#cbd5e1",
+          "circle-stroke-color": "#64748b",
+          "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 9, 0.5, 13, 1.5],
+        },
+      });
       m.addLayer({
         id: "stops-dot",
         type: "circle",
         source: "stops",
-        minzoom: 13,
         paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 13, 3, 16, 7],
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 9, 2.5, 13, 4, 16, 7],
           "circle-color": "#ffffff",
-          "circle-stroke-color": "#475569",
-          "circle-stroke-width": 2,
+          "circle-stroke-color": "#334155",
+          "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 9, 1, 13, 2],
         },
       });
       m.addLayer({
@@ -331,7 +385,7 @@ export default function TripPlanner() {
         paint: { "circle-radius": 11, "circle-color": "#0f172a", "circle-stroke-color": "#ffffff", "circle-stroke-width": 4 },
       });
 
-      for (const layer of ["stops-dot", "nearby-dot"]) {
+      for (const layer of ["idle-dot", "stops-dot", "nearby-dot"]) {
         m.on("click", layer, (e) => {
           const id = e.features?.[0]?.properties?.id;
           if (typeof id === "string") selectStop.current(id);
@@ -364,14 +418,16 @@ export default function TripPlanner() {
     return () => window.removeEventListener("resize", apply);
   }, [mapReady, expanded]);
 
-  // Every stop, as small dots when zoomed in
+  // Every stop, as small dots
   useEffect(() => {
     if (!mapReady) return;
-    source("stops")?.setData({
+    const points = (list: NetStop[]): GeoJSON.FeatureCollection => ({
       type: "FeatureCollection",
-      features: stops.map((s) => ({ type: "Feature", geometry: { type: "Point", coordinates: [s.lng, s.lat] }, properties: { id: s.id } })),
+      features: list.map((s) => ({ type: "Feature", geometry: { type: "Point", coordinates: [s.lng, s.lat] }, properties: { id: s.id } })),
     });
-  }, [mapReady, stops]);
+    source("stops")?.setData(points(stops));
+    source("idle-stops")?.setData(points(idleStops));
+  }, [mapReady, stops, idleStops]);
 
   // Live buses
   useEffect(() => {
@@ -422,14 +478,12 @@ export default function TripPlanner() {
   useEffect(() => {
     if (!mapReady || !map.current || !me) return;
     if (!meMarker.current) {
-      const el = document.createElement("div");
-      el.innerHTML = `<div style="position:relative;width:32px;height:32px">
-        <div style="position:absolute;inset:4px;background:#3b82f6;border-radius:50%;opacity:.3;animation:tp-pulse 2s ease-out infinite"></div>
-        <div style="position:absolute;top:8px;left:8px;width:16px;height:16px;background:#3b82f6;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div></div>`;
-      el.setAttribute("aria-label", "A sua localização");
-      meMarker.current = new maplibregl.Marker({ element: el })
+      const { el, face } = mePin();
+      meFace.current = face;
+      paintFace(face);
+      meMarker.current = new maplibregl.Marker({ element: el, anchor: "bottom" })
         .setLngLat([me[1], me[0]])
-        .setPopup(new maplibregl.Popup({ offset: 16 }).setDOMContent(popupContent([{ text: "Está aqui", bold: true }])))
+        .setPopup(new maplibregl.Popup({ offset: 44 }).setDOMContent(popupContent([{ text: "Está aqui", bold: true }])))
         .addTo(map.current);
     } else {
       meMarker.current.setLngLat([me[1], me[0]]);
@@ -439,6 +493,11 @@ export default function TripPlanner() {
       map.current.flyTo({ center: [me[1], me[0]], zoom: 15, duration: 1200 });
     }
   }, [mapReady, me, meInArea]);
+
+  // Initials in the pin follow sign-in and sign-out
+  useEffect(() => {
+    if (meFace.current) paintFace(meFace.current);
+  }, [signedIn]);
 
   // Stops near the passenger (or near the centre of the map when the position is unknown)
   const anchor: Point = me && meInArea ? me : mapCentre;
@@ -545,7 +604,7 @@ export default function TripPlanner() {
       </div>
 
       {/* Title and account */}
-      <div className="absolute top-3 left-3 right-3 md:right-auto md:w-[400px] z-20 flex items-center justify-between gap-3 bg-white/95 backdrop-blur rounded-xl px-4 py-2.5 shadow-lg">
+      <div className="absolute top-3 left-3 right-3 md:right-auto md:w-[400px] z-40 flex items-center justify-between gap-3 bg-white/95 backdrop-blur rounded-xl px-4 py-2.5 shadow-lg">
         <div className="min-w-0">
           <h1 className="text-base font-bold text-slate-900 truncate">Transportes Moçambique</h1>
           <p className="text-xs text-slate-600 flex items-center gap-1.5">
@@ -727,10 +786,22 @@ function NearbyView({
   onDestination: (p: { ids: string[]; label: string }) => void;
 }) {
   const fromMe = hasMe && meInArea;
+  // Nothing within NEAR_RADIUS_M: the list holds the nearest stops, however far
+  const far = !loading && nearby.length > 0 && nearby[0].m > NEAR_RADIUS_M;
   return (
     <div>
       <DestinationSearch places={places} vias={vias} onPick={onDestination} />
-      <h2 className="text-sm font-bold text-slate-900 mb-1">{fromMe ? "Paragens perto de si" : "Paragens nesta zona do mapa"}</h2>
+      <h2 className="text-sm font-bold text-slate-900 mb-1">
+        {far ? "Paragens mais próximas" : fromMe ? "Onde vai apanhar o autocarro?" : "Paragens nesta zona do mapa"}
+      </h2>
+      {fromMe && !far && (
+        <p className="text-xs text-slate-600 mb-2">Escolha a paragem perto de si onde quer apanhar o autocarro.</p>
+      )}
+      {far && (
+        <p className="text-xs text-slate-600 mb-2">
+          Não há paragens a menos de {formatDistance(NEAR_RADIUS_M)} {fromMe ? "de si" : "do centro do mapa"}.
+        </p>
+      )}
       {!fromMe && (
         <p className="text-xs text-slate-600 mb-2">
           {locState === "asking" && "A procurar a sua localização…"}
@@ -738,7 +809,10 @@ function NearbyView({
           {locState === "unavailable" && (
             <>
               Não foi possível obter a sua localização.{" "}
-              <button className="underline font-medium" onClick={onRetry}>
+              <button
+                className="ml-1 inline-flex items-center rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+                onClick={onRetry}
+              >
                 Tentar de novo
               </button>
             </>
@@ -766,7 +840,7 @@ function NearbyView({
                 </span>
                 <span className="shrink-0 text-right">
                   <span className="block text-sm font-semibold text-slate-900">{formatDistance(m)}</span>
-                  {fromMe && <span className="block text-xs text-slate-500">{walkMinutes(m)} min a pé</span>}
+                  {fromMe && m <= NEAR_RADIUS_M && <span className="block text-xs text-slate-500">{walkMinutes(m)} min a pé</span>}
                 </span>
               </button>
             </li>
@@ -800,7 +874,11 @@ function StopView({
   const [error, setError] = useState(false);
   const [open, setOpen] = useState<Record<string, boolean>>({});
 
+  // No route with a vehicle passes this stop: nothing to ask the server
+  const idle = stop !== null && stop.v.length === 0;
+
   useEffect(() => {
+    if (idle) return;
     let cancelled = false;
     fetch(`/api/stops/${encodeURIComponent(stopId)}`)
       .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
@@ -809,79 +887,96 @@ function StopView({
     return () => {
       cancelled = true;
     };
-  }, [stopId]);
+  }, [stopId, idle]);
 
   const direct = useMemo(() => new Set(stop?.v ?? []), [stop]);
   const away = me && stop ? distanceMeters(me, stop.point) : null;
 
   return (
     <div>
-      <button onClick={onBack} className="text-sm text-slate-600 hover:text-slate-900 mb-2 flex items-center gap-1">
+      <button onClick={onBack} className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3.5 py-1.5 text-sm font-semibold text-slate-800 hover:bg-slate-200 active:bg-slate-300">
         <span aria-hidden>←</span> Paragens perto
       </button>
       <h2 className="text-lg font-bold text-slate-900 leading-tight">{stop?.nome ?? data?.paragem.nome ?? "Paragem"}</h2>
       <p className="text-xs text-slate-600 mb-3">
-        {stop ? `${stop.v.length} ${stop.v.length === 1 ? "rota" : "rotas"}` : ""}
+        {stop ? (idle ? "sem autocarros" : `${stop.v.length} ${stop.v.length === 1 ? "rota" : "rotas"}`) : ""}
         {away !== null && away < 50_000 ? ` · a ${formatDistance(away)} de si (${walkMinutes(away)} min a pé)` : ""}
       </p>
 
-      <DestinationSearch places={places} vias={vias} directRouteIdx={direct} onPick={onDestination} />
+      {idle ? (
+        <p className="text-sm text-slate-700 bg-slate-100 rounded-xl p-3">
+          Nenhum autocarro passa nesta paragem: as rotas que a servem não têm veículos. Escolha uma paragem branca no mapa.
+        </p>
+      ) : (
+        <>
+          <p className="text-xs text-slate-600 mb-2">Apanhe o autocarro aqui: escolha para onde quer ir.</p>
+          <DestinationSearch places={places} vias={vias} directRouteIdx={direct} onPick={onDestination} />
 
-      <h3 className="text-sm font-bold text-slate-900 mb-2">Para onde vão os autocarros daqui</h3>
-      {error && <p className="text-sm text-red-700">Não foi possível ler os destinos desta paragem.</p>}
-      {!data && !error && <p className="text-sm text-slate-600">A carregar…</p>}
-      <div className="space-y-3">
-        {data?.rotas.map((rota) => (
-          <div key={rota.via.id} className="border border-slate-200 rounded-xl p-3">
-            <p className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full shrink-0" style={{ background: rota.via.cor }} aria-hidden />
-              <span className="min-w-0 truncate">{rota.via.nome}</span>
-            </p>
-            {rota.sentidos.map((sentido) => {
-              const key = `${rota.via.id}:${sentido.para}`;
-              const all = distinctNames(sentido.paragens);
-              const shown = open[key] ? all : all.slice(0, 4);
-              return (
-                <div key={key} className="mt-2">
-                  <p className="text-xs text-slate-700">
-                    <span className="font-semibold">Sentido {sentido.para}</span>
-                    {sentido.proximo ? (
-                      <span>
-                        {" "}· próximo autocarro {formatEta(sentido.proximo.minutos).text}{" "}
-                        <span className="text-slate-500">({sentido.proximo.matricula})</span>
-                      </span>
-                    ) : (
-                      <span className="text-slate-500"> · sem autocarro</span>
-                    )}
-                  </p>
-                  <ul className="mt-1 flex flex-wrap gap-1.5">
-                    {shown.map((p) => (
-                      <li key={p.id}>
+          <h3 className="text-sm font-bold text-slate-900 mb-2">Para onde vão os autocarros daqui</h3>
+          {error && <p className="text-sm text-red-700">Não foi possível ler os destinos desta paragem.</p>}
+          {!data && !error && <p className="text-sm text-slate-600">A carregar…</p>}
+          <div className="space-y-3">
+            {data?.rotas.map((rota) => (
+              <div key={rota.via.id} className="border border-slate-200 rounded-xl overflow-hidden">
+                <p
+                  className="px-3 py-2 text-sm font-semibold flex items-center gap-2"
+                  style={{ background: rota.via.cor, color: textOn(rota.via.cor) }}
+                >
+                  <span className="text-xs font-bold opacity-80 shrink-0">{rota.via.codigo}</span>
+                  <span className="min-w-0 truncate">{rota.via.nome}</span>
+                </p>
+                {rota.sentidos.map((sentido) => {
+                  const key = `${rota.via.id}:${sentido.para}`;
+                  const all = distinctNames(sentido.paragens);
+                  const shown = open[key] ? all : all.slice(0, 4);
+                  return (
+                    <div key={key} className="px-3 py-2.5 border-t border-slate-100 first-of-type:border-t-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-slate-900">Sentido {sentido.para}</p>
+                          <p className="text-xs text-slate-600">
+                            {sentido.proximo
+                              ? `Próximo autocarro ${formatEta(sentido.proximo.minutos).text}`
+                              : "Sem autocarro neste sentido"}
+                          </p>
+                        </div>
+                        {sentido.proximo && <Plate matricula={sentido.proximo.matricula} />}
+                      </div>
+                      {/* The stops ahead, as a line in the route's colour: tap one to go there */}
+                      <ol className="mt-2 ml-2 border-l-2" style={{ borderColor: rota.via.cor }}>
+                        {shown.map((p) => (
+                          <li key={p.id} className="relative">
+                            <span
+                              className="absolute -left-[7px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2"
+                              style={{ borderColor: rota.via.cor }}
+                              aria-hidden
+                            />
+                            <button
+                              className="w-full ml-2 flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-slate-100"
+                              onClick={() => onDestination({ ids: [p.id], label: p.nome })}
+                            >
+                              <span className="min-w-0 truncate text-sm text-slate-800">{p.nome}</span>
+                              <span className="shrink-0 rounded-full bg-slate-900 px-2.5 py-0.5 text-xs font-semibold text-white">Ir</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ol>
+                      {all.length > 4 && (
                         <button
-                          className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-800 hover:bg-slate-200"
-                          onClick={() => onDestination({ ids: [p.id], label: p.nome })}
-                        >
-                          {p.nome}
-                        </button>
-                      </li>
-                    ))}
-                    {all.length > 4 && (
-                      <li>
-                        <button
-                          className="text-xs px-2 py-1 rounded-full text-slate-700 underline"
+                          className="mt-2 text-xs px-3 py-1 rounded-full border border-slate-300 bg-white font-semibold text-slate-800 hover:bg-slate-50"
                           onClick={() => setOpen((o) => ({ ...o, [key]: !o[key] }))}
                         >
                           {open[key] ? "Mostrar menos" : `Ver as ${all.length} paragens`}
                         </button>
-                      </li>
-                    )}
-                  </ul>
-                </div>
-              );
-            })}
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
     </div>
   );
 }
@@ -929,7 +1024,7 @@ function JourneysView({
 
   return (
     <div>
-      <button onClick={onBack} className="text-sm text-slate-600 hover:text-slate-900 mb-2 flex items-center gap-1">
+      <button onClick={onBack} className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3.5 py-1.5 text-sm font-semibold text-slate-800 hover:bg-slate-200 active:bg-slate-300">
         <span aria-hidden>←</span> Voltar
       </button>
       <p className="text-xs text-slate-600">Partida: {view.fromLabel}</p>
@@ -958,7 +1053,9 @@ function JourneysView({
               <div className="flex items-center gap-1 mt-2 flex-wrap">
                 {j.etapas.map((e, n) =>
                   e.tipo === "pe" ? (
-                    <span key={n} className="text-xs text-slate-500" aria-label="a pé">🚶</span>
+                    <span key={n} className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                      a pé
+                    </span>
                   ) : (
                     <span
                       key={n}
@@ -999,9 +1096,14 @@ function Legs({ journey }: { journey: Journey }) {
         ) : (
           <li key={n} className="flex gap-3">
             <span className="w-1.5 rounded-full shrink-0" style={{ background: e.via.cor || "#2563eb" }} aria-hidden />
-            <div className="min-w-0 text-sm">
-              <p className="font-semibold text-slate-900">{e.via.nome}</p>
-              <p className="text-xs text-slate-600">Sentido {e.sentido} · autocarro {e.transporte.matricula}</p>
+            <div className="min-w-0 flex-1 text-sm">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-900">{e.via.nome}</p>
+                  <p className="text-xs text-slate-600">Sentido {e.sentido}</p>
+                </div>
+                <Plate matricula={e.transporte.matricula} />
+              </div>
               <p className="mt-1 text-slate-800">
                 Apanhe em <Stop s={e.de} /> {at(e.embarque)}{" "}
                 <span className="text-slate-500">
@@ -1015,7 +1117,7 @@ function Legs({ journey }: { journey: Journey }) {
                 {e.paragens} {e.paragens === 1 ? "paragem" : "paragens"} · {duration(e.viagemMin)} · {formatDistance(e.metros)} · {e.tarifa} MT
               </p>
               <button
-                className="mt-1.5 text-xs font-semibold text-slate-900 underline"
+                className="mt-2 inline-flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700"
                 onClick={() => router.push(`/track/${e.transporte.id}?paragem=${e.de.id}&destino=${e.para.id}`)}
               >
                 Acompanhar este autocarro →
@@ -1035,9 +1137,20 @@ function WalkStep({ leg }: { leg: WalkLeg }) {
     <li className="flex gap-3 text-sm text-slate-700">
       <span className="w-1.5 shrink-0 border-l-2 border-dashed border-slate-400 ml-0.5" aria-hidden />
       <p>
-        🚶 Caminhe {formatDistance(leg.metros)} ({leg.minutos} min) até <Stop s={leg.para} />
+        <span className="mr-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">A pé</span>
+        Caminhe {formatDistance(leg.metros)} ({leg.minutos} min) até <Stop s={leg.para} />
       </p>
     </li>
+  );
+}
+
+/** A bus's plate, drawn like a number plate so it is easy to match with the bus in the street. */
+function Plate({ matricula }: { matricula: string }) {
+  return (
+    <span className="shrink-0 inline-flex flex-col items-center rounded-md border-2 border-slate-900 bg-white px-1.5 py-0.5 leading-tight">
+      <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-500">Autocarro</span>
+      <span className="font-mono text-sm font-bold text-slate-900">{matricula}</span>
+    </span>
   );
 }
 
