@@ -257,6 +257,37 @@ export async function PUT(
   }
 }
 
+// PATCH: move the vehicle to another route, or take it off its route ({ viaId: null }).
+// Used by the route pages' "Atribuir Transportes" and remove buttons.
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const body = await request.json().catch(() => null);
+  if (!body || !('viaId' in body) || (body.viaId !== null && typeof body.viaId !== 'string')) {
+    return NextResponse.json({ error: 'viaId (id de uma via, ou null) é obrigatório' }, { status: 400 });
+  }
+
+  let codigoVia = '';
+  if (body.viaId) {
+    const via = await prisma.via.findUnique({ where: { id: body.viaId }, select: { codigo: true } });
+    if (!via) return NextResponse.json({ error: 'Via não encontrada' }, { status: 404 });
+    codigoVia = via.codigo;
+  }
+
+  try {
+    const transporte = await prisma.transporte.update({
+      where: { id },
+      data: { viaId: body.viaId, codigoVia },
+      select: { id: true, matricula: true, viaId: true, codigoVia: true },
+    });
+    return NextResponse.json(transporte);
+  } catch {
+    return NextResponse.json({ error: 'Transporte não encontrado' }, { status: 404 });
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

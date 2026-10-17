@@ -172,6 +172,30 @@ test('Via: criar (desenhada no mapa), listar, ver, editar, eliminar', async ({ p
   await deleteFromDetail(page, `/vias/${vid}`, `/api/vias/${vid}`);
 });
 
+test('Via: "Atribuir Transporte" muda a via do transporte', async ({ page }) => {
+  const vias = await (await page.request.get('/api/vias?limit=1')).json();
+  const via = vias.data[0];
+  const transportes = await (await page.request.get('/api/transportes')).json();
+  const transporte = transportes.data.find((t: { viaId: string | null }) => t.viaId !== via.id);
+  const viaOriginal: string | null = transporte.viaId;
+
+  try {
+    await page.goto(`/vias/${via.id}/editar`);
+    await page.getByRole('button', { name: 'Atribuir Transporte' }).click();
+    await page.getByText(transporte.matricula, { exact: true }).click();
+    const patched = page.waitForResponse((r) => r.url().endsWith(`/api/transportes/${transporte.id}`) && r.request().method() === 'PATCH');
+    await page.getByRole('button', { name: /^Atribuir \(1\)$/ }).click();
+    expect((await patched).ok()).toBeTruthy();
+    await expect(page.getByText('1 transporte(s) atribuído(s) com sucesso!')).toBeVisible();
+
+    const depois = await (await page.request.get(`/api/transportes/${transporte.id}`)).json();
+    expect(depois.viaId).toBe(via.id);
+  } finally {
+    // Put the vehicle back on its route
+    await page.request.patch(`/api/transportes/${transporte.id}`, { data: { viaId: viaOriginal } });
+  }
+});
+
 test('Proprietário: criar, listar, ver, editar, eliminar', async ({ page }) => {
   const id = uid();
   await page.goto('/proprietarios/novo');
@@ -194,6 +218,37 @@ test('Proprietário: criar, listar, ver, editar, eliminar', async ({ page }) => 
   await deleteFromDetail(page, `/proprietarios/${oid}`, `/api/proprietarios/${oid}`);
 });
 
+test('Proprietário com transporte: "Remover Associações e Eliminar" elimina-o e mantém o transporte', async ({ page }) => {
+  const id = uid();
+  const nome = `E2E Proprietário ${id}`;
+  const created = await page.request.post('/api/proprietarios', {
+    data: {
+      nome, bi: `${digits(12)}E`, nacionalidade: 'Moçambicana', birthDate: '2020-01-15',
+      endereco: 'Av. de Teste, 4, Maputo', contacto1: `84${digits(7)}`,
+    },
+  });
+  expect(created.ok()).toBeTruthy();
+  const oid = (await created.json()).id as string;
+  const vehicles = await (await page.request.get('/api/transportes?limit=1')).json();
+  const tid = vehicles.data[0].id as string;
+  expect((await page.request.post(`/api/transportes/${tid}/atribuir-proprietario`, { data: { proprietarioId: oid } })).ok()).toBeTruthy();
+
+  await page.goto('/proprietarios');
+  await page.getByPlaceholder('Pesquisar por nome, BI ou nacionalidade...').fill(nome);
+  const row = page.getByRole('row').filter({ hasText: nome });
+  await row.getByTitle('Eliminar').click();
+  // The dialog's button (the row icons are also called "Eliminar", but through their title)
+  await page.locator('button:not([title])', { hasText: /^\s*Eliminar\s*$/ }).click();
+  await expect(page.getByText('Não é Possível Eliminar')).toBeVisible();
+
+  const deleted = page.waitForResponse((r) => r.url().includes(`/api/proprietarios/${oid}`) && r.request().method() === 'DELETE');
+  await page.getByRole('button', { name: 'Remover Associações e Eliminar' }).click();
+  expect((await deleted).ok()).toBeTruthy();
+
+  expect((await page.request.get(`/api/proprietarios/${oid}`)).status()).toBe(404);
+  expect((await page.request.get(`/api/transportes/${tid}`)).ok()).toBeTruthy();
+});
+
 test('Motorista: criar, listar, ver, editar, eliminar', async ({ page }) => {
   const id = uid();
   const phone = `86${digits(7)}`;
@@ -214,7 +269,8 @@ test('Motorista: criar, listar, ver, editar, eliminar', async ({ page }) => {
   await page.getByPlaceholder('Ex: Isabel Nhaca (Familiar)').fill('Contacto E2E');
   await page.getByPlaceholder('845622062').fill(`84${digits(7)}`);
   await page.getByPlaceholder('Ex: 5').fill('5');
-  await page.getByPlaceholder('Digite a senha para o driver login').fill(`e2e-driver-${id}`);
+  // No password field: drivers get a PIN from their page (pin.spec.ts)
+  await expect(page.getByText('Gerar PIN', { exact: false })).toBeVisible();
   const did = await submitCreate(page, '/api/motoristas', 'Criar Motorista');
 
   await expectInList(page, '/motoristas', `E2E Motorista ${id}`);
