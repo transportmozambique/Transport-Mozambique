@@ -218,7 +218,7 @@ export default function NovaVia() {
 
         map.current.addSource('openmaptiles', {
           type: 'vector',
-          url: 'https://api.maptiler.com/tiles/v3/tiles.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL',
+          url: 'https://tiles.openfreemap.org/planet',
         });
 
         map.current.addLayer({
