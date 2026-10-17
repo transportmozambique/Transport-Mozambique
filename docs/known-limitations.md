@@ -2,7 +2,7 @@
 
 What is incomplete, estimated or legacy on 2026-10-17, so that you do not mistake it for a bug, or build on it without knowing. Security gaps have their own list in [Security → Known gaps](security.md#known-gaps).
 
-**On this page:** [Positions and times](#positions-and-times) · [Notifications](#notifications) · [Data](#data) · [Admin](#admin) · [Driver portal](#driver-portal) · [USSD and SMS](#ussd-and-sms) · [Code and repository](#code-and-repository)
+**On this page:** [Positions and times](#positions-and-times) · [Journeys](#journeys) · [Notifications](#notifications) · [Data](#data) · [Admin](#admin) · [Driver portal](#driver-portal) · [USSD and SMS](#ussd-and-sms) · [Code and repository](#code-and-repository)
 
 ---
 
@@ -14,9 +14,17 @@ What is incomplete, estimated or legacy on 2026-10-17, so that you do not mistak
 - **Distances use the stored path.** A route without `geoLocationPath` falls back to straight lines between stops × `fatorEstrada` (1.3 by default).
 - **Same speed everywhere.** Traffic, time of day and stop dwell times are not modelled; only the 5-minute stop at each terminal is.
 
+## Journeys
+
+- **Journey times are estimates** from the same model as above, for each bus at the moment you reach its stop. A late first bus makes you miss the next one; the planner does not know.
+- **Walks are straight lines**, timed at 4.5 km/h with a quarter added for streets. The planner walks up to 400 m to change buses, 300 m at either end to a stop near the one chosen, and 800 m from your position. A river or a motorway between two stops is not seen.
+- **Some places are not connected.** Two small groups of routes (VIA-071, VIA-073, VIA-075 and VIA-111; and V111 in Manhiça) share no stop within 400 m with the other 86 routes. Journeys between them and the rest answer "Não há ligação" ([Data flow → Journey planning](data-flow.md#journey-planning)).
+- **The network is cached 5 minutes** per server instance: a new stop, route or vehicle appears in the planner within 5 minutes.
+- **The position is sent in the URL** of `/api/journeys` and so lands in Vercel's request logs ([Security → Public endpoints](security.md#public-endpoints)).
+
 ## Notifications
 
-- **The arrival-SMS check needs traffic.** It runs when someone opens the passenger home page or while a live map is open (at most every 30 s per server instance), not on a timer ([Data flow → Arrival alert](data-flow.md#arrival-alert-and-sms)). With nobody on the web app, passengers waiting through USSD get no arrival SMS. A scheduled call to `POST /api/simulation {"action":"check"}` (Vercel Cron, or any external scheduler) would remove that dependency.
+- **The arrival-SMS check needs traffic.** It runs while someone has the passenger map open, or asks for a stop or a journey (at most every 30 s per server instance), not on a timer ([Data flow → Arrival alert](data-flow.md#arrival-alert-and-sms)). With nobody on the web app, passengers waiting through USSD get no arrival SMS. A scheduled call to `POST /api/simulation {"action":"check"}` (Vercel Cron, or any external scheduler) would remove that dependency.
 - Alerts older than 24 hours are ignored, and an alert sends at most one SMS every 30 minutes.
 
 ## Data

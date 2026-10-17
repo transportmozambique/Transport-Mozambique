@@ -2,60 +2,79 @@
 
 **Live:** https://transport-mz.vercel.app · **Code:** `transport-client/app` · **Runs locally on:** http://localhost:3000
 
-Passengers see every bus on a live map, search for a trip between two stops, follow one bus until it arrives, and save stops to get an SMS when a bus is close. Browsing and searching need no account. Saving alerts and the account page need one. Every screen below is followed by the requests it makes; the full request and response formats are in the [API reference](api-reference.md#passenger-app-transport-client).
+Passengers see every bus on a live map with their own position and the stops around them. Tapping a stop shows where its buses go; choosing or typing a destination shows how to get there, with changes of bus when no single bus goes there. They can follow one bus until it arrives, and save stops to get an SMS when a bus is close. Browsing and planning need no account. Saving alerts and the account page need one. Every screen below is followed by the requests it makes; the full request and response formats are in the [API reference](api-reference.md#passenger-app-transport-client).
 
-**On this page:** [Live map](#live-map-) · [Search](#search-search) · [Results](#results) · [Tracking a bus](#tracking-a-bus-trackid) · [Account and sign-in](#account-and-sign-in) · [Account page and alerts](#account-page-and-alerts-user-info) · [Browser storage](#what-the-browser-stores)
+**On this page:** [The map](#the-map--and-search) · [Stops near you](#stops-near-you) · [A stop's destinations](#a-stops-destinations) · [Journeys](#journeys) · [Tracking a bus](#tracking-a-bus-trackid) · [Account and sign-in](#account-and-sign-in) · [Account page and alerts](#account-page-and-alerts-user-info) · [Browser storage](#what-the-browser-stores)
 
 ---
 
-## Live map (`/`)
+## The map (`/` and `/search`)
 
-![Home page: every bus on the map](images/passenger-home.png)
+![Home page: the passenger's position, the stops near it and the live buses](images/passenger-home.png)
 
-- Shows every bus with its position now: a real GPS position when fresh, otherwise the timetable position ([GPS tracking](gps-tracking.md#how-a-position-is-chosen)). The counter in the corner ("111 autocarros") is the number of buses on the map.
-- The map opens on the area where the buses are (the 10th–90th percentile of their positions), not on the whole province.
-- Markers glide to their new position every 5 seconds.
-- "Entrar" goes to sign-in (`/auth`), which opens the search after signing in or registering. The search itself needs no account: open `/search` directly.
+`/` and `/search` are the same page (`app/components/TripPlanner.tsx`); `/search` is where sign-in and registration lead. The title card shows the number of buses and "Entrar", or the passenger's avatar when signed in.
+
+- **Buses.** Every bus with its position now: a real GPS position when fresh, otherwise the timetable position ([GPS tracking](gps-tracking.md#how-a-position-is-chosen)). Markers glide to their new position every 5 seconds. Tapping a bus draws its route and opens a card with "Acompanhar →".
+- **Your position.** The browser asks for the location when the page opens. With it, the map centres on you once, and the blue dot moves as you move. The round button at the bottom right centres the map on you again, or asks again after a refusal. Positions more than 80 km from Maputo are not used to centre the map.
+- **Stops.** The stops near you are green dots. Every other stop appears as a small white dot from zoom 13; tapping any stop opens its destinations.
+- **The panel** is a side panel on a computer and a bottom sheet on a phone (the bar at its top folds it away).
 
 | When | Request |
 |---|---|
-| Page opens | `GET /api/startup` (also triggers the arrival SMS check) |
+| Page opens | `GET /api/stops` (every stop served by a bus, with its routes; cached 5 min) |
 | Page opens | `GET /api/buses` (all buses with positions) |
-| Every 5 s | `GET /api/buses?fields=position` (light: id, latitude, longitude, source, heading) |
+| Every 5 s | `GET /api/buses?fields=position` (light: id, latitude, longitude, source, heading; also triggers the arrival SMS check) |
 
-On a phone the same page fills the screen:
+On a phone:
 
-<img src="images/passenger-home-mobile.png" alt="Home page on a phone" width="320">
+<img src="images/passenger-home-mobile.png" alt="The map on a phone, with the stops near the passenger in a bottom sheet" width="320">
 
-## Search (`/search`)
+## Stops near you
 
-![Search form: municipality, route, origin and destination](images/passenger-search-form.png)
+The panel lists up to 8 stops within 1.5 km, nearest first, with the distance, the walking time (4.5 km/h, a quarter added for streets) and the number of routes. With no stop that close, it lists the 3 nearest. Without a position (refused, unavailable, or far from Maputo), the list is about the centre of the map and follows it as you move the map, with a line saying why.
 
-The form goes step by step: **Município** → **Rota (Direção)** → **Sua Paragem (Origem)** → **Destino**. Each list only offers options that have buses ("57 rotas disponíveis", "20 paragens disponíveis"). Stops appear in travel order along the route, numbered, and destinations are the stops after the origin in the chosen direction.
+**"Para onde quer ir?"** on top searches every stop by name, without accents or capitals, and every typed word must start a word of the name ("av ind" finds "Av. das Indústrias"). Stops with the same name within 400 m count as one place. Choosing a result plans the journey **from your position**: a walk to one of the stops within 800 m, then the buses. Without a position, from the nearest stop to the centre of the map.
 
-| Step | Request |
+## A stop's destinations
+
+![A stop: its routes, each direction's next bus and the stops it goes to](images/passenger-stop.png)
+
+Tapping a stop (in the list or on the map) shows:
+
+- its name, number of routes and, with a position, how far it is from you;
+- the same destination search, where each result says **"Directo"** (a bus from this stop goes there) or **"Com transbordo"** (it needs a change);
+- every route through the stop, and for each direction ("Sentido Antena"): the next bus with its plate and arrival ("próximo autocarro 27 min", "às 17:58", "amanhã às 05:12"), and the stops it goes to in order. Consecutive stops with the same name are shown once; "Ver as N paragens" shows them all.
+
+Tapping one of those stops, or a search result, plans the journey from this stop.
+
+| When | Request |
 |---|---|
-| Open | `GET /api/available-routes` → municipalities with buses |
-| Municipality chosen | `GET /api/available-routes?municipioId=…` → that municipality's routes with buses |
-| Route chosen | `GET /api/available-routes?municipioId=…&viaId=…` → its stops in travel order |
-| "Pesquisar Transportes" | `GET /api/buses?paragemId=ORIGIN&destinoId=DEST&viaIds=A,B` |
+| Stop opened | `GET /api/stops/{id}` |
 
-`viaIds` holds every route with the same two terminals as the chosen one, so buses on both directions are considered.
+## Journeys
 
-## Results
+![A direct journey: three options, the chosen one drawn on the map](images/passenger-journey-direct.png)
 
-![Search results with arrival time, distance, duration and price](images/passenger-search-results.png)
+Up to three options, earliest arrival first. Each card shows the arrival ("Chega às 16:51", or "Chega amanhã às 06:32"), the total fare, "Directo" or the number of changes ("2 transbordos"), the total time from now and the walking distance, and the routes as coloured labels. The chosen option is drawn on the map: each bus in its route's colour, walks dashed, and only the buses of that journey stay on the map.
 
-One card per bus that serves both stops, sorted by arrival:
+![A journey with two changes, from the passenger's position](images/passenger-journey-transfer.png)
 
-| Field | Meaning |
+The chosen option lists its steps:
+
+- **Walks**: "Caminhe 100 m (2 min) até Portão", from your position to the first stop, between two stops to change buses (up to 400 m), or from the last stop.
+- **Buses**: the route, its direction and the bus's plate; where and when to take it ("Apanhe em Portão às 16:47 (daqui a 5 min)", and for the next buses the wait at the stop: "espera 35 min"); where and when to get off; the number of stops, time on board, distance and fare. "Acompanhar este autocarro →" opens the tracking page with that bus's two stops.
+- When the journey only finishes the next morning (buses run 05:00–21:00), a note says so.
+
+Each bus charges its own fare, with the fare rule (max(10 MT, ⌈km × 10 MT⌉) by default, [Configuration](configuration.md#fare-rule-tarifa)). Times use the same model as everywhere else: real GPS when fresh, else the timetable, worked out for the moment you reach each stop. How the options are found is in [Data flow → Journey planning](data-flow.md#journey-planning). When the two places are not connected by any chain of buses (a few routes form separate groups), the panel says "Não há ligação de autocarro entre estes dois locais".
+
+| When | Request |
 |---|---|
-| **Chega em** | Minutes until the bus reaches your origin, going in your direction. It includes turning around at a terminal if the bus has passed you or is going the other way. Waits of an hour or more show the clock time ("às 11:56"). At night, or when the bus would only come after 21:00, it is tomorrow's first pass ("amanhã às 05:12"). |
-| **Distância da viagem** | Road distance from your origin to your destination, along the route's path. |
-| **Duração da viagem** | That distance at the fare rule's travel speed (30 km/h by default). |
-| **Preço** | max(10 MT, ⌈km × 10 MT⌉) with the default fare rule ([Configuration](configuration.md#fare-rule-tarifa)). |
+| From a stop | `GET /api/journeys?from={stopId}&to={stopIds}` |
+| From your position | `GET /api/journeys?lat=…&lng=…&to={stopIds}` |
 
-"Acompanhar" opens the tracking page for that bus with your two stops: `/track/{busId}?paragem=ORIGIN&destino=DEST`.
+On a phone:
+
+<img src="images/passenger-journey-mobile.png" alt="A journey with changes on a phone" width="320">
 
 ## Tracking a bus (`/track/[id]`)
 
@@ -69,7 +88,7 @@ One card per bus that serves both stops, sorted by arrival:
   - **Tempo de viagem** and **Distância viagem**: minutes and distance on board.
 - **Rota completa.** The route's road path. The bus marker glides along it; your origin and destination are highlighted. The full-screen button enlarges the map.
 - **"Adicionar aos Meus Transportes"** saves an arrival alert for your origin stop. You get an SMS when a bus on a route through that stop is less than 1 km away ([Data flow → Arrival alert](data-flow.md#arrival-alert-and-sms)). Without a session the button answers "Você precisa estar logado para salvar transportes". An expired session clears the stored account so you can sign in again.
-- **"Parar Rastreamento"** leaves the page. The footer shows the refresh period and the time of the last update.
+- **"Parar Rastreamento"** goes back to the map (`/search`). The footer shows the refresh period and the time of the last update.
 
 | When | Request |
 |---|---|

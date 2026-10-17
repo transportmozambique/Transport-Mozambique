@@ -153,13 +153,25 @@ To run production builds instead, use `npm run build && npx next start -p <port>
 
 **Admin**: open http://localhost:3002/login and sign in with `admin@transportmz.com` / `admin123`. The session is an `HttpOnly` cookie valid for 12 hours ([Security](security.md#admin-dashboard)).
 
+<img src="images/admin-login.png" alt="Admin sign-in page" width="480">
+
 **Passenger**: open http://localhost:3000/auth, choose "Entrar", and sign in with phone `840000001` and password `123456`. The `+258` prefix is optional. You can also register a new account on the same page.
+
+<img src="images/passenger-auth.png" alt="Passenger sign-in and registration page" width="480">
 
 **Driver**: drivers sign in with a PIN the administrator generates; nobody chooses their own.
 
 1. In the admin, open **Motoristas**, open a driver (for example "Ana Sitoe", phone `+258 84 567 8901`), and press **"Gerar PIN"** on the "PIN de Acesso" card. The 6-digit PIN is shown **once**; only its bcrypt hash is stored.
+
+   <img src="images/admin-driver-pin.png" alt="PIN de Acesso card right after a new PIN was generated" width="280">
+
 2. Open http://localhost:3001 and sign in with phone `845678901` and that PIN.
+
+   <img src="images/driver-login.png" alt="Driver portal sign-in: phone number and PIN" width="280">
+
 3. Press **"Iniciar"** to start a trip. The same trip state is visible in the USSD driver menu ([Driver portal](driver-portal.md)).
+
+   <img src="images/driver-trip-active.png" alt="Driver portal with a trip in progress" width="280">
 
 ## 9. Try the USSD menu with `curl`
 
@@ -171,20 +183,20 @@ curl -s -X POST http://localhost:3000/api/ussd \
   --data-urlencode "sessionId=test-1" --data-urlencode "serviceCode=*384*848080#" \
   --data-urlencode "phoneNumber=+258840000001" --data-urlencode "text="
 
-# Option 1, "Encontrar transporte": first list of places
+# Option 1: type where you are, pick the stop, type the destination, pick it
 curl -s -X POST http://localhost:3000/api/ussd \
   --data-urlencode "sessionId=test-1" --data-urlencode "phoneNumber=+258840000001" \
-  --data-urlencode "text=1"
+  --data-urlencode "text=1*portao"
 ```
 
 ```text
-CON Onde esta agora?
-1. Albert Lithule
-2. Laurentina
-3. Machava Sede
-4. Praca dos Trabalha..
-...
+CON Qual paragem?
+1. Portao
+2. Segundo Portao da Radio Marconi
+0. Voltar
 ```
+
+`text=1*portao*1*makalela*1` then shows the first journey; [USSD → 1 Encontrar transporte](ussd.md#1-encontrar-transporte) has every screen.
 
 Without `AFRICASTALKING_API_KEY`, the SMS the menus send are logged in the client's terminal (`SMS não enviado para ...`) instead of sent.
 
@@ -214,7 +226,15 @@ psql "postgresql://postgres:postgres123@localhost:5433/transport_db" \
   -c 'SELECT matricula, "viaId", "currGeoLocation" FROM "Transporte" LIMIT 5'
 ```
 
-[Database](database.md) explains every table and has tested example queries.
+Or as ready-made lists that join tables (routes, a route's stops in order, vehicles with their driver, drivers with or without a PIN):
+
+```bash
+cd transport-client
+npx tsx scripts/queries.ts routes
+npx tsx scripts/queries.ts stops VIA-1A     # a route code from the list above
+```
+
+[Database](database.md) explains every table, each way to connect (including the Neon SQL Editor for production) and has tested example queries.
 
 ---
 

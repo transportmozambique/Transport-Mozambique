@@ -76,7 +76,7 @@ Endpoints that answer without any credential, on purpose:
 |---|---|
 | `/api/startup`, `/api/simulation` (`GET`) | counts of buses and of the last arrival check |
 | `POST /api/simulation {"action":"check"}` | runs the arrival-SMS check now; only SMS that are due go out |
-| `/api/available-routes`, `/api/locations`, `/api/buses`, `/api/bus/{id}` | the network (routes, stops, paths) and vehicle positions, plates and fares |
+| `/api/stops`, `/api/stops/{id}`, `/api/journeys`, `/api/buses`, `/api/bus/{id}` | the network (routes, stops, paths), journeys between stops, and vehicle positions, plates and fares. A position sent to `/api/journeys` is not saved in the database, but it is part of the URL, so it appears in Vercel's request logs. |
 | `POST /api/auth/register`, `/api/auth/login`, `/api/driver/login` | sign-in |
 | `/api/ussd` | the USSD menus (see [USSD callback](#ussd-callback)) |
 

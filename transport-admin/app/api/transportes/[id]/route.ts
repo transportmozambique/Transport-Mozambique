@@ -331,9 +331,12 @@ export async function DELETE(
       );
     }
 
-    await prisma.transporte.delete({
-      where: { id },
-    });
+    // GeoLocation rows come from the initial import and block the delete (foreign key
+    // without cascade); positions now live on Transporte itself, so they go with it
+    await prisma.$transaction([
+      prisma.geoLocation.deleteMany({ where: { transporteId: id } }),
+      prisma.transporte.delete({ where: { id } }),
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

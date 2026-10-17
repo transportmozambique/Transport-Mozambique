@@ -2,35 +2,50 @@
 
 This page follows the data through each flow of the platform, from the first request to the rows it reads or writes. Each flow names the endpoint, the code that handles it (`transport-client/...` or `transport-admin/...`) and the tables involved. Table and field meanings are in [Database](database.md).
 
-**On this page:** [Search and arrival time](#search-and-arrival-time) · [Live map](#live-map) · [Tracking page](#tracking-page) · [Arrival alert and SMS](#arrival-alert-and-sms) · [USSD session](#ussd-session) · [Driver sign-in and trip](#driver-sign-in-and-trip) · [GPS position](#gps-position) · [Admin changes](#admin-changes) · [PIN and device code](#driver-pin-and-gps-device-code) · [Who writes what](#who-writes-each-table)
+**On this page:** [Journey planning](#journey-planning) · [Arrival time](#arrival-time) · [Live map](#live-map) · [Tracking page](#tracking-page) · [Arrival alert and SMS](#arrival-alert-and-sms) · [USSD session](#ussd-session) · [Driver sign-in and trip](#driver-sign-in-and-trip) · [GPS position](#gps-position) · [Admin changes](#admin-changes) · [PIN and device code](#driver-pin-and-gps-device-code) · [Who writes what](#who-writes-each-table)
 
 ---
 
-## Search and arrival time
+## Journey planning
 
-The search form narrows municipality → route → origin stop → destination. It only offers choices that have buses. The search then asks for every bus on the chosen route.
+The passenger's map (`/`, `/search`) loads every stop once, finds the stops near the passenger in the browser, and asks the server for a stop's destinations and for journeys. `lib/journeys.ts` does the planning, for the web and for USSD option 1.
 
 ```mermaid
 sequenceDiagram
   autonumber
-  participant B as Browser (/search)
+  participant B as Browser (/ or /search)
   participant C as transport-client
   participant DB as PostgreSQL
-  B->>C: GET /api/available-routes
-  C->>DB: Municipio with Via that have Transporte
-  C-->>B: municipios
-  B->>C: GET /api/available-routes?municipioId=…
-  C-->>B: municipios + that municipality's routes (Via) that have buses
-  B->>B: groups routes with the same terminals into one choice
-  B->>C: GET /api/available-routes?municipioId=…&viaId=…
-  C->>DB: ViaParagem + Paragem of the route's vias, ordered along Via.geoLocationPath
-  C-->>B: stops in travel order
-  B->>C: GET /api/buses?paragemId=ORIGIN&destinoId=DEST&viaIds=A,B
-  C->>DB: Via + ViaParagem + Paragem + Transporte (+ active Tarifa, cached 60 s)
-  Note over C: for each bus: vehiclePosition() = fresh GPS or timetable<br/>estimateBusTrip() = arrival, trip time and fare along the road path
-  C-->>B: buses sorted by arrival time
-  B->>B: "Acompanhar" → /track/{busId}?paragem=ORIGIN&destino=DEST
+  B->>C: GET /api/stops
+  C->>DB: Via that have Transporte + their ViaParagem + Paragem (network cached 5 min per instance)
+  C-->>B: every stop served by a bus, with its routes
+  B->>B: position (browser) → nearest stops, name search, places
+  B->>C: GET /api/stops/{id}
+  C->>DB: Transporte of the stop's routes (position fields)
+  C-->>B: routes × directions: next bus, stops reached
+  B->>C: GET /api/journeys?from={stop} or lat,lng & to={stops}
+  Note over C: candidates ranked on fixed speeds + 10 min per bus,<br/>then timed with estimateBusTrip() at each stop's arrival time
+  C->>DB: Transporte of the candidate routes (+ active Tarifa, cached 60 s)
+  C-->>B: up to 3 journeys: walks + buses with times, fares, paths
+  B->>B: draws the chosen journey; "Acompanhar" → /track/{busId}?paragem=…&destino=…
 ```
+
+**The network** (`loadNetwork`) is built once per server instance and kept 5 minutes: each route with a bus, its road path, its stops ordered along the path with their distance along it, and for every stop the stops within 400 m (a grid of ~500 m cells). Stops with the same name within 400 m of each other form a *place* (`lib/places.ts`), which is what the name search returns.
+
+**Finding journeys** (`planJourneys`):
+
+1. **Start and end.** The chosen stops and every stop within 300 m of them, or, from the passenger's position, the 8 nearest stops within 800 m. Walking counts at 1 m/s straight-line (4.5 km/h with a quarter added for streets).
+2. **Direct**: every route through a start and an end stop (buses shuttle along their route, so either direction works).
+3. **One change**: every pair of routes, one through a start stop and one through an end stop, that meet at a common stop or two stops within 400 m. Each bus leg rides at least 300 m. The best change point is kept per pair of routes.
+4. **More changes**, only when 2 and 3 find nothing: a round-by-round search, one more bus per round (as in RAPTOR, up to 5 buses), keeping the cheapest way to every stop per round. Its result is the journey with the fewest buses, and one more bus when that saves over 15 minutes.
+5. **Ranking**: candidates are ranked on ride time at the fare rule's speed, walking, and 10 minutes per bus. When a direct bus exists, journeys with changes are only kept if they are at least 10 minutes better on these estimates. The best 8 are **timed**: for each leg, every bus of the route is asked when it reaches the stop *at the moment the passenger gets there* (`estimateBusTrip` with that time), and the first one is taken.
+6. **Result**: earliest arrival first. Options that no other beats on both arrival and number of changes come first, then other routes, up to 3.
+
+About 8 ms per journey on the production network (1,004 stops, 91 routes). 86 of the 91 routes are connected through shared or nearby stops; two small groups (4 routes, and 1 route) are not, and journeys between them and the rest do not exist.
+
+## Arrival time
+
+The same numbers serve the journeys, the stop's "próximo autocarro", the tracking page and USSD.
 
 How the numbers are made (`lib/vehiclePosition.ts`, `lib/fares.ts`):
 
@@ -46,9 +61,6 @@ sequenceDiagram
   participant B as Browser (/)
   participant C as transport-client
   participant DB as PostgreSQL
-  B->>C: GET /api/startup
-  C-->>B: {mode: "gps-or-timetable", busCount, withFreshGps}
-  C--)C: waitUntil(maybeCheckArrivals())
   B->>C: GET /api/buses
   C->>DB: every Transporte with its Via path
   C-->>B: buses with position, route line, stops
@@ -82,19 +94,19 @@ sequenceDiagram
   end
 ```
 
-The same `estimateBusTrip()` serves `/api/buses`, `/api/bus/[id]` and USSD option 1, so the web and USSD always agree.
+The same `estimateBusTrip()` serves `/api/buses`, `/api/bus/[id]`, `/api/stops/{id}`, `/api/journeys` and USSD option 1, so the web and USSD always agree.
 
 ## Arrival alert and SMS
 
 A `MISSION` row is "this passenger is waiting at this stop". There are two ways to create one:
 
 - on the web: the tracking page's "Adicionar aos Meus Transportes" calls `POST /api/user/missions/save` with the passenger's token;
-- by USSD: option 1's result screen. That screen also creates a passwordless `Utente` for the phone number if none exists.
+- by USSD: option 1's journey screen, at the stop where the first bus is taken. That screen also creates a passwordless `Utente` for the phone number if none exists.
 
 ```mermaid
 sequenceDiagram
   autonumber
-  participant T as Trigger (/api/startup or the 5-second position poll)
+  participant T as Trigger (the 5-second position poll, a stop or a journey request)
   participant C as transport-client (lib/busSimulator.ts)
   participant DB as PostgreSQL
   participant AT as Africa's Talking
@@ -231,7 +243,7 @@ A new PIN or code replaces the old one at once.
 | Table | Written by | Read by |
 |---|---|---|
 | `Administrador` | admin | admin |
-| `Provincia`, `Cidade`, `Municipio` | admin (`Cidade` has no UI and is empty) | admin; passenger app (`Municipio` for the search filter) |
+| `Provincia`, `Cidade`, `Municipio` | admin (`Cidade` has no UI and is empty) | admin; driver sign-in (the municipality name) |
 | `Via`, `Paragem`, `ViaParagem` | admin | everything |
 | `Transporte` (network fields) | admin | everything |
 | `Transporte` (GPS fields) | passenger app `/api/gps`; admin clears them on revoke | everything |
