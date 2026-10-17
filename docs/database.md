@@ -152,6 +152,20 @@ Four ways in:
 3. **Prisma Studio.** A table browser pointed at the database through `DATABASE_URL` ([below](#prisma-studio)).
 4. **Prisma Client in a script.** Ready-made lists that join tables, or your own ([below](#prisma-client-in-a-script)).
 
+#### Neon console
+
+Sign in at https://console.neon.tech, open the **TransportMZ** project, and check the branch at the top left (`production` is the live data).
+
+- **SQL Editor** (left menu): choose the database `neondb`, paste a query from [Example queries](#example-queries), press **Run**. The editor opens with Neon's own sample `CREATE TABLE … INSERT …`; replace it rather than running it, or it creates a table in production.
+
+  ![Neon SQL Editor: the busiest stops](images/neon-sql-editor.png)
+
+- **Tables** (left menu): browse a table page by page, with filters and sorting, without SQL. It can also edit and add rows: on `production`, prefer the admin dashboard, which keeps the related rows consistent.
+
+  ![Neon Tables view: the Paragem table](images/neon-tables.png)
+
+- **Branches**: create a branch of `production` to try a change on a copy. **Connect** shows the connection strings, including the password: do not screenshot or share it.
+
 For people who only need to read, create a read-only role (Neon console → Roles, or SQL as the owner) instead of sharing the owner's credentials:
 
 ```sql
