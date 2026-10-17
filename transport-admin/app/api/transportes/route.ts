@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
     const availableOnly = searchParams.get('availableOnly') === 'true';
     const includeTransportId = searchParams.get('includeTransportId') || null;
     const limit = parseInt(searchParams.get('limit') || '1000');
+    const search = searchParams.get('search')?.trim() || '';
 
     let whereClause: any = {};
 
@@ -21,6 +22,17 @@ export async function GET(request: NextRequest) {
       } else {
         whereClause.motorista = { is: null };
       }
+    }
+
+    // Plate, model, make or route name, ignoring case (the header search)
+    if (search) {
+      const contains = { contains: search, mode: 'insensitive' as const };
+      whereClause = {
+        AND: [
+          whereClause,
+          { OR: [{ matricula: contains }, { modelo: contains }, { marca: contains }, { via: { is: { nome: contains } } }] },
+        ],
+      };
     }
 
     const transportes = await prisma.transporte.findMany({

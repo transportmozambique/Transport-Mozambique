@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
         { nome: { contains: search, mode: 'insensitive' as const } },
         { bi: { contains: search, mode: 'insensitive' as const } },
         { cartaConducao: { contains: search, mode: 'insensitive' as const } },
+        { telefone: { contains: search } },
       ];
     }
 
