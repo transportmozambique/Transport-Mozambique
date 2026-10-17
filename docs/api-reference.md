@@ -379,16 +379,16 @@ Paged lists answer `{"data": [...], "pagination": {"page", "limit", "total", "to
 
 **Deleting.** Records with dependants are refused with 400 and the reason in `error` and `details`:
 
-| Entity | Refused while | Otherwise also removes |
-|---|---|---|
-| Province | it has municipalities | |
-| Municipality | it has routes or stops | |
-| Vehicle | it has a driver | |
-| Driver | they are assigned to a vehicle | |
-| Owner | they own vehicles, unless `?force=true` | with `force`, the owner–vehicle links |
-| Passenger | they have arrival alerts | |
-| Route | | its stop links; its vehicles lose their route (`viaId = NULL`) |
-| Stop | | its route links and the arrival alerts at it (`{"success": true, "alertasRemovidos": n}`) |
+| Entity | Refused while | `?force=true` (sent by the admin pages) | Also removes |
+|---|---|---|---|
+| Province | it has municipalities | detaches the municipalities first (`provinciaId = NULL`) | |
+| Municipality | it has routes (or stops through them) | not accepted: every route needs a municipality | |
+| Vehicle | it has a driver or an owner | | its imported `GeoLocation` rows |
+| Driver | they are assigned to a vehicle | unassigns them first | |
+| Owner | they own vehicles | removes the owner–vehicle links first | |
+| Passenger | they have arrival alerts | deletes the alerts first | |
+| Route | | | its stop links; its vehicles lose their route (`viaId = NULL`) |
+| Stop | | | its route links and the arrival alerts at it (`{"success": true, "alertasRemovidos": n}`) |
 
 Passwords and PINs are never returned: administrator and passenger queries leave out `senha`, and the admin's Prisma client omits `Motorista.password` from every query.
 
