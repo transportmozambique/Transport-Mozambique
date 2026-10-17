@@ -111,7 +111,7 @@ destino                                 0. Voltar
 0. Voltar
 ```
 
-- **Typing a name.** Any part of the name, without accents or capitals; every typed word must start a word of the name (`av ind` finds "Av. das Industrias"). Stops with the same name within 400 m are one place. Nothing found: `CON Nenhuma paragem com "xyz".` and `0` to type again.
+- **Typing a name.** Any part of the name, without accents or capitals; every typed word must start a word of the name (`av ind` finds "Av. das Industrias"). Stops with the same name within 400 m are one place, ignoring a route number in brackets at the end ("Museu (X39)" is "Museu"). Nothing found: `CON Nenhuma paragem com "xyz".` and `0` to type again.
 - **Places with the same name** (49 names are used by several places, often along one avenue) are told apart by the nearest place with another name, and the distance to it when that is also shared. These lists show 4 places per page, so the labels have room:
 
 ```text
