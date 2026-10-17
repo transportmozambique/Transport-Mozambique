@@ -30,6 +30,10 @@ What is incomplete, estimated or legacy on 2026-10-17, so that you do not mistak
 ## Data
 
 - **Stop names repeat.** Many stops carry the street name, so one route can list "Rua do Cajueiro (Fedel Castro)" eight times, and some terminals have names like "120". Users see these names on the web, in USSD and in SMS.
+- **Imported routes** ([Database → OpenStreetMap](database.md#importing-stops-and-routes-from-openstreetmap)):
+  - their vehicles are simulated (plates `SIM-…`) until operators register real ones;
+  - both directions follow the outbound path, so on one-way streets the return trip is drawn on the wrong street; its stops more than 60 m from that path are left out;
+  - the fare rule (10 MT per km by default) gives long routes fares well above what chapas charge.
 - **Stop order is computed.** `ViaParagem` has no order column; stops are ordered by projecting them onto the route's path. A stop far from its path can land in the wrong place.
 - **Coordinates are text.** Points are `"lat,lng"` strings and paths `"lng,lat;…"` (note the order); there is no PostGIS and no spatial index ([Database → Conventions](database.md#conventions-read-this-before-querying)).
 - **`Cidade` is empty** and has no screen; municipalities link to provinces directly.
