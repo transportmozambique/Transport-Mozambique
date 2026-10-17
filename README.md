@@ -17,6 +17,37 @@ The network in production has 91 routes, about 1,080 stops and 111 vehicles in t
 
 USSD and SMS run on the Africa's Talking **sandbox**: they reach the simulator, not real phones ([Going live](docs/africas-talking.md#going-live)). Bus positions come from GPS where a vehicle reports one and from a timetable model otherwise ([GPS tracking](docs/gps-tracking.md)).
 
+## USSD menu
+
+Dial `*384*848080#` in the [Africa's Talking simulator](https://developers.africastalking.com/simulator). Every final screen is also sent by SMS.
+
+<img src="docs/images/at-sim-main-menu.png" alt="The USSD main menu in the Africa's Talking simulator" width="240" align="right">
+
+| Option | What it does |
+|---|---|
+| 1 Encontrar transporte | Where you are and where you are going → the next bus, its arrival time, trip time and fare. It also registers an arrival alert: an SMS comes when a bus is under 1 km away |
+| 2 Procurar rotas | The routes leaving from a place, with length, stops and full-route fare |
+| 3 Paragens de uma rota | A route's stops in travel order, then one stop's details |
+| 4 Calcular tarifa | Fare, distance and trip time between two places |
+| 5 Rastrear autocarro | Where a bus is, by its plate (or part of it) |
+| 6 Area do motorista | Drivers, with their PIN: start or end a trip, see their vehicle and route |
+| 7 Ajuda | Help |
+
+Every screen, the paging keys (`7` next, `0` back) and what each option reads and writes: [USSD service](docs/ussd.md). Setting up the channel and testing in the simulator: [Africa's Talking](docs/africas-talking.md).
+
+<br clear="right">
+
+## Getting lists out of the database
+
+The production database is on Neon. [Database → Connecting](docs/database.md#connecting) shows four ways in, step by step:
+
+- **Neon SQL Editor** in the browser, for SQL;
+- **`psql`**;
+- **Prisma Studio**, to browse tables without SQL;
+- **ready-made lists with Prisma Client**, for example `npx tsx scripts/queries.ts routes matola` in `transport-client` ([Prisma Client in a script](docs/database.md#prisma-client-in-a-script)).
+
+[Example queries](docs/database.md#example-queries) has tested SQL for the usual questions, such as a route's stops, vehicles with their driver, or the alerts of the last 24 hours.
+
 ## How it fits together
 
 Three Next.js apps share one PostgreSQL database (Neon) through Prisma, and each is its own Vercel project:

@@ -65,6 +65,8 @@ Three kinds of device can report a vehicle's position. All of them use the vehic
 
 In the admin, open **Transportes → the vehicle → "Rastreador GPS"** and press **"Gerar código do dispositivo"** ([Admin dashboard → GPS tracker card](admin-dashboard.md#gps-tracker-card)).
 
+<img src="images/admin-gps-device-code.png" alt="Rastreador GPS card right after a device code was generated, with the Traccar Client settings" width="640">
+
 - The code is 20 characters (15 random bytes in base64url, 120 bits).
 - It is shown **once**, together with the server URL and the Traccar Client settings. Only its SHA-256 hash is stored, in `Transporte.gpsDispositivoHash` (unique).
 - "Gerar novo código" replaces it: the old code stops working at once, and every device using it gets 401 until it is reconfigured.
@@ -159,6 +161,8 @@ curl -s "https://transport-mz.vercel.app/api/gps?id=<device code>&lat=-25.9692&l
 ```
 
 **In the admin**, the vehicle's "Rastreador GPS" badge turns **"GPS ativo"** within 30 s and shows "Última posição recebida", and the map badge says "GPS real". On the passenger map the bus jumps to the reported point.
+
+<img src="images/admin-transporte-gps-live.png" alt="Vehicle page with a live GPS position: GPS real badge on the map, GPS ativo on the tracker card" width="640">
 
 **In the database:**
 
