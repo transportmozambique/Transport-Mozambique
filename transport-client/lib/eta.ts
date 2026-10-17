@@ -18,7 +18,7 @@ export function maputoClock(d: Date): string {
 export interface EtaText {
   /** Big number or clock time, e.g. "7" or "05:12" */
   value: string;
-  /** Word under it, e.g. "minutos" or "amanhã às" */
+  /** Word under it, e.g. "minutos", "hoje" or "amanhã" */
   unit: string;
   /** One line, e.g. "7 min" or "amanhã às 05:12" */
   text: string;
@@ -33,7 +33,7 @@ export function formatEta(minutes: number, from: Date = new Date()): EtaText {
   const tomorrow = maputoDay(at) !== maputoDay(from);
   return {
     value: clock,
-    unit: tomorrow ? 'amanhã às' : 'às',
+    unit: tomorrow ? 'amanhã' : 'hoje',
     text: `${tomorrow ? 'amanhã às' : 'às'} ${clock}`,
     isClock: true,
   };

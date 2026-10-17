@@ -4,7 +4,11 @@ A public-transport information platform for the Maputo–Matola area. Passengers
 
 The network in production has 91 routes, about 1,080 stops and 111 vehicles in two municipalities (October 2026).
 
-<img src="docs/images/passenger-home.png" alt="Passenger web app: live map of Maputo with buses on their routes" width="720">
+Like a ride-hailing app, but for public transport. The start is your position or a place you pick. The app lists every place you can reach from there, earliest arrival first, and says which stop to walk to for the first bus. Pick a destination C and the journey reads A → B → C: walk from where you are (A) to the stop (B), then the bus, or buses, to C.
+
+<img src="docs/images/passenger-home.png" alt="Passenger web app: the start (your position), and every destination with the stop where the first bus is taken" width="720">
+
+How to use it, step by step with screenshots: [Passenger web app → How to use it](docs/passenger-web.md#how-to-use-it-step-by-step).
 
 ## Live apps
 
@@ -219,7 +223,8 @@ Each also has the same four pages: list, detail, new and edit. What differs is b
 | Who, doing what | What is read | What is written |
 |---|---|---|
 | Passenger opens the map | `GET /api/stops`: every served stop, with its routes. `GET /api/buses`: every bus, positioned now. Then the positions every 5 s. | nothing; the 5-second poll also starts the arrival check |
-| Taps a stop | `GET /api/stops/{id}`: each route through it, each direction's next bus and stops | nothing |
+| Has a position, or picks a start (Partida) | `GET /api/destinos?lat=…&lng=…` (or `from=`): every place reachable, earliest arrival first, each with the stop where the first bus is taken | nothing |
+| Taps a stop | `GET /api/stops/{id}`: each route through it, each direction's next bus and stops, and every place reachable from it (with changes of bus), earliest arrival first | nothing |
 | Chooses a destination | `GET /api/journeys?lat=…&lng=…&to=…` (or `from=`): up to 3 journeys, each bus leg timed for the moment you reach its stop | nothing |
 | Follows a bus | `GET /api/bus/{id}?paragem=…&destino=…`, every 10 s | a `MISSION` when they save the alert |
 | Dials the USSD code | Africa's Talking posts each step to `/api/ussd` (with `?key=`). Every step resends all the answers so far in `text`, so the server keeps no session. | Option 1: a `MISSION`, and an `Utente` for a new phone. Option 6: `Motorista.emViagem`. SMS go out through Africa's Talking. |

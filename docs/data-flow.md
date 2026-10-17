@@ -8,7 +8,7 @@ This page follows the data through each flow of the platform, from the first req
 
 ## Journey planning
 
-The passenger's map (`/`, `/search`) loads every stop once, finds the stops near the passenger in the browser, and asks the server for a stop's destinations and for journeys. `lib/journeys.ts` does the planning, for the web and for USSD option 1.
+The passenger's map (`/`, `/search`) loads every stop once and finds the stops near the passenger in the browser. It asks the server for every destination from the start (the passenger's position or a picked place), for a stop's destinations, and for journeys. `lib/journeys.ts` does the planning, for the web and for USSD option 1.
 
 ```mermaid
 sequenceDiagram
@@ -20,9 +20,12 @@ sequenceDiagram
   C->>DB: Via that have Transporte + their ViaParagem + Paragem (network cached 5 min per instance)
   C-->>B: every stop served by a bus, with its routes
   B->>B: position (browser) → nearest stops, name search, places
+  B->>C: GET /api/destinos?lat,lng or from={stops}
+  C->>DB: every Transporte (position fields)
+  C-->>B: every place reachable, earliest arrival first,<br/>each with the stop where the first bus is taken
   B->>C: GET /api/stops/{id}
-  C->>DB: Transporte of the stop's routes (position fields)
-  C-->>B: routes × directions: next bus, stops reached
+  C->>DB: every Transporte (position fields)
+  C-->>B: routes × directions: next bus, stops reached;<br/>every place reachable, earliest arrival first
   B->>C: GET /api/journeys?from={stop} or lat,lng & to={stops}
   Note over C: candidates ranked on fixed speeds + 10 min per bus,<br/>then timed with estimateBusTrip() at each stop's arrival time
   C->>DB: Transporte of the candidate routes (+ active Tarifa, cached 60 s)
@@ -37,11 +40,19 @@ sequenceDiagram
 1. **Start and end.** The chosen stops and every stop within 300 m of them, or, from the passenger's position, the 8 nearest stops within 800 m. Walking counts at 1 m/s straight-line (4.5 km/h with a quarter added for streets).
 2. **Direct**: every route through a start and an end stop (buses shuttle along their route, so either direction works).
 3. **One change**: every pair of routes, one through a start stop and one through an end stop, that meet at a common stop or two stops within 400 m. Each bus leg rides at least 300 m. The best change point is kept per pair of routes.
-4. **More changes**, only when 2 and 3 find nothing: a round-by-round search, one more bus per round (as in RAPTOR, up to 5 buses), keeping the cheapest way to every stop per round. Its result is the journey with the fewest buses, and one more bus when that saves over 15 minutes.
-5. **Ranking**: candidates are ranked on ride time at the fare rule's speed, walking, and 10 minutes per bus. When a direct bus exists, journeys with changes are only kept if they are at least 10 minutes better on these estimates. The best 8 are **timed**: for each leg, every bus of the route is asked when it reaches the stop *at the moment the passenger gets there* (`estimateBusTrip` with that time), and the first one is taken.
-6. **Result**: earliest arrival first. Options that no other beats on both arrival and number of changes come first, then other routes, up to 3.
+4. **Earliest arrival with the real times** (`earliestArrivals`): a time-dependent round-by-round search (RAPTOR) from the start stops, up to 4 buses.
+   - Each round scans every route through a stop improved in the previous round, in both directions.
+   - At each stop where the passenger can be, it asks every bus of the route when it comes after that moment (`estimateBusTrip`), and stays on the bus already taken unless another arrives sooner.
+   - After each round, a walk of up to 400 m to a nearby stop.
 
-About 8 ms per journey on the production network (1,004 stops, 91 routes). 86 of the 91 routes are connected through shared or nearby stops; two small groups (4 routes, and 1 route) are not, and journeys between them and the rest do not exist.
+   - From the passenger's position, a start stop farther away loses to a closer one when the same route's bus comes there at most 2 minutes later (`BOARD_SLACK_MS`). The two estimates are usually the same bus, and walking less is better.
+
+   Its fastest journey to the destination is added to the candidates. The same search, run to every stop, gives the list of all destinations (`reachFrom`, about 60 to 80 ms). The list comes from a stop (`/api/stops/{id}`), or from a position or picked place (`/api/destinos`), and each entry names the stop where the first bus is taken.
+5. **More changes**, only when 2 and 3 find nothing: a round-by-round search, one more bus per round (as in RAPTOR, up to 5 buses), keeping the cheapest way to every stop per round. Its result is the journey with the fewest buses, and one more bus when that saves over 15 minutes.
+6. **Ranking**: candidates are ranked on ride time at the fare rule's speed, walking, and 10 minutes per bus. When a direct bus exists, journeys with changes are only kept if they are at least 10 minutes better on these estimates. The best 8 are **timed**: for each leg, every bus of the route is asked when it reaches the stop *at the moment the passenger gets there* (`estimateBusTrip` with that time), and the first one is taken.
+7. **Result**: earliest arrival first. An option with the same number of buses, less walking and an arrival at most 2 minutes later moves to the top, which matches the list of destinations. Options that no other beats on both arrival and number of changes come first, then other routes, up to 3.
+
+About 60 ms per journey on the production network (1,004 stops, 91 routes). 86 of the 91 routes are connected through shared or nearby stops; two small groups (4 routes, and 1 route) are not, and journeys between them and the rest do not exist.
 
 ## Arrival time
 

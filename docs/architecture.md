@@ -60,7 +60,7 @@ flowchart LR
 | Production URL | https://transport-mz.vercel.app | https://transport-mz-admin.vercel.app | https://transport-mz-driver.vercel.app |
 | Vercel project | `transport-mz` | `transport-mz-admin` | `transport-mz-driver` |
 | Pages | `/` and `/search` (live map and journey planner), `/track/[id]`, `/auth`, `/user-info`, `/my-transports` (redirect) | 46 pages: list, detail, new and edit for each entity, plus dashboard, reports, profile | `/` (sign-in), `/dashboard` |
-| API routes | 20 (`app/api/**/route.ts`) | 33 | none |
+| API routes | 21 (`app/api/**/route.ts`) | 33 | none |
 | Database access | Prisma, read/write | Prisma, read/write | none, via the passenger app's API |
 | Who calls it | Browsers, Africa's Talking, the driver portal, GPS devices | Administrators' browsers | Drivers' browsers |
 | Authentication | Passenger and driver: signed Bearer tokens | Admin: signed `HttpOnly` cookie, checked by `proxy.ts` on every `/api/*` | Holds the driver token from the passenger app |
@@ -122,7 +122,7 @@ These choices explain most of the code's shape.
 .
 ├── transport-client/          Passenger app (deployed as transport-mz)
 │   ├── app/                   Pages: / search track/[id] auth user-info my-transports
-│   │   ├── api/               ussd, buses, bus/[id], stops, stops/[id], journeys, gps,
+│   │   ├── api/               ussd, buses, bus/[id], stops, stops/[id], destinos, journeys, gps,
 │   │   │                      auth/*, user/*, driver/*, startup, simulation, ussd-telerivet
 │   │   └── components/        TripPlanner (map and planner), TransportMap (tracking map),
 │   │                          UserAvatar, LoadingScreen, Bus3D*
