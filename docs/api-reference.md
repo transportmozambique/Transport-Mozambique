@@ -51,7 +51,7 @@ Every stop served by a bus, with the routes through it, for the map and the name
 
 #### `GET /api/stops/{id}`
 
-A stop's routes, and for each direction of each route the next bus and the stops it goes to, in order. `para` names the direction by the stop at that end of the route. `minutos` follows the same rules as everywhere else ([Data flow → Arrival time](data-flow.md#arrival-time)); `proximo` is `null` when no bus of the route can come.
+A stop's routes, and for each direction of each route the next bus and the stops it goes to, in order. `destinos` lists every place reachable from the stop with up to 4 buses, earliest arrival first ([Data flow → Journey planning](data-flow.md#journey-planning)). `para` names the direction by the stop at that end of the route. `minutos` follows the same rules as everywhere else ([Data flow → Arrival time](data-flow.md#arrival-time)); `proximo` is `null` when no bus of the route can come.
 
 ```json
 {
@@ -63,11 +63,53 @@ A stop's routes, and for each direction of each route the next bus and the stops
      "proximo": {"minutos": 10, "matricula": "ACK-145M", "transporteId": "cmozbudx900049ounfhdlny9a"},
      "paragens": [{"id": "cmoveoy0q00d114lnzprias6n", "nome": "Michafutene", "lat": -25.7843419, "lng": 32.5924715}, "… (27 items)"]
    }, "… (other direction)"]
- }, "… (22 routes)"]
+ }, "… (22 routes)"],
+ "destinos": [
+   {"ids": ["cmoveoy0q00d114lnzprias6n"], "nome": "Michafutene", "chegada": "2026-10-18T03:03:23.221Z", "minutos": 334,
+    "transbordos": 0, "vias": [{"codigo": "V101", "nome": "Moamba - Djimomposse", "cor": "#FF6B6B"}],
+    "embarque": {"id": "cmoveoy8l00d214lnk8uwxf8t", "nome": "Portão", "lat": -25.784395699999997, "lng": 32.58930225}, "metrosAtePrimeira": 0},
+   {"ids": ["cmoveqpvj00kv14lnwb9sor5u", "… (6 stops of one place)"], "nome": "Estrada Circular - Rua Baixo dos Fios 380 m",
+    "chegada": "2026-10-18T03:34:23.221Z", "minutos": 365, "transbordos": 2,
+    "vias": [{"codigo": "V052", "nome": "Rua 15 - Barraca Azul", "cor": "#F1FAEE"}, {"codigo": "V076", "…": "…"}, {"codigo": "V089", "…": "…"}],
+    "embarque": {"id": "cmoveoy0q00d114lnzprias6n", "nome": "Michafutene", "…": "…"}, "metrosAtePrimeira": 280},
+   "… (408 places)"
+ ]
 }
 ```
 
+`ids` are the place's stops (pass them as `to` to `/api/journeys`), `nome` tells same-name places apart, and `vias` are the buses' routes in the order they are taken. `embarque` is the stop where the first bus is taken: this stop, or one within 300 m. `metrosAtePrimeira` is the walk to it.
+
 Errors: 404 `Paragem não encontrada`.
+
+#### `GET /api/destinos`
+
+Every place reachable from a start with up to 4 buses, earliest arrival first, for the panel's "Para onde ir" list. Each entry says where to take the first bus: B in A → B → C ([Data flow → Journey planning](data-flow.md#journey-planning)).
+
+| Query | Meaning |
+|---|---|
+| `lat`, `lng` | the passenger's position; the first bus is taken at whichever of the 8 nearest stops within 800 m gets there soonest, walk included |
+| `from` | instead of a position: a stop id, or several, comma-separated, for one place |
+
+The entries have the same fields as `destinos` in [`GET /api/stops/{id}`](#get-apistopsid). The panel asks again when the position has moved about 100 m.
+
+```json
+{
+ "destinos": [
+   {"ids": ["cmoveoxsu00d014ln67l0uot1"], "nome": "Igreja - Makalela", "chegada": "2026-10-19T05:54:02.831Z", "minutos": 10,
+    "transbordos": 0, "vias": [{"codigo": "V052", "nome": "Rua 15 - Barraca Azul", "cor": "#F1FAEE"}],
+    "embarque": {"id": "cmoveoy8l00d214lnk8uwxf8t", "nome": "Portão", "lat": -25.784395699999997, "lng": 32.58930225},
+    "metrosAtePrimeira": 69},
+   {"ids": ["cmovem8oo001c14ln40xsj3g0", "… (4 stops of one place)"], "nome": "Maputo - Wintbank - Tricamo 1730 m",
+    "chegada": "2026-10-19T08:01:02.831Z", "minutos": 137, "transbordos": 1,
+    "vias": [{"codigo": "V080", "…": "…"}, {"codigo": "V051", "…": "…"}],
+    "embarque": {"id": "cmovenf64006i14lnul7e0xjz", "nome": "Michafutene (508)", "lat": -25.784588999999997, "lng": 32.5860694},
+    "metrosAtePrimeira": 286},
+   "… (404 places)"
+ ]
+}
+```
+
+A position with no stop within 800 m gives `{"destinos": []}`. Errors: 400 `Indique a partida (from, ou lat e lng)`; 404 `Paragem não encontrada` (no `from` id is a stop with a bus); 500 `Erro ao listar destinos`.
 
 #### `GET /api/journeys`
 
@@ -76,7 +118,7 @@ Journeys to a destination, with changes of bus when no single bus goes there ([D
 | Query | Meaning |
 |---|---|
 | `to` | destination stop id; several, comma-separated, for one place (same-name stops) |
-| `from` | origin stop id, or several for one place |
+| `from` | origin stop id, or several for one place (a start picked in the Partida field) |
 | `lat`, `lng` | instead of `from`: the passenger's position; the journey starts with a walk to one of the 8 nearest stops within 800 m |
 
 Up to 3 options, earliest arrival first. Times are ISO dates (UTC). `partida` is when the first bus is boarded, `chegada` the arrival at the destination stop, and `duracaoMin` counts from now, walks and waits included; `esperaMin` is the wait at that stop once the passenger is there. Each bus leg has its own `tarifa`, and `percurso` is its road path as `[lng, lat]` points.

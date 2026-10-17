@@ -2,11 +2,68 @@
 
 **Live:** https://transport-mz.vercel.app · **Code:** `transport-client/app` · **Runs locally on:** http://localhost:3000
 
-Passengers see every bus on a live map with their own position and the stops around them. Tapping a stop shows where its buses go; choosing or typing a destination shows how to get there, with changes of bus when no single bus goes there. They can follow one bus until it arrives, and save stops to get an SMS when a bus is close. Browsing and planning need no account. Saving alerts and the account page need one. Every screen below is followed by the requests it makes; the full request and response formats are in the [API reference](api-reference.md#passenger-app-transport-client).
+It works like a ride-hailing app (Uber, Bolt, Yango), but for public transport. The start is your position, or a place you pick. The app lists every place you can get to from there, by the time you would arrive, and says which stop to walk to for the first bus. Pick a destination C and the journey is laid out as **A → B → C**:
 
-**On this page:** [The map](#the-map--and-search) · [Stops near you](#stops-near-you) · [A stop's destinations](#a-stops-destinations) · [Journeys](#journeys) · [Tracking a bus](#tracking-a-bus-trackid) · [Account and sign-in](#account-and-sign-in) · [Account page and alerts](#account-page-and-alerts-user-info) · [Browser storage](#what-the-browser-stores)
+- **A** is where you are;
+- **B** is the stop where you take the first bus;
+- **C** is where you get off, with the changes of bus in between when one bus is not enough.
+
+You can follow your bus until it arrives, and save a stop to get an SMS when a bus is close. Browsing and planning need no account; saving alerts and the account page need one. Every screen below is followed by the requests it makes. The full request and response formats are in the [API reference](api-reference.md#passenger-app-transport-client).
+
+**On this page:** [How to use it](#how-to-use-it-step-by-step) · [The map](#the-map--and-search) · [Partida and destinations](#partida-and-destinations) · [Stops near you](#stops-near-you) · [A stop's destinations](#a-stops-destinations) · [Journeys](#journeys) · [Tracking a bus](#tracking-a-bus-trackid) · [Account and sign-in](#account-and-sign-in) · [Account page and alerts](#account-page-and-alerts-user-info) · [Browser storage](#what-the-browser-stores)
 
 ---
+
+## How to use it, step by step
+
+These screenshots were taken by driving the app in a browser (Playwright) against a copy of the database at 07:40 on a weekday. The position was set a few steps from the Portão stop.
+
+**1. Open the app.** It asks for your location. The panel then shows:
+
+- **Partida**: "A sua localização";
+- **Para onde ir**: every place you can reach, earliest arrival first.
+
+Each row says where to take the first bus ("Apanhe em Portão · 70 m a pé"), "Directo" or how many buses it takes, the routes, the arrival time and the minutes from now.
+
+![Step 1: the start is your position, and every destination with the stop where the first bus is taken](images/passenger-home.png)
+
+**2. Pick a destination**, from the list or by typing in "Para onde quer ir?". Results show how far each place is from the start.
+
+![Step 2: typing a destination](images/passenger-search.png)
+
+**3. See the journey: A → B → C.** It shows the walk to the stop (A → B), the bus with its plate, when it comes, and where and when to get off (B → C). The map draws the walk dashed and the bus in its route's colour. The other options are below, earliest arrival first.
+
+![Step 3: walk 70 m to Portão, take bus ACF-004M at 07:51, get off at Makalela at 07:55](images/passenger-journey-direct.png)
+
+**4. Follow the bus.** "Acompanhar este autocarro →" opens the tracking page: the wait, the distance to the bus, the arrival, the fare and the route map. These refresh every 10 seconds.
+
+![Step 4: tracking the bus](images/passenger-track.png)
+
+**5. Destinations that take more than one bus** are in the same list ("2 autocarros", with each route's code). "Ver mais destinos" shows more.
+
+![Step 5: a destination two buses away, further down the list](images/passenger-destinations-several.png)
+
+Opening one shows each bus in turn. You walk to the first stop, ride to the change, wait for the next bus there, and ride on. All times are worked out for the moment you reach each stop.
+
+![A journey with one change: two buses, each with its plate and times](images/passenger-journey-transfer.png)
+
+**6. Start somewhere else.** Tap **Partida** and type a stop or place. The list of destinations is then worked out from there, and each row says where to take the first bus. That is the start itself, or a stop a short walk away.
+
+![Step 6: choosing another start](images/passenger-start.png)
+
+![Every destination from Igreja; for Agostinho Neto the first bus is taken at Makalela, 240 m away](images/passenger-start-chosen.png)
+
+![The journey from Igreja: walk 240 m to Makalela, then the bus to Agostinho Neto](images/passenger-journey-from-start.png)
+
+"A sua localização" (under the Partida field) brings the start back to your position.
+
+**7. The stops near you.** The "Paragens perto" tab lists them. Tapping one shows everything that stop reaches, and its routes ([A stop's destinations](#a-stops-destinations)).
+
+![Step 7: the stops near you](images/passenger-nearby.png)
+
+On a phone, the panel is a bottom sheet over the map:
+
+<img src="images/passenger-home-mobile.png" alt="The app on a phone: Partida, destination and every destination with where to take the first bus" width="320"> <img src="images/passenger-journey-mobile.png" alt="A journey on a phone: walk to Portão, then the bus" width="320">
 
 ## The map (`/` and `/search`)
 
@@ -20,33 +77,57 @@ Passengers see every bus on a live map with their own position and the stops aro
   - the stops near you are green dots;
   - stops where buses pass are white dots;
   - stops no bus serves now (none of their routes has a vehicle) are grey. Their page says so, and they are not offered in the search or the nearby list.
-- **The panel** is a side panel on a computer and a bottom sheet on a phone (the bar at its top folds it away).
+- **The panel** is a card on the left on a computer, with the title (bus count, "Entrar" or the avatar) at its top. On a phone it is a bottom sheet, and the bar at its top folds it away.
 
 | When | Request |
 |---|---|
-| Page opens | `GET /api/stops` (every stop served by a bus, with its routes; cached 5 min) |
+| Page opens | `GET /api/stops` (every stop served by a bus, with its routes, and the stops no bus serves now; cached 5 min) |
 | Page opens | `GET /api/buses` (all buses with positions) |
 | Every 5 s | `GET /api/buses?fields=position` (light: id, latitude, longitude, source, heading; also triggers the arrival SMS check) |
 
-On a phone:
+## Partida and destinations
 
-<img src="images/passenger-home-mobile.png" alt="The map on a phone, with the stops near the passenger in a bottom sheet" width="320">
+The top of the panel has two fields:
+
+- **Partida** is where the journey starts. It is "A sua localização" when the position is known. Tapping it lets you type a stop or place instead; the list says how far each result is. "A sua localização" puts your position back, and "Cancelar" keeps the current start. The start you pick is marked on the map, and the map moves to it.
+- **"Para onde quer ir?"** searches every stop by name, without accents or capitals. Every typed word must start a word of the name: "av ind" finds "Av. das Indústrias". Stops with the same name within 400 m count as one place. Each result shows how far it is from the start, and the route name when two places share a name.
+
+Below them, the **"Para onde ir"** tab lists every place reachable from the start, with up to 4 buses, earliest arrival first. Each row has:
+
+- **where to take the first bus**: "Apanhe em Portão · 70 m a pé". From your position, this is the stop within 800 m that gets you there soonest, counting the walk. When the same bus passes a closer stop at most 2 minutes later, the closer stop is chosen. From a picked place, it is that place or a stop within 300 m.
+- "Directo", or how many buses it takes ("2 autocarros");
+- the codes of the routes, in their colours;
+- the arrival ("Chega 07:54", "Chega amanhã 05:37") and the time from now.
+
+The first 25 are shown, and "Ver mais destinos" adds 50 at a time. Places within a short walk of the start are left out.
+
+Choosing a destination, from the list or the search, plans the journey from the start. Without a position and without a picked start, the list of destinations is not shown. The search then plans from the stop nearest the centre of the map.
+
+| When | Request |
+|---|---|
+| Position known, or a start picked | `GET /api/destinos?lat=…&lng=…` (asked again after about 100 m) or `GET /api/destinos?from={stopIds}` |
 
 ## Stops near you
 
-**"Onde vai apanhar o autocarro?"**: the stops where you can catch a bus. The panel lists up to 8 stops within 1.5 km, nearest first, with the distance, the walking time (4.5 km/h, a quarter added for streets) and the number of routes. With no stop that close, it lists the 3 nearest under "Paragens mais próximas", with a line saying none is within 1.5 km and without walking times. Without a position (refused, unavailable, or far from Maputo), the list is about the centre of the map and follows it as you move the map, with a line saying why.
+![The stops near you](images/passenger-nearby.png)
 
-**"Para onde quer ir?"** on top searches every stop by name, without accents or capitals, and every typed word must start a word of the name ("av ind" finds "Av. das Indústrias"). Stops with the same name within 400 m count as one place. Choosing a result plans the journey **from your position**: a walk to one of the stops within 800 m, then the buses. Without a position, from the nearest stop to the centre of the map.
+**"Onde vai apanhar o autocarro?"**: the stops where you can catch a bus. The panel lists up to 8 stops within 1.5 km, nearest first, with the distance, the walking time (4.5 km/h, a quarter added for streets) and the number of routes. With no stop that close, it lists the 3 nearest under "Paragens mais próximas", with a line saying none is within 1.5 km and without walking times. With a picked start, the list is about that start ("Paragens perto da partida"). Without a position (refused, unavailable, or far from Maputo), the list is about the centre of the map and follows it as you move the map, with a line saying why. This list is the second tab, "Paragens perto", when a start is known.
 
 ## A stop's destinations
 
-![A stop: its routes, each direction's next bus and the stops it goes to](images/passenger-stop.png)
+![A stop: every destination it reaches, earliest arrival first](images/passenger-stop.png)
 
 Tapping a stop (in the list or on the map) shows:
 
 - its name, number of routes and, with a position, how far it is from you; "Apanhe o autocarro aqui" reminds you this is where you board;
-- the same destination search, where each result says **"Directo"** (a bus from this stop goes there) or **"Com transbordo"** (it needs a change);
-- every route through the stop, under a header in the route's colour. For each direction ("Sentido Antena"):
+- the Partida (this stop) and the destination search, where each result says **"Directo"** (a bus from this stop goes there) or **"Com transbordo"** (it needs a change). Changing the Partida here makes the new start the panel's start;
+- **"Todos os destinos"** (the first tab): every place you can reach from this stop, with up to 4 buses, in the order you would get there.
+  - Each row has the arrival ("Chega 10:17", "Chega amanhã 05:37") and the time from now.
+  - It shows "Directo", or how many buses it takes ("3 autocarros"), and the codes of those routes in their colours.
+  - The first 25 are shown; "Ver mais destinos" adds 50 at a time.
+
+  Tapping a row opens that journey: the arrival is the same as on the row, or earlier.
+- **"Por rota"** (the second tab): every route through the stop, under a header in the route's colour. For each direction ("Sentido Antena"):
   - the next bus's arrival ("Próximo autocarro 27 min", "às 17:58", "amanhã às 05:12");
   - its plate, drawn like a number plate on the right, so it is easy to match with the bus in the street;
   - the stops it goes to, in order, as a line in the route's colour; each has an "Ir" button.
@@ -63,9 +144,9 @@ Tapping one of those stops, or a search result, plans the journey from this stop
 
 ![A direct journey: three options, the chosen one drawn on the map](images/passenger-journey-direct.png)
 
-Up to three options, earliest arrival first. Each card shows the arrival ("Chega às 16:51", or "Chega amanhã às 06:32"), the total fare, "Directo" or the number of changes ("2 transbordos"), the total time from now and the walking distance, and the routes as coloured labels. The chosen option is drawn on the map: each bus in its route's colour, walks dashed, and only the buses of that journey stay on the map.
+The top of the panel shows the Partida and the destination. Up to three options follow, earliest arrival first. When another option takes the same number of buses, needs less walking, and arrives at most 2 minutes later, it comes first. It is usually the same bus, caught at a closer stop, and it is the one the list of destinations showed. Each card shows the arrival ("Chega às 16:51", or "Chega amanhã às 06:32"), the total fare, "Directo" or the number of changes ("2 transbordos"), the total time from now and the walking distance, and the routes as coloured labels. The chosen option is drawn on the map: each bus in its route's colour, walks dashed, and only the buses of that journey stay on the map.
 
-![A journey with two changes, from the passenger's position](images/passenger-journey-transfer.png)
+![A journey with one change, from the passenger's position](images/passenger-journey-transfer.png)
 
 The chosen option lists its steps:
 
@@ -77,12 +158,8 @@ Each bus charges its own fare, with the fare rule (max(10 MT, ⌈km × 10 MT⌉)
 
 | When | Request |
 |---|---|
-| From a stop | `GET /api/journeys?from={stopId}&to={stopIds}` |
+| From a stop or a picked start | `GET /api/journeys?from={stopIds}&to={stopIds}` |
 | From your position | `GET /api/journeys?lat=…&lng=…&to={stopIds}` |
-
-On a phone:
-
-<img src="images/passenger-journey-mobile.png" alt="A journey with changes on a phone" width="320">
 
 ## Tracking a bus (`/track/[id]`)
 

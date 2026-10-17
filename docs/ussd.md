@@ -117,16 +117,16 @@ destino                                 0. Voltar
 ```text
 text="1*av ind"                           text="1*av ind*7"
 CON Qual paragem?                         CON Qual paragem?
-1. Av. das Industrias                     1. Av... - Maputo - Wintbank - ..
-2. Av... - Rua Principal - Rua Do ..      2. Av. Industrias - 120
-3. Av. Industrias - Casa Branca           3. Av. In.. - Machava-Sede 960 m
-4. Av. In.. - Machava-Sede 170 m          4. Av. In.. - Machava-Sede 970 m
+1. Av. das Industrias                     1. Av. Industrias - Darling
+2. Av. Indu.. - Rua Principal..           2. Avenida das Industrias - 120
+3. Av. Industrias - Casa Branca           3. Av. Indu.. - Machava-.. 960 m
+4. Av. Indu.. - Machava-.. 170 m          4. Av. Indu.. - Machava-.. 970 m
 7. Proximo                                7. Proximo
 0. Voltar                                 8. Anterior
                                           0. Voltar
 ```
 
-  When no other place is within 1.5 km, the first route through the place is used instead ("Av... - Rua Principal - …").
+  The web shows the full names ("Av. Industrias - Machava-Sede 960 m"). On USSD a label has at most 29 characters: the name is shortened first, keeping at least 10 characters, then the landmark. A place with no other place on the network is told apart by its first route.
 - **The answer** is the best journey, earliest arrival first; the time is from now, waits included. A direct bus:
 
 ```text

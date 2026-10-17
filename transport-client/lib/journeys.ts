@@ -12,8 +12,8 @@ import {
 import { distanceMeters, groupPlaces, normalizeName, walkMinutes, type Place } from './places';
 
 /**
- * Journey planning on the bus network: the destinations a stop reaches directly, and journeys
- * between two stops with up to two changes of bus, used by the web app and USSD.
+ * Journey planning on the bus network: the destinations a stop reaches directly or with changes
+ * of bus, and journeys between two places, used by the web app and USSD.
  *
  * Buses shuttle back and forth along their route, so a bus reaches every stop of its route from
  * any other. Options are first ranked with fixed speeds and a fixed wait per bus, then the best
@@ -158,14 +158,14 @@ function shortPlaceName(nome: string): string {
     .trim();
 }
 
-/** The nearest place with another name within 1.5 km of `place`, else its first route. */
+/** The nearest place with another name (a long road's stops are far from any), else its first route. */
 function landmarkOf(net: Network, place: Place<NetStop>): { nome: string; m: number | null } {
   const name = normalizeName(place.nome);
   let best: { nome: string; m: number } | null = null;
   for (const p of net.places) {
     if (normalizeName(p.nome) === name) continue;
     const m = distanceMeters(place.point, p.point);
-    if (m <= 1500 && (!best || m < best.m)) best = { nome: p.nome, m };
+    if (!best || m < best.m) best = { nome: p.nome, m };
   }
   return best ?? { nome: net.routes.get(place.stops[0].routeIds[0])?.nome ?? '', m: null };
 }
@@ -181,12 +181,14 @@ export function placeLabel(net: Network, place: Place<NetStop>, max = Infinity):
   if (twins.length < 2) return place.nome;
   const own = landmarkOf(net, place);
   const shared = twins.some((t) => t !== place && landmarkOf(net, t).nome === own.nome);
-  const tail = `${own.nome}${shared && own.m !== null ? ` ${Math.round(own.m / 10) * 10} m` : ''}`;
-  // Short of room (USSD), the name is shortened first: the person typed it, the tail is new
+  const distance = shared && own.m !== null ? ` ${Math.round(own.m / 10) * 10} m` : '';
+  if (place.nome.length + own.nome.length + distance.length + 3 <= max) return `${place.nome} - ${own.nome}${distance}`;
+  // Short of room (USSD), the name is shortened first: the person typed it, the tail is new.
+  // The name keeps at least 10 characters; a landmark too long for the rest is cut too
+  const cut = (text: string, n: number) => (text.length > n ? `${text.slice(0, Math.max(1, n - 2)).trimEnd()}..` : text);
   let head = shortPlaceName(place.nome);
-  const room = max - tail.length - 3;
-  if (head.length > room) head = `${head.slice(0, Math.max(3, room - 2))}..`;
-  return `${head} - ${tail}`;
+  head = cut(head, Math.max(Math.min(head.length, 10), max - own.nome.length - distance.length - 3));
+  return `${head} - ${cut(own.nome, max - head.length - distance.length - 3)}${distance}`;
 }
 
 type Vehicle = PositionedVehicle & { matricula: string; viaId: string | null };
@@ -540,6 +542,145 @@ function fewestBuses(
   return found;
 }
 
+// ─── Earliest arrival everywhere ─────────────────────────────────────────────
+
+/** Most buses in one journey for the time-dependent search */
+const MAX_TIMED_BUSES = 4;
+/**
+ * A start stop closer to the passenger wins over a farther one upstream on the same route when
+ * its bus is at most this much later: the two are usually the same bus, and the estimates of
+ * when it passes each stop differ a little.
+ */
+const BOARD_SLACK_MS = 2 * 60000;
+
+interface TimedLabel {
+  /** When the passenger is at the stop (ms) */
+  t: number;
+  prev:
+    | { type: 'start'; anchor: string }
+    | { type: 'bus'; route: NetRoute; from: string }
+    | { type: 'walk'; from: string };
+}
+
+interface Arrivals {
+  /** rounds[k]: the stops whose earliest arrival improved with k buses */
+  rounds: Map<string, TimedLabel>[];
+  /** The same, without the walk at the end of the round */
+  byBus: Map<string, TimedLabel>[];
+  /** Earliest arrival at each stop, and the round it was reached in */
+  best: Map<string, { t: number; k: number }>;
+}
+
+/**
+ * Earliest arrival at every stop from `origins`, with 1, 2, … MAX_TIMED_BUSES buses, using each
+ * bus's real next pass (GPS when fresh, else the timetable) at the moment the passenger is at the
+ * stop: a time-dependent RAPTOR. Each round scans every route through a stop improved in the
+ * previous round, in both directions, staying on the bus already taken unless another one at a
+ * later stop arrives sooner.
+ */
+function earliestArrivals(net: Network, origins: Catchment, vehicles: Map<string, Vehicle[]>, rule: FareRule, now: Date): Arrivals {
+  const v = (rule.velocidadeViagemKmh * 1000) / 3600;
+  const ride = (m: number) => Math.max(1, Math.ceil(m / v / 60)) * 60000;
+  const start = new Map<string, TimedLabel>();
+  for (const [id, o] of origins) {
+    start.set(id, { t: now.getTime() + (o.m > 0 ? walkMinutes(o.m) * 60000 : 0), prev: { type: 'start', anchor: o.anchor } });
+  }
+  const best = new Map([...start].map(([id, l]) => [id, { t: l.t, k: 0 }]));
+  const rounds = [start];
+  const byBus: Map<string, TimedLabel>[] = [new Map()];
+  const cameBy = (k: number, stop: string): string | null => {
+    let label = rounds[k].get(stop);
+    if (label?.prev.type === 'walk') label = byBus[k].get(label.prev.from);
+    return label?.prev.type === 'bus' ? label.prev.route.id : null;
+  };
+
+  for (let k = 1; k <= MAX_TIMED_BUSES; k++) {
+    const marked = rounds[k - 1];
+    const routeIds = new Set([...marked.keys()].flatMap((id) => net.stops.get(id)?.routeIds ?? []));
+    const bus = new Map<string, TimedLabel>();
+
+    for (const routeId of routeIds) {
+      const r = net.routes.get(routeId);
+      const vs = vehicles.get(routeId) ?? [];
+      if (!r || !vs.length) continue;
+      for (const order of [r.stops, [...r.stops].reverse()]) {
+        let cur: { from: string; board: number; at: number } | null = null;
+        for (let i = 0; i < order.length; i++) {
+          const z = order[i];
+          const curAtZ = cur ? cur.board + ride(Math.abs(z.at - cur.at)) : Infinity;
+          if (cur && Math.abs(z.at - cur.at) >= MIN_RIDE_M && curAtZ < (best.get(z.id)?.t ?? Infinity) && curAtZ < (bus.get(z.id)?.t ?? Infinity)) {
+            bus.set(z.id, { t: curAtZ, prev: { type: 'bus', route: r, from: cur.from } });
+          }
+          // Board here when the passenger is here before the bus already taken
+          const ready = marked.get(z.id);
+          if (!ready || i === order.length - 1 || ready.t >= curAtZ || cameBy(k - 1, z.id) === r.id) continue;
+          const closerStart = k === 1 && cur !== null && ready.t < (start.get(cur.from)?.t ?? Infinity);
+          let boardAt = closerStart ? curAtZ + BOARD_SLACK_MS : curAtZ;
+          for (const vehicle of vs) {
+            const trip = estimateBusTrip({ vehicle, path: r.g.path, stops: r.routeStops, origemId: z.id, destinoId: order[i + 1].id, rule, now: new Date(ready.t) });
+            if (!trip) continue;
+            const board = ready.t + trip.tempoChegada * 60000;
+            if (board < boardAt) {
+              boardAt = board;
+              cur = { from: z.id, board, at: z.at };
+            }
+          }
+        }
+      }
+    }
+
+    // A short walk to the stops nearby, to change buses there
+    const reached = new Map<string, TimedLabel>(bus);
+    for (const [z, label] of bus) {
+      for (const { id: w, m } of net.near.get(z) ?? []) {
+        const t = label.t + walkMinutes(m) * 60000;
+        if (t < (best.get(w)?.t ?? Infinity) && t < (reached.get(w)?.t ?? Infinity)) reached.set(w, { t, prev: { type: 'walk', from: z } });
+      }
+    }
+    for (const [id, l] of reached) best.set(id, { t: l.t, k });
+    rounds.push(reached);
+    byBus.push(bus);
+    if (!reached.size) break;
+  }
+  return { rounds, byBus, best };
+}
+
+/** The buses taken to reach `stop`, read back from the labels (and the origin it started at). */
+function segmentsTo(a: Arrivals, stop: string): { origin: string; segs: Segment[] } | null {
+  const reached = a.best.get(stop);
+  if (!reached) return null;
+  const segs: Segment[] = [];
+  let at = stop;
+  for (let k = reached.k; k >= 0; k--) {
+    let label = a.rounds[k].get(at);
+    if (!label) return null;
+    if (label.prev.type === 'start') return { origin: label.prev.anchor, segs };
+    if (label.prev.type === 'walk') {
+      at = label.prev.from;
+      label = a.byBus[k].get(at);
+    }
+    if (label?.prev.type !== 'bus') return null;
+    segs.unshift({ route: label.prev.route, from: label.prev.from, to: at });
+    at = label.prev.from;
+  }
+  const first = a.rounds[0].get(at);
+  return first?.prev.type === 'start' ? { origin: first.prev.anchor, segs } : null;
+}
+
+async function allVehicles(): Promise<Map<string, Vehicle[]>> {
+  const rows = await prisma.transporte.findMany({
+    where: { viaId: { not: null } },
+    select: { ...POSITION_FIELDS, matricula: true, viaId: true },
+  });
+  const byRoute = new Map<string, Vehicle[]>();
+  for (const v of rows) {
+    const list = byRoute.get(v.viaId!);
+    if (list) list.push(v);
+    else byRoute.set(v.viaId!, [v]);
+  }
+  return byRoute;
+}
+
 function pathBetween(r: NetRoute, a: number, b: number): [number, number][] {
   const lo = Math.min(a, b);
   const hi = Math.max(a, b);
@@ -564,9 +705,27 @@ export async function planJourneys(
   const fromIds = position ? [] : (from as string[]);
   if (fromIds.some((id) => to.includes(id))) return [];
   const origins = position ? catchmentOfPoint(net, position) : catchment(net, fromIds, WALK_END_M);
-  const plans = candidatePlans(net, origins, catchment(net, to, WALK_END_M), rule);
+  const dests = catchment(net, to, WALK_END_M);
+  const plans = candidatePlans(net, origins, dests, rule);
+  const vehicles = await allVehicles();
+
+  // The earliest arrival with the buses' real times: it can beat every fixed-speed candidate (a bus
+  // that comes sooner), and it is what a stop's list of destinations shows
+  const arrivals = earliestArrivals(net, origins, vehicles, rule, now);
+  let soonest: { id: string; t: number } | null = null;
+  for (const [d, w] of dests) {
+    const b = arrivals.best.get(d);
+    const t = b && b.k > 0 ? b.t + (w.m > 0 ? walkMinutes(w.m) * 60000 : 0) : Infinity;
+    if (t < (soonest?.t ?? Infinity)) soonest = { id: d, t };
+  }
+  const fastest = soonest ? segmentsTo(arrivals, soonest.id) : null;
+  if (fastest?.segs.length) {
+    const key = (segs: Segment[]) => segs.map((s) => `${s.route.id}:${s.from}:${s.to}`).join('>');
+    if (!plans.some((p) => key(p.segs) === key(fastest.segs))) {
+      plans.unshift({ origin: fastest.origin, dest: dests.get(soonest!.id)!.anchor, segs: fastest.segs, cost: 0 });
+    }
+  }
   if (!plans.length) return [];
-  const vehicles = await vehiclesOn(plans.flatMap((p) => p.segs.map((s) => s.route.id)));
   const refOf = (id: string): StopRef =>
     id === ME && position ? { id: '', nome: 'A sua localização', lat: position[0], lng: position[1] } : ref(net.stops.get(id)!);
 
@@ -635,8 +794,85 @@ export async function planJourneys(
   // Earliest arrival first. Options no other option beats on both arrival and changes come
   // first, then the rest (other routes) in order of arrival
   timed.sort((a, b) => a.chegada.localeCompare(b.chegada) || a.transbordos - b.transbordos);
+  // A bus a minute or two later from a closer stop beats a longer walk to catch it upstream: the
+  // same rule as the list of destinations (BOARD_SLACK_MS), so the journey picked matches the list
+  if (timed.length) {
+    const first = timed[0];
+    const closer = timed
+      .filter((j) => j.transbordos === first.transbordos && j.metrosAPe < first.metrosAPe && Date.parse(j.chegada) - Date.parse(first.chegada) <= BOARD_SLACK_MS)
+      .sort((a, b) => a.metrosAPe - b.metrosAPe)[0];
+    if (closer) timed.unshift(...timed.splice(timed.indexOf(closer), 1));
+  }
   const beaten = (j: Journey, i: number) =>
     timed.some((k, n) => n < i && k.chegada <= j.chegada && k.transbordos <= j.transbordos);
   const best = timed.filter((j, i) => !beaten(j, i));
   return [...best, ...timed.filter((j) => !best.includes(j))].slice(0, limit);
+}
+
+// ─── Every destination of a stop ─────────────────────────────────────────────
+
+export interface Destino {
+  /** The place's stops, to plan the journey to it */
+  ids: string[];
+  nome: string;
+  chegada: string;
+  minutos: number;
+  transbordos: number;
+  /** The buses' routes, in the order they are taken */
+  vias: { codigo: string; nome: string; cor: string }[];
+  /** Where the first bus is taken (B in A → B → C), and the walk to it from the start */
+  embarque: StopRef;
+  metrosAtePrimeira: number;
+}
+
+const labelCache = new WeakMap<Network, Map<Place<NetStop>, string>>();
+
+function labelOf(net: Network, place: Place<NetStop>): string {
+  let labels = labelCache.get(net);
+  if (!labels) labelCache.set(net, (labels = new Map()));
+  let label = labels.get(place);
+  if (label === undefined) labels.set(place, (label = placeLabel(net, place)));
+  return label;
+}
+
+/**
+ * Every place reachable from `from` with up to MAX_TIMED_BUSES buses, earliest arrival first, with
+ * the buses' real times. `from` is a stop (or the stops of a place), or a position: the first
+ * stop of each journey is then the one that gets there soonest, within a short walk. Places
+ * within a short walk of the start are left out.
+ */
+export async function reachFrom(from: string[] | LatLng, now = new Date()): Promise<Destino[] | null> {
+  const [net, rule, vehicles] = await Promise.all([loadNetwork(), getFareRule(), allVehicles()]);
+  const position = typeof from[0] === 'number' ? (from as LatLng) : null;
+  const ids = position ? [] : (from as string[]);
+  if (!position && !ids.some((id) => net.stops.has(id))) return null;
+  const origins = position ? catchmentOfPoint(net, position) : catchment(net, ids, WALK_END_M);
+  if (!origins.size) return [];
+  const arrivals = earliestArrivals(net, origins, vehicles, rule, now);
+
+  const out: Destino[] = [];
+  for (const place of net.places) {
+    if (place.stops.some((s) => origins.has(s.id))) continue;
+    // As planJourneys does: the place's stops, or a stop a short walk away from them
+    let soonest: { id: string; t: number } | null = null;
+    for (const [id, w] of catchment(net, place.stops.map((s) => s.id), WALK_END_M)) {
+      const b = arrivals.best.get(id);
+      const t = b && b.k > 0 ? b.t + (w.m > 0 ? walkMinutes(w.m) * 60000 : 0) : Infinity;
+      if (t < (soonest?.t ?? Infinity)) soonest = { id, t };
+    }
+    const path = soonest && segmentsTo(arrivals, soonest.id);
+    if (!soonest || !path?.segs.length) continue;
+    const board = net.stops.get(path.segs[0].from)!;
+    out.push({
+      ids: place.stops.map((s) => s.id),
+      nome: labelOf(net, place),
+      chegada: new Date(soonest.t).toISOString(),
+      minutos: Math.round((soonest.t - now.getTime()) / 60000),
+      transbordos: path.segs.length - 1,
+      vias: path.segs.map((s) => ({ codigo: s.route.codigo, nome: s.route.nome, cor: s.route.cor })),
+      embarque: ref(board),
+      metrosAtePrimeira: Math.round(origins.get(board.id)?.m ?? 0),
+    });
+  }
+  return out.sort((x, y) => x.chegada.localeCompare(y.chegada) || x.transbordos - y.transbordos);
 }

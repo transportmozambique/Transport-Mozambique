@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { useRouter } from "next/navigation";
 import maplibregl, { type GeoJSONSource } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import type { Journey, StopDestinations, StopRef, WalkLeg } from "@/lib/journeys";
+import type { Destino, Journey, StopDestinations, StopRef, WalkLeg } from "@/lib/journeys";
 import { formatEta, maputoClock } from "@/lib/eta";
 import { distanceMeters, formatDistance, groupPlaces, searchPlaces, walkMinutes, type Place, type Point } from "@/lib/places";
 import UserAvatar from "./UserAvatar";
@@ -161,7 +161,7 @@ const isDesktop = () => typeof window !== "undefined" && window.matchMedia("(min
  */
 function mapPadding(sheetOpen: boolean) {
   return isDesktop()
-    ? { top: 90, bottom: 0, left: 420, right: 0 }
+    ? { top: 16, bottom: 0, left: 420, right: 0 }
     : { top: 80, bottom: sheetOpen ? Math.round(window.innerHeight * 0.5) : 64, left: 0, right: 0 };
 }
 
@@ -211,6 +211,10 @@ export default function TripPlanner() {
   const [locState, setLocState] = useState<LocationState>("asking");
   const [mapCentre, setMapCentre] = useState<Point>(MAPUTO);
   const [view, setView] = useState<View>({ kind: "nearby" });
+  // A: where the journey starts when it is not the passenger's position (a place they picked)
+  const [start, setStart] = useState<(PlacePick & { point: Point }) | null>(null);
+  // Every destination from the start, with the stop where the first bus is taken (B)
+  const [destinos, setDestinos] = useState<{ key: string; list: Destino[] | null }>({ key: "", list: null });
   const [expanded, setExpanded] = useState(true);
   // Signed in when the passenger app stored a session (read after hydration, false on the server)
   const signedIn = useSyncExternalStore(
@@ -270,14 +274,14 @@ export default function TripPlanner() {
     };
   }, [watchPosition]);
 
-  const locate = () => {
+  const locate = useCallback(() => {
     if (!("geolocation" in navigator)) {
       setLocState("unavailable");
       return;
     }
     if (locState !== "ok") setLocState("asking");
     watchPosition();
-  };
+  }, [locState, watchPosition]);
 
   const meInArea = me !== null && distanceMeters(me, MAPUTO) <= SERVICE_AREA_M;
 
@@ -500,7 +504,41 @@ export default function TripPlanner() {
   }, [signedIn]);
 
   // Stops near the passenger (or near the centre of the map when the position is unknown)
-  const anchor: Point = me && meInArea ? me : mapCentre;
+  const anchor: Point = start ? start.point : me && meInArea ? me : mapCentre;
+  const fromMe = !start && Boolean(me && meInArea);
+
+  // Destinations from the start: the picked place, or the passenger's position (asked again
+  // when they have moved about 100 m)
+  const destinosKey = start ? `from=${start.ids.join(",")}` : fromMe && me ? `lat=${me[0].toFixed(3)}&lng=${me[1].toFixed(3)}` : "";
+  useEffect(() => {
+    if (!destinosKey) return;
+    let cancelled = false;
+    fetch(`/api/destinos?${destinosKey}`)
+      .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
+      .then((d) => !cancelled && setDestinos({ key: destinosKey, list: d.destinos }))
+      .catch(() => !cancelled && setDestinos({ key: destinosKey, list: [] }));
+    return () => {
+      cancelled = true;
+    };
+  }, [destinosKey]);
+
+  const pickStart = useCallback(
+    (p: PlacePick | "me") => {
+      setView({ kind: "nearby" });
+      setExpanded(true);
+      if (p === "me") {
+        setStart(null);
+        if (me && map.current) map.current.flyTo({ center: [me[1], me[0]], zoom: 15 });
+        else locate();
+        return;
+      }
+      const first = stopById.get(p.ids[0]);
+      if (!first) return;
+      setStart({ ...p, point: first.point });
+      map.current?.flyTo({ center: [first.lng, first.lat], zoom: 15 });
+    },
+    [me, stopById, locate],
+  );
   const nearby = useMemo(() => {
     const all = stops.map((s) => ({ stop: s, m: distanceMeters(anchor, s.point) })).sort((a, b) => a.m - b.m);
     const close = all.filter((x) => x.m <= NEAR_RADIUS_M).slice(0, NEAR_MAX);
@@ -533,7 +571,7 @@ export default function TripPlanner() {
     selectStop.current = openStop;
   }, [openStop]);
 
-  const selectedStopId = view.kind === "stop" ? view.stopId : null;
+  const selectedStopId = view.kind === "stop" ? view.stopId : view.kind === "nearby" && start ? start.ids[0] : null;
   useEffect(() => {
     if (!mapReady) return;
     const s = selectedStopId ? stopById.get(selectedStopId) : null;
@@ -584,6 +622,29 @@ export default function TripPlanner() {
     if (view.kind !== "journeys") showJourney(null);
   }, [view.kind, showJourney]);
 
+  const titleBar = (
+    <>
+      <div className="min-w-0">
+        <h1 className="text-base font-bold text-slate-900 truncate">Transportes Moçambique</h1>
+        <p className="text-xs text-slate-600 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+          <span className="font-semibold text-emerald-700">{buses.length} autocarros</span>
+          <span>· tempo real</span>
+        </p>
+      </div>
+      {signedIn ? (
+        <UserAvatar />
+      ) : (
+        <button
+          onClick={() => router.push("/auth")}
+          className="shrink-0 px-4 py-2 bg-slate-900 text-white rounded-full text-sm font-semibold hover:bg-slate-800"
+        >
+          Entrar
+        </button>
+      )}
+    </>
+  );
+
   // ── Layout ──────────────────────────────────────────────────────────────────
   return (
     <div className="relative h-[100dvh] w-screen overflow-hidden bg-slate-100">
@@ -603,26 +664,9 @@ export default function TripPlanner() {
         <div className="h-full w-full" ref={mapRef} />
       </div>
 
-      {/* Title and account */}
-      <div className="absolute top-3 left-3 right-3 md:right-auto md:w-[400px] z-40 flex items-center justify-between gap-3 bg-white/95 backdrop-blur rounded-xl px-4 py-2.5 shadow-lg">
-        <div className="min-w-0">
-          <h1 className="text-base font-bold text-slate-900 truncate">Transportes Moçambique</h1>
-          <p className="text-xs text-slate-600 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="font-semibold text-emerald-700">{buses.length} autocarros</span>
-            <span>· tempo real</span>
-          </p>
-        </div>
-        {signedIn ? (
-          <UserAvatar />
-        ) : (
-          <button
-            onClick={() => router.push("/auth")}
-            className="shrink-0 px-4 py-2 bg-slate-900 text-white rounded-full text-sm font-semibold hover:bg-slate-800"
-          >
-            Entrar
-          </button>
-        )}
+      {/* Title and account: a bar at the top on phones, the top of the panel on larger screens */}
+      <div className="md:hidden absolute top-3 left-3 right-3 z-40 flex items-center justify-between gap-3 bg-white/95 backdrop-blur rounded-xl px-4 py-2.5 shadow-lg">
+        {titleBar}
       </div>
 
       {/* My location */}
@@ -645,7 +689,7 @@ export default function TripPlanner() {
 
       {/* Panel: bottom sheet on phones, side panel on larger screens */}
       <section
-        className={`absolute z-30 bg-white shadow-2xl flex flex-col left-0 right-0 bottom-0 rounded-t-2xl md:rounded-2xl md:left-3 md:right-auto md:top-[84px] md:bottom-3 md:w-[400px] ${
+        className={`absolute z-30 bg-white shadow-2xl flex flex-col left-0 right-0 bottom-0 rounded-t-2xl md:rounded-2xl md:left-3 md:right-auto md:top-3 md:bottom-3 md:w-[400px] ${
           expanded ? "max-h-[50vh] md:max-h-none" : "max-h-[64px] md:max-h-none"
         }`}
         aria-label="Planear viagem"
@@ -657,6 +701,7 @@ export default function TripPlanner() {
         >
           <span className="w-10 h-1.5 rounded-full bg-slate-300" />
         </button>
+        <div className="hidden md:flex items-center justify-between gap-3 px-4 pt-3 pb-3 border-b border-slate-100">{titleBar}</div>
         <div className="overflow-y-auto px-4 pb-4 md:pt-4 flex-1">
           {netError ? (
             <p className="text-sm text-red-700 py-4">Não foi possível carregar as paragens. Recarregue a página.</p>
@@ -666,15 +711,22 @@ export default function TripPlanner() {
               vias={vias}
               places={places}
               locState={locState}
-              hasMe={Boolean(me)}
               meInArea={meInArea}
               loading={!stops.length}
               onStop={openStop}
               onRetry={locate}
+              origin={start ? start.label : fromMe ? "A sua localização" : "Escolha o ponto de partida"}
+              originIsMe={fromMe}
+              hasStart={Boolean(start) || fromMe}
+              anchor={anchor}
+              destinos={destinos.key === destinosKey ? destinos.list : null}
+              onOrigin={pickStart}
               onDestination={(p) =>
-                me && meInArea
-                  ? planTo(p, { me }, "a sua localização")
-                  : nearby[0] && planTo(p, { stopIds: [nearby[0].stop.id] }, nearby[0].stop.nome)
+                start
+                  ? planTo(p, { stopIds: start.ids }, start.label)
+                  : me && meInArea
+                    ? planTo(p, { me }, "A sua localização")
+                    : nearby[0] && planTo(p, { stopIds: [nearby[0].stop.id] }, nearby[0].stop.nome)
               }
             />
           ) : view.kind === "stop" ? (
@@ -686,6 +738,7 @@ export default function TripPlanner() {
               places={places}
               me={me}
               onBack={() => setView({ kind: "nearby" })}
+              onOrigin={pickStart}
               onDestination={(p) => planTo(p, { stopIds: [view.stopId] }, stopById.get(view.stopId)?.nome ?? "Paragem")}
             />
           ) : (
@@ -699,53 +752,145 @@ export default function TripPlanner() {
 
 // ─── Nearby stops ─────────────────────────────────────────────────────────────
 
-function DestinationSearch({
+type PlacePick = { ids: string[]; label: string };
+
+/** The start and end dots joined by a line, as in ride-hailing apps. */
+function RouteDots() {
+  return (
+    <div className="flex flex-col items-center py-5 pl-1" aria-hidden>
+      <span className="w-3 h-3 rounded-full bg-blue-600 ring-4 ring-blue-100" />
+      <span className="w-0.5 flex-1 bg-slate-300 my-1.5" />
+      <span className="w-3 h-3 bg-slate-900" />
+    </div>
+  );
+}
+
+/**
+ * Where the journey starts ("Partida": the passenger's position, or a stop or place they pick)
+ * and where it goes ("Para onde quer ir?"), with the search results of the field being typed in.
+ */
+function RouteFields({
   places,
-  directRouteIdx,
   vias,
+  origin,
+  originIsMe,
+  canUseMe,
+  directRouteIdx,
+  near,
+  onOrigin,
   onPick,
-  autoFocus,
 }: {
   places: Place<NetStop>[];
-  directRouteIdx?: Set<number>;
   vias: NetVia[];
-  onPick: (p: { ids: string[]; label: string }) => void;
-  autoFocus?: boolean;
+  origin: string;
+  originIsMe: boolean;
+  canUseMe: boolean;
+  directRouteIdx?: Set<number>;
+  /** Where distances in the results are measured from (the passenger, or the stop shown) */
+  near: Point | null;
+  onOrigin: (p: PlacePick | "me") => void;
+  onPick: (p: PlacePick) => void;
 }) {
+  const [editingOrigin, setEditingOrigin] = useState(false);
+  const [originQuery, setOriginQuery] = useState("");
   const [query, setQuery] = useState("");
-  const results = useMemo(() => (query.trim().length >= 2 ? searchPlaces(places, query, 12) : []), [places, query]);
+  const active = editingOrigin ? originQuery : query;
+  const results = useMemo(() => (active.trim().length >= 2 ? searchPlaces(places, active, 12) : []), [places, active]);
   const routeName = (p: Place<NetStop>) => vias[p.stops[0]?.v[0]]?.nome;
+  const field =
+    "w-full rounded-xl bg-white border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500";
 
   return (
-    <div className="mb-3">
-      <label className="relative block">
-        <span className="sr-only">Para onde quer ir?</span>
-        <svg className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          autoFocus={autoFocus}
-          placeholder="Para onde quer ir?"
-          className="w-full pl-10 pr-3 py-3 rounded-xl border border-slate-300 text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500"
-        />
-      </label>
-      {query.trim().length >= 2 && (
+    <div className="mb-4">
+      <div className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-2">
+        <RouteDots />
+        <div className="flex-1 min-w-0 space-y-2">
+          {editingOrigin ? (
+            <input
+              autoFocus
+              value={originQuery}
+              onChange={(e) => setOriginQuery(e.target.value)}
+              placeholder="De onde parte? Paragem ou local"
+              aria-label="Partida"
+              className={field}
+            />
+          ) : (
+            <button
+              onClick={() => setEditingOrigin(true)}
+              className="w-full text-left rounded-xl bg-white border border-slate-200 px-3 py-1.5 hover:border-slate-400"
+              aria-label={`Partida: ${origin}. Mudar`}
+            >
+              <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Partida</span>
+              <span className={`block truncate text-sm font-semibold ${originIsMe ? "text-blue-700" : "text-slate-900"}`}>{origin}</span>
+            </button>
+          )}
+          <label className="block">
+            <span className="sr-only">Para onde quer ir?</span>
+            <input
+              value={query}
+              onFocus={() => setEditingOrigin(false)}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Para onde quer ir?"
+              className={`${field} py-3`}
+            />
+          </label>
+        </div>
+      </div>
+
+      {editingOrigin && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {canUseMe && (
+            <button
+              className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3.5 py-1.5 text-sm font-semibold text-blue-800 hover:bg-blue-100"
+              onClick={() => {
+                setEditingOrigin(false);
+                onOrigin("me");
+              }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <circle cx="12" cy="12" r="3.5" strokeWidth={2} />
+                <path strokeLinecap="round" strokeWidth={2} d="M12 2v3m0 14v3M2 12h3m14 0h3" />
+              </svg>
+              A sua localização
+            </button>
+          )}
+          <button
+            className="rounded-full bg-slate-100 px-3.5 py-1.5 text-sm font-semibold text-slate-800 hover:bg-slate-200"
+            onClick={() => {
+              setEditingOrigin(false);
+              setOriginQuery("");
+            }}
+          >
+            Cancelar
+          </button>
+        </div>
+      )}
+
+      {active.trim().length >= 2 && (
         <ul className="mt-2 divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
           {results.length === 0 && <li className="px-3 py-3 text-sm text-slate-600">Nenhuma paragem com esse nome.</li>}
           {results.map((p) => {
-            const direct = directRouteIdx ? p.stops.some((s) => s.v.some((i) => directRouteIdx.has(i))) : undefined;
+            const direct = !editingOrigin && directRouteIdx ? p.stops.some((s) => s.v.some((i) => directRouteIdx.has(i))) : undefined;
             const twins = results.filter((r) => r.nome === p.nome).length > 1;
+            const away = near ? formatDistance(distanceMeters(near, p.point)) : null;
             return (
               <li key={p.key}>
                 <button
                   className="w-full text-left px-3 py-2.5 hover:bg-slate-50 flex items-center justify-between gap-2"
-                  onClick={() => onPick({ ids: p.stops.map((s) => s.id), label: p.nome })}
+                  onClick={() => {
+                    const pick = { ids: p.stops.map((s) => s.id), label: p.nome };
+                    if (editingOrigin) {
+                      setEditingOrigin(false);
+                      setOriginQuery("");
+                      onOrigin(pick);
+                    } else onPick(pick);
+                  }}
                 >
                   <span className="min-w-0">
                     <span className="block text-sm font-medium text-slate-900 truncate">{p.nome}</span>
-                    {twins && <span className="block text-xs text-slate-500 truncate">{routeName(p)}</span>}
+                    <span className="block text-xs text-slate-500 truncate">
+                      {[away && `a ${away}`, twins && routeName(p)].filter(Boolean).join(" · ")}
+                    </span>
                   </span>
                   {direct !== undefined && (
                     <span className={`shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full ${direct ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
@@ -762,91 +907,172 @@ function DestinationSearch({
   );
 }
 
+/** The chosen start and destination, shown above the journeys. */
+function RouteSummary({ from, to }: { from: string; to: string }) {
+  return (
+    <div className="mb-3 flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-2">
+      <RouteDots />
+      <div className="flex-1 min-w-0 space-y-2 py-1">
+        <p className="px-1">
+          <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Partida</span>
+          <span className="block truncate text-sm font-semibold text-slate-900">{from}</span>
+        </p>
+        <p className="px-1">
+          <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Destino</span>
+          <span className="block truncate text-base font-bold text-slate-900">{to}</span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function NearbyView({
   nearby,
   vias,
   places,
   locState,
-  hasMe,
   meInArea,
   loading,
   onStop,
   onRetry,
+  origin,
+  originIsMe,
+  hasStart,
+  anchor,
+  destinos,
+  onOrigin,
   onDestination,
 }: {
   nearby: { stop: NetStop; m: number }[];
   vias: NetVia[];
   places: Place<NetStop>[];
   locState: LocationState;
-  hasMe: boolean;
   meInArea: boolean;
   loading: boolean;
   onStop: (id: string) => void;
   onRetry: () => void;
-  onDestination: (p: { ids: string[]; label: string }) => void;
+  origin: string;
+  originIsMe: boolean;
+  /** A start is known (the passenger's position or a picked place), so destinations can be listed */
+  hasStart: boolean;
+  anchor: Point;
+  destinos: Destino[] | null;
+  onOrigin: (p: PlacePick | "me") => void;
+  onDestination: (p: PlacePick) => void;
 }) {
-  const fromMe = hasMe && meInArea;
+  const fromMe = originIsMe;
+  const fromPlace = hasStart && !originIsMe;
+  const [tab, setTab] = useState<"destinos" | "paragens">("destinos");
+  const showing = hasStart ? tab : "paragens";
   // Nothing within NEAR_RADIUS_M: the list holds the nearest stops, however far
   const far = !loading && nearby.length > 0 && nearby[0].m > NEAR_RADIUS_M;
   return (
     <div>
-      <DestinationSearch places={places} vias={vias} onPick={onDestination} />
-      <h2 className="text-sm font-bold text-slate-900 mb-1">
-        {far ? "Paragens mais próximas" : fromMe ? "Onde vai apanhar o autocarro?" : "Paragens nesta zona do mapa"}
-      </h2>
-      {fromMe && !far && (
-        <p className="text-xs text-slate-600 mb-2">Escolha a paragem perto de si onde quer apanhar o autocarro.</p>
+      <RouteFields
+        places={places}
+        vias={vias}
+        origin={origin}
+        originIsMe={originIsMe}
+        canUseMe={!originIsMe}
+        near={anchor}
+        onOrigin={onOrigin}
+        onPick={onDestination}
+      />
+      {hasStart && (
+        <Tabs
+          value={showing}
+          options={[
+            ["destinos", "Para onde ir"],
+            ["paragens", "Paragens perto"],
+          ]}
+          onChange={setTab}
+        />
       )}
-      {far && (
-        <p className="text-xs text-slate-600 mb-2">
-          Não há paragens a menos de {formatDistance(NEAR_RADIUS_M)} {fromMe ? "de si" : "do centro do mapa"}.
-        </p>
-      )}
-      {!fromMe && (
-        <p className="text-xs text-slate-600 mb-2">
-          {locState === "asking" && "A procurar a sua localização…"}
-          {locState === "denied" && "A localização está desativada. Ative-a no navegador para ver as paragens perto de si, ou toque numa paragem no mapa."}
-          {locState === "unavailable" && (
-            <>
-              Não foi possível obter a sua localização.{" "}
-              <button
-                className="ml-1 inline-flex items-center rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-800 hover:bg-slate-50"
-                onClick={onRetry}
-              >
-                Tentar de novo
-              </button>
-            </>
-          )}
-          {locState === "ok" && !meInArea && "Está fora da área servida. Mova o mapa ou toque numa paragem."}
-        </p>
-      )}
-      {loading ? (
-        <p className="text-sm text-slate-600 py-3">A carregar paragens…</p>
+      {showing === "destinos" ? (
+        destinos ? (
+          <AllDestinations destinos={destinos} showBoarding onDestination={onDestination} />
+        ) : (
+          <p className="text-sm text-slate-600 py-3">A calcular para onde pode ir…</p>
+        )
       ) : (
-        <ul className="divide-y divide-slate-100">
-          {nearby.map(({ stop, m }) => (
-            <li key={stop.id}>
-              <button className="w-full text-left py-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-lg px-1" onClick={() => onStop(stop.id)}>
-                <span className="shrink-0 w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center" aria-hidden>
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z" />
-                  </svg>
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-semibold text-slate-900 truncate">{stop.nome}</span>
-                  <span className="block text-xs text-slate-600 truncate">
-                    {stop.v.length} {stop.v.length === 1 ? "rota" : "rotas"} · {vias[stop.v[0]]?.nome}
-                  </span>
-                </span>
-                <span className="shrink-0 text-right">
-                  <span className="block text-sm font-semibold text-slate-900">{formatDistance(m)}</span>
-                  {fromMe && m <= NEAR_RADIUS_M && <span className="block text-xs text-slate-500">{walkMinutes(m)} min a pé</span>}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <>
+          <h2 className="text-sm font-bold text-slate-900 mb-1">
+            {far ? "Paragens mais próximas" : fromMe ? "Onde vai apanhar o autocarro?" : fromPlace ? "Paragens perto da partida" : "Paragens nesta zona do mapa"}
+          </h2>
+          {fromMe && !far && (
+            <p className="text-xs text-slate-600 mb-2">Escolha a paragem perto de si onde quer apanhar o autocarro.</p>
+          )}
+          {far && (
+            <p className="text-xs text-slate-600 mb-2">
+              Não há paragens a menos de {formatDistance(NEAR_RADIUS_M)} {fromMe ? "de si" : fromPlace ? "da partida" : "do centro do mapa"}.
+            </p>
+          )}
+          {!fromMe && !fromPlace && (
+            <p className="text-xs text-slate-600 mb-2">
+              {locState === "asking" && "A procurar a sua localização…"}
+              {locState === "denied" && "A localização está desativada. Ative-a no navegador para ver as paragens perto de si, ou toque numa paragem no mapa."}
+              {locState === "unavailable" && (
+                <>
+                  Não foi possível obter a sua localização.{" "}
+                  <button
+                    className="ml-1 inline-flex items-center rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+                    onClick={onRetry}
+                  >
+                    Tentar de novo
+                  </button>
+                </>
+              )}
+              {locState === "ok" && !meInArea && "Está fora da área servida. Mova o mapa ou toque numa paragem."}
+            </p>
+          )}
+          {loading ? (
+            <p className="text-sm text-slate-600 py-3">A carregar paragens…</p>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {nearby.map(({ stop, m }) => (
+                <li key={stop.id}>
+                  <button className="w-full text-left py-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-lg px-1" onClick={() => onStop(stop.id)}>
+                    <span className="shrink-0 w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center" aria-hidden>
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z" />
+                      </svg>
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold text-slate-900 truncate">{stop.nome}</span>
+                      <span className="block text-xs text-slate-600 truncate">
+                        {stop.v.length} {stop.v.length === 1 ? "rota" : "rotas"} · {vias[stop.v[0]]?.nome}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className="block text-sm font-semibold text-slate-900">{formatDistance(m)}</span>
+                      {fromMe && m <= NEAR_RADIUS_M && <span className="block text-xs text-slate-500">{walkMinutes(m)} min a pé</span>}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
+    </div>
+  );
+}
+
+/** Two or three choices as a segmented control. */
+function Tabs<T extends string>({ value, options, onChange }: { value: T; options: [T, string][]; onChange: (v: T) => void }) {
+  return (
+    <div className="mb-3 inline-flex rounded-full bg-slate-100 p-1" role="tablist">
+      {options.map(([key, label]) => (
+        <button
+          key={key}
+          role="tab"
+          aria-selected={value === key}
+          onClick={() => onChange(key)}
+          className={`rounded-full px-3.5 py-1.5 text-sm font-semibold ${value === key ? "bg-white text-slate-900 shadow" : "text-slate-600 hover:text-slate-900"}`}
+        >
+          {label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -860,6 +1086,7 @@ function StopView({
   places,
   me,
   onBack,
+  onOrigin,
   onDestination,
 }: {
   stop: NetStop | null;
@@ -868,11 +1095,13 @@ function StopView({
   places: Place<NetStop>[];
   me: Point | null;
   onBack: () => void;
-  onDestination: (p: { ids: string[]; label: string }) => void;
+  onOrigin: (p: PlacePick | "me") => void;
+  onDestination: (p: PlacePick) => void;
 }) {
-  const [data, setData] = useState<StopDestinations | null>(null);
+  const [data, setData] = useState<(StopDestinations & { destinos: Destino[] }) | null>(null);
   const [error, setError] = useState(false);
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [tab, setTab] = useState<"todos" | "rotas">("todos");
 
   // No route with a vehicle passes this stop: nothing to ask the server
   const idle = stop !== null && stop.v.length === 0;
@@ -909,73 +1138,169 @@ function StopView({
         </p>
       ) : (
         <>
-          <p className="text-xs text-slate-600 mb-2">Apanhe o autocarro aqui: escolha para onde quer ir.</p>
-          <DestinationSearch places={places} vias={vias} directRouteIdx={direct} onPick={onDestination} />
+          <RouteFields
+            places={places}
+            vias={vias}
+            origin={stop?.nome ?? data?.paragem.nome ?? "Paragem"}
+            originIsMe={false}
+            canUseMe
+            directRouteIdx={direct}
+            near={stop?.point ?? null}
+            onOrigin={onOrigin}
+            onPick={onDestination}
+          />
 
-          <h3 className="text-sm font-bold text-slate-900 mb-2">Para onde vão os autocarros daqui</h3>
+          <h3 className="text-sm font-bold text-slate-900 mb-2">Para onde pode ir daqui</h3>
+          <Tabs
+            value={tab}
+            options={[
+              ["todos", "Todos os destinos"],
+              ["rotas", "Por rota"],
+            ]}
+            onChange={setTab}
+          />
           {error && <p className="text-sm text-red-700">Não foi possível ler os destinos desta paragem.</p>}
           {!data && !error && <p className="text-sm text-slate-600">A carregar…</p>}
-          <div className="space-y-3">
-            {data?.rotas.map((rota) => (
-              <div key={rota.via.id} className="border border-slate-200 rounded-xl overflow-hidden">
-                <p
-                  className="px-3 py-2 text-sm font-semibold flex items-center gap-2"
-                  style={{ background: rota.via.cor, color: textOn(rota.via.cor) }}
-                >
-                  <span className="text-xs font-bold opacity-80 shrink-0">{rota.via.codigo}</span>
-                  <span className="min-w-0 truncate">{rota.via.nome}</span>
-                </p>
-                {rota.sentidos.map((sentido) => {
-                  const key = `${rota.via.id}:${sentido.para}`;
-                  const all = distinctNames(sentido.paragens);
-                  const shown = open[key] ? all : all.slice(0, 4);
-                  return (
-                    <div key={key} className="px-3 py-2.5 border-t border-slate-100 first-of-type:border-t-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-900">Sentido {sentido.para}</p>
-                          <p className="text-xs text-slate-600">
-                            {sentido.proximo
-                              ? `Próximo autocarro ${formatEta(sentido.proximo.minutos).text}`
-                              : "Sem autocarro neste sentido"}
-                          </p>
+          {tab === "todos" && data && <AllDestinations key={stopId} destinos={data.destinos} onDestination={onDestination} />}
+          {tab === "rotas" && (
+            <div className="space-y-3">
+              {data?.rotas.map((rota) => (
+                <div key={rota.via.id} className="border border-slate-200 rounded-xl overflow-hidden">
+                  <p
+                    className="px-3 py-2 text-sm font-semibold flex items-center gap-2"
+                    style={{ background: rota.via.cor, color: textOn(rota.via.cor) }}
+                  >
+                    <span className="text-xs font-bold opacity-80 shrink-0">{rota.via.codigo}</span>
+                    <span className="min-w-0 truncate">{rota.via.nome}</span>
+                  </p>
+                  {rota.sentidos.map((sentido) => {
+                    const key = `${rota.via.id}:${sentido.para}`;
+                    const all = distinctNames(sentido.paragens);
+                    const shown = open[key] ? all : all.slice(0, 4);
+                    return (
+                      <div key={key} className="px-3 py-2.5 border-t border-slate-100 first-of-type:border-t-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-900">Sentido {sentido.para}</p>
+                            <p className="text-xs text-slate-600">
+                              {sentido.proximo
+                                ? `Próximo autocarro ${formatEta(sentido.proximo.minutos).text}`
+                                : "Sem autocarro neste sentido"}
+                            </p>
+                          </div>
+                          {sentido.proximo && <Plate matricula={sentido.proximo.matricula} />}
                         </div>
-                        {sentido.proximo && <Plate matricula={sentido.proximo.matricula} />}
+                        {/* The stops ahead, as a line in the route's colour: tap one to go there */}
+                        <ol className="mt-2 ml-2 border-l-2" style={{ borderColor: rota.via.cor }}>
+                          {shown.map((p) => (
+                            <li key={p.id} className="relative">
+                              <span
+                                className="absolute -left-[7px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2"
+                                style={{ borderColor: rota.via.cor }}
+                                aria-hidden
+                              />
+                              <button
+                                className="w-full ml-2 flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-slate-100"
+                                onClick={() => onDestination({ ids: [p.id], label: p.nome })}
+                              >
+                                <span className="min-w-0 truncate text-sm text-slate-800">{p.nome}</span>
+                                <span className="shrink-0 rounded-full bg-slate-900 px-2.5 py-0.5 text-xs font-semibold text-white">Ir</span>
+                              </button>
+                            </li>
+                          ))}
+                        </ol>
+                        {all.length > 4 && (
+                          <button
+                            className="mt-2 text-xs px-3 py-1 rounded-full border border-slate-300 bg-white font-semibold text-slate-800 hover:bg-slate-50"
+                            onClick={() => setOpen((o) => ({ ...o, [key]: !o[key] }))}
+                          >
+                            {open[key] ? "Mostrar menos" : `Ver as ${all.length} paragens`}
+                          </button>
+                        )}
                       </div>
-                      {/* The stops ahead, as a line in the route's colour: tap one to go there */}
-                      <ol className="mt-2 ml-2 border-l-2" style={{ borderColor: rota.via.cor }}>
-                        {shown.map((p) => (
-                          <li key={p.id} className="relative">
-                            <span
-                              className="absolute -left-[7px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2"
-                              style={{ borderColor: rota.via.cor }}
-                              aria-hidden
-                            />
-                            <button
-                              className="w-full ml-2 flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-slate-100"
-                              onClick={() => onDestination({ ids: [p.id], label: p.nome })}
-                            >
-                              <span className="min-w-0 truncate text-sm text-slate-800">{p.nome}</span>
-                              <span className="shrink-0 rounded-full bg-slate-900 px-2.5 py-0.5 text-xs font-semibold text-white">Ir</span>
-                            </button>
-                          </li>
-                        ))}
-                      </ol>
-                      {all.length > 4 && (
-                        <button
-                          className="mt-2 text-xs px-3 py-1 rounded-full border border-slate-300 bg-white font-semibold text-slate-800 hover:bg-slate-50"
-                          onClick={() => setOpen((o) => ({ ...o, [key]: !o[key] }))}
-                        >
-                          {open[key] ? "Mostrar menos" : `Ver as ${all.length} paragens`}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
         </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Every place reachable from the start, earliest arrival first, including those that take more
+ * than one bus. With `showBoarding`, each says where the first bus is taken (B in A → B → C).
+ */
+function AllDestinations({
+  destinos,
+  showBoarding,
+  onDestination,
+}: {
+  destinos: Destino[];
+  showBoarding?: boolean;
+  onDestination: (p: { ids: string[]; label: string }) => void;
+}) {
+  const [count, setCount] = useState(25);
+  if (!destinos.length) return <p className="text-sm text-slate-600">Nenhum destino com os autocarros de agora.</p>;
+  return (
+    <div>
+      <p className="text-xs text-slate-600 mb-2">
+        {destinos.length} destinos, pela hora de chegada.
+        {showBoarding ? " Cada um diz onde apanhar o primeiro autocarro." : ""} Toque num para ver a viagem, mesmo os que precisam de mais de um autocarro.
+      </p>
+      <ul className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
+        {destinos.slice(0, count).map((d) => (
+          <li key={d.ids[0]}>
+            <button
+              className="w-full text-left px-3 py-2.5 hover:bg-slate-50 flex items-center gap-3"
+              onClick={() => onDestination({ ids: d.ids, label: d.nome })}
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-slate-900 truncate">{d.nome}</span>
+                {showBoarding && (
+                  <span className="block text-xs text-slate-600 truncate">
+                    Apanhe em <strong className="font-semibold text-slate-800">{d.embarque.nome}</strong>
+                    {d.metrosAtePrimeira > 0 ? ` · ${formatDistance(d.metrosAtePrimeira)} a pé` : ""}
+                  </span>
+                )}
+                <span className="mt-1 flex items-center gap-1 flex-wrap">
+                  <span
+                    className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                      d.transbordos === 0 ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-900"
+                    }`}
+                  >
+                    {d.transbordos === 0 ? "Directo" : `${d.transbordos + 1} autocarros`}
+                  </span>
+                  {d.vias.map((v, i) => (
+                    <span
+                      key={i}
+                      className="text-[11px] font-semibold px-1.5 py-0.5 rounded"
+                      style={{ background: v.cor, color: textOn(v.cor) }}
+                      title={v.nome}
+                    >
+                      {v.codigo}
+                    </span>
+                  ))}
+                </span>
+              </span>
+              <span className="shrink-0 text-right">
+                <span className="block text-sm font-semibold text-slate-900">Chega {at(d.chegada).replace("às ", "")}</span>
+                <span className="block text-xs text-slate-500">{duration(d.minutos)}</span>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      {destinos.length > count && (
+        <button
+          className="mt-2 text-sm px-3.5 py-1.5 rounded-full border border-slate-300 bg-white font-semibold text-slate-800 hover:bg-slate-50"
+          onClick={() => setCount((c) => c + 50)}
+        >
+          Ver mais destinos ({destinos.length - count})
+        </button>
       )}
     </div>
   );
@@ -1027,8 +1352,7 @@ function JourneysView({
       <button onClick={onBack} className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3.5 py-1.5 text-sm font-semibold text-slate-800 hover:bg-slate-200 active:bg-slate-300">
         <span aria-hidden>←</span> Voltar
       </button>
-      <p className="text-xs text-slate-600">Partida: {view.fromLabel}</p>
-      <h2 className="text-lg font-bold text-slate-900 leading-tight mb-3">Para {view.toLabel}</h2>
+      <RouteSummary from={view.fromLabel} to={view.toLabel} />
 
       {error && <p className="text-sm text-red-700">Não foi possível planear a viagem. Tente de novo.</p>}
       {!options && !error && <p className="text-sm text-slate-600">A procurar autocarros…</p>}
