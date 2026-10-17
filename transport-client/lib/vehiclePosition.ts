@@ -292,7 +292,7 @@ export function distanceUntilPass(
  * route: a destination before the origin is a trip on the return leg.
  *
  * Times come from the bus's position on the path at the travel speed, so they match where the
- * timetable puts the bus later. The fare keeps the stop-to-stop distance (lib/fares.ts).
+ * timetable puts the bus later. Trip distance, time and fare are measured along the path.
  * Without a route path it falls back to estimateTrip (forward trips only).
  */
 export function estimateBusTrip(args: {
@@ -320,16 +320,33 @@ export function estimateBusTrip(args: {
   const travel: Direction = d > o ? 1 : -1;
   const atOrigin = progressOf(g, stops[o].point);
   const atDestination = progressOf(g, stops[d].point);
-  const { meters, turns } = distanceUntilPass(position, g.length, atOrigin, travel);
   const v = speedMps(rule);
-  const secondsToOrigin = position.waitS + meters / v + turns * TERMINAL_STOP_S;
+  const passFrom = (p: VehiclePosition, afterS: number) => {
+    const { meters, turns } = distanceUntilPass(p, g.length, atOrigin, travel);
+    return { meters, turns, seconds: afterS + p.waitS + meters / v + turns * TERMINAL_STOP_S };
+  };
+  const fromNow = passFrom(position, 0);
+  let pass = fromNow;
+  // Timetable buses run 05:00-21:00 and are parked overnight: a pass that would come after
+  // 21:00, or a question asked at night, gets the bus's first pass of the next service day
+  // (the same pass the admin's operation view shows)
+  if (position.source === 'horario') {
+    const minutes = maputoMinutes(now);
+    const inService = minutes >= SERVICE_START_MIN && minutes < SERVICE_END_MIN;
+    if (!inService || fromNow.seconds > (SERVICE_END_MIN - minutes) * 60) {
+      // One second past 05:00, so the timetable already has the bus on its way
+      const untilStartS = ((((SERVICE_START_MIN - minutes) % 1440) + 1440) % 1440) * 60 + 1;
+      const first = scheduledPosition(vehicle.id, g, new Date(now.getTime() + untilStartS * 1000), rule);
+      if (first) pass = passFrom(first, untilStartS);
+    }
+  }
 
   // Distance, fare and time of the trip all along the road path, as the bus drives it
   const distanciaViagem = Math.abs(atDestination - atOrigin);
   return {
-    distanciaAteOrigem: meters,
-    tempoChegada: Math.max(1, Math.ceil(secondsToOrigin / 60)),
-    jaPassou: turns > 0,
+    distanciaAteOrigem: pass.meters,
+    tempoChegada: Math.max(1, Math.ceil(pass.seconds / 60)),
+    jaPassou: fromNow.turns > 0,
     distanciaViagem,
     tempoViagem: Math.max(1, Math.ceil(distanciaViagem / v / 60)),
     fare: fareFor(distanciaViagem, rule),
