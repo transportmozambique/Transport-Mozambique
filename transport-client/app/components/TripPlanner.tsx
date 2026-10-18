@@ -1271,6 +1271,12 @@ function JourneysView({
           Não há ligação de autocarro entre estes dois locais. Experimente uma paragem próxima do destino.
         </p>
       )}
+      {/* From a stop the first bus is taken there; a walk first only when no bus from it gets there */}
+      {options?.length && !("me" in view.from) && options[0].etapas[0].tipo === "pe" ? (
+        <p className="text-sm text-slate-700 bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3">
+          Nenhum autocarro de {view.fromLabel} chega lá. A viagem começa a pé, até uma paragem perto.
+        </p>
+      ) : null}
 
       <div className="space-y-3">
         {options?.map((j, i) => (

@@ -77,7 +77,7 @@ A stop's routes, and for each direction of each route the next bus and the stops
 }
 ```
 
-`ids` are the place's stops (pass them as `to` to `/api/journeys`), `nome` tells same-name places apart, and `vias` are the buses' routes in the order they are taken. `embarque` is the stop where the first bus is taken: this stop, or one within 300 m. `metrosAtePrimeira` is the walk to it.
+`ids` are the place's stops (pass them as `to` to `/api/journeys`), `nome` tells same-name places apart, and `vias` are the buses' routes in the order they are taken. `embarque` is the stop where the first bus is taken: this stop. `metrosAtePrimeira` is the walk to it (0 from a stop; from a position on `/api/destinos`, the walk from there).
 
 Errors: 404 `Paragem não encontrada`.
 
