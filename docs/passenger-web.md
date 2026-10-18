@@ -269,4 +269,4 @@ Signing out (avatar menu) clears it. A token that is expired or signed with a ro
 
 ---
 
-[← Configuration](configuration.md) · [Documentation index](README.md) · Next: [USSD service →](ussd.md)
+[← GPS tracking](gps-tracking.md) · [Documentation index](README.md) · Next: [USSD service →](ussd.md)

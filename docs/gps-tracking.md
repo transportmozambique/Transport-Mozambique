@@ -192,4 +192,4 @@ ORDER BY "gpsAtualizadoEm" DESC NULLS LAST;
 
 ---
 
-[← Admin dashboard](admin-dashboard.md) · [Documentation index](README.md) · Next: [Africa's Talking →](africas-talking.md)
+[← Database](database.md) · [Documentation index](README.md) · Next: [Passenger web app →](passenger-web.md)

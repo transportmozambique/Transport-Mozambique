@@ -4,12 +4,13 @@ USSD brings the platform to any phone, without data or an app. The passenger dia
 
 | | |
 |---|---|
-| Code (sandbox) | `*384*848080#`, dialled from the [Africa's Talking simulator](africas-talking.md#try-it-in-the-simulator) |
+| Code (sandbox) | `*384*848080#`, dialled from the [Africa's Talking simulator](africas-talking.md#use-the-menu-in-the-simulator) |
 | Callback | `https://transport-mz.vercel.app/api/ussd` |
-| Code | `transport-client/app/api/ussd/route.ts` |
+| Code | `transport-client/app/api/ussd/route.ts` ([Inside the handler](#inside-the-handler)) |
+| Setup and simulator | [Africa's Talking, step by step](africas-talking.md#how-it-was-set-up-step-by-step) |
 | Live (real phones) | not yet: needs a production USSD channel from Africa's Talking ([Going live](africas-talking.md#going-live)) |
 
-**On this page:** [How a session works](#how-a-session-works) · [Menu tree](#menu-tree) · [1 Encontrar transporte](#1-encontrar-transporte) · [2 Procurar rotas](#2-procurar-rotas) · [3 Paragens de uma rota](#3-paragens-de-uma-rota) · [4 Calcular tarifa](#4-calcular-tarifa) · [5 Rastrear autocarro](#5-rastrear-autocarro) · [6 Área do motorista](#6-area-do-motorista) · [7 Ajuda](#7-ajuda) · [Errors](#errors) · [Testing](#testing)
+**On this page:** [How a session works](#how-a-session-works) · [Inside the handler](#inside-the-handler) · [Menu tree](#menu-tree) · [1 Encontrar transporte](#1-encontrar-transporte) · [2 Procurar rotas](#2-procurar-rotas) · [3 Paragens de uma rota](#3-paragens-de-uma-rota) · [4 Calcular tarifa](#4-calcular-tarifa) · [5 Rastrear autocarro](#5-rastrear-autocarro) · [6 Área do motorista](#6-area-do-motorista) · [7 Ajuda](#7-ajuda) · [Errors](#errors) · [Testing](#testing)
 
 ![The main menu in the Africa's Talking simulator](images/at-sim-main-menu.png)
 
@@ -49,6 +50,53 @@ Typed answers (a place name in option 1, a plate number, a driver's PIN) are not
 **SMS.** Options 1 to 6 can send the result by SMS too. The SMS is sent after the response, with `waitUntil`, so the screen never waits for it. Without `AFRICASTALKING_API_KEY` the SMS is only logged.
 
 **Logs.** Each request and response is logged (`📱 USSD Request`, `📤 USSD Response`) in the Vercel function logs. The PIN in option 6 is masked as `***`.
+
+## Inside the handler
+
+How one keypress is handled, in `transport-client/app/api/ussd/route.ts`. The example is the request the simulator sent when Baixa was chosen on the second page of option 2's origins, as the Vercel log shows it:
+
+![Vercel log of one USSD request: sessionId, serviceCode, phoneNumber, text "2*7*6", then the response](images/vercel-log-request.png)
+
+```mermaid
+flowchart TD
+  A["POST /api/ussd?key=…<br/>sessionId, serviceCode, phoneNumber, text"] --> B{"callbackAllowed()<br/>key = USSD_CALLBACK_KEY?"}
+  B -- no --> X["403 Forbidden<br/>log: USSD pedido recusado"]
+  B -- yes --> C["read the form fields<br/>log 📱 USSD Request (PIN as ***)"]
+  C --> D["handleUSSD()<br/>parseInputs(text) → inputs, pages, currPg"]
+  D --> E{"inputs[0]"}
+  E -- "none" --> M["MAIN_MENU"]
+  E -- "1 to 5" --> F["the option's menu function<br/>reads the database"]
+  E -- "6" --> G["handleDriverMenuStateless()"]
+  E -- "7" --> H["HELP"]
+  F --> S["CON screen (paginateList)<br/>or END screen + sms()"]
+  G --> S
+  M --> T
+  H --> T
+  S --> T["toGsm(): plain GSM-7 text<br/>log 📤 USSD Response"]
+  T --> R["200 text/plain"]
+  S -. "after the answer (waitUntil)" .-> SMS["sendSMS() → Africa's Talking SMS<br/>log ✅ SMS enviado / ❌ Erro"]
+```
+
+1. **Check the caller** (`callbackAllowed`). With `USSD_CALLBACK_KEY` set, the `key` in the URL must equal it. The comparison takes the same time whatever the input (`timingSafeEqual`). A wrong or missing key answers `403` and logs "USSD pedido recusado: chave do callback em falta ou errada". Nothing else runs.
+2. **Read the request.** The four form fields are read and logged as `📱 USSD Request`. In option 6 the second answer is the driver's PIN, so it is logged as `***`.
+3. **Replay the session** (`parseInputs`). `text` holds every answer since the code was dialled; the server keeps nothing between requests. `7`, `8` and `0` are navigation, not answers. For `text="2*7*6"`:
+
+   | Key | Meaning | `inputs` | `pages` | `currPg` |
+   |---|---|---|---|---|
+   | `2` | option 2 | `["2"]` | `[0]` | 0 |
+   | `7` | next page of origins | `["2"]` | `[0]` | 1 |
+   | `6` | sixth item of that page | `["2", "6"]` | `[0, 1]` | 0 |
+
+   So the origin is item 6 of page 2: the 12th origin, Baixa. Typed answers (a place name in option 1, a plate in option 5, the PIN in option 6) are taken as they are.
+4. **Run the option** (`handleUSSD`). The first answer picks the menu function: `findTransportMenu` (1), `routesMenu` (2), `routeStopsMenu` (3), `fareMenu` (4), `trackBusMenu` (5), `handleDriverMenuStateless` (6), or the fixed help screen (7). Each function reads what it needs from the database on every request: for option 2, `getAvailableOrigins()` then `getRoutesFrom("Baixa")`.
+5. **Build the screen.**
+   - A list goes through `paginateList`: 6 items a page, each item cut so the whole screen fits 182 characters, then `7. Proximo`, `8. Anterior`, `0. Voltar` as they apply.
+   - A final screen starts with `END`. When the option sends its result by SMS, `sms()` queues it with `waitUntil` and the screen goes back without waiting for it.
+6. **Make it GSM-7** (`toGsm`). Accents are removed, and ordinals and typographic signs become plain letters (`1º` → `1o`, `2ª` → `2a`). The answer is logged as `📤 USSD Response` and sent as `200 text/plain`.
+7. **Errors.** An exception answers `END Erro ao processar pedido. Tente novamente.` with status 200, so the phone shows a message instead of the gateway's error. The exception is logged as `❌ USSD Error`.
+8. **The SMS, after the answer.** `sendSMS` (`lib/notifications.ts`) turns the number into `+258…` and sends it through the `africastalking` SDK. It logs `✅ SMS enviado para …` or `❌ Erro ao enviar SMS para …`, and never retries.
+
+The request above took 269 ms in the function, so the gateway gets its answer well within the time it allows. The sandbox SMS API sometimes answers late: the log then shows `❌ Erro ao enviar SMS` although the message reached the simulator ([Africa's Talking → SMS](africas-talking.md#sms)).
 
 ## Menu tree
 
@@ -322,7 +370,7 @@ curl -s -X POST http://localhost:3000/api/ussd \
   --data-urlencode "text=2*3*1"
 ```
 
-**In the Africa's Talking simulator.** Dial `*384*848080#` from a test number. The screens are real production answers, and SMS arrive in the simulated phone's inbox ([Africa's Talking → simulator](africas-talking.md#try-it-in-the-simulator)):
+**In the Africa's Talking simulator.** Dial `*384*848080#` from a test number. The screens are real production answers, and SMS arrive in the simulated phone's inbox ([Africa's Talking → simulator](africas-talking.md#use-the-menu-in-the-simulator)):
 
 ![SMS received in the simulator](images/at-sim-sms.png)
 

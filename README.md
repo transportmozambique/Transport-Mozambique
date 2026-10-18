@@ -10,6 +10,10 @@ Like a ride-hailing app, but for public transport. The start is your position or
 
 How to use it, step by step with screenshots: [Passenger web app → How to use it](docs/passenger-web.md#how-to-use-it-step-by-step).
 
+**On this page:** [Live apps](#live-apps) · [USSD menu](#ussd-menu) · [Getting lists out of the database](#getting-lists-out-of-the-database) · [How it fits together](#how-it-fits-together) · [How the data flows](#how-the-data-flows) · [Run it locally](#run-it-locally) · [Documentation](#documentation) · [Contributing](#contributing)
+
+**New here?** [Getting started](docs/getting-started.md) · [Architecture](docs/architecture.md) · [Glossary](docs/glossary.md) · [Project status](docs/project-status.md) · [All documentation →](docs/README.md)
+
 ## Live apps
 
 | App | URL | Who uses it |
@@ -252,12 +256,15 @@ On Windows, `start-all.bat` opens the three in their own windows.
 
 ## Documentation
 
-The [documentation index](docs/README.md) lists every page with reading paths. Most used:
+Every page, in reading order. The [documentation index](docs/README.md) says what each covers, answers common questions with a link, and suggests reading paths. Each page ends with links to the previous and next one.
 
-- [Architecture](docs/architecture.md) · [Data flow](docs/data-flow.md) · [Database](docs/database.md)
-- [Passenger web app](docs/passenger-web.md) · [USSD service](docs/ussd.md) · [Driver portal](docs/driver-portal.md) · [Admin dashboard](docs/admin-dashboard.md)
-- [API reference](docs/api-reference.md) · [Deployment](docs/deployment.md) · [Testing](docs/testing.md) · [Security](docs/security.md)
-- [Troubleshooting](docs/troubleshooting.md) · [Known limitations](docs/known-limitations.md)
+| | Pages |
+|---|---|
+| **1. Start here** | [Getting started](docs/getting-started.md) · [Architecture](docs/architecture.md) · [Glossary](docs/glossary.md) · [Project status](docs/project-status.md) |
+| **2. How it works** | [Data flow](docs/data-flow.md) · [Database](docs/database.md) · [GPS tracking](docs/gps-tracking.md) |
+| **3. Using each app** | [Passenger web app](docs/passenger-web.md) · [USSD service](docs/ussd.md) ([inside the handler](docs/ussd.md#inside-the-handler)) · [Driver portal](docs/driver-portal.md) · [Admin dashboard](docs/admin-dashboard.md) |
+| **4. Step-by-step guides, with screenshots** | [Africa's Talking](docs/africas-talking.md) ([setup](docs/africas-talking.md#how-it-was-set-up-step-by-step), [simulator](docs/africas-talking.md#use-the-menu-in-the-simulator)) · [Viewing the data in Neon](docs/neon-guide.md) · [Vercel](docs/vercel-guide.md) |
+| **5. Reference and operations** | [Configuration](docs/configuration.md) · [API reference](docs/api-reference.md) · [Deployment](docs/deployment.md) · [Testing](docs/testing.md) · [Security](docs/security.md) · [Troubleshooting](docs/troubleshooting.md) · [Known limitations](docs/known-limitations.md) |
 
 ## Contributing
 

@@ -282,4 +282,4 @@ All under `transport-admin/app/api`, all behind the session cookie. Request and 
 
 ---
 
-[← Driver portal](driver-portal.md) · [Documentation index](README.md) · Next: [GPS tracking →](gps-tracking.md)
+[← Driver portal](driver-portal.md) · [Documentation index](README.md) · Next: [Africa's Talking →](africas-talking.md)

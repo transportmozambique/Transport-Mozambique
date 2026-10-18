@@ -112,7 +112,7 @@ ussd "4*1"      # Calcular tarifa
 ussd "7"        # Ajuda
 ```
 
-Check that each screen starts with `CON` or `END` and stays within 182 characters. The menu tree with real screens is in [USSD service](ussd.md). To test with the real gateway, use the [Africa's Talking simulator](africas-talking.md#try-it-in-the-simulator), which talks to production.
+Check that each screen starts with `CON` or `END` and stays within 182 characters. The menu tree with real screens is in [USSD service](ussd.md). To test with the real gateway, use the [Africa's Talking simulator](africas-talking.md#use-the-menu-in-the-simulator), which talks to production.
 
 ## GPS by hand
 

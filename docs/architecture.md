@@ -166,4 +166,4 @@ The full list of known gaps is in [Known limitations](known-limitations.md).
 
 ---
 
-[← Getting started](getting-started.md) · [Documentation index](README.md) · Next: [Data flow →](data-flow.md)
+[← Getting started](getting-started.md) · [Documentation index](README.md) · Next: [Glossary →](glossary.md)
