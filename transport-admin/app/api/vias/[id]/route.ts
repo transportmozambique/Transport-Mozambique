@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { orderStopsAlongRoute } from '@/lib/routeOrder';
+import { orderStopsAlongRoute, toStoredPath } from '@/lib/routeOrder';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -113,10 +113,21 @@ export async function PATCH(
   try {
     const params = await Promise.resolve(context.params);
     const body = await request.json();
-    const { nome, terminalPartida, terminalChegada, cor, municipioId, paragensIds } = body;
+    const { nome, terminalPartida, terminalChegada, cor, municipioId, paragensIds, geoLocationPath } = body;
 
     // Update via basic info
     const updateData: any = {};
+    // A new path (Vias → Percurso), stored as "lng,lat;lng,lat;..." like on creation
+    if (geoLocationPath !== undefined) {
+      const storedPath = toStoredPath(geoLocationPath);
+      if (!storedPath) {
+        return NextResponse.json(
+          { error: 'O percurso da via precisa de pelo menos dois pontos válidos' },
+          { status: 400 }
+        );
+      }
+      updateData.geoLocationPath = storedPath;
+    }
     if (nome) updateData.nome = nome;
     if (terminalPartida) updateData.terminalPartida = terminalPartida;
     if (terminalChegada) updateData.terminalChegada = terminalChegada;
@@ -136,31 +147,22 @@ export async function PATCH(
       data: updateData,
     });
 
-    // Update paragens associations if provided
+    // The route's stops become exactly paragensIds. Links that stay are kept as they are (their
+    // terminal flag too); only the removed ones are deleted and the new ones created.
     if (paragensIds !== undefined && Array.isArray(paragensIds)) {
-      // Delete all existing associations
+      const ids = paragensIds.filter((id: unknown): id is string => typeof id === 'string');
       await prisma.viaParagem.deleteMany({
-        where: {
-          viaId: params.id,
-        },
+        where: { viaId: params.id, paragemId: { notIn: ids } },
       });
-
-      // Create new associations if there are selected paragens
-      if (paragensIds.length > 0) {
-        // Get paragem codes for the selected paragens
+      const linked = new Set(
+        (await prisma.viaParagem.findMany({ where: { viaId: params.id }, select: { paragemId: true } })).map((vp) => vp.paragemId)
+      );
+      const missing = ids.filter((id) => !linked.has(id));
+      if (missing.length > 0) {
         const paragens = await prisma.paragem.findMany({
-          where: {
-            id: {
-              in: paragensIds,
-            },
-          },
-          select: {
-            id: true,
-            codigo: true,
-          },
+          where: { id: { in: missing } },
+          select: { id: true, codigo: true },
         });
-
-        // Create ViaParagem records
         await prisma.viaParagem.createMany({
           data: paragens.map((paragem) => ({
             viaId: params.id,
@@ -169,6 +171,7 @@ export async function PATCH(
             codigoParagem: paragem.codigo,
             terminalBoolean: false,
           })),
+          skipDuplicates: true,
         });
       }
     }
@@ -194,6 +197,9 @@ export async function PATCH(
 
     return NextResponse.json(updatedVia);
   } catch (error: any) {
+    if (error.code === 'P2025') {
+      return NextResponse.json({ error: 'Via não encontrada' }, { status: 404 });
+    }
     console.error('Error updating via:', error);
     return NextResponse.json(
       { 

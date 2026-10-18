@@ -152,7 +152,19 @@ How to set up the phone or tracker is in [GPS tracking](gps-tracking.md#1-create
 4. Stops within **50 m** of the road path are listed under "Paragens da Rota", in travel order, and are linked to the route when it is created. Untick any you do not want.
 5. "Criar Via" stores the road path in `Via.geoLocationPath` as `lng,lat;lng,lat;…` ([Database → Conventions](database.md#conventions-read-this-before-querying)).
 
-**Editing a route (`/vias/{id}/editar`)** changes its name, terminals, colour, municipality and linked stops, and **"Atribuir Transporte"** moves vehicles onto the route (`PATCH /api/transportes/{id}` with the route's id). The path cannot be redrawn there: create a new route instead.
+**Editing a route (`/vias/{id}/editar`)** changes its name, terminals, colour, municipality and linked stops, and **"Atribuir Transporte"** moves vehicles onto the route (`PATCH /api/transportes/{id}` with the route's id). The path has its own page:
+
+**Redrawing a route's path (`/vias/{id}/percurso`)**, from **"Redesenhar percurso"** on the route's page. Use it when a route's line cuts across blocks instead of following the streets ([Database → Putting route paths on the roads](database.md#putting-route-paths-on-the-roads) lists them).
+
+![Redrawing a route's path: the current path dashed in grey, the new road path in the route's colour](images/admin-via-percurso.png)
+
+1. The current path is drawn dashed in grey, and the stops linked to the route are highlighted.
+2. **"Começar pelo percurso atual"** puts up to 25 points along the current path (at its turns) and asks the router for the road through them. Or click the map or a stop to add points, as when drawing a new route. Drag, add or remove points where the road path leaves the bus's way.
+3. Only a road path can be saved, as on "Nova Via": while the router has not answered, or when it failed (dashed line), "Guardar percurso" is disabled.
+4. **"Paragens no novo percurso"** lists the stops within 50 m of the new path, in travel order, marked "ligada" (already linked) or "nova". **"Paragens ligadas fora do novo percurso"** lists the linked stops the new path no longer passes. Every ticked stop is linked to the route; untick the ones it does not serve.
+5. "Guardar percurso" stores the path and the ticked stops (`PATCH /api/vias/{id}` with `geoLocationPath` and `paragensIds`). The links that stay are kept as they were. The timetable positions, arrival times and fares use the new path at once ([GPS tracking](gps-tracking.md#how-a-position-is-chosen)).
+
+On a phone the map comes first, above the stop lists.
 
 ## Stops (`/paragens`)
 

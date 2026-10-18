@@ -140,7 +140,7 @@ Each also has the same four pages: list, detail, new and edit. What differs is b
 |---|---|
 | **POST** `/api/vias` | Needs `nome`, `codigo` (unique), `municipioId` and `geoLocationPath`: the road path drawn on the form's map, with at least two points. It is stored as `"lng,lat;lng,lat;…"`. `paragensIds` creates the stop links. |
 | **GET** | List: 10 per page; `search` also matches the municipality. Each route comes with its number of stops and vehicles, plus totals over the search. One route: with its municipality, stops and vehicles. |
-| **PATCH** `/api/vias/{id}` | Name, terminals, colour, municipality. `paragensIds` replaces every stop link. The path cannot be redrawn. |
+| **PATCH** `/api/vias/{id}` | Name, terminals, colour, municipality, and the path (`geoLocationPath`, at least two valid points). `paragensIds` makes the route's stops exactly that list, keeping the links that stay. |
 | **DELETE** | Removes its stop links (cascade). Its vehicles stay, without a route (`viaId = NULL`): they leave the map until they get a new one. |
 | **Shown** | Passenger map: the route line when a bus is tapped, the coloured route labels at a stop and in journeys, the path of each bus leg. The map of a journey being followed. USSD options 1–4. Driver portal map. Admin `/vias`, with the path on a map. |
 </details>

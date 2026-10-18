@@ -12,7 +12,8 @@ What is incomplete, estimated or legacy on 2026-10-17, so that you do not mistak
 - **Few GPS devices.** Real positions need a device code per vehicle and a phone or tracker that reports. Until vehicles are equipped, the map shows timetable positions.
 - **No position history.** Each GPS fix overwrites the last one; there is no track to replay or analyse. `GeoLocation` holds rows from the initial import only.
 - **Distances use the stored path.** A route without `geoLocationPath` falls back to straight lines between stops × `fatorEstrada` (1.3 by default).
-- **Some route paths still cut corners.** `scripts/snap-paths.mjs` puts straight jumps on the roads. It keeps a jump when the router's road strays far from it, because that road is probably not the bus's. It does not check stretches under 300 m. 13 routes keep a jump of 1 km or more, to redraw in the admin (214, 504 and 216 the longest) ([Database](database.md#putting-route-paths-on-the-roads)).
+- **One route path still cuts a corner.** `scripts/snap-paths.mjs` puts straight jumps on the roads and `scripts/redraw-from-osm.mjs` rebuilds the OpenStreetMap routes whose relation is out of order. V086 (Rua dos Bons Amigos – Antena) keeps a 2 km straight line: the street exists, but OpenStreetMap maps it with a break, so no router follows it. Stretches under 300 m are not checked ([Database](database.md#putting-route-paths-on-the-roads)).
+- **Drawing a route depends on the public OSRM demo router** (`router.project-osrm.org`), called from the admin's browser. When it is down, "Nova Via" and "Redesenhar percurso" cannot save.
 - **Same speed everywhere.** Traffic, time of day and stop dwell times are not modelled; only the 5-minute stop at each terminal is.
 
 ## Journeys
@@ -48,7 +49,6 @@ What is incomplete, estimated or legacy on 2026-10-17, so that you do not mistak
 - **"Raio de Cobertura"** on the province and municipality forms only sizes the circle on the form's map.
 - **Reports:** "Histórico", "Agendar", the custom report and the report preview pages only say "em desenvolvimento". The report preview shows the first 8 fields of up to 100 rows, and PDFs come from the browser's print dialog.
 - **The dashboard is cached 5 minutes** per server instance; list pages are not.
-- **A route's path cannot be redrawn** on its edit page; create a new route.
 - **Searching for a phone** in the header search matches the digits as stored, with spaces (`87 183`).
 - **No roles:** every administrator can do everything.
 
