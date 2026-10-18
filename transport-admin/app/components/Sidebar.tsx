@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../contexts/SidebarContext";
 
@@ -107,57 +108,90 @@ const menuItems = [
   },
 ];
 
+/** The sections, grouped: the network, the people, the territory, and reports */
+const groups: { label: string; paths: string[] }[] = [
+  { label: "Rede", paths: ["/dashboard", "/transportes", "/vias", "/paragens"] },
+  { label: "Pessoas", paths: ["/motoristas", "/proprietarios", "/utentes", "/administradores"] },
+  { label: "Território", paths: ["/provincias", "/municipios"] },
+  { label: "Análise", paths: ["/relatorios"] },
+];
+
 export default function Sidebar() {
   const pathname = usePathname();
-  const { isExpanded, toggleSidebar } = useSidebar();
+  const { isExpanded, toggleSidebar, mobileOpen, setMobileOpen } = useSidebar();
+  // On a phone the sidebar is a drawer, always with its labels
+  const wide = isExpanded || mobileOpen;
+
+  // Esc closes the drawer
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMobileOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mobileOpen, setMobileOpen]);
 
   return (
-    <aside className={`${isExpanded ? 'w-64' : 'w-20'} flex h-full shrink-0 flex-col border-r border-gray-800 bg-black text-white transition-all duration-300`}>
-      {/* Logo */}
-      <div className="p-6 border-b border-gray-800">
-        <div className="flex items-center space-x-3">
-          <button 
-            onClick={toggleSidebar}
-            className="w-10 h-10 bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg flex items-center justify-center hover:from-gray-800 hover:to-gray-700 transition-all flex-shrink-0"
+    <>
+      {mobileOpen && <div className="fixed inset-0 z-40 bg-slate-900/50 md:hidden" onClick={() => setMobileOpen(false)} aria-hidden />}
+      <aside
+        className={`scroll-dark fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col bg-slate-900 text-white transition-transform duration-300 md:static md:z-auto md:translate-x-0 md:transition-[width] ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        } ${isExpanded ? "md:w-64" : "md:w-20"}`}
+      >
+        {/* Brand, and the button that folds the sidebar */}
+        <div className="flex items-center gap-3 px-4 py-5">
+          <button
+            onClick={() => (mobileOpen ? setMobileOpen(false) : toggleSidebar())}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 transition-colors hover:bg-white/20"
+            aria-label={mobileOpen ? "Fechar o menu" : isExpanded ? "Recolher o menu" : "Expandir o menu"}
           >
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
           </button>
-          {isExpanded && (
-            <div>
-              <h2 className="text-sm font-bold text-white">TransportMZ</h2>
-              <p className="text-[10px] text-gray-400">Admin Panel</p>
+          {wide && (
+            <div className="min-w-0">
+              <h2 className="text-sm font-bold leading-tight text-white">Transportes Moçambique</h2>
+              <p className="text-xs text-slate-400">Administração</p>
             </div>
           )}
         </div>
-      </div>
 
-      {/* Navigation */}
-      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-4">
-        {menuItems.map((item) => {
-          // Check if current path starts with the menu item path
-          // This keeps the menu item active when viewing details or editing
-          const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
-          return (
-            <Link
-              key={item.path}
-              href={item.path}
-              className={`flex items-center ${isExpanded ? 'space-x-3' : 'justify-center'} px-4 py-3 rounded-lg transition-all duration-200 group ${
-                isActive
-                  ? "bg-white text-black"
-                  : "text-gray-400 hover:bg-gray-900 hover:text-white"
-              }`}
-              title={!isExpanded ? item.name : undefined}
-            >
-              <span className={isActive ? "text-black" : "text-gray-500 group-hover:text-white"}>
-                {item.icon}
-              </span>
-              {isExpanded && <span className="font-medium">{item.name}</span>}
-            </Link>
-          );
-        })}
-      </nav>
-    </aside>
+        <nav className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 pb-6">
+          {groups.map((group) => (
+            <div key={group.label}>
+              {wide ? (
+                <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{group.label}</p>
+              ) : (
+                <div className="mx-auto mb-2 h-px w-8 bg-white/10" aria-hidden />
+              )}
+              <div className="space-y-1">
+                {menuItems
+                  .filter((item) => group.paths.includes(item.path))
+                  .map((item) => {
+                    // Active on the section's own pages too (details, editing)
+                    const isActive = pathname === item.path || pathname.startsWith(item.path + "/");
+                    return (
+                      <Link
+                        key={item.path}
+                        href={item.path}
+                        onClick={() => setMobileOpen(false)}
+                        className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${wide ? "" : "justify-center"} ${
+                          isActive ? "bg-white text-slate-900 shadow-sm" : "text-slate-300 hover:bg-white/10 hover:text-white"
+                        }`}
+                        title={!wide ? item.name : undefined}
+                        aria-current={isActive ? "page" : undefined}
+                      >
+                        <span className={isActive ? "text-slate-900" : "text-slate-400 group-hover:text-white"}>{item.icon}</span>
+                        {wide && <span>{item.name}</span>}
+                      </Link>
+                    );
+                  })}
+              </div>
+            </div>
+          ))}
+        </nav>
+      </aside>
+    </>
   );
 }

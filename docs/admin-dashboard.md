@@ -4,7 +4,7 @@
 
 The back office. Administrators manage the network (provinces, municipalities, routes and stops), the fleet (vehicles, drivers, owners), passengers and other administrators. They also follow each vehicle live, set up GPS trackers, give drivers their PINs and print reports. The admin has its own API (`transport-admin/app/api`) on the same database as the passenger app. It never calls the passenger app ([Architecture](architecture.md#how-the-parts-connect)).
 
-The interface is in Portuguese. Screenshots on this page were taken on a local copy of the production data.
+The interface is in Portuguese. Screenshots on this page were taken on a local copy of the production data, with phone and ID numbers blurred.
 
 **On this page:** [Sign-in](#sign-in-and-session) · [Layout and search](#layout-and-search) · [Dashboard](#dashboard-dashboard) · [Vehicles](#vehicles-transportes) · [Routes](#routes-vias) · [Stops](#stops-paragens) · [Drivers](#drivers-motoristas) · [Owners](#owners-proprietarios) · [Provinces and municipalities](#provinces-and-municipalities) · [Passengers](#passengers-utentes) · [Administrators](#administrators-and-profile) · [Reports](#reports-relatorios) · [API used by each page](#api-used-by-each-page)
 
@@ -30,7 +30,20 @@ It writes to the database named by `DATABASE_URL` (environment or `.env`). Run i
 
 ## Layout and search
 
-The sidebar lists every section: Dashboard, Transportes, Vias, Paragens, Proprietários, Motoristas, Províncias, Municípios, Utentes, Administradores, Relatórios. The avatar menu at the top right has "Meu Perfil" and "Sair".
+The sidebar groups the sections:
+
+| Group | Sections |
+|---|---|
+| Rede | Dashboard, Transportes, Vias, Paragens |
+| Pessoas | Proprietários, Motoristas, Utentes, Administradores |
+| Território | Províncias, Municípios |
+| Análise | Relatórios |
+
+On a computer the sidebar stays on the left; the arrow at its edge folds it down to icons. On a phone or a narrow window it is hidden: the button at the top left ("Abrir o menu") slides it in over the page, and choosing a section, tapping outside it or Esc closes it. The avatar menu at the top right has "Meu Perfil" and "Sair".
+
+<img src="images/admin-dashboard-mobile.png" alt="Dashboard on a phone" width="300"> <img src="images/admin-menu-mobile.png" alt="The menu open on a phone" width="300">
+
+The list tables show fewer columns on narrower screens, so that they fit without scrolling sideways; the detail page of each row has everything. On a phone the vehicle list becomes cards.
 
 **The search box in the header** finds vehicles, routes and drivers from any page. Type at least 2 characters; 300 ms after the last keystroke it shows up to 5 matches of each kind:
 
@@ -48,30 +61,29 @@ Every list page also has its own search box and pagination.
 
 ## Dashboard (`/dashboard`)
 
-![Dashboard: counters, routes per municipality, route map and status charts](images/admin-dashboard-full.png)
+![Dashboard: greeting and shortcuts, counters, route map, what the vehicles are doing now, route list, bars and status](images/admin-dashboard-full.png)
 
-Everything on this page comes from one request, `GET /api/dashboard/stats`, **cached 5 minutes** per server instance. A change can take up to 5 minutes to show here, while the list pages show it at once.
+At the top: a greeting with the admin's first name and the shortcuts "+ Transporte", "+ Via", "+ Motorista" (each opens its creation form) and "Actualizar" (reloads the numbers). When some vehicles have no driver, an amber banner says how many and links to `/motoristas/atribuir`.
+
+Everything except "Agora" comes from one request, `GET /api/dashboard/stats`, **cached 5 minutes** per server instance. A change can take up to 5 minutes to show there, while the list pages show it at once.
 
 | Block | What it counts |
 |---|---|
-| Total Transportes / Motoristas / Vias / Paragens | Rows of each table. "activos" under Motoristas = drivers with status `ativo` **and** a vehicle. |
-| Proprietários, Províncias, Municípios | Rows of each table. |
-| Vias por Município | Routes per municipality. |
-| Paragens por Município | Distinct stops on each municipality's routes, as a share of all stops. A stop served by routes of both municipalities counts in both, and a stop on no route counts in neither. |
-| Top Vias | The routes with the most vehicles. |
-| Mapa de Vias | Every route's stored road path, in the route's colour. |
-| Vias (261) | Every route with its terminals and vehicle count, most vehicles first. |
-| Estado dos Transportes | Vehicles with and without a driver. |
-| Estado dos Motoristas | "Activos" as above; "Disponíveis" = active drivers without a vehicle. |
-| Distribuição de Vias | Routes with and without vehicles. |
-
-Each counter card links to its list page.
+| Transportes / Motoristas / Vias / Paragens | Rows of each table. Under Transportes: how many have no driver ("todos com motorista" when none). Under Motoristas: "activos" = drivers with status `ativo` **and** a vehicle. Under Vias: routes with at least one vehicle. Each card opens its list page. |
+| Mapa de vias | Every route's stored road path, in the route's colour, on the OpenFreeMap street map. A route tapped in the "Vias" list is shown alone; tapping it again shows all. |
+| Agora | What each vehicle is doing now, from `GET /api/transportes/estado` (GPS, or the timetable without GPS), refreshed every 30 seconds: Em circulação, Parados (at a terminal or out of service), Com GPS activo, Sem rota (no route path to place it on). Not cached. |
+| Vias | Every route with its terminals and vehicle count, most vehicles first. |
+| Vias por município | Routes per municipality. |
+| Paragens por município | Distinct stops on each municipality's routes. A stop served by routes of both municipalities counts in both, and a stop on no route counts in neither. |
+| Vias com mais veículos | The 5 routes with the most vehicles. |
+| Estado | Transportes com motorista (and "sem"); Motoristas activos as above (and "disponíveis" = active drivers without a vehicle); Vias com veículos (and "sem"). |
+| Proprietários, Províncias, Municípios | Rows of each table; each card opens its list page. |
 
 ## Vehicles (`/transportes`)
 
 ![Vehicle list with the "Agora" column](images/admin-transportes.png)
 
-**List.** One row per vehicle: plate and number, model and make, driver, owner, route, capacity and **"Agora"**, what the vehicle is doing right now:
+**List.** One row per vehicle: plate and number, model and make, driver, owner, route, capacity and **"Agora"**, what the vehicle is doing right now (model, owner and capacity only on wider screens):
 
 | "Agora" | Meaning |
 |---|---|
@@ -244,7 +256,7 @@ All under `transport-admin/app/api`, all behind the session cookie. Request and 
 | Page | Endpoints |
 |---|---|
 | Header search | `GET /api/transportes?search=`, `GET /api/vias?search=`, `GET /api/motoristas?search=` |
-| Dashboard | `GET /api/dashboard/stats` |
+| Dashboard | `GET /api/dashboard/stats`, `GET /api/transportes/estado` |
 | Vehicles | `GET/POST /api/transportes`, `GET/PUT/PATCH/DELETE /api/transportes/{id}`, `GET /api/transportes/estado`, `GET /api/transportes/{id}/posicao`, `GET /api/transportes/{id}/operacao`, `GET/POST/DELETE /api/transportes/{id}/gps`, `POST/DELETE /api/transportes/{id}/atribuir-motorista`, `POST/DELETE /api/transportes/{id}/atribuir-proprietario`, `POST/DELETE /api/transportes/{id}/proprietario` |
 | Routes | `GET/POST /api/vias`, `GET/PATCH/DELETE /api/vias/{id}`, `PATCH /api/transportes/{id}`; the public OSRM router from the browser |
 | Stops | `GET/POST /api/paragens`, `GET/PATCH/DELETE /api/paragens/{id}` |

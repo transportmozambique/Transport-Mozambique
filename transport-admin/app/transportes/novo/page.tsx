@@ -213,7 +213,7 @@ export default function NovoTransporte() {
       {/* Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
-          <div className={`rounded-lg shadow-lg p-4 min-w-[300px] ${
+          <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
             notification.type === 'success' ? 'bg-green-50 border border-green-200' :
             notification.type === 'error' ? 'bg-red-50 border border-red-200' :
             'bg-blue-50 border border-blue-200'
@@ -243,20 +243,20 @@ export default function NovoTransporte() {
 
       <div className="max-w-[1600px] mx-auto px-6 pt-6 pb-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/transportes')}
-              className="p-2 rounded-lg"
+              className="p-2 rounded-xl"
               style={{ transition: 'none' }}
             >
-              <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-black">Novo Transporte</h2>
-              <p className="text-black mt-1">Adicione um novo transporte ao sistema</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Novo Transporte</h2>
+              <p className="text-slate-900 mt-1">Adicione um novo transporte ao sistema</p>
             </div>
           </div>
         </div>
@@ -266,12 +266,12 @@ export default function NovoTransporte() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Informações Básicas */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Informações Básicas</h3>
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Informações Básicas</h3>
                 
                 <div className="space-y-5">
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Matrícula *
                     </label>
                     <input
@@ -279,7 +279,7 @@ export default function NovoTransporte() {
                       required
                       value={formData.matricula}
                       onChange={(e) => setFormData({ ...formData, matricula: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                       placeholder="Ex: AAA-123-MZ"
                       style={{ transition: 'none' }}
                     />
@@ -287,7 +287,7 @@ export default function NovoTransporte() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-black mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Modelo *
                       </label>
                       <input
@@ -295,14 +295,14 @@ export default function NovoTransporte() {
                         required
                         value={formData.modelo}
                         onChange={(e) => setFormData({ ...formData, modelo: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                         placeholder="Ex: Hiace"
                         style={{ transition: 'none' }}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-black mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Marca *
                       </label>
                       <input
@@ -310,7 +310,7 @@ export default function NovoTransporte() {
                         required
                         value={formData.marca}
                         onChange={(e) => setFormData({ ...formData, marca: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                         placeholder="Ex: Toyota"
                         style={{ transition: 'none' }}
                       />
@@ -319,7 +319,7 @@ export default function NovoTransporte() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-black mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Cor *
                       </label>
                       <input
@@ -327,14 +327,14 @@ export default function NovoTransporte() {
                         required
                         value={formData.cor}
                         onChange={(e) => setFormData({ ...formData, cor: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                         placeholder="Ex: Branco"
                         style={{ transition: 'none' }}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-black mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Ano *
                       </label>
                       <input
@@ -344,7 +344,7 @@ export default function NovoTransporte() {
                         max={new Date().getFullYear() + 1}
                         value={formData.ano}
                         onChange={(e) => setFormData({ ...formData, ano: parseInt(e.target.value) || new Date().getFullYear() })}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                         placeholder="2020"
                         style={{ transition: 'none' }}
                       />
@@ -353,7 +353,7 @@ export default function NovoTransporte() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-black mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Lotação *
                       </label>
                       <input
@@ -362,21 +362,21 @@ export default function NovoTransporte() {
                         min="1"
                         value={formData.lotacao}
                         onChange={(e) => setFormData({ ...formData, lotacao: parseInt(e.target.value) || 0 })}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                         placeholder="50"
                         style={{ transition: 'none' }}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-black mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Estado *
                       </label>
                       <select
                         required
                         value={formData.estado}
                         onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black bg-white"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 bg-white"
                         style={{ transition: 'none' }}
                       >
                         <option value="ativo">Ativo</option>
@@ -388,14 +388,14 @@ export default function NovoTransporte() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Via *
                     </label>
                     <select
                       required
                       value={formData.viaId}
                       onChange={(e) => setFormData({ ...formData, viaId: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black bg-white"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 bg-white"
                       style={{ transition: 'none' }}
                     >
                       <option value="">Selecione uma via</option>
@@ -408,33 +408,33 @@ export default function NovoTransporte() {
               </div>
 
               {/* Informações Técnicas */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Informações Técnicas</h3>
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Informações Técnicas</h3>
                 
                 <div className="space-y-5">
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Número do Chassis
                     </label>
                     <input
                       type="text"
                       value={formData.numeroChasis}
                       onChange={(e) => setFormData({ ...formData, numeroChasis: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                       placeholder="Ex: 1HGBH41JXMN109186"
                       style={{ transition: 'none' }}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Número do Motor
                     </label>
                     <input
                       type="text"
                       value={formData.numeroMotor}
                       onChange={(e) => setFormData({ ...formData, numeroMotor: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                       placeholder="Ex: 2TR-FE-1234567"
                       style={{ transition: 'none' }}
                     />
@@ -442,13 +442,13 @@ export default function NovoTransporte() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-black mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Tipo Combustível
                       </label>
                       <select
                         value={formData.tipoCombustivel}
                         onChange={(e) => setFormData({ ...formData, tipoCombustivel: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black bg-white"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 bg-white"
                         style={{ transition: 'none' }}
                       >
                         <option value="diesel">Diesel</option>
@@ -459,7 +459,7 @@ export default function NovoTransporte() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-black mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Capacidade (L)
                       </label>
                       <input
@@ -467,7 +467,7 @@ export default function NovoTransporte() {
                         min="0"
                         value={formData.capacidadeCombustivel}
                         onChange={(e) => setFormData({ ...formData, capacidadeCombustivel: parseInt(e.target.value) || 0 })}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                         placeholder="70"
                         style={{ transition: 'none' }}
                       />
@@ -475,7 +475,7 @@ export default function NovoTransporte() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Quilometragem Total (km)
                     </label>
                     <input
@@ -483,7 +483,7 @@ export default function NovoTransporte() {
                       min="0"
                       value={formData.kmTotal}
                       onChange={(e) => setFormData({ ...formData, kmTotal: parseInt(e.target.value) || 0 })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                       placeholder="0"
                       style={{ transition: 'none' }}
                     />
@@ -492,32 +492,32 @@ export default function NovoTransporte() {
               </div>
 
               {/* Manutenção */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Manutenção</h3>
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Manutenção</h3>
                 
                 <div className="space-y-5">
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Próxima Manutenção
                     </label>
                     <input
                       type="date"
                       value={formData.dataProximaManutencao}
                       onChange={(e) => setFormData({ ...formData, dataProximaManutencao: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                       style={{ transition: 'none' }}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Próxima Revisão
                     </label>
                     <input
                       type="date"
                       value={formData.dataProximaRevisao}
                       onChange={(e) => setFormData({ ...formData, dataProximaRevisao: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                       style={{ transition: 'none' }}
                     />
                   </div>
@@ -526,15 +526,15 @@ export default function NovoTransporte() {
             </div>
 
             {/* Observações - Full Width */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Observações</h3>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Observações</h3>
               
               <div>
                 <textarea
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
                   rows={4}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black resize-none"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 resize-none"
                   placeholder="Adicione notas ou observações sobre o transporte..."
                   style={{ transition: 'none' }}
                 />
@@ -542,12 +542,12 @@ export default function NovoTransporte() {
             </div>
 
             {/* Coordenadas - Full Width */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Coordenadas</h3>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Coordenadas</h3>
               
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-2">
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">
                     Latitude
                   </label>
                   <input
@@ -555,13 +555,13 @@ export default function NovoTransporte() {
                     step="any"
                     value={formData.latitude}
                     onChange={(e) => setFormData({ ...formData, latitude: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                     style={{ transition: 'none' }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-2">
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">
                     Longitude
                   </label>
                   <input
@@ -569,7 +569,7 @@ export default function NovoTransporte() {
                     step="any"
                     value={formData.longitude}
                     onChange={(e) => setFormData({ ...formData, longitude: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                     style={{ transition: 'none' }}
                   />
                 </div>
@@ -581,7 +581,7 @@ export default function NovoTransporte() {
               <button
                 type="button"
                 onClick={() => router.push('/transportes')}
-                className="px-6 py-3 border-2 border-slate-300 text-black rounded-lg font-semibold"
+                className="px-6 py-3 border-2 border-slate-300 text-slate-900 rounded-xl font-semibold"
                 style={{ transition: 'none' }}
               >
                 Cancelar
@@ -589,7 +589,7 @@ export default function NovoTransporte() {
               <button
                 type="submit"
                 disabled={saving}
-                className="px-6 py-3 bg-slate-900 text-white rounded-lg font-semibold disabled:bg-slate-400"
+                className="px-6 py-3 bg-slate-900 text-white rounded-xl font-semibold disabled:bg-slate-400"
                 style={{ transition: 'none' }}
               >
                 {saving ? 'Criando...' : 'Criar Transporte'}

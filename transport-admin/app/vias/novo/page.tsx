@@ -489,7 +489,7 @@ export default function NovaVia() {
       {/* Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
-          <div className={`rounded-lg shadow-lg p-4 min-w-[300px] ${
+          <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
             notification.type === 'success' ? 'bg-green-50 border border-green-200' :
             notification.type === 'error' ? 'bg-red-50 border border-red-200' :
             'bg-blue-50 border border-blue-200'
@@ -522,60 +522,60 @@ export default function NovaVia() {
         <div className="flex items-center space-x-4">
           <button
             onClick={() => router.push('/vias')}
-            className="p-2 rounded-lg hover:bg-gray-100 flex-shrink-0"
+            className="p-2 rounded-xl hover:bg-slate-100 flex-shrink-0"
             aria-label="Voltar às vias"
           >
-            <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <div>
-            <h2 className="text-3xl font-bold text-gray-900">Nova Via</h2>
-            <p className="text-gray-600 mt-1">Criar uma nova via no sistema</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Nova Via</h2>
+            <p className="text-slate-600 mt-1">Criar uma nova via no sistema</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Form */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Informações da Via</h3>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Informações da Via</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-slate-900 mb-2">
                   Nome da Via *
                 </label>
                 <input
                   type="text"
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                   placeholder="Ex: Via Principal Centro"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-slate-900 mb-2">
                   Código *
                 </label>
                 <input
                   type="text"
                   value={formData.codigo}
                   onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                   placeholder="Ex: VP-001"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-slate-900 mb-2">
                   Município *
                 </label>
                 <select
                   value={formData.municipioId}
                   onChange={(e) => setFormData({ ...formData, municipioId: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                   required
                 >
                   <option value="">Selecione um município</option>
@@ -587,36 +587,36 @@ export default function NovaVia() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                  <label className="block text-sm font-medium text-slate-900 mb-2">
                     Terminal de Partida *
                   </label>
                   <input
                     type="text"
                     value={formData.terminalPartida}
                     onChange={(e) => setFormData({ ...formData, terminalPartida: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                     placeholder={selectedParagens[0] ? `${selectedParagens[0].nome} (1.ª paragem)` : 'Ex: Terminal Central'}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                  <label className="block text-sm font-medium text-slate-900 mb-2">
                     Terminal de Chegada *
                   </label>
                   <input
                     type="text"
                     value={formData.terminalChegada}
                     onChange={(e) => setFormData({ ...formData, terminalChegada: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                     placeholder={selectedParagens.length > 1 ? `${selectedParagens[selectedParagens.length - 1].nome} (última paragem)` : 'Ex: Terminal Norte'}
                   />
                 </div>
               </div>
               {selectedParagens.length > 0 && (
-                <p className="text-xs text-gray-600 -mt-2">Em branco: usa a primeira e a última paragem da rota.</p>
+                <p className="text-xs text-slate-600 -mt-2">Em branco: usa a primeira e a última paragem da rota.</p>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-slate-900 mb-2">
                   Cor da Rota
                 </label>
                 <div className="flex items-center space-x-3">
@@ -624,17 +624,17 @@ export default function NovaVia() {
                     type="color"
                     value={formData.cor}
                     onChange={(e) => setFormData({ ...formData, cor: e.target.value })}
-                    className="h-10 w-20 border border-gray-300 rounded cursor-pointer"
+                    className="h-10 w-20 border border-slate-300 rounded-lg cursor-pointer"
                   />
-                  <span className="text-sm text-gray-600">{formData.cor}</span>
+                  <span className="text-sm text-slate-600">{formData.cor}</span>
                 </div>
               </div>
 
               {/* Stops along the drawn route, in travel order */}
               {nearbyParagens.length > 0 && (
-                <div className="pt-4 border-t border-gray-200">
+                <div className="pt-4 border-t border-slate-200">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-semibold text-gray-900">
+                    <h4 className="text-sm font-semibold text-slate-900">
                       Paragens da Rota ({selectedParagens.length} de {nearbyParagens.length})
                     </h4>
                     <button
@@ -644,7 +644,7 @@ export default function NovaVia() {
                           selectedParagens.length === nearbyParagens.length ? nearbyParagens.map((p) => p.id) : [],
                         )
                       }
-                      className="text-xs font-medium text-gray-900 hover:text-gray-700 px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50"
+                      className="text-xs font-medium text-slate-900 hover:text-slate-700 px-3 py-1 border border-slate-300 rounded-xl hover:bg-slate-50"
                     >
                       {selectedParagens.length === nearbyParagens.length ? 'Desmarcar Todas' : 'Selecionar Todas'}
                     </button>
@@ -655,8 +655,8 @@ export default function NovaVia() {
                       return (
                         <label
                           key={paragem.id}
-                          className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-all ${
-                            selected ? 'border-gray-900 bg-gray-50' : 'border-gray-200 hover:border-gray-300'
+                          className={`flex items-center space-x-3 p-3 border rounded-xl cursor-pointer transition-all ${
+                            selected ? 'border-slate-900 bg-slate-50' : 'border-slate-200 hover:border-slate-300'
                           }`}
                         >
                           <input
@@ -667,12 +667,12 @@ export default function NovaVia() {
                                 prev.includes(paragem.id) ? prev.filter((id) => id !== paragem.id) : [...prev, paragem.id],
                               )
                             }
-                            className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
+                            className="w-4 h-4 text-slate-900 border-slate-300 rounded-lg focus:ring-slate-900"
                           />
-                          <span className="text-xs text-gray-500 w-5 text-right">{i + 1}</span>
+                          <span className="text-xs text-slate-500 w-5 text-right">{i + 1}</span>
                           <span>
-                            <span className="block text-sm font-medium text-gray-900">{paragem.nome}</span>
-                            <span className="block text-xs text-gray-600 font-mono">{paragem.codigo}</span>
+                            <span className="block text-sm font-medium text-slate-900">{paragem.nome}</span>
+                            <span className="block text-xs text-slate-600 font-mono">{paragem.codigo}</span>
                           </span>
                         </label>
                       );
@@ -681,18 +681,18 @@ export default function NovaVia() {
                 </div>
               )}
 
-              <div className="pt-4 border-t border-gray-200 space-y-3">
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-gray-700" data-testid="route-counts">
-                  <span>Pontos na rota: <strong className="text-gray-900">{drawing.points.length}</strong></span>
-                  <span>Paragens próximas: <strong className="text-gray-900">{nearbyParagens.length}</strong></span>
+              <div className="pt-4 border-t border-slate-200 space-y-3">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-slate-700" data-testid="route-counts">
+                  <span>Pontos na rota: <strong className="text-slate-900">{drawing.points.length}</strong></span>
+                  <span>Paragens próximas: <strong className="text-slate-900">{nearbyParagens.length}</strong></span>
                 </div>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-slate-600">
                   * Campos obrigatórios. Clique no mapa para desenhar a rota.
                 </p>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-lg font-medium disabled:opacity-50"
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl font-medium disabled:opacity-50"
                 >
                   {loading ? 'Criando...' : 'Criar Via'}
                 </button>
@@ -700,13 +700,13 @@ export default function NovaVia() {
             </form>
           </div>
 
-          {/* Map */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b border-gray-200 space-y-3">
+          {/* Map: stays in view while the form scrolls */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden lg:sticky lg:top-6 lg:self-start">
+            <div className="p-4 border-b border-slate-200 space-y-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Desenhar Rota no Mapa</h3>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <h3 className="text-lg font-semibold text-slate-900">Desenhar Rota no Mapa</h3>
+                  <p className="text-sm text-slate-600 mt-1">
                     Clique no mapa ou numa paragem para adicionar um ponto. Arraste um ponto para o mover; clique nele para o remover.
                   </p>
                 </div>
@@ -716,7 +716,7 @@ export default function NovaVia() {
                     onClick={() => dispatch({ type: 'undo' })}
                     disabled={!drawing.past.length}
                     title="Desfazer (Ctrl+Z)"
-                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     ↶ Desfazer
                   </button>
@@ -725,7 +725,7 @@ export default function NovaVia() {
                     onClick={() => dispatch({ type: 'redo' })}
                     disabled={!drawing.future.length}
                     title="Refazer (Ctrl+Y)"
-                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     ↷ Refazer
                   </button>
@@ -733,13 +733,13 @@ export default function NovaVia() {
                     type="button"
                     onClick={() => dispatch({ type: 'clear' })}
                     disabled={!drawing.points.length}
-                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Limpar Rota
                   </button>
                 </div>
               </div>
-              <p className={`text-xs ${routingFailed ? 'text-red-700' : 'text-gray-600'}`} data-testid="route-status">
+              <p className={`text-xs ${routingFailed ? 'text-red-700' : 'text-slate-600'}`} data-testid="route-status">
                 {!hasRoute && 'Adicione pelo menos dois pontos.'}
                 {hasRoute && !routeReady && 'A calcular o percurso pelas estradas…'}
                 {routeReady && !routingFailed && `Percurso pelas estradas: ${routeKm.toFixed(1)} km`}
@@ -758,7 +758,7 @@ export default function NovaVia() {
                 )}
               </p>
             </div>
-            <div ref={mapContainer} className="w-full h-[600px]" />
+            <div ref={mapContainer} className="w-full h-[420px] sm:h-[600px] lg:h-[calc(100dvh-19rem)] lg:min-h-[420px]" />
           </div>
         </div>
       </div>

@@ -517,7 +517,7 @@ Passwords and PINs are never returned: administrator and passenger queries leave
 
 #### `GET /api/transportes/estado`
 
-What every vehicle is doing now, for the list's "Agora" column:
+What every vehicle is doing now, for the vehicle list's "Agora" column and the dashboard's "Agora" card:
 
 ```json
 {"cmozbuqta00189ounhmm7x4d6": {"estado": "circulacao", "gps": false}, "…": {"estado": "terminal", "gps": false}}
@@ -581,7 +581,7 @@ The vehicle's day by the timetable:
 
 | Endpoint | Content |
 |---|---|
-| `GET /api/dashboard/stats` | Everything the dashboard shows: counters, vehicles per municipality, every route with its path and vehicle count, routes and stops per municipality. Cached 5 minutes per instance. |
+| `GET /api/dashboard/stats` | Everything the dashboard shows except the "Agora" card: counters, vehicles per municipality, every route with its path and vehicle count, routes and stops per municipality. Cached 5 minutes per instance. |
 | `GET /api/relatorios/stats` | The "Estatísticas Gerais" report: `{"totalTransportes": 111, "totalVias": 91, "totalParagens": 1079, "totalProprietarios": 11, "totalMotoristas": 111, "totalProvincias": 11, "totalMunicipios": 2, "totalUtentes": 8, "transportComMotorista": 111, "transportSemMotorista": 0, "motoristasAtivos": 111, "utentesSubscritos": 6}` |
 
 ---

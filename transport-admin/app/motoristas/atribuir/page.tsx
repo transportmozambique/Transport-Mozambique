@@ -138,7 +138,7 @@ export default function AtribuirMotoristasPage() {
             </div>
             <button
               onClick={() => router.push('/motoristas')}
-              className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors"
             >
               ← Voltar aos Motoristas
             </button>
@@ -149,23 +149,23 @@ export default function AtribuirMotoristasPage() {
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-4">
             <p className="text-xs text-slate-600 mb-1">Total Motoristas</p>
             <p className="text-2xl font-bold text-slate-900">{stats.totalMotoristas}</p>
           </div>
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-4">
             <p className="text-xs text-slate-600 mb-1">Motoristas Ativos</p>
             <p className="text-2xl font-bold text-green-600">{stats.motoristasAtivos}</p>
           </div>
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-4">
             <p className="text-xs text-slate-600 mb-1">Com Transporte</p>
             <p className="text-2xl font-bold text-blue-600">{stats.motoristasComTransporte}</p>
           </div>
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-4">
             <p className="text-xs text-slate-600 mb-1">Disponíveis</p>
             <p className="text-2xl font-bold text-purple-600">{stats.motoristasDisponiveis}</p>
           </div>
-          <div className="bg-white rounded-lg border border-orange-200 p-4 bg-orange-50">
+          <div className="bg-white rounded-xl border border-orange-200 p-4 bg-orange-50">
             <p className="text-xs text-orange-700 mb-1">Sem Motorista</p>
             <p className="text-2xl font-bold text-orange-600">{stats.transportesSemMotorista}</p>
           </div>
@@ -173,7 +173,7 @@ export default function AtribuirMotoristasPage() {
 
         {/* Alert */}
         {stats.transportesSemMotorista > 0 && stats.motoristasDisponiveis === 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
             <div className="flex items-start space-x-3">
               <svg className="w-5 h-5 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -193,7 +193,7 @@ export default function AtribuirMotoristasPage() {
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Transportes sem Motorista */}
-          <div className="bg-white rounded-lg border border-slate-200">
+          <div className="bg-white rounded-xl border border-slate-200">
             <div className="p-6 border-b border-slate-200">
               <h2 className="text-lg font-bold text-slate-900 mb-4">
                 Transportes sem Motorista ({filteredTransportes.length})
@@ -203,7 +203,7 @@ export default function AtribuirMotoristasPage() {
                 placeholder="Pesquisar por matrícula, modelo, marca, código ou via..."
                 value={searchTransporte}
                 onChange={(e) => setSearchTransporte(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div className="p-4 space-y-2 max-h-[600px] overflow-y-auto">
@@ -219,7 +219,7 @@ export default function AtribuirMotoristasPage() {
                   <button
                     key={transporte.id}
                     onClick={() => setSelectedTransporte(transporte.id)}
-                    className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
                       selectedTransporte === transporte.id
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
@@ -246,7 +246,7 @@ export default function AtribuirMotoristasPage() {
           </div>
 
           {/* Motoristas Disponíveis */}
-          <div className="bg-white rounded-lg border border-slate-200">
+          <div className="bg-white rounded-xl border border-slate-200">
             <div className="p-6 border-b border-slate-200">
               <h2 className="text-lg font-bold text-slate-900 mb-4">
                 Motoristas Disponíveis ({filteredMotoristas.length})
@@ -256,7 +256,7 @@ export default function AtribuirMotoristasPage() {
                 placeholder="Pesquisar por nome, BI, carta ou telefone..."
                 value={searchMotorista}
                 onChange={(e) => setSearchMotorista(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div className="p-4 space-y-2 max-h-[600px] overflow-y-auto">
@@ -273,7 +273,7 @@ export default function AtribuirMotoristasPage() {
                   <button
                     key={motorista.id}
                     onClick={() => setSelectedMotorista(motorista.id)}
-                    className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
                       selectedMotorista === motorista.id
                         ? 'border-green-500 bg-green-50'
                         : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
@@ -300,7 +300,7 @@ export default function AtribuirMotoristasPage() {
         </div>
 
         {/* Action Button */}
-        <div className="bg-white rounded-lg border border-slate-200 p-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-900 mb-1">
@@ -318,7 +318,7 @@ export default function AtribuirMotoristasPage() {
             <button
               onClick={handleAtribuir}
               disabled={!selectedTransporte || !selectedMotorista || assigning}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
             >
               {assigning ? (
                 <>

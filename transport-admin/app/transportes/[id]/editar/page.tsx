@@ -409,20 +409,20 @@ export default function EditarTransporte() {
     <div className="bg-white min-h-screen">
       <div className="max-w-[1600px] mx-auto px-6 pt-6 pb-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push(`/transportes/${params.id}`)}
-              className="p-2 rounded-lg"
+              className="p-2 rounded-xl"
               style={{ transition: 'none' }}
             >
-              <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-black">Editar Transporte</h2>
-              <p className="text-black mt-1">{transporte?.matricula || 'Carregando...'}</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Editar Transporte</h2>
+              <p className="text-slate-900 mt-1">{transporte?.matricula || 'Carregando...'}</p>
             </div>
           </div>
         </div>
@@ -432,12 +432,12 @@ export default function EditarTransporte() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Informações Básicas */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Informações Básicas</h3>
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Informações Básicas</h3>
                 
                 <div className="space-y-5">
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Matrícula *
                     </label>
                     <input
@@ -445,7 +445,7 @@ export default function EditarTransporte() {
                       required
                       value={formData.matricula}
                       onChange={(e) => setFormData({ ...formData, matricula: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                       placeholder="Ex: AAA-123-MZ"
                       style={{ transition: 'none' }}
                     />
@@ -453,7 +453,7 @@ export default function EditarTransporte() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-black mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Modelo *
                       </label>
                       <input
@@ -461,14 +461,14 @@ export default function EditarTransporte() {
                         required
                         value={formData.modelo}
                         onChange={(e) => setFormData({ ...formData, modelo: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                         placeholder="Ex: Hiace"
                         style={{ transition: 'none' }}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-black mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Marca *
                       </label>
                       <input
@@ -476,7 +476,7 @@ export default function EditarTransporte() {
                         required
                         value={formData.marca}
                         onChange={(e) => setFormData({ ...formData, marca: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                         placeholder="Ex: Toyota"
                         style={{ transition: 'none' }}
                       />
@@ -485,7 +485,7 @@ export default function EditarTransporte() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-black mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Cor *
                       </label>
                       <input
@@ -493,14 +493,14 @@ export default function EditarTransporte() {
                         required
                         value={formData.cor}
                         onChange={(e) => setFormData({ ...formData, cor: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                         placeholder="Ex: Branco"
                         style={{ transition: 'none' }}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-black mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Ano *
                       </label>
                       <input
@@ -510,7 +510,7 @@ export default function EditarTransporte() {
                         max={new Date().getFullYear() + 1}
                         value={formData.ano}
                         onChange={(e) => setFormData({ ...formData, ano: parseInt(e.target.value) || new Date().getFullYear() })}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                         placeholder="2020"
                         style={{ transition: 'none' }}
                       />
@@ -519,7 +519,7 @@ export default function EditarTransporte() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-black mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Lotação *
                       </label>
                       <input
@@ -528,21 +528,21 @@ export default function EditarTransporte() {
                         min="1"
                         value={formData.lotacao}
                         onChange={(e) => setFormData({ ...formData, lotacao: parseInt(e.target.value) || 0 })}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                         placeholder="50"
                         style={{ transition: 'none' }}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-black mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Estado *
                       </label>
                       <select
                         required
                         value={formData.estado}
                         onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black bg-white"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 bg-white"
                         style={{ transition: 'none' }}
                       >
                         <option value="ativo">Ativo</option>
@@ -554,14 +554,14 @@ export default function EditarTransporte() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Via *
                     </label>
                     <select
                       required
                       value={formData.viaId}
                       onChange={(e) => setFormData({ ...formData, viaId: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black bg-white"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 bg-white"
                       style={{ transition: 'none' }}
                     >
                       <option value="">Selecione uma via</option>
@@ -574,33 +574,33 @@ export default function EditarTransporte() {
               </div>
 
               {/* Informações Técnicas */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Informações Técnicas</h3>
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Informações Técnicas</h3>
                 
                 <div className="space-y-5">
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Número do Chassis
                     </label>
                     <input
                       type="text"
                       value={formData.numeroChasis}
                       onChange={(e) => setFormData({ ...formData, numeroChasis: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                       placeholder="Ex: 1HGBH41JXMN109186"
                       style={{ transition: 'none' }}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Número do Motor
                     </label>
                     <input
                       type="text"
                       value={formData.numeroMotor}
                       onChange={(e) => setFormData({ ...formData, numeroMotor: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                       placeholder="Ex: 2TR-FE-1234567"
                       style={{ transition: 'none' }}
                     />
@@ -608,13 +608,13 @@ export default function EditarTransporte() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-black mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Tipo Combustível
                       </label>
                       <select
                         value={formData.tipoCombustivel}
                         onChange={(e) => setFormData({ ...formData, tipoCombustivel: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black bg-white"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 bg-white"
                         style={{ transition: 'none' }}
                       >
                         <option value="diesel">Diesel</option>
@@ -625,7 +625,7 @@ export default function EditarTransporte() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-black mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Capacidade (L)
                       </label>
                       <input
@@ -633,7 +633,7 @@ export default function EditarTransporte() {
                         min="0"
                         value={formData.capacidadeCombustivel}
                         onChange={(e) => setFormData({ ...formData, capacidadeCombustivel: parseInt(e.target.value) || 0 })}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                         placeholder="70"
                         style={{ transition: 'none' }}
                       />
@@ -641,7 +641,7 @@ export default function EditarTransporte() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Quilometragem Total (km)
                     </label>
                     <input
@@ -649,7 +649,7 @@ export default function EditarTransporte() {
                       min="0"
                       value={formData.kmTotal}
                       onChange={(e) => setFormData({ ...formData, kmTotal: parseInt(e.target.value) || 0 })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                       placeholder="45230"
                       style={{ transition: 'none' }}
                     />
@@ -658,32 +658,32 @@ export default function EditarTransporte() {
               </div>
 
               {/* Manutenção */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Manutenção</h3>
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Manutenção</h3>
                 
                 <div className="space-y-5">
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Próxima Manutenção
                     </label>
                     <input
                       type="date"
                       value={formData.dataProximaManutencao}
                       onChange={(e) => setFormData({ ...formData, dataProximaManutencao: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                       style={{ transition: 'none' }}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Próxima Revisão
                     </label>
                     <input
                       type="date"
                       value={formData.dataProximaRevisao}
                       onChange={(e) => setFormData({ ...formData, dataProximaRevisao: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                       style={{ transition: 'none' }}
                     />
                   </div>
@@ -692,15 +692,15 @@ export default function EditarTransporte() {
             </div>
 
             {/* Observações - Full Width */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Observações</h3>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Observações</h3>
                 
               <div>
                 <textarea
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
                   rows={4}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black resize-none"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 resize-none"
                   placeholder="Adicione notas ou observações sobre o transporte..."
                   style={{ transition: 'none' }}
                 />
@@ -709,14 +709,14 @@ export default function EditarTransporte() {
 
             {/* Pessoas Associadas - Full Width */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Pessoas Associadas</h3>
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Pessoas Associadas</h3>
                 
                 <div className="space-y-6">
                   {/* Motorista */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-base font-semibold text-black">Motorista</h4>
+                      <h4 className="text-base font-semibold text-slate-900">Motorista</h4>
                       {!transporte?.motorista && (
                         <button 
                           type="button"
@@ -724,7 +724,7 @@ export default function EditarTransporte() {
                             setShowMotoristaModal(true);
                             fetchMotoristasDisponiveis();
                           }}
-                          className="px-3 py-1.5 bg-black text-white rounded-lg text-xs font-medium"
+                          className="px-3 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-medium"
                           style={{ transition: 'none' }}
                         >
                           + Atribuir
@@ -732,18 +732,18 @@ export default function EditarTransporte() {
                       )}
                     </div>
                     {transporte?.motorista ? (
-                      <div className="border border-slate-200 rounded-lg p-4">
+                      <div className="border border-slate-200 rounded-xl p-4">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-start space-x-3 flex-1 min-w-0">
                             <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
-                              <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h5 className="font-bold text-black text-base mb-1.5">{transporte.motorista.nome}</h5>
+                              <h5 className="font-bold text-slate-900 text-base mb-1.5">{transporte.motorista.nome}</h5>
                               <span className={`inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full ${
-                                (transporte.motorista as any).status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                (transporte.motorista as any).status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'
                               }`}>
                                 {(transporte.motorista as any).status || 'ativo'}
                               </span>
@@ -761,15 +761,15 @@ export default function EditarTransporte() {
                             </svg>
                           </button>
                         </div>
-                        <div className="space-y-2.5 text-sm text-black pl-15">
+                        <div className="space-y-2.5 text-sm text-slate-900 pl-15">
                           <p className="flex items-center">
-                            <svg className="w-4 h-4 mr-2 flex-shrink-0 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 mr-2 flex-shrink-0 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                             </svg>
                             <span className="truncate">{transporte.motorista.telefone}</span>
                           </p>
                           <p className="flex items-center">
-                            <svg className="w-4 h-4 mr-2 flex-shrink-0 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 mr-2 flex-shrink-0 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                             <span className="truncate">{transporte.motorista.email}</span>
@@ -777,7 +777,7 @@ export default function EditarTransporte() {
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center py-6 text-black border border-slate-200 rounded-lg bg-slate-50">
+                      <div className="text-center py-6 text-slate-900 border border-slate-200 rounded-xl bg-slate-50">
                         <svg className="w-10 h-10 mx-auto mb-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
@@ -789,7 +789,7 @@ export default function EditarTransporte() {
                   {/* Proprietário */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-base font-semibold text-black">Proprietário</h4>
+                      <h4 className="text-base font-semibold text-slate-900">Proprietário</h4>
                       {(!transporte?.proprietarios || transporte.proprietarios.length === 0) && (
                         <button 
                           type="button"
@@ -797,7 +797,7 @@ export default function EditarTransporte() {
                             setShowProprietarioModal(true);
                             fetchProprietariosDisponiveis();
                           }}
-                          className="px-3 py-1.5 bg-black text-white rounded-lg text-xs font-medium"
+                          className="px-3 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-medium"
                           style={{ transition: 'none' }}
                         >
                           + Atribuir
@@ -805,16 +805,16 @@ export default function EditarTransporte() {
                       )}
                     </div>
                     {transporte?.proprietarios && transporte.proprietarios.length > 0 ? (
-                      <div className="border border-slate-200 rounded-lg p-4">
+                      <div className="border border-slate-200 rounded-xl p-4">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-start space-x-3 flex-1 min-w-0">
                             <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
-                              <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                               </svg>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h5 className="font-bold text-black text-base">{transporte.proprietarios[0].proprietario.nome}</h5>
+                              <h5 className="font-bold text-slate-900 text-base">{transporte.proprietarios[0].proprietario.nome}</h5>
                             </div>
                           </div>
                           <button
@@ -829,15 +829,15 @@ export default function EditarTransporte() {
                             </svg>
                           </button>
                         </div>
-                        <div className="space-y-2.5 text-sm text-black pl-15">
+                        <div className="space-y-2.5 text-sm text-slate-900 pl-15">
                           <p className="flex items-center">
-                            <svg className="w-4 h-4 mr-2 flex-shrink-0 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 mr-2 flex-shrink-0 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                             </svg>
                             <span className="truncate">+258 {transporte.proprietarios[0].proprietario.contacto1}</span>
                           </p>
                           <p className="flex items-center">
-                            <svg className="w-4 h-4 mr-2 flex-shrink-0 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 mr-2 flex-shrink-0 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             </svg>
                             <span className="truncate">{transporte.proprietarios[0].proprietario.endereco}</span>
@@ -845,7 +845,7 @@ export default function EditarTransporte() {
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center py-6 text-black border border-slate-200 rounded-lg bg-slate-50">
+                      <div className="text-center py-6 text-slate-900 border border-slate-200 rounded-xl bg-slate-50">
                         <svg className="w-10 h-10 mx-auto mb-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
@@ -857,12 +857,12 @@ export default function EditarTransporte() {
               </div>
 
               {/* Localização - Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Coordenadas</h3>
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Coordenadas</h3>
                 
                 <div className="space-y-5">
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Latitude
                     </label>
                     <input
@@ -870,13 +870,13 @@ export default function EditarTransporte() {
                       step="any"
                       value={formData.latitude}
                       onChange={(e) => setFormData({ ...formData, latitude: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                       style={{ transition: 'none' }}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Longitude
                     </label>
                     <input
@@ -884,14 +884,14 @@ export default function EditarTransporte() {
                       step="any"
                       value={formData.longitude}
                       onChange={(e) => setFormData({ ...formData, longitude: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                       style={{ transition: 'none' }}
                     />
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-                    <p className="text-xs text-black font-medium mb-2">💡 Dica</p>
-                    <p className="text-xs text-black">Clique no mapa abaixo para definir a localização automaticamente.</p>
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                    <p className="text-xs text-slate-900 font-medium mb-2">💡 Dica</p>
+                    <p className="text-xs text-slate-900">Clique no mapa abaixo para definir a localização automaticamente.</p>
                   </div>
                 </div>
               </div>
@@ -902,7 +902,7 @@ export default function EditarTransporte() {
               <button
                 type="button"
                 onClick={() => router.push(`/transportes/${params.id}`)}
-                className="px-6 py-3 border-2 border-slate-300 text-black rounded-lg font-semibold"
+                className="px-6 py-3 border-2 border-slate-300 text-slate-900 rounded-xl font-semibold"
                 style={{ transition: 'none' }}
               >
                 Cancelar
@@ -910,7 +910,7 @@ export default function EditarTransporte() {
               <button
                 type="submit"
                 disabled={saving}
-                className="px-6 py-3 bg-slate-900 text-white rounded-lg font-semibold disabled:bg-slate-400"
+                className="px-6 py-3 bg-slate-900 text-white rounded-xl font-semibold disabled:bg-slate-400"
                 style={{ transition: 'none' }}
               >
                 {saving ? 'Guardando...' : 'Guardar Alterações'}
@@ -928,12 +928,12 @@ export default function EditarTransporte() {
           >
             <div className="flex items-center justify-center min-h-screen p-4">
               <div 
-                className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto my-8"
+                className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto my-8"
                 onClick={(e) => e.stopPropagation()}
               >
               <div className="p-6 border-b border-slate-200">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-black">Atribuir Motorista</h3>
+                  <h3 className="text-xl font-bold text-slate-900">Atribuir Motorista</h3>
                   <button
                     onClick={() => setShowMotoristaModal(false)}
                     className="text-slate-400"
@@ -951,21 +951,21 @@ export default function EditarTransporte() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
                   </div>
                 ) : motoristasDisponiveis.length === 0 ? (
-                  <p className="text-center text-black py-8">Nenhum motorista disponível</p>
+                  <p className="text-center text-slate-900 py-8">Nenhum motorista disponível</p>
                 ) : (
                   motoristasDisponiveis.map((motorista) => (
                     <div
                       key={motorista.id}
-                      className="border border-slate-200 rounded-lg p-4 flex items-center justify-between"
+                      className="border border-slate-200 rounded-xl p-4 flex items-center justify-between"
                     >
                       <div>
-                        <h4 className="font-bold text-black">{motorista.nome}</h4>
-                        <p className="text-sm text-black">{motorista.telefone}</p>
-                        <p className="text-sm text-black">{motorista.email}</p>
+                        <h4 className="font-bold text-slate-900">{motorista.nome}</h4>
+                        <p className="text-sm text-slate-900">{motorista.telefone}</p>
+                        <p className="text-sm text-slate-900">{motorista.email}</p>
                       </div>
                       <button
                         onClick={() => handleAtribuirMotorista(motorista.id)}
-                        className="px-4 py-2 bg-black text-white rounded-lg font-medium"
+                        className="px-4 py-2 bg-slate-900 text-white rounded-xl font-medium"
                         style={{ transition: 'none' }}
                       >
                         Atribuir
@@ -988,12 +988,12 @@ export default function EditarTransporte() {
           >
             <div className="flex items-center justify-center min-h-screen p-4">
               <div 
-                className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto my-8"
+                className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto my-8"
                 onClick={(e) => e.stopPropagation()}
               >
               <div className="p-6 border-b border-slate-200">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-black">Atribuir Proprietário</h3>
+                  <h3 className="text-xl font-bold text-slate-900">Atribuir Proprietário</h3>
                   <button
                     onClick={() => setShowProprietarioModal(false)}
                     className="text-slate-400"
@@ -1011,21 +1011,21 @@ export default function EditarTransporte() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
                   </div>
                 ) : proprietariosDisponiveis.length === 0 ? (
-                  <p className="text-center text-black py-8">Nenhum proprietário disponível</p>
+                  <p className="text-center text-slate-900 py-8">Nenhum proprietário disponível</p>
                 ) : (
                   proprietariosDisponiveis.map((proprietario) => (
                     <div
                       key={proprietario.id}
-                      className="border border-slate-200 rounded-lg p-4 flex items-center justify-between"
+                      className="border border-slate-200 rounded-xl p-4 flex items-center justify-between"
                     >
                       <div>
-                        <h4 className="font-bold text-black">{proprietario.nome}</h4>
-                        <p className="text-sm text-black">BI: {proprietario.bi}</p>
-                        <p className="text-sm text-black">+258 {proprietario.contacto1}</p>
+                        <h4 className="font-bold text-slate-900">{proprietario.nome}</h4>
+                        <p className="text-sm text-slate-900">BI: {proprietario.bi}</p>
+                        <p className="text-sm text-slate-900">+258 {proprietario.contacto1}</p>
                       </div>
                       <button
                         onClick={() => handleAtribuirProprietario(proprietario.id)}
-                        className="px-4 py-2 bg-black text-white rounded-lg font-medium"
+                        className="px-4 py-2 bg-slate-900 text-white rounded-xl font-medium"
                         style={{ transition: 'none' }}
                       >
                         Atribuir
@@ -1043,7 +1043,7 @@ export default function EditarTransporte() {
       {/* Toast Notification */}
       {notification && (
         <div className="fixed bottom-6 right-6 z-50 animate-fade-in">
-          <div className={`px-6 py-4 rounded-lg shadow-lg border-2 ${
+          <div className={`px-6 py-4 rounded-xl shadow-lg border-2 ${
             notification.type === 'success' ? 'bg-green-50 border-green-500 text-green-900' :
             notification.type === 'error' ? 'bg-red-50 border-red-500 text-red-900' :
             'bg-blue-50 border-blue-500 text-blue-900'
@@ -1079,7 +1079,7 @@ export default function EditarTransporte() {
         >
           <div className="flex items-center justify-center min-h-screen p-4">
             <div 
-              className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+              className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start space-x-4 mb-6">
@@ -1089,21 +1089,21 @@ export default function EditarTransporte() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-black mb-2">Confirmar Ação</h3>
-                  <p className="text-black">{confirmModal.message}</p>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">Confirmar Ação</h3>
+                  <p className="text-slate-900">{confirmModal.message}</p>
                 </div>
               </div>
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => setConfirmModal(null)}
-                  className="px-4 py-2 border-2 border-slate-300 text-black rounded-lg font-semibold"
+                  className="px-4 py-2 border-2 border-slate-300 text-slate-900 rounded-xl font-semibold"
                   style={{ transition: 'none' }}
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={confirmModal.onConfirm}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold"
+                  className="px-4 py-2 bg-red-600 text-white rounded-xl font-semibold"
                   style={{ transition: 'none' }}
                 >
                   Confirmar

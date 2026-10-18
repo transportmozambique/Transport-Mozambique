@@ -3,6 +3,7 @@ import LoadingScreen from "../components/LoadingScreen";
 
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "../contexts/AuthContext";
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -62,6 +63,9 @@ function DashboardContent() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedVia, setSelectedVia] = useState<string | null>(null);
+  const { admin } = useAuth();
+  // What the vehicles are doing now (GPS or timetable), from the same source as the vehicle list
+  const [agora, setAgora] = useState<{ circulacao: number; parados: number; gps: number; semPosicao: number } | null>(null);
   
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -174,6 +178,30 @@ function DashboardContent() {
     };
   }, []);
 
+  useEffect(() => {
+    let alive = true;
+    const load = () =>
+      fetch('/api/transportes/estado')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d: Record<string, { estado: string; gps: boolean }> | null) => {
+          if (!alive || !d) return;
+          const all = Object.values(d);
+          setAgora({
+            circulacao: all.filter((v) => v.estado === 'circulacao').length,
+            parados: all.filter((v) => v.estado === 'terminal' || v.estado === 'fora-de-servico').length,
+            gps: all.filter((v) => v.gps).length,
+            semPosicao: all.filter((v) => v.estado === 'sem-posicao').length,
+          });
+        })
+        .catch(() => {});
+    load();
+    const timer = setInterval(load, 30000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, []);
+
   // Handle via query parameter
   useEffect(() => {
     const viaId = searchParams.get('via');
@@ -192,22 +220,8 @@ function DashboardContent() {
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: {
-        version: 8,
-        sources: {
-          'osm': {
-            type: 'raster',
-            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-            tileSize: 256,
-            attribution: '© OpenStreetMap contributors'
-          }
-        },
-        layers: [{
-          id: 'osm',
-          type: 'raster',
-          source: 'osm'
-        }]
-      },
+      style: 'https://tiles.openfreemap.org/styles/liberty',
+      attributionControl: { compact: true },
       center: [32.5892, -25.9655], // Maputo center
       zoom: 11,
       pitch: 45, // Tilt map to see buildings in 3D
@@ -396,16 +410,16 @@ function DashboardContent() {
     return (
       <div className="flex items-center justify-center h-screen bg-white">
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Erro de Conexão</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Erro de Conexão</h2>
+          <p className="text-slate-600 mb-6">{error}</p>
           <button
             onClick={fetchStats}
-            className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors font-medium"
+            className="px-6 py-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors font-medium"
           >
             Tentar Novamente
           </button>
@@ -414,627 +428,287 @@ function DashboardContent() {
     );
   }
 
-  const motoristasPercentage = stats.transportes > 0 
-    ? Math.round((stats.motoristasActivos / stats.transportes) * 100) 
+  const motoristasPercentage = stats.transportes > 0
+    ? Math.round((stats.motoristasActivos / stats.transportes) * 100)
     : 0;
+  const viasComVeiculos = viasData.filter((v) => v.count > 0).length;
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+  const firstName = admin?.nome.trim().split(/\s+/)[0];
+  const maxVia = Math.max(...viasData.map((v) => v.count), 1);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-[1800px] mx-auto px-6 py-8 space-y-6">
-        {/* Alert for buses without drivers - TOP OF PAGE */}
-        {stats.transportesSemMotorista > 0 && (
-          <div className="bg-black text-white rounded-xl p-6 border-2 border-gray-800">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-lg font-bold text-white mb-1">
-                    Atenção: {stats.transportesSemMotorista} {stats.transportesSemMotorista === 1 ? 'transporte está' : 'transportes estão'} sem motorista
-                  </p>
-                  <p className="text-sm text-gray-300">
-                    Cada transporte deve ter um motorista único atribuído para operar. Atribua motoristas agora para garantir operação completa.
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => router.push('/motoristas')}
-                className="px-6 py-3 bg-white text-black text-sm font-bold rounded-lg hover:bg-gray-100 transition-colors whitespace-nowrap flex items-center space-x-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span>Ver Motoristas</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Primary Stats Grid - 4 columns */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Transportes */}
-          <button
-            onClick={() => router.push('/transportes')}
-            className="bg-white rounded-xl border-2 border-gray-200 p-6 hover:border-black hover:shadow-xl transition-all cursor-pointer text-left group"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center group-hover:bg-black transition-colors">
-                <svg className="w-6 h-6 text-black group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
-              </div>
-              <svg className="w-5 h-5 text-gray-400 group-hover:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-            <p className="text-sm font-medium text-gray-600 mb-1">Total Transportes</p>
-            <p className="text-4xl font-bold text-black mb-2">{stats.transportes}</p>
-            {stats.transportesSemMotorista > 0 && (
-              <p className="text-xs text-gray-600">
-                {stats.transportesSemMotorista} sem motorista
+    <div className="min-h-full bg-slate-50">
+      <div className="mx-auto max-w-[1600px] space-y-6 px-4 py-6 sm:px-6 lg:py-8">
+        {/* Greeting and quick actions */}
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-slate-500">
+              {greeting}
+              {firstName ? `, ${firstName}` : ''}
+            </p>
+            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Visão geral da rede</h1>
+            {lastUpdated && (
+              <p className="mt-1 text-xs text-slate-500">
+                Actualizado às {lastUpdated.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} · os números podem demorar até 5 min a mudar
               </p>
             )}
-          </button>
-
-          {/* Motoristas */}
-          <button
-            onClick={() => router.push('/motoristas')}
-            className="bg-white rounded-xl border-2 border-gray-200 p-6 hover:border-black hover:shadow-xl transition-all cursor-pointer text-left group"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center group-hover:bg-black transition-colors">
-                <svg className="w-6 h-6 text-black group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-              <svg className="w-5 h-5 text-gray-400 group-hover:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-            <p className="text-sm font-medium text-gray-600 mb-1">Total Motoristas</p>
-            <p className="text-4xl font-bold text-black mb-2">{stats.motoristas}</p>
-            <p className="text-xs text-gray-600">
-              {stats.motoristasActivos} activos ({motoristasPercentage}%)
-            </p>
-          </button>
-
-          {/* Vias */}
-          <button
-            onClick={() => router.push('/vias')}
-            className="bg-white rounded-xl border-2 border-gray-200 p-6 hover:border-black hover:shadow-xl transition-all cursor-pointer text-left group"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center group-hover:bg-black transition-colors">
-                <svg className="w-6 h-6 text-black group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                </svg>
-              </div>
-              <svg className="w-5 h-5 text-gray-400 group-hover:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-            <p className="text-sm font-medium text-gray-600 mb-1">Total Vias</p>
-            <p className="text-4xl font-bold text-black mb-2">{stats.vias}</p>
-            <p className="text-xs text-gray-600">Rotas de transporte</p>
-          </button>
-
-          {/* Paragens */}
-          <button
-            onClick={() => router.push('/paragens')}
-            className="bg-white rounded-xl border-2 border-gray-200 p-6 hover:border-black hover:shadow-xl transition-all cursor-pointer text-left group"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center group-hover:bg-black transition-colors">
-                <svg className="w-6 h-6 text-black group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              <svg className="w-5 h-5 text-gray-400 group-hover:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-            <p className="text-sm font-medium text-gray-600 mb-1">Total Paragens</p>
-            <p className="text-4xl font-bold text-black mb-2">{stats.paragens}</p>
-            <p className="text-xs text-gray-600">Pontos de paragem</p>
-          </button>
-        </div>
-
-        {/* Secondary Stats - Dark Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          <button
-            onClick={() => router.push('/proprietarios')}
-            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-6 hover:shadow-xl transition-all cursor-pointer text-left group"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <svg className="w-5 h-5 text-white/60 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-            <p className="text-sm font-medium text-gray-400 mb-1">Proprietários</p>
-            <p className="text-4xl font-bold text-white">{stats.proprietarios}</p>
-            <p className="text-xs text-gray-400 mt-2">Empresas registadas</p>
-          </button>
-
-          <button
-            onClick={() => router.push('/provincias')}
-            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-6 hover:shadow-xl transition-all cursor-pointer text-left group"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <svg className="w-5 h-5 text-white/60 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-            <p className="text-sm font-medium text-gray-400 mb-1">Províncias</p>
-            <p className="text-4xl font-bold text-white">{stats.provincias}</p>
-            <p className="text-xs text-gray-400 mt-2">Regiões administrativas</p>
-          </button>
-
-          <button
-            onClick={() => router.push('/municipios')}
-            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-6 hover:shadow-xl transition-all cursor-pointer text-left group"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
-              <svg className="w-5 h-5 text-white/60 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-            <p className="text-sm font-medium text-gray-400 mb-1">Municípios</p>
-            <p className="text-4xl font-bold text-white">{stats.municipios}</p>
-            <p className="text-xs text-gray-400 mt-2">Distritos urbanos</p>
-          </button>
-        </div>
-
-        {/* New Analytics Graphs - 3 columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* 1. Vias por Município */}
-          <button
-            onClick={() => router.push('/vias')}
-            className="bg-white rounded-xl border-2 border-gray-200 p-6 hover:border-black transition-all text-left w-full cursor-pointer"
-          >
-            <h3 className="text-lg font-bold text-black mb-4">Vias por Município</h3>
-            <div className="flex items-center space-x-6">
-              <div className="relative w-32 h-32 flex-shrink-0">
-                <svg viewBox="0 0 200 200" className="transform -rotate-90">
-                  {/* Background circle */}
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#f3f4f6" strokeWidth="40" />
-                  
-                  {viasMunicipioData.length > 0 && (() => {
-                    const total = viasMunicipioData.reduce((sum, m) => sum + m.count, 0);
-                    let offset = 0;
-                    const colors = ['#000000', '#6b7280', '#9ca3af', '#d1d5db'];
-                    
-                    return viasMunicipioData.map((municipio, index) => {
-                      const percentage = municipio.count / total;
-                      const dashArray = percentage * 502.65;
-                      const dashOffset = -offset;
-                      offset += dashArray;
-                      
-                      return (
-                        <circle
-                          key={municipio.name}
-                          cx="100"
-                          cy="100"
-                          r="80"
-                          fill="none"
-                          stroke={colors[index % colors.length]}
-                          strokeWidth="40"
-                          strokeDasharray={`${dashArray} 502.65`}
-                          strokeDashoffset={dashOffset}
-                          strokeLinecap="round"
-                          className="transition-all duration-300"
-                        />
-                      );
-                    });
-                  })()}
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-2xl font-bold text-black">{stats.vias}</p>
-                  <p className="text-xs text-gray-600">Total</p>
-                </div>
-              </div>
-              
-              <div className="flex-1 space-y-2">
-                {viasMunicipioData.map((municipio, index) => {
-                  const colors = ['bg-black', 'bg-gray-500', 'bg-gray-400', 'bg-gray-300'];
-                  const percentage = stats.vias > 0 ? Math.round((municipio.count / stats.vias) * 100) : 0;
-                  
-                  return (
-                    <div
-                      key={municipio.name}
-                      className="w-full flex items-center justify-between p-2"
-                    >
-                      <div className="flex items-center space-x-2 flex-1 min-w-0">
-                        <div className={`w-3 h-3 ${colors[index % colors.length]} rounded-sm flex-shrink-0`}></div>
-                        <span className="text-sm text-black truncate">{municipio.name}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 ml-2">
-                        <span className="text-sm font-bold text-black">{municipio.count}</span>
-                        <span className="text-xs text-gray-500">({percentage}%)</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </button>
-
-          {/* 2. Paragens por Município */}
-          <button
-            onClick={() => router.push('/paragens')}
-            className="bg-white rounded-xl border-2 border-gray-200 p-6 hover:border-black transition-all text-left w-full cursor-pointer"
-          >
-            <h3 className="text-lg font-bold text-black mb-4">Paragens por Município</h3>
-            <div className="flex items-center space-x-6">
-              <div className="relative w-32 h-32 flex-shrink-0">
-                <svg viewBox="0 0 200 200" className="transform -rotate-90">
-                  {/* Background circle */}
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#f3f4f6" strokeWidth="40" />
-                  
-                  {paragensMunicipioData.length > 0 && (() => {
-                    const total = paragensMunicipioData.reduce((sum, m) => sum + m.count, 0);
-                    let offset = 0;
-                    const colors = ['#000000', '#6b7280', '#9ca3af', '#d1d5db'];
-                    
-                    return paragensMunicipioData.map((municipio, index) => {
-                      const percentage = municipio.count / total;
-                      const dashArray = percentage * 502.65;
-                      const dashOffset = -offset;
-                      offset += dashArray;
-                      
-                      return (
-                        <circle
-                          key={municipio.name}
-                          cx="100"
-                          cy="100"
-                          r="80"
-                          fill="none"
-                          stroke={colors[index % colors.length]}
-                          strokeWidth="40"
-                          strokeDasharray={`${dashArray} 502.65`}
-                          strokeDashoffset={dashOffset}
-                          strokeLinecap="round"
-                          className="transition-all duration-300"
-                        />
-                      );
-                    });
-                  })()}
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-2xl font-bold text-black">{stats.paragens}</p>
-                  <p className="text-xs text-gray-600">Total</p>
-                </div>
-              </div>
-              
-              <div className="flex-1 space-y-2">
-                {paragensMunicipioData.map((municipio, index) => {
-                  const colors = ['bg-black', 'bg-gray-500', 'bg-gray-400', 'bg-gray-300'];
-                  const percentage = stats.paragens > 0 ? Math.round((municipio.count / stats.paragens) * 100) : 0;
-                  
-                  return (
-                    <div
-                      key={municipio.name}
-                      className="w-full flex items-center justify-between p-2"
-                    >
-                      <div className="flex items-center space-x-2 flex-1 min-w-0">
-                        <div className={`w-3 h-3 ${colors[index % colors.length]} rounded-sm flex-shrink-0`}></div>
-                        <span className="text-sm text-black truncate">{municipio.name}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 ml-2">
-                        <span className="text-sm font-bold text-black">{municipio.count}</span>
-                        <span className="text-xs text-gray-500">({percentage}%)</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </button>
-
-          {/* 3. Top Vias com Mais Transportes */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-6 hover:border-black transition-all">
-            <button
-              onClick={() => router.push('/vias')}
-              className="w-full text-left mb-4 hover:opacity-70 transition-opacity"
-            >
-              <h3 className="text-lg font-bold text-black">Top Vias</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => router.push('/transportes/novo')} className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+              + Transporte
             </button>
-            <div className="space-y-3">
-              {viasData.slice(0, 3).map((via, index) => {
-                const maxCount = Math.max(...viasData.map(v => v.count), 1);
-                const barWidth = (via.count / maxCount) * 100;
-                
-                return (
-                  <button
-                    key={via.id}
-                    onClick={() => router.push(`/vias/${via.id}`)}
-                    className="w-full text-left hover:bg-gray-50 p-2 rounded transition-colors group"
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center space-x-2 flex-1 min-w-0">
-                        <span className="text-xs font-bold text-gray-400 w-4">#{index + 1}</span>
-                        <div
-                          className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: via.color }}
-                        ></div>
-                        <span className="text-sm text-black truncate">{via.name}</span>
-                      </div>
-                      <span className="text-sm font-bold text-black ml-2">{via.count}</span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-300 group-hover:opacity-80"
-                        style={{ 
-                          width: `${barWidth}%`,
-                          backgroundColor: via.color
-                        }}
-                      ></div>
-                    </div>
-                  </button>
-                );
-              })}
-              
-              {viasData.length === 0 && (
-                <div className="text-center py-8">
-                  <p className="text-sm text-gray-500">Nenhuma via com transportes</p>
-                </div>
-              )}
-            </div>
+            <button onClick={() => router.push('/vias/novo')} className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100">
+              + Via
+            </button>
+            <button onClick={() => router.push('/motoristas/novo')} className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100">
+              + Motorista
+            </button>
+            <button
+              onClick={fetchStats}
+              disabled={refreshing}
+              className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100 disabled:opacity-50"
+            >
+              {refreshing ? 'A actualizar…' : 'Actualizar'}
+            </button>
           </div>
         </div>
 
-        {/* Map and Vias Section */}
-        {viasData.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            {/* Map - Takes 3 columns */}
-            <div className="lg:col-span-3 bg-white rounded-xl border-2 border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-black">Mapa de Vias</h2>
-                {selectedVia && (
-                  <button
-                    onClick={() => setSelectedVia(null)}
-                    className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-black rounded-lg font-medium transition-colors"
-                  >
-                    Mostrar Todas
-                  </button>
-                )}
-              </div>
-              <div 
-                ref={mapContainer} 
-                className="w-full h-[600px] rounded-xl border-2 border-gray-200"
-              />
-            </div>
-
-            {/* Vias List - Takes 1 column */}
-            <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-black mb-4">Vias ({viasData.length})</h2>
-              <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
-                {viasData.map((via) => (
-                  <button
-                    key={via.id}
-                    onClick={() => setSelectedVia(via.id === selectedVia ? null : via.id)}
-                    className={`w-full text-left p-4 rounded-lg transition-all ${
-                      selectedVia === via.id
-                        ? 'bg-black text-white shadow-lg'
-                        : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-2 flex-1 min-w-0">
-                        <div
-                          className={`w-3 h-3 rounded-full flex-shrink-0 ${selectedVia === via.id ? 'ring-2 ring-white' : ''}`}
-                          style={{ backgroundColor: getValidColor(via.color) }}
-                        ></div>
-                        <span className={`text-sm font-bold truncate ${selectedVia === via.id ? 'text-white' : 'text-black'}`}>
-                          {via.name}
-                        </span>
-                      </div>
-                      <span className={`text-lg font-bold ml-2 ${selectedVia === via.id ? 'text-white' : 'text-black'}`}>
-                        {via.count}
-                      </span>
-                    </div>
-                    <div className={`text-xs ${selectedVia === via.id ? 'text-gray-300' : 'text-gray-600'}`}>
-                      <div className="flex items-center space-x-1 mb-1">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                        <span className="truncate">{via.start}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                        </svg>
-                        <span className="truncate">{via.end}</span>
-                      </div>
-                    </div>
-                  </button>
-                ))}
+        {stats.transportesSemMotorista > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700" aria-hidden>
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" />
+                </svg>
+              </span>
+              <div>
+                <p className="font-semibold text-amber-900">
+                  {stats.transportesSemMotorista} {stats.transportesSemMotorista === 1 ? 'transporte está' : 'transportes estão'} sem motorista
+                </p>
+                <p className="text-sm text-amber-800">Cada transporte precisa de um motorista atribuído para operar.</p>
               </div>
             </div>
+            <button onClick={() => router.push('/motoristas/atribuir')} className="rounded-full bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">
+              Atribuir motoristas
+            </button>
           </div>
         )}
 
-        {/* Compact Analytics Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Transportes with/without Motoristas */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-4 hover:border-black transition-all">
-            <h3 className="text-sm font-bold text-black mb-3">Estado dos Transportes</h3>
-            <div className="flex items-center space-x-4">
-              <button 
-                onClick={() => router.push('/transportes')}
-                className="relative w-24 h-24 flex-shrink-0 group cursor-pointer"
-              >
-                <svg viewBox="0 0 200 200" className="transform -rotate-90">
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#e5e7eb" strokeWidth="32" />
-                  <circle 
-                    cx="100" cy="100" r="80" fill="none" stroke="#000000" strokeWidth="32"
-                    strokeDasharray={`${((stats.transportes - stats.transportesSemMotorista) / stats.transportes) * 502.65} 502.65`} 
-                    strokeLinecap="round"
-                    className="transition-all duration-300 group-hover:stroke-[36]"
-                  />
-                  <circle 
-                    cx="100" cy="100" r="80" fill="none" stroke="#d1d5db" strokeWidth="32"
-                    strokeDasharray={`${(stats.transportesSemMotorista / stats.transportes) * 502.65} 502.65`}
-                    strokeDashoffset={`-${((stats.transportes - stats.transportesSemMotorista) / stats.transportes) * 502.65}`} 
-                    strokeLinecap="round"
-                    className="transition-all duration-300 group-hover:stroke-[36]"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <p className="text-xl font-bold text-black group-hover:text-2xl transition-all">{stats.transportes}</p>
-                </div>
-              </button>
-              <div className="flex-1 space-y-2">
-                <button
-                  onClick={() => router.push('/transportes?filter=comMotorista')}
-                  className="w-full flex items-center justify-between hover:bg-gray-50 p-2 rounded transition-colors"
-                >
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-black rounded-full"></div>
-                    <span className="text-xs text-black">Com Motorista</span>
-                  </div>
-                  <span className="text-sm font-bold text-black">{stats.transportes - stats.transportesSemMotorista}</span>
-                </button>
-                <button
-                  onClick={() => router.push('/transportes?filter=semMotorista')}
-                  className="w-full flex items-center justify-between hover:bg-gray-50 p-2 rounded transition-colors"
-                >
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                    <span className="text-xs text-black">Sem Motorista</span>
-                  </div>
-                  <span className="text-sm font-bold text-black">{stats.transportesSemMotorista}</span>
-                </button>
-              </div>
-            </div>
-          </div>
+        {/* Counters */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+          <Kpi
+            label="Transportes"
+            value={stats.transportes}
+            note={stats.transportesSemMotorista > 0 ? `${stats.transportesSemMotorista} sem motorista` : 'todos com motorista'}
+            tone="blue"
+            icon={ICONS.bus}
+            onClick={() => router.push('/transportes')}
+          />
+          <Kpi
+            label="Motoristas"
+            value={stats.motoristas}
+            note={`${stats.motoristasActivos} activos (${motoristasPercentage}%)`}
+            tone="emerald"
+            icon={ICONS.driver}
+            onClick={() => router.push('/motoristas')}
+          />
+          <Kpi label="Vias" value={stats.vias} note={`${viasComVeiculos} com veículos`} tone="violet" icon={ICONS.route} onClick={() => router.push('/vias')} />
+          <Kpi label="Paragens" value={stats.paragens} note="pontos de paragem" tone="amber" icon={ICONS.stop} onClick={() => router.push('/paragens')} />
+        </div>
 
-          {/* Motoristas Active vs Available */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-4 hover:border-black transition-all">
-            <h3 className="text-sm font-bold text-black mb-3">Estado dos Motoristas</h3>
-            <div className="flex items-center space-x-4">
-              <button 
-                onClick={() => router.push('/motoristas')}
-                className="relative w-24 h-24 flex-shrink-0 group cursor-pointer"
-              >
-                <svg viewBox="0 0 200 200" className="transform -rotate-90">
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#e5e7eb" strokeWidth="32" />
-                  <circle 
-                    cx="100" cy="100" r="80" fill="none" stroke="#000000" strokeWidth="32"
-                    strokeDasharray={`${(stats.motoristasActivos / stats.motoristas) * 502.65} 502.65`} 
-                    strokeLinecap="round"
-                    className="transition-all duration-300 group-hover:stroke-[36]"
-                  />
-                  <circle 
-                    cx="100" cy="100" r="80" fill="none" stroke="#9ca3af" strokeWidth="32"
-                    strokeDasharray={`${((stats.motoristas - stats.motoristasActivos) / stats.motoristas) * 502.65} 502.65`}
-                    strokeDashoffset={`-${(stats.motoristasActivos / stats.motoristas) * 502.65}`} 
-                    strokeLinecap="round"
-                    className="transition-all duration-300 group-hover:stroke-[36]"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <p className="text-xl font-bold text-black group-hover:text-2xl transition-all">{stats.motoristas}</p>
-                </div>
-              </button>
-              <div className="flex-1 space-y-2">
-                <button
-                  onClick={() => router.push('/motoristas?filter=activos')}
-                  className="w-full flex items-center justify-between hover:bg-gray-50 p-2 rounded transition-colors"
-                >
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-black rounded-full"></div>
-                    <span className="text-xs text-black">Activos</span>
-                  </div>
-                  <span className="text-sm font-bold text-black">{stats.motoristasActivos}</span>
+        {/* The map, what the vehicles are doing now, and the routes */}
+        <div className="grid gap-4 xl:grid-cols-3">
+          <Card
+            className="xl:col-span-2"
+            title="Mapa de vias"
+            subtitle={selectedVia ? viasData.find((v) => v.id === selectedVia)?.name : 'Toque numa via da lista para a ver sozinha'}
+            action={
+              selectedVia ? (
+                <button onClick={() => setSelectedVia(null)} className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200">
+                  Mostrar todas
                 </button>
-                <button
-                  onClick={() => router.push('/motoristas?filter=disponiveis')}
-                  className="w-full flex items-center justify-between hover:bg-gray-50 p-2 rounded transition-colors"
-                >
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                    <span className="text-xs text-black">Disponíveis</span>
-                  </div>
-                  <span className="text-sm font-bold text-black">{stats.motoristas - stats.motoristasActivos}</span>
-                </button>
-              </div>
-            </div>
-          </div>
+              ) : null
+            }
+          >
+            <div ref={mapContainer} className="min-h-[420px] w-full flex-1 overflow-hidden rounded-2xl bg-slate-100 lg:min-h-[520px]" />
+          </Card>
 
-          {/* Vias with/without Transportes */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-4 hover:border-black transition-all">
-            <h3 className="text-sm font-bold text-black mb-3">Distribuição de Vias</h3>
-            <div className="flex items-center space-x-4">
-              <button 
-                onClick={() => router.push('/vias')}
-                className="relative w-24 h-24 flex-shrink-0 group cursor-pointer"
-              >
-                <svg viewBox="0 0 200 200" className="transform -rotate-90">
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#e5e7eb" strokeWidth="32" />
-                  <circle 
-                    cx="100" cy="100" r="80" fill="none" stroke="#000000" strokeWidth="32"
-                    strokeDasharray={`${(viasData.length / stats.vias) * 502.65} 502.65`} 
-                    strokeLinecap="round"
-                    className="transition-all duration-300 group-hover:stroke-[36]"
-                  />
-                  <circle 
-                    cx="100" cy="100" r="80" fill="none" stroke="#6b7280" strokeWidth="32"
-                    strokeDasharray={`${((stats.vias - viasData.length) / stats.vias) * 502.65} 502.65`}
-                    strokeDashoffset={`-${(viasData.length / stats.vias) * 502.65}`} 
-                    strokeLinecap="round"
-                    className="transition-all duration-300 group-hover:stroke-[36]"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <p className="text-xl font-bold text-black group-hover:text-2xl transition-all">{stats.vias}</p>
+          <div className="flex min-w-0 flex-col gap-4">
+            <Card title="Agora" subtitle="O que cada veículo está a fazer (GPS ou horário)">
+              {agora ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <MiniStat value={agora.circulacao} label="Em circulação" tone="emerald" />
+                  <MiniStat value={agora.parados} label="Parados" tone="slate" />
+                  <MiniStat value={agora.gps} label="Com GPS activo" tone="blue" />
+                  <MiniStat value={agora.semPosicao} label="Sem rota" tone="amber" />
                 </div>
-              </button>
-              <div className="flex-1 space-y-2">
-                <button
-                  onClick={() => router.push('/vias?filter=comTransportes')}
-                  className="w-full flex items-center justify-between hover:bg-gray-50 p-2 rounded transition-colors"
-                >
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-black rounded-full"></div>
-                    <span className="text-xs text-black">Com Transportes</span>
-                  </div>
-                  <span className="text-sm font-bold text-black">{viasData.length}</span>
-                </button>
-                <button
-                  onClick={() => router.push('/vias?filter=semTransportes')}
-                  className="w-full flex items-center justify-between hover:bg-gray-50 p-2 rounded transition-colors"
-                >
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                    <span className="text-xs text-black">Sem Transportes</span>
-                  </div>
-                  <span className="text-sm font-bold text-black">{stats.vias - viasData.length}</span>
-                </button>
-              </div>
-            </div>
+              ) : (
+                <p className="text-sm text-slate-500">A carregar…</p>
+              )}
+            </Card>
+
+            <Card title="Vias" subtitle={`${viasData.length} vias, as com mais veículos primeiro`} className="min-h-0 flex-1">
+              <ul className="-mx-2 max-h-[300px] overflow-y-auto">
+                {viasData.map((via) => (
+                  <li key={via.id}>
+                    <button
+                      onClick={() => setSelectedVia(selectedVia === via.id ? null : via.id)}
+                      className={`flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-slate-50 ${selectedVia === via.id ? 'bg-slate-100' : ''}`}
+                    >
+                      <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: getValidColor(via.color) }} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-slate-900">{via.name}</span>
+                        <span className="block truncate text-xs text-slate-500">
+                          {via.start} → {via.end}
+                        </span>
+                      </span>
+                      <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700">{via.count}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </Card>
           </div>
+        </div>
+
+        {/* How the network is spread */}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <Card title="Vias por município">
+            <BarList items={viasMunicipioData.map((m) => ({ label: m.name, value: m.count }))} total={stats.vias} />
+          </Card>
+          <Card title="Paragens por município">
+            <BarList items={paragensMunicipioData.map((m) => ({ label: m.name, value: m.count }))} total={stats.paragens} />
+          </Card>
+          <Card title="Vias com mais veículos">
+            <BarList items={viasData.slice(0, 5).map((v) => ({ label: v.name, value: v.count, color: getValidColor(v.color) }))} total={maxVia} />
+          </Card>
+          <Card title="Estado">
+            <dl className="space-y-3 text-sm">
+              <Split label="Transportes com motorista" a={stats.transportes - stats.transportesSemMotorista} b={stats.transportesSemMotorista} bLabel="sem" />
+              <Split label="Motoristas activos" a={stats.motoristasActivos} b={stats.motoristas - stats.motoristasActivos} bLabel="disponíveis" />
+              <Split label="Vias com veículos" a={viasComVeiculos} b={stats.vias - viasComVeiculos} bLabel="sem" />
+            </dl>
+          </Card>
+        </div>
+
+        {/* The rest of the register */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <LinkStat label="Proprietários" note="Empresas registadas" value={stats.proprietarios} onClick={() => router.push('/proprietarios')} />
+          <LinkStat label="Províncias" note="Regiões administrativas" value={stats.provincias} onClick={() => router.push('/provincias')} />
+          <LinkStat label="Municípios" note="Distritos urbanos" value={stats.municipios} onClick={() => router.push('/municipios')} />
         </div>
       </div>
     </div>
+  );
+}
+
+const ICONS = {
+  bus: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4',
+  driver: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
+  route: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7',
+  stop: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z',
+};
+
+const TONES: Record<string, string> = {
+  blue: 'bg-blue-50 text-blue-700',
+  emerald: 'bg-emerald-50 text-emerald-700',
+  violet: 'bg-violet-50 text-violet-700',
+  amber: 'bg-amber-50 text-amber-700',
+  slate: 'bg-slate-100 text-slate-700',
+};
+
+function Kpi({ label, value, note, tone, icon, onClick }: { label: string; value: number; note: string; tone: string; icon: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="group rounded-3xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5">
+      <div className="flex items-center justify-between">
+        <span className={`flex h-11 w-11 items-center justify-center rounded-2xl ${TONES[tone]}`} aria-hidden>
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icon} />
+          </svg>
+        </span>
+        <span className="text-slate-300 transition group-hover:text-slate-600" aria-hidden>
+          →
+        </span>
+      </div>
+      <p className="mt-4 text-sm font-medium text-slate-500">{label}</p>
+      <p className="text-3xl font-bold tabular-nums text-slate-900 sm:text-4xl">{value.toLocaleString('pt-PT')}</p>
+      <p className="mt-1 truncate text-xs text-slate-500">{note}</p>
+    </button>
+  );
+}
+
+function Card({ title, subtitle, action, className = '', children }: { title: string; subtitle?: string; action?: React.ReactNode; className?: string; children: React.ReactNode }) {
+  return (
+    <section className={`flex min-w-0 flex-col rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 ${className}`}>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-base font-bold text-slate-900">{title}</h2>
+          {subtitle && <p className="truncate text-xs text-slate-500">{subtitle}</p>}
+        </div>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function MiniStat({ value, label, tone }: { value: number; label: string; tone: string }) {
+  return (
+    <div className={`rounded-2xl px-3 py-3 ${TONES[tone]}`}>
+      <p className="text-2xl font-bold tabular-nums">{value}</p>
+      <p className="text-xs font-medium opacity-80">{label}</p>
+    </div>
+  );
+}
+
+/** Horizontal bars, each as a share of `total` */
+function BarList({ items, total }: { items: { label: string; value: number; color?: string }[]; total: number }) {
+  if (!items.length) return <p className="text-sm text-slate-500">Sem dados.</p>;
+  return (
+    <ul className="space-y-3">
+      {items.map((item, i) => (
+        <li key={`${item.label}-${i}`}>
+          <div className="mb-1 flex items-baseline justify-between gap-2 text-sm">
+            <span className="truncate text-slate-700">{item.label}</span>
+            <span className="shrink-0 font-semibold tabular-nums text-slate-900">{item.value}</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-full rounded-full" style={{ width: `${Math.min(100, (item.value / Math.max(total, 1)) * 100)}%`, background: item.color ?? '#0f172a' }} />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** `a` out of `a + b`, as a bar */
+function Split({ label, a, b, bLabel }: { label: string; a: number; b: number; bLabel: string }) {
+  const total = Math.max(a + b, 1);
+  return (
+    <div>
+      <div className="mb-1 flex items-baseline justify-between gap-2">
+        <dt className="text-slate-700">{label}</dt>
+        <dd className="shrink-0 text-xs text-slate-500">
+          <span className="font-semibold text-slate-900">{a}</span> · {b} {bLabel}
+        </dd>
+      </div>
+      <div className="flex h-2 overflow-hidden rounded-full bg-slate-100">
+        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${(a / total) * 100}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function LinkStat({ label, note, value, onClick }: { label: string; note: string; value: number; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="flex items-center justify-between rounded-3xl bg-slate-900 px-5 py-4 text-left text-white transition hover:bg-slate-800">
+      <span>
+        <span className="block text-sm font-semibold">{label}</span>
+        <span className="block text-xs text-slate-400">{note}</span>
+      </span>
+      <span className="text-3xl font-bold tabular-nums">{value}</span>
+    </button>
   );
 }
 

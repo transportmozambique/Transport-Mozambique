@@ -6,6 +6,9 @@ interface SidebarContextType {
   isExpanded: boolean;
   toggleSidebar: () => void;
   setIsExpanded: (value: boolean) => void;
+  /** On a phone the sidebar slides in over the page */
+  mobileOpen: boolean;
+  setMobileOpen: (value: boolean) => void;
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
@@ -13,6 +16,7 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Load sidebar state from localStorage on mount
   useEffect(() => {
@@ -35,7 +39,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <SidebarContext.Provider value={{ isExpanded, toggleSidebar, setIsExpanded }}>
+    <SidebarContext.Provider value={{ isExpanded, toggleSidebar, setIsExpanded, mobileOpen, setMobileOpen }}>
       {children}
     </SidebarContext.Provider>
   );

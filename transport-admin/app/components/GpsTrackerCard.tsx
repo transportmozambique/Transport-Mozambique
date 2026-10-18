@@ -74,11 +74,11 @@ export default function GpsTrackerCard({ transporteId }: { transporteId: string 
     : null;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-testid="gps-card">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6" data-testid="gps-card">
       <div className="flex items-start justify-between mb-4 pb-3 border-b border-slate-200">
         <div>
-          <h3 className="text-lg font-bold text-black">Rastreador GPS</h3>
-          <p className="text-sm text-black">
+          <h3 className="text-lg font-bold text-slate-900">Rastreador GPS</h3>
+          <p className="text-sm text-slate-900">
             Posição real enviada pelo telemóvel do motorista ou por um rastreador. Sem GPS, a posição é estimada pelo horário.
           </p>
         </div>
@@ -92,16 +92,16 @@ export default function GpsTrackerCard({ transporteId }: { transporteId: string 
       </div>
 
       {status && (
-        <p className="text-sm text-black mb-4">
+        <p className="text-sm text-slate-900 mb-4">
           {ultima ? `Última posição recebida: ${ultima}` : "Ainda não recebeu nenhuma posição."}
           {status.ativo && status.velocidadeKmh != null ? ` · ${status.velocidadeKmh} km/h` : ""}
         </p>
       )}
 
       {codigo && status && (
-        <div className="mb-4 rounded-lg border border-slate-300 bg-slate-50 p-4 text-sm text-black space-y-2">
+        <div className="mb-4 rounded-xl border border-slate-300 bg-slate-50 p-4 text-sm text-slate-900 space-y-2">
           <p className="font-semibold">Código do dispositivo (só é mostrado agora; guarde-o):</p>
-          <code className="block select-all rounded bg-white border border-slate-200 px-3 py-2 font-mono text-base" data-testid="gps-code">
+          <code className="block select-all rounded-lg bg-white border border-slate-200 px-3 py-2 font-mono text-base" data-testid="gps-code">
             {codigo}
           </code>
           <p className="font-semibold pt-2">Configurar a app Traccar Client no telemóvel do motorista:</p>
@@ -126,7 +126,7 @@ export default function GpsTrackerCard({ transporteId }: { transporteId: string 
           type="button"
           onClick={gerar}
           disabled={busy}
-          className="px-4 py-2 bg-gray-900 hover:bg-black text-white rounded-lg text-sm font-medium disabled:opacity-50"
+          className="px-4 py-2 bg-slate-900 hover:bg-slate-900 text-white rounded-xl text-sm font-medium disabled:opacity-50"
         >
           {status?.configurado ? "Gerar novo código" : "Gerar código do dispositivo"}
         </button>
@@ -137,14 +137,14 @@ export default function GpsTrackerCard({ transporteId }: { transporteId: string 
                 type="button"
                 onClick={revogar}
                 disabled={busy}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium disabled:opacity-50"
               >
                 Confirmar revogação
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmRevoke(false)}
-                className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-black"
+                className="px-4 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-900"
               >
                 Cancelar
               </button>
@@ -153,7 +153,7 @@ export default function GpsTrackerCard({ transporteId }: { transporteId: string 
             <button
               type="button"
               onClick={() => setConfirmRevoke(true)}
-              className="px-4 py-2 border border-slate-300 hover:bg-slate-50 rounded-lg text-sm font-medium text-black"
+              className="px-4 py-2 border border-slate-300 hover:bg-slate-50 rounded-xl text-sm font-medium text-slate-900"
             >
               Revogar dispositivo
             </button>

@@ -249,7 +249,7 @@ export default function Relatorios() {
 
   const renderTableData = (data: any[], entity: string) => {
     if (!data || data.length === 0) {
-      return <p className="text-gray-500">Sem dados disponíveis</p>;
+      return <p className="text-slate-500">Sem dados disponíveis</p>;
     }
 
     const getValue = (item: any, key: string) => {
@@ -304,21 +304,21 @@ export default function Relatorios() {
     const getLabel = (key: string) => labelMap[key] || key;
 
     return (
-      <table className="min-w-full divide-y divide-gray-300">
-        <thead className="bg-gray-200">
+      <table className="min-w-full divide-y divide-slate-300">
+        <thead className="bg-slate-200">
           <tr>
             {headers.map((header) => (
-              <th key={header} className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th key={header} className="px-4 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
                 {getLabel(header)}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-300">
+        <tbody className="bg-white divide-y divide-slate-300">
           {data.slice(0, 100).map((item, idx) => (
-            <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+            <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
               {headers.map((header) => (
-                <td key={header} className="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">
+                <td key={header} className="px-4 py-3 text-sm text-slate-800 whitespace-nowrap">
                   {getValue(item, header)}
                 </td>
               ))}
@@ -330,14 +330,14 @@ export default function Relatorios() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-slate-50 min-h-screen">
       {/* Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
-          <div className={`rounded-lg shadow-lg p-4 min-w-[300px] ${
-            notification.type === 'success' ? 'bg-gray-800 border border-gray-700' :
-            notification.type === 'error' ? 'bg-gray-900 border border-gray-800' :
-            'bg-gray-700 border border-gray-600'
+          <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
+            notification.type === 'success' ? 'bg-slate-800 border border-slate-700' :
+            notification.type === 'error' ? 'bg-slate-900 border border-slate-800' :
+            'bg-slate-700 border border-slate-600'
           }`}>
             <div className="flex items-center space-x-3">
               {notification.type === 'success' && (
@@ -365,25 +365,25 @@ export default function Relatorios() {
 
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/dashboard')}
-              className="p-2 rounded-lg hover:bg-gray-200 flex-shrink-0"
+              className="p-2 rounded-xl hover:bg-slate-200 flex-shrink-0"
             >
-              <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">Relatórios</h2>
-              <p className="hidden lg:block text-gray-600 mt-1">Gere relatórios e análises do sistema</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Relatórios</h2>
+              <p className="hidden lg:block text-slate-600 mt-1">Gere relatórios e análises do sistema</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
             <button
               onClick={() => router.push('/relatorios/historico')}
-              className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2"
+              className="bg-slate-800 hover:bg-slate-800 text-white px-4 py-2 rounded-xl font-medium flex items-center space-x-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -392,7 +392,7 @@ export default function Relatorios() {
             </button>
             <button
               onClick={() => router.push('/relatorios/agendar')}
-              className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2"
+              className="bg-slate-800 hover:bg-slate-800 text-white px-4 py-2 rounded-xl font-medium flex items-center space-x-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -404,53 +404,53 @@ export default function Relatorios() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl border border-gray-300 p-6">
+          <div className="bg-white rounded-2xl border border-slate-300 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 font-medium mb-1">Relatórios Disponíveis</p>
-                <p className="text-3xl font-bold text-gray-900">{relatorios.length}</p>
+                <p className="text-sm text-slate-600 font-medium mb-1">Relatórios Disponíveis</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900">{relatorios.length}</p>
               </div>
-              <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-300 p-6">
+          <div className="bg-white rounded-2xl border border-slate-300 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 font-medium mb-1">Entidades</p>
-                <p className="text-3xl font-bold text-gray-900">8</p>
+                <p className="text-sm text-slate-600 font-medium mb-1">Entidades</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900">8</p>
               </div>
-              <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-300 p-6">
+          <div className="bg-white rounded-2xl border border-slate-300 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 font-medium mb-1">Categorias</p>
-                <p className="text-3xl font-bold text-gray-900">{categorias.length - 1}</p>
+                <p className="text-sm text-slate-600 font-medium mb-1">Categorias</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900">{categorias.length - 1}</p>
               </div>
-              <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-300 p-6">
+          <div className="bg-white rounded-2xl border border-slate-300 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 font-medium mb-1">Exportação</p>
-                <p className="text-3xl font-bold text-gray-900">PDF</p>
+                <p className="text-sm text-slate-600 font-medium mb-1">Exportação</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900">PDF</p>
               </div>
-              <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
@@ -459,11 +459,11 @@ export default function Relatorios() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl border border-gray-300 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Filtros</h3>
+        <div className="bg-white rounded-2xl border border-slate-300 p-6">
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Filtros</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
-              <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
@@ -471,14 +471,14 @@ export default function Relatorios() {
                 placeholder="Pesquisar relatórios..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900"
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-slate-900"
               />
             </div>
             <div>
               <select
                 value={selectedCategoria}
                 onChange={(e) => setSelectedCategoria(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
               >
                 {categorias.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
@@ -491,8 +491,8 @@ export default function Relatorios() {
         {/* Reports Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredRelatorios.length === 0 ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-12 text-gray-500">
-              <svg className="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="col-span-full flex flex-col items-center justify-center py-12 text-slate-500">
+              <svg className="w-16 h-16 mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <p className="text-lg font-medium">Nenhum relatório encontrado</p>
@@ -502,25 +502,25 @@ export default function Relatorios() {
             filteredRelatorios.map((relatorio) => (
               <div
                 key={relatorio.id}
-                className="bg-white rounded-xl border border-gray-300 hover:border-gray-900 hover:shadow-lg transition-all duration-200 p-6 flex flex-col"
+                className="bg-white rounded-2xl border border-slate-300 hover:border-slate-900 hover:shadow-lg transition-all duration-200 p-6 flex flex-col"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
-                  <span className="px-3 py-1 text-xs font-medium bg-gray-200 text-gray-700 rounded-full">
+                  <span className="px-3 py-1 text-xs font-medium bg-slate-200 text-slate-700 rounded-full">
                     {relatorio.categoria}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">{relatorio.titulo}</h3>
-                <p className="text-sm text-gray-600 mb-4 flex-grow">{relatorio.descricao}</p>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">{relatorio.titulo}</h3>
+                <p className="text-sm text-slate-600 mb-4 flex-grow">{relatorio.descricao}</p>
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => handleGenerateReport(relatorio)}
                     disabled={isGenerating === relatorio.id}
-                    className="flex-1 bg-gray-900 hover:bg-black text-white py-2.5 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
+                    className="flex-1 bg-slate-900 hover:bg-slate-800 text-white py-2.5 px-4 rounded-xl font-medium transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
                   >
                     {isGenerating === relatorio.id ? (
                       <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -536,10 +536,10 @@ export default function Relatorios() {
                   </button>
                   <button
                     onClick={() => handleGenerateReport(relatorio)}
-                    className="p-2.5 border border-gray-300 rounded-lg hover:bg-gray-100"
+                    className="p-2.5 border border-slate-300 rounded-xl hover:bg-slate-100"
                     title="Ver dados"
                   >
-                    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
@@ -551,8 +551,8 @@ export default function Relatorios() {
         </div>
 
         {/* Legend */}
-        <div className="bg-white rounded-xl border border-gray-300 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Entidades Disponiveis para Relatorio</h3>
+        <div className="bg-white rounded-2xl border border-slate-300 p-6">
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Entidades Disponiveis para Relatorio</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { icon: "bus", name: "Transportes", desc: "Veiculos registados" },
@@ -564,15 +564,15 @@ export default function Relatorios() {
               { icon: "city", name: "Municipios", desc: "Cidades e vilas" },
               { icon: "users", name: "Utentes", desc: "Utilizadores" },
             ].map((item, idx) => (
-              <div key={idx} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
-                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div key={idx} className="flex items-center space-x-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="w-8 h-8 bg-slate-200 rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900 text-sm">{item.name}</p>
-                  <p className="text-xs text-gray-500">{item.desc}</p>
+                  <p className="font-medium text-slate-900 text-sm">{item.name}</p>
+                  <p className="text-xs text-slate-500">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -582,18 +582,18 @@ export default function Relatorios() {
 
       {/* Report Modal */}
       {showReportModal && selectedReport && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 bg-slate-900/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-300 bg-gray-100">
+            <div className="flex items-center justify-between p-6 border-b border-slate-300 bg-slate-100">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{selectedReport.titulo}</h2>
-                <p className="text-gray-600">Dados do sistema</p>
+                <h2 className="text-2xl font-bold text-slate-900">{selectedReport.titulo}</h2>
+                <p className="text-slate-600">Dados do sistema</p>
               </div>
               <div className="flex items-center space-x-2">
                 <button
                   onClick={handlePrint}
-                  className="bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2"
+                  className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl font-medium flex items-center space-x-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -602,9 +602,9 @@ export default function Relatorios() {
                 </button>
                 <button
                   onClick={() => setShowReportModal(false)}
-                  className="p-2 hover:bg-gray-200 rounded-lg"
+                  className="p-2 hover:bg-slate-200 rounded-xl"
                 >
-                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -612,10 +612,10 @@ export default function Relatorios() {
             </div>
 
             {/* Modal Content */}
-            <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+            <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
               {isLoadingData ? (
                 <div className="flex items-center justify-center py-12">
-                  <svg className="w-8 h-8 animate-spin text-gray-700" fill="none" viewBox="0 0 24 24">
+                  <svg className="w-8 h-8 animate-spin text-slate-700" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
@@ -623,90 +623,90 @@ export default function Relatorios() {
               ) : selectedReport.entity === 'estatisticas' ? (
                 <div ref={printRef}>
                   <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Estatísticas Gerais do Sistema</h1>
-                    <p className="text-gray-600">Data de geração: {formatDate()}</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Estatísticas Gerais do Sistema</h1>
+                    <p className="text-slate-600">Data de geração: {formatDate()}</p>
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    <div className="bg-white rounded-lg p-6 text-center border border-gray-300">
-                      <p className="text-4xl font-bold text-gray-900">{stats.totalTransportes || 0}</p>
-                      <p className="text-sm text-gray-600 mt-1">Transportes</p>
+                    <div className="bg-white rounded-xl p-6 text-center border border-slate-300">
+                      <p className="text-4xl font-bold text-slate-900">{stats.totalTransportes || 0}</p>
+                      <p className="text-sm text-slate-600 mt-1">Transportes</p>
                     </div>
-                    <div className="bg-white rounded-lg p-6 text-center border border-gray-300">
-                      <p className="text-4xl font-bold text-gray-900">{stats.totalVias || 0}</p>
-                      <p className="text-sm text-gray-600 mt-1">Vias</p>
+                    <div className="bg-white rounded-xl p-6 text-center border border-slate-300">
+                      <p className="text-4xl font-bold text-slate-900">{stats.totalVias || 0}</p>
+                      <p className="text-sm text-slate-600 mt-1">Vias</p>
                     </div>
-                    <div className="bg-white rounded-lg p-6 text-center border border-gray-300">
-                      <p className="text-4xl font-bold text-gray-900">{stats.totalParagens || 0}</p>
-                      <p className="text-sm text-gray-600 mt-1">Paragens</p>
+                    <div className="bg-white rounded-xl p-6 text-center border border-slate-300">
+                      <p className="text-4xl font-bold text-slate-900">{stats.totalParagens || 0}</p>
+                      <p className="text-sm text-slate-600 mt-1">Paragens</p>
                     </div>
-                    <div className="bg-white rounded-lg p-6 text-center border border-gray-300">
-                      <p className="text-4xl font-bold text-gray-900">{stats.totalMotoristas || 0}</p>
-                      <p className="text-sm text-gray-600 mt-1">Motoristas</p>
+                    <div className="bg-white rounded-xl p-6 text-center border border-slate-300">
+                      <p className="text-4xl font-bold text-slate-900">{stats.totalMotoristas || 0}</p>
+                      <p className="text-sm text-slate-600 mt-1">Motoristas</p>
                     </div>
-                    <div className="bg-white rounded-lg p-6 text-center border border-gray-300">
-                      <p className="text-4xl font-bold text-gray-900">{stats.totalProprietarios || 0}</p>
-                      <p className="text-sm text-gray-600 mt-1">Proprietários</p>
+                    <div className="bg-white rounded-xl p-6 text-center border border-slate-300">
+                      <p className="text-4xl font-bold text-slate-900">{stats.totalProprietarios || 0}</p>
+                      <p className="text-sm text-slate-600 mt-1">Proprietários</p>
                     </div>
-                    <div className="bg-white rounded-lg p-6 text-center border border-gray-300">
-                      <p className="text-4xl font-bold text-gray-900">{stats.totalProvincias || 0}</p>
-                      <p className="text-sm text-gray-600 mt-1">Províncias</p>
+                    <div className="bg-white rounded-xl p-6 text-center border border-slate-300">
+                      <p className="text-4xl font-bold text-slate-900">{stats.totalProvincias || 0}</p>
+                      <p className="text-sm text-slate-600 mt-1">Províncias</p>
                     </div>
-                    <div className="bg-white rounded-lg p-6 text-center border border-gray-300">
-                      <p className="text-4xl font-bold text-gray-900">{stats.totalMunicipios || 0}</p>
-                      <p className="text-sm text-gray-600 mt-1">Municípios</p>
+                    <div className="bg-white rounded-xl p-6 text-center border border-slate-300">
+                      <p className="text-4xl font-bold text-slate-900">{stats.totalMunicipios || 0}</p>
+                      <p className="text-sm text-slate-600 mt-1">Municípios</p>
                     </div>
-                    <div className="bg-white rounded-lg p-6 text-center border border-gray-300">
-                      <p className="text-4xl font-bold text-gray-900">{stats.totalUtentes || 0}</p>
-                      <p className="text-sm text-gray-600 mt-1">Utentes</p>
+                    <div className="bg-white rounded-xl p-6 text-center border border-slate-300">
+                      <p className="text-4xl font-bold text-slate-900">{stats.totalUtentes || 0}</p>
+                      <p className="text-sm text-slate-600 mt-1">Utentes</p>
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-lg p-6 border border-gray-300">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Métricas Adicionais</h3>
+                  <div className="bg-white rounded-xl p-6 border border-slate-300">
+                    <h3 className="text-lg font-bold text-slate-900 mb-4">Métricas Adicionais</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg border">
-                        <span className="text-gray-600">Transportes com Motorista</span>
-                        <span className="font-bold text-gray-900">{stats.transportComMotorista || 0}</span>
+                      <div className="flex justify-between items-center p-4 bg-slate-50 rounded-xl border">
+                        <span className="text-slate-600">Transportes com Motorista</span>
+                        <span className="font-bold text-slate-900">{stats.transportComMotorista || 0}</span>
                       </div>
-                      <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg border">
-                        <span className="text-gray-600">Transportes sem Motorista</span>
-                        <span className="font-bold text-gray-900">{stats.transportSemMotorista || 0}</span>
+                      <div className="flex justify-between items-center p-4 bg-slate-50 rounded-xl border">
+                        <span className="text-slate-600">Transportes sem Motorista</span>
+                        <span className="font-bold text-slate-900">{stats.transportSemMotorista || 0}</span>
                       </div>
-                      <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg border">
-                        <span className="text-gray-600">Motoristas Ativos</span>
-                        <span className="font-bold text-gray-900">{stats.motoristasAtivos || 0}</span>
+                      <div className="flex justify-between items-center p-4 bg-slate-50 rounded-xl border">
+                        <span className="text-slate-600">Motoristas Ativos</span>
+                        <span className="font-bold text-slate-900">{stats.motoristasAtivos || 0}</span>
                       </div>
-                      <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg border">
-                        <span className="text-gray-600">Utentes Subscritos</span>
-                        <span className="font-bold text-gray-900">{stats.utentesSubscritos || 0}</span>
+                      <div className="flex justify-between items-center p-4 bg-slate-50 rounded-xl border">
+                        <span className="text-slate-600">Utentes Subscritos</span>
+                        <span className="font-bold text-slate-900">{stats.utentesSubscritos || 0}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-6 text-center text-gray-500 text-sm">
+                  <div className="mt-6 text-center text-slate-500 text-sm">
                     <p>Relatório gerado por TransportMZ em {formatDate()}</p>
                   </div>
                 </div>
               ) : (
                 <div ref={printRef}>
                   <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{selectedReport.titulo}</h1>
-                    <p className="text-gray-600">Data de geração: {formatDate()}</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">{selectedReport.titulo}</h1>
+                    <p className="text-slate-600">Data de geração: {formatDate()}</p>
                   </div>
 
                   {reportData[selectedReport.entity] ? (
                     <div>
                       <div className="mb-4 flex items-center justify-between">
-                        <p className="text-gray-600">Total de registos: {reportData[selectedReport.entity].length}</p>
+                        <p className="text-slate-600">Total de registos: {reportData[selectedReport.entity].length}</p>
                       </div>
                       {renderTableData(reportData[selectedReport.entity], selectedReport.entity)}
                     </div>
                   ) : (
-                    <p className="text-gray-500 text-center py-8">Sem dados disponíveis para este relatório</p>
+                    <p className="text-slate-500 text-center py-8">Sem dados disponíveis para este relatório</p>
                   )}
 
-                  <div className="mt-6 text-center text-gray-500 text-sm">
+                  <div className="mt-6 text-center text-slate-500 text-sm">
                     <p>Relatório gerado por TransportMZ em {formatDate()}</p>
                   </div>
                 </div>

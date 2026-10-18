@@ -207,7 +207,7 @@ export default function MotoristasPage() {
       {/* Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
-          <div className={`rounded-lg shadow-lg p-4 min-w-[300px] ${
+          <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
             notification.type === 'success' ? 'bg-green-50 border border-green-200' :
             notification.type === 'error' ? 'bg-red-50 border border-red-200' :
             'bg-blue-50 border border-blue-200'
@@ -238,7 +238,7 @@ export default function MotoristasPage() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && motoristaToDelete && (
         <div 
-          className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm min-h-screen" 
+          className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm min-h-screen" 
           style={{ minHeight: '100vh', height: '100%' }}
           onClick={() => {
             setShowDeleteModal(false);
@@ -247,7 +247,7 @@ export default function MotoristasPage() {
         >
           <div className="flex items-center justify-center min-h-screen p-4">
             <div 
-              className="relative z-[101] bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-gray-200 my-8"
+              className="relative z-[101] bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-slate-200 my-8"
               onClick={(e) => e.stopPropagation()}
             >
             {deleteError ? (
@@ -258,11 +258,11 @@ export default function MotoristasPage() {
                   </svg>
                 </div>
                 
-                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                <h3 className="text-xl font-bold text-slate-900 text-center mb-2">
                   Não é Possível Eliminar
                 </h3>
                 
-                <p className="text-gray-600 text-center mb-4">
+                <p className="text-slate-600 text-center mb-4">
                   {deleteError.details || deleteError.message}
                 </p>
 
@@ -271,7 +271,7 @@ export default function MotoristasPage() {
                     <button
                       onClick={() => motoristaToDelete && handleRemoveAssignments(motoristaToDelete.id)}
                       disabled={deleting}
-                      className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {deleting ? (
                         <>
@@ -290,7 +290,7 @@ export default function MotoristasPage() {
                       setDeleteError(null);
                     }}
                     disabled={deleting}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {deleteError.canRemove ? 'Cancelar' : 'Fechar'}
                   </button>
@@ -304,12 +304,12 @@ export default function MotoristasPage() {
                   </svg>
                 </div>
                 
-                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                <h3 className="text-xl font-bold text-slate-900 text-center mb-2">
                   Eliminar Motorista
                 </h3>
                 
-                <p className="text-gray-600 text-center mb-6">
-                  Tem certeza que deseja eliminar o motorista <strong className="text-gray-900">"{motoristaToDelete.nome}"</strong>?
+                <p className="text-slate-600 text-center mb-6">
+                  Tem certeza que deseja eliminar o motorista <strong className="text-slate-900">"{motoristaToDelete.nome}"</strong>?
                   <br />
                   <span className="text-sm text-red-600 font-medium">Esta ação não pode ser desfeita.</span>
                 </p>
@@ -321,14 +321,14 @@ export default function MotoristasPage() {
                       setMotoristaToDelete(null);
                     }}
                     disabled={deleting}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={() => motoristaToDelete && handleDelete(motoristaToDelete.id)}
                     disabled={deleting}
-                    className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {deleting ? (
                       <>
@@ -354,28 +354,28 @@ export default function MotoristasPage() {
 
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
         {/* Header - 2 Columns Layout */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Left - Title and Description */}
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/dashboard')}
-              className="p-2 rounded-lg hover:bg-gray-100 flex-shrink-0"
+              className="p-2 rounded-xl hover:bg-slate-100 flex-shrink-0"
             >
-              <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">Motoristas</h2>
-              <p className="hidden lg:block text-gray-600 mt-1">Gestão de todos os motoristas do sistema</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Motoristas</h2>
+              <p className="hidden lg:block text-slate-600 mt-1">Gestão de todos os motoristas do sistema</p>
             </div>
           </div>
 
           {/* Right - Action Buttons */}
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => router.push('/motoristas/atribuir')}
-              className="bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 px-6 py-3 rounded-lg font-medium flex items-center space-x-2 whitespace-nowrap"
+              className="bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 px-4 sm:px-6 py-3 rounded-xl font-medium flex items-center space-x-2 whitespace-nowrap"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -384,7 +384,7 @@ export default function MotoristasPage() {
             </button>
             <button
               onClick={() => router.push('/motoristas/novo')}
-              className="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 whitespace-nowrap"
+              className="bg-slate-900 hover:bg-slate-800 text-white px-4 sm:px-6 py-3 rounded-xl font-medium flex items-center space-x-2 whitespace-nowrap"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -397,16 +397,16 @@ export default function MotoristasPage() {
         {/* Filter Badge */}
         {statusFilter && (
           <div className="flex items-center space-x-2">
-            <div className="inline-flex items-center space-x-2 bg-gray-100 border border-gray-300 rounded-lg px-4 py-2">
-              <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="inline-flex items-center space-x-2 bg-slate-100 border border-slate-300 rounded-xl px-4 py-2">
+              <svg className="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
-              <span className="text-sm font-medium text-gray-900">
+              <span className="text-sm font-medium text-slate-900">
                 Filtro: {statusFilter === 'ativos' ? 'Ativos' : statusFilter === 'inativos' ? 'Inativos' : 'Com Transporte'}
               </span>
               <button 
                 onClick={() => setStatusFilter(null)}
-                className="ml-2 text-gray-600 hover:text-gray-900"
+                className="ml-2 text-slate-600 hover:text-slate-900"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -420,38 +420,38 @@ export default function MotoristasPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <button 
             onClick={() => setStatusFilter(null)}
-            className={`bg-white rounded-lg border p-4 hover:border-gray-900 hover:shadow-md transition-all text-left cursor-pointer ${
-              statusFilter === null ? 'border-gray-900 shadow-md' : 'border-gray-200'
+            className={`bg-white rounded-xl border p-4 hover:border-slate-900 hover:shadow-md transition-all text-left cursor-pointer ${
+              statusFilter === null ? 'border-slate-900 shadow-md' : 'border-slate-200'
             }`}
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Total</p>
-                <p className="text-2xl font-bold text-gray-900">{motoristas.length}</p>
+                <p className="text-xs text-slate-600 font-medium">Total</p>
+                <p className="text-2xl font-bold text-slate-900">{motoristas.length}</p>
               </div>
             </div>
           </button>
 
           <button 
             onClick={() => setStatusFilter('ativos')}
-            className={`bg-white rounded-lg border p-4 hover:border-gray-900 hover:shadow-md transition-all text-left cursor-pointer ${
-              statusFilter === 'ativos' ? 'border-gray-900 shadow-md' : 'border-gray-200'
+            className={`bg-white rounded-xl border p-4 hover:border-slate-900 hover:shadow-md transition-all text-left cursor-pointer ${
+              statusFilter === 'ativos' ? 'border-slate-900 shadow-md' : 'border-slate-200'
             }`}
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Ativos</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-xs text-slate-600 font-medium">Ativos</p>
+                <p className="text-2xl font-bold text-slate-900">
                   {motoristas.filter(m => m.status === "ativo").length}
                 </p>
               </div>
@@ -460,19 +460,19 @@ export default function MotoristasPage() {
 
           <button 
             onClick={() => setStatusFilter('inativos')}
-            className={`bg-white rounded-lg border p-4 hover:border-gray-900 hover:shadow-md transition-all text-left cursor-pointer ${
-              statusFilter === 'inativos' ? 'border-gray-900 shadow-md' : 'border-gray-200'
+            className={`bg-white rounded-xl border p-4 hover:border-slate-900 hover:shadow-md transition-all text-left cursor-pointer ${
+              statusFilter === 'inativos' ? 'border-slate-900 shadow-md' : 'border-slate-200'
             }`}
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Inativos</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-xs text-slate-600 font-medium">Inativos</p>
+                <p className="text-2xl font-bold text-slate-900">
                   {motoristas.filter(m => m.status === "inativo").length}
                 </p>
               </div>
@@ -481,19 +481,19 @@ export default function MotoristasPage() {
 
           <button 
             onClick={() => setStatusFilter('com-transporte')}
-            className={`bg-white rounded-lg border p-4 hover:border-gray-900 hover:shadow-md transition-all text-left cursor-pointer ${
-              statusFilter === 'com-transporte' ? 'border-gray-900 shadow-md' : 'border-gray-200'
+            className={`bg-white rounded-xl border p-4 hover:border-slate-900 hover:shadow-md transition-all text-left cursor-pointer ${
+              statusFilter === 'com-transporte' ? 'border-slate-900 shadow-md' : 'border-slate-200'
             }`}
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Com Transporte</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-xs text-slate-600 font-medium">Com Transporte</p>
+                <p className="text-2xl font-bold text-slate-900">
                   {motoristas.filter(m => m.transporte).length}
                 </p>
               </div>
@@ -502,7 +502,7 @@ export default function MotoristasPage() {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
           <div className="p-6 border-b border-slate-200">
             <div className="flex items-center space-x-4">
               <div className="flex-1 relative">
@@ -514,14 +514,14 @@ export default function MotoristasPage() {
                   placeholder="Pesquisar por nome, BI, carta ou telefone..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-black"
+                  className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-slate-900"
                   style={{ transition: 'none' }}
                 />
               </div>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-black bg-white"
+                className="px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-slate-900 bg-white"
                 style={{ transition: 'none' }}
               >
                 <option value="todos">Todos os Status</option>
@@ -535,31 +535,31 @@ export default function MotoristasPage() {
           <div className="overflow-x-auto">
             {listLoading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
               </div>
             ) : (
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-4 lg:px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+                  <th className="px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Motorista
                   </th>
-                  <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+                  <th className="hidden min-[1400px]:table-cell px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Documentos
                   </th>
-                  <th className="hidden md:table-cell px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Contacto
                   </th>
-                  <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+                  <th className="hidden xl:table-cell px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Transporte
                   </th>
-                  <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+                  <th className="hidden 2xl:table-cell px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Empresa
                   </th>
-                  <th className="px-4 lg:px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+                  <th className="hidden sm:table-cell px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-4 lg:px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+                  <th className="px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Acções
                   </th>
                 </tr>
@@ -585,49 +585,49 @@ export default function MotoristasPage() {
                       className="border-b border-slate-100 cursor-pointer hover:bg-slate-50"
                       style={{ transition: 'none' }}
                     >
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center mr-3">
-                            <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="hidden xl:flex w-10 h-10 bg-slate-100 rounded-xl items-center justify-center mr-3">
+                            <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                           </div>
                           <div>
-                            <div className="text-sm font-bold text-black">{motorista.nome}</div>
-                            <div className="text-xs text-black">{motorista.endereco}</div>
+                            <div className="text-sm font-bold text-slate-900">{motorista.nome}</div>
+                            <div className="max-w-[220px] truncate text-xs text-slate-900">{motorista.endereco}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-black">BI: {motorista.bi}</div>
-                        <div className="text-xs text-black">Carta: {motorista.cartaConducao}</div>
+                      <td className="hidden min-[1400px]:table-cell px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-slate-900">BI: {motorista.bi}</div>
+                        <div className="text-xs text-slate-900">Carta: {motorista.cartaConducao}</div>
                       </td>
-                      <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">{motorista.telefone}</div>
-                        <div className="text-xs text-black">{motorista.email}</div>
+                      <td className="hidden md:table-cell px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-slate-900">{motorista.telefone}</div>
+                        <div className="text-xs text-slate-900">{motorista.email}</div>
                       </td>
-                      <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
+                      <td className="hidden xl:table-cell px-4 py-4 whitespace-nowrap">
                         {motorista.transporte ? (
-                          <div className="text-sm font-medium text-black">{motorista.transporte.matricula}</div>
+                          <div className="text-sm font-medium text-slate-900">{motorista.transporte.matricula}</div>
                         ) : (
-                          <span className="text-sm text-black">Não atribuído</span>
+                          <span className="text-sm text-slate-900">Não atribuído</span>
                         )}
                       </td>
-                      <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
+                      <td className="hidden 2xl:table-cell px-4 py-4 whitespace-nowrap">
                         {motorista.transporte && motorista.transporte.proprietarios.length > 0 ? (
-                          <div className="text-sm text-black">
+                          <div className="text-sm text-slate-900">
                             {motorista.transporte.proprietarios[0].proprietario.nome}
                           </div>
                         ) : (
-                          <span className="text-sm text-black">Sem empresa</span>
+                          <span className="text-sm text-slate-900">Sem empresa</span>
                         )}
                       </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                        <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-black">
+                      <td className="hidden sm:table-cell px-4 py-4 whitespace-nowrap">
+                        <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-900">
                           {motorista.status}
                         </span>
                       </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-3" onClick={(e) => e.stopPropagation()}>
                           <button 
                             onClick={() => router.push(`/motoristas/${motorista.id}`)}
@@ -677,17 +677,17 @@ export default function MotoristasPage() {
           </div>
 
           {/* Pagination */}
-          <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-slate-600">
                 Mostrando <span className="font-medium">{startIndex + 1}</span> a <span className="font-medium">{Math.min(endIndex, filteredMotoristas.length)}</span> de <span className="font-medium">{filteredMotoristas.length}</span> motoristas
               </div>
               <div className="hidden lg:flex items-center space-x-2">
-                <label className="text-sm text-gray-900 font-medium">Itens por página:</label>
+                <label className="text-sm text-slate-900 font-medium">Itens por página:</label>
                 <select
                   value={itemsPerPage}
                   onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  className="px-3 py-1.5 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 >
                   <option value={10}>10</option>
                   <option value={25}>25</option>
@@ -701,9 +701,9 @@ export default function MotoristasPage() {
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                className="px-3 py-2 border border-slate-300 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
               >
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
@@ -726,10 +726,10 @@ export default function MotoristasPage() {
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`px-4 py-2 rounded-lg font-medium ${
+                      className={`px-4 py-2 rounded-xl font-medium ${
                         currentPage === pageNum
-                          ? 'bg-gray-900 text-white'
-                          : 'border border-gray-300 hover:bg-gray-50 text-gray-700'
+                          ? 'bg-slate-900 text-white'
+                          : 'border border-slate-300 hover:bg-slate-50 text-slate-700'
                       }`}
                     >
                       {pageNum}
@@ -741,9 +741,9 @@ export default function MotoristasPage() {
               <button 
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                className="px-3 py-2 border border-slate-300 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
               >
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>

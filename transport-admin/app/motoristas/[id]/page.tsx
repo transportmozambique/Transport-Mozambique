@@ -151,8 +151,8 @@ export default function MotoristaDetalhes() {
   if (!motorista) {
     return (
       <div className="text-center py-12">
-        <p className="text-black">Motorista não encontrado</p>
-        <button onClick={() => router.push('/motoristas')} className="mt-4 text-black" style={{ transition: 'none' }}>
+        <p className="text-slate-900">Motorista não encontrado</p>
+        <button onClick={() => router.push('/motoristas')} className="mt-4 text-slate-900" style={{ transition: 'none' }}>
           Voltar para lista
         </button>
       </div>
@@ -163,26 +163,26 @@ export default function MotoristaDetalhes() {
     <div className="bg-white min-h-screen">
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/motoristas')}
-              className="p-2 rounded-lg"
+              className="p-2 rounded-xl"
               style={{ transition: 'none' }}
             >
-              <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-black">{motorista.nome}</h2>
-              <p className="text-black mt-1">Detalhes do motorista</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{motorista.nome}</h2>
+              <p className="text-slate-900 mt-1">Detalhes do motorista</p>
             </div>
           </div>
           <div className="flex items-center space-x-3">
             <button
               onClick={() => router.push(`/motoristas/editar/${params.id}`)}
-              className="px-4 py-2 bg-slate-900 text-white rounded-lg font-medium flex items-center space-x-2"
+              className="px-4 py-2 bg-slate-900 text-white rounded-xl font-medium flex items-center space-x-2"
               style={{ transition: 'none' }}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -192,7 +192,7 @@ export default function MotoristaDetalhes() {
             </button>
             <button 
               onClick={() => setShowDeleteModal(true)}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium flex items-center space-x-2" 
+              className="px-4 py-2 bg-red-600 text-white rounded-xl font-medium flex items-center space-x-2" 
               style={{ transition: 'none' }}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,7 +208,7 @@ export default function MotoristaDetalhes() {
           {/* Foto e Info Rápida - Coluna Esquerda */}
           <div className="lg:col-span-1 space-y-6">
             {/* Foto */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <div className="flex flex-col items-center">
                 <div className="w-40 h-40 bg-slate-100 rounded-full flex items-center justify-center mb-4 overflow-hidden">
                   {motorista.foto ? (
@@ -219,36 +219,36 @@ export default function MotoristaDetalhes() {
                     </svg>
                   )}
                 </div>
-                <h3 className="text-xl font-bold text-black text-center mb-2">{motorista.nome}</h3>
-                <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-black mb-4">
+                <h3 className="text-xl font-bold text-slate-900 text-center mb-2">{motorista.nome}</h3>
+                <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-900 mb-4">
                   {motorista.status}
                 </span>
                 <div className="w-full space-y-2 text-sm">
                   <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                    <span className="text-black font-medium">Experiência</span>
-                    <span className="text-black">{motorista.experienciaAnos} anos</span>
+                    <span className="text-slate-900 font-medium">Experiência</span>
+                    <span className="text-slate-900">{motorista.experienciaAnos} anos</span>
                   </div>
                   <div className="flex items-center justify-between py-2">
-                    <span className="text-black font-medium">Categoria</span>
-                    <span className="text-black">{motorista.categoriaCarta}</span>
+                    <span className="text-slate-900 font-medium">Categoria</span>
+                    <span className="text-slate-900">{motorista.categoriaCarta}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Status Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-black mb-4 pb-3 border-b border-slate-200">Status</h3>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-4 pb-3 border-b border-slate-200">Status</h3>
               <div className="space-y-3 text-sm">
                 <div>
-                  <label className="block text-black font-semibold mb-1">Estado</label>
-                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-black">
+                  <label className="block text-slate-900 font-semibold mb-1">Estado</label>
+                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-900">
                     {motorista.status}
                   </span>
                 </div>
                 <div>
-                  <label className="block text-black font-semibold mb-1">Registado em</label>
-                  <p className="text-black">{new Date(motorista.createdAt).toLocaleDateString('pt-PT')}</p>
+                  <label className="block text-slate-900 font-semibold mb-1">Registado em</label>
+                  <p className="text-slate-900">{new Date(motorista.createdAt).toLocaleDateString('pt-PT')}</p>
                 </div>
               </div>
             </div>
@@ -259,70 +259,70 @@ export default function MotoristaDetalhes() {
           {/* Informações Detalhadas - Colunas Direita */}
           <div className="lg:col-span-3 space-y-6">
             {/* Informações Pessoais */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Informações Pessoais</h3>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Informações Pessoais</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-1">Nome Completo</label>
-                  <p className="text-black">{motorista.nome}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Nome Completo</label>
+                  <p className="text-slate-900">{motorista.nome}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-1">Data de Nascimento</label>
-                  <p className="text-black">{new Date(motorista.dataNascimento).toLocaleDateString('pt-PT')}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Data de Nascimento</label>
+                  <p className="text-slate-900">{new Date(motorista.dataNascimento).toLocaleDateString('pt-PT')}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-1">Nacionalidade</label>
-                  <p className="text-black">{motorista.nacionalidade}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Nacionalidade</label>
+                  <p className="text-slate-900">{motorista.nacionalidade}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-1">Género</label>
-                  <p className="text-black">{motorista.genero}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Género</label>
+                  <p className="text-slate-900">{motorista.genero}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-1">Estado Civil</label>
-                  <p className="text-black">{motorista.estadoCivil}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Estado Civil</label>
+                  <p className="text-slate-900">{motorista.estadoCivil}</p>
                 </div>
 
                 {motorista.deficiencia && (
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-1">Deficiência</label>
-                    <p className="text-black">{motorista.deficiencia}</p>
+                    <label className="block text-sm font-semibold text-slate-900 mb-1">Deficiência</label>
+                    <p className="text-slate-900">{motorista.deficiencia}</p>
                   </div>
                 )}
 
                 <div className="md:col-span-3">
-                  <label className="block text-sm font-semibold text-black mb-1">Endereço</label>
-                  <p className="text-black">{motorista.endereco}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Endereço</label>
+                  <p className="text-slate-900">{motorista.endereco}</p>
                 </div>
               </div>
             </div>
 
             {/* Documentos */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Documentos</h3>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Documentos</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* BI */}
                 <div className="space-y-4">
-                  <h4 className="font-semibold text-black">Bilhete de Identidade</h4>
+                  <h4 className="font-semibold text-slate-900">Bilhete de Identidade</h4>
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-1">Número</label>
-                    <p className="text-black">{motorista.bi}</p>
+                    <label className="block text-sm font-semibold text-slate-900 mb-1">Número</label>
+                    <p className="text-slate-900">{motorista.bi}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-1">Data de Emissão</label>
-                    <p className="text-black">
+                    <label className="block text-sm font-semibold text-slate-900 mb-1">Data de Emissão</label>
+                    <p className="text-slate-900">
                       {new Date(motorista.dataEmissaoBI).toLocaleDateString('pt-PT')}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-1">Data de Validade</label>
-                    <p className="text-black">
+                    <label className="block text-sm font-semibold text-slate-900 mb-1">Data de Validade</label>
+                    <p className="text-slate-900">
                       {new Date(motorista.dataValidadeBI).toLocaleDateString('pt-PT')}
                     </p>
                   </div>
@@ -330,24 +330,24 @@ export default function MotoristaDetalhes() {
 
                 {/* Carta de Condução */}
                 <div className="space-y-4">
-                  <h4 className="font-semibold text-black">Carta de Condução</h4>
+                  <h4 className="font-semibold text-slate-900">Carta de Condução</h4>
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-1">Número</label>
-                    <p className="text-black">{motorista.cartaConducao}</p>
+                    <label className="block text-sm font-semibold text-slate-900 mb-1">Número</label>
+                    <p className="text-slate-900">{motorista.cartaConducao}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-1">Categoria</label>
-                    <p className="text-black">{motorista.categoriaCarta}</p>
+                    <label className="block text-sm font-semibold text-slate-900 mb-1">Categoria</label>
+                    <p className="text-slate-900">{motorista.categoriaCarta}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-1">Data de Emissão</label>
-                    <p className="text-black">
+                    <label className="block text-sm font-semibold text-slate-900 mb-1">Data de Emissão</label>
+                    <p className="text-slate-900">
                       {new Date(motorista.dataEmissaoCarta).toLocaleDateString('pt-PT')}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-black mb-1">Data de Validade</label>
-                    <p className="text-black">
+                    <label className="block text-sm font-semibold text-slate-900 mb-1">Data de Validade</label>
+                    <p className="text-slate-900">
                       {new Date(motorista.dataValidadeCarta).toLocaleDateString('pt-PT')}
                     </p>
                   </div>
@@ -356,82 +356,82 @@ export default function MotoristaDetalhes() {
             </div>
 
             {/* Contacto */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Contacto</h3>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Contacto</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-1">Telefone</label>
-                  <p className="text-black">{motorista.telefone}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Telefone</label>
+                  <p className="text-slate-900">{motorista.telefone}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-1">Email</label>
-                  <p className="text-black">{motorista.email}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Email</label>
+                  <p className="text-slate-900">{motorista.email}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-1">Contacto de Emergência</label>
-                  <p className="text-black">{motorista.contatoEmergencia}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Contacto de Emergência</label>
+                  <p className="text-slate-900">{motorista.contatoEmergencia}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-1">Telefone de Emergência</label>
-                  <p className="text-black">{motorista.numeroEmergencia}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Telefone de Emergência</label>
+                  <p className="text-slate-900">{motorista.numeroEmergencia}</p>
                 </div>
               </div>
             </div>
 
             {/* Experiência Profissional */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Experiência Profissional</h3>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Experiência Profissional</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-1">Anos de Experiência</label>
-                  <p className="text-black">{motorista.experienciaAnos} anos</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Anos de Experiência</label>
+                  <p className="text-slate-900">{motorista.experienciaAnos} anos</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-1">Categoria da Carta</label>
-                  <p className="text-black">{motorista.categoriaCarta}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Categoria da Carta</label>
+                  <p className="text-slate-900">{motorista.categoriaCarta}</p>
                 </div>
               </div>
             </div>
 
             {/* Observações */}
             {motorista.observacoes && (
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Observações</h3>
-                <p className="text-black whitespace-pre-wrap">{motorista.observacoes}</p>
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Observações</h3>
+                <p className="text-slate-900 whitespace-pre-wrap">{motorista.observacoes}</p>
               </div>
             )}
 
             {/* Transporte Atribuído */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Transporte Atribuído</h3>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Transporte Atribuído</h3>
               
               {motorista.transporte ? (
                 <div className="space-y-4">
-                  <div className="border border-slate-200 rounded-lg p-4">
+                  <div className="border border-slate-200 rounded-xl p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-                          <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                          <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                           </svg>
                         </div>
                         <div>
-                          <h4 className="font-bold text-black">{motorista.transporte.matricula}</h4>
-                          <p className="text-sm text-black">{motorista.transporte.modelo} - {motorista.transporte.marca}</p>
+                          <h4 className="font-bold text-slate-900">{motorista.transporte.matricula}</h4>
+                          <p className="text-sm text-slate-900">{motorista.transporte.modelo} - {motorista.transporte.marca}</p>
                           {motorista.transporte.via && (
-                            <p className="text-xs text-black">Via: {motorista.transporte.via.nome} ({motorista.transporte.via.codigo})</p>
+                            <p className="text-xs text-slate-900">Via: {motorista.transporte.via.nome} ({motorista.transporte.via.codigo})</p>
                           )}
                         </div>
                       </div>
                       <button
                         onClick={() => router.push(`/transportes/${motorista.transporte?.id}`)}
-                        className="px-4 py-2 bg-slate-100 text-black rounded-lg font-medium"
+                        className="px-4 py-2 bg-slate-100 text-slate-900 rounded-xl font-medium"
                         style={{ transition: 'none' }}
                       >
                         Ver Transporte
@@ -441,8 +441,8 @@ export default function MotoristaDetalhes() {
 
                   {/* Empresa/Proprietário */}
                   {motorista.transporte.proprietarios && motorista.transporte.proprietarios.length > 0 && (
-                    <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
-                      <h4 className="font-bold text-black mb-3 flex items-center">
+                    <div className="border border-slate-200 rounded-xl p-4 bg-slate-50">
+                      <h4 className="font-bold text-slate-900 mb-3 flex items-center">
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
@@ -452,29 +452,29 @@ export default function MotoristaDetalhes() {
                         <div key={index} className="space-y-2">
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-xs font-semibold text-black mb-1">Nome da Empresa</label>
-                              <p className="text-sm text-black">{tp.proprietario.nome}</p>
+                              <label className="block text-xs font-semibold text-slate-900 mb-1">Nome da Empresa</label>
+                              <p className="text-sm text-slate-900">{tp.proprietario.nome}</p>
                             </div>
                             <div>
-                              <label className="block text-xs font-semibold text-black mb-1">BI/NUIT</label>
-                              <p className="text-sm text-black">{tp.proprietario.bi}</p>
+                              <label className="block text-xs font-semibold text-slate-900 mb-1">BI/NUIT</label>
+                              <p className="text-sm text-slate-900">{tp.proprietario.bi}</p>
                             </div>
                             <div>
-                              <label className="block text-xs font-semibold text-black mb-1">Nacionalidade</label>
-                              <p className="text-sm text-black">{tp.proprietario.nacionalidade}</p>
+                              <label className="block text-xs font-semibold text-slate-900 mb-1">Nacionalidade</label>
+                              <p className="text-sm text-slate-900">{tp.proprietario.nacionalidade}</p>
                             </div>
                             <div>
-                              <label className="block text-xs font-semibold text-black mb-1">Contacto</label>
-                              <p className="text-sm text-black">{tp.proprietario.contacto1}</p>
+                              <label className="block text-xs font-semibold text-slate-900 mb-1">Contacto</label>
+                              <p className="text-sm text-slate-900">{tp.proprietario.contacto1}</p>
                             </div>
                             <div className="col-span-2">
-                              <label className="block text-xs font-semibold text-black mb-1">Endereço</label>
-                              <p className="text-sm text-black">{tp.proprietario.endereco}</p>
+                              <label className="block text-xs font-semibold text-slate-900 mb-1">Endereço</label>
+                              <p className="text-sm text-slate-900">{tp.proprietario.endereco}</p>
                             </div>
                           </div>
                           <button
                             onClick={() => router.push(`/proprietarios/${tp.proprietario.id}`)}
-                            className="mt-2 px-3 py-1.5 bg-slate-100 text-black rounded text-xs font-medium"
+                            className="mt-2 px-3 py-1.5 bg-slate-100 text-slate-900 rounded-lg text-xs font-medium"
                             style={{ transition: 'none' }}
                           >
                             Ver Detalhes da Empresa
@@ -485,7 +485,7 @@ export default function MotoristaDetalhes() {
                   )}
                 </div>
               ) : (
-                <div className="text-center py-6 text-black border border-slate-200 rounded-lg bg-slate-50">
+                <div className="text-center py-6 text-slate-900 border border-slate-200 rounded-xl bg-slate-50">
                   <svg className="w-10 h-10 mx-auto mb-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
@@ -499,7 +499,7 @@ export default function MotoristaDetalhes() {
         {/* Notification Toast */}
         {notification && (
           <div className="fixed top-4 right-4 z-50 animate-slide-in">
-            <div className={`rounded-lg shadow-lg p-4 min-w-[300px] ${
+            <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
               notification.type === 'success' ? 'bg-green-50 border border-green-200' :
               notification.type === 'error' ? 'bg-red-50 border border-red-200' :
               'bg-blue-50 border border-blue-200'
@@ -536,7 +536,7 @@ export default function MotoristaDetalhes() {
           >
             <div className="flex items-center justify-center min-h-screen p-4">
               <div 
-                className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-gray-200 my-8"
+                className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-slate-200 my-8"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className={`flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4 ${
@@ -551,16 +551,16 @@ export default function MotoristaDetalhes() {
                   </svg>
                 </div>
                 
-                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                <h3 className="text-xl font-bold text-slate-900 text-center mb-2">
                   {hasAssociations ? 'Remover Associações' : 'Eliminar Motorista'}
                 </h3>
                 
                 {hasAssociations ? (
                   <div className="space-y-4">
-                    <p className="text-gray-600 text-center">
+                    <p className="text-slate-600 text-center">
                       {deleteError}
                     </p>
-                    <div className="bg-white rounded-lg p-4">
+                    <div className="bg-white rounded-xl p-4">
                       <p className="text-sm text-red-600 text-center font-medium">
                         Clique em <strong>"Remover e Eliminar"</strong> para remover as associações e eliminar o motorista.
                       </p>
@@ -573,14 +573,14 @@ export default function MotoristaDetalhes() {
                           setHasAssociations(false);
                         }}
                         disabled={deleting}
-                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Cancelar
                       </button>
                       <button
                         onClick={handleRemoveAssociationsAndDelete}
                         disabled={deleting}
-                        className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {deleting ? (
                           <>
@@ -600,8 +600,8 @@ export default function MotoristaDetalhes() {
                   </div>
                 ) : (
                   <>
-                    <p className="text-gray-600 text-center mb-6">
-                      Tem certeza que deseja eliminar o motorista <strong className="text-gray-900">"{motorista?.nome}"</strong>?
+                    <p className="text-slate-600 text-center mb-6">
+                      Tem certeza que deseja eliminar o motorista <strong className="text-slate-900">"{motorista?.nome}"</strong>?
                       <br />
                       <span className="text-sm text-red-600 font-medium">Esta ação não pode ser desfeita.</span>
                     </p>
@@ -610,14 +610,14 @@ export default function MotoristaDetalhes() {
                       <button
                         onClick={() => setShowDeleteModal(false)}
                         disabled={deleting}
-                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Cancelar
                       </button>
                       <button
                         onClick={handleDelete}
                         disabled={deleting}
-                        className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {deleting ? (
                           <>
