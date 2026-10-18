@@ -460,14 +460,14 @@ A USSD-only account becomes a full account when the same phone number registers 
 
 ## Importing stops and routes from OpenStreetMap
 
-The original network left much of central Maputo out. For example, it had one stop within 2 km of Av. Eduardo Mondlane. OpenStreetMap maps the city's buses and chapas: the Chapas, EMTPM, Corujas, REM and RCM networks. `transport-client/scripts/import-osm.js` brings them in.
+The original network left much of central Maputo out. For example, it had one stop within 2 km of Av. Eduardo Mondlane. OpenStreetMap maps the city's buses and chapas: the Chapas, EMTPM, Corujas, REM and RCM networks. `transport-client/scripts/import-osm.mjs` brings them in.
 
 ```bash
 cd transport-client
-node scripts/import-osm.js --fetch                       # download from Overpass into osm-data/ (git-ignored)
-DATABASE_URL=… node scripts/import-osm.js --verbose       # dry run: lists what it would add, writes nothing
-DATABASE_URL=… node scripts/import-osm.js --apply --buses 2                 # local databases only
-DATABASE_URL=… node scripts/import-osm.js --apply --buses 2 --production    # a remote database
+node scripts/import-osm.mjs --fetch                       # download from Overpass into osm-data/ (git-ignored)
+DATABASE_URL=… node scripts/import-osm.mjs --verbose       # dry run: lists what it would add, writes nothing
+DATABASE_URL=… node scripts/import-osm.mjs --apply --buses 2                 # local databases only
+DATABASE_URL=… node scripts/import-osm.mjs --apply --buses 2 --production    # a remote database
 ```
 
 What it does:
@@ -508,6 +508,77 @@ Speed after the import:
 
 **Licence.** OpenStreetMap data is © OpenStreetMap contributors, under the [Open Database License](https://www.openstreetmap.org/copyright) (ODbL). The map already credits OpenStreetMap at the bottom right. Under the ODbL's share-alike terms, the imported stops and routes stay under the ODbL; this script and the OSM data it reads are the way to rebuild them.
 
+## Putting route paths on the roads
+
+Some stored paths (`Via.geoLocationPath`) cut across the map in a straight line: over blocks, fields or a river. There are two causes:
+
+- **Holes in OpenStreetMap routes.** The import joins a relation's ways in order. Where a way is missing, the path jumps straight from the end of one way to the start of the next.
+- **The first routes** were drawn stop to stop by the first data scripts. Their straight lines are cut into points a few tens of metres apart.
+
+`transport-client/scripts/snap-paths.mjs` puts these jumps on the roads:
+
+```bash
+cd transport-client
+DATABASE_URL=… node scripts/snap-paths.mjs                          # dry run: what would change, writes nothing
+DATABASE_URL=… node scripts/snap-paths.mjs --apply                  # local databases only
+DATABASE_URL=… node scripts/snap-paths.mjs --apply --production     # a remote database
+```
+
+How it works:
+
+- **Straight stretches.** The path is read as straight stretches: consecutive points that lie within 3 m of one line. Every stretch of at least 300 m (`--min`) is checked. For each one, the script asks a public OSRM car router for the road between its two ends.
+- **Kept: a straight road.** When the road stays within 50 m of the line, the road itself is straight (Av. das Indústrias, the Marginal), and the stretch is kept.
+- **Replaced.** When the road stays within a quarter of the stretch's length of the line (at least 300 m), the stretch is replaced by the road.
+- **Kept and listed: no close road.** A road that strays further, or is more than 3 times as long (+500 m), is the router's own way between two far points: a ring road, or the city centre. It is not the bus's way, so the stretch is kept. The dry run lists the routes left with a jump of 1 km or more, to redraw in the admin's route editor (Vias → Editar).
+- **Simplified.** The new path is simplified to 4 m and written only when it changed.
+- **Routers.** The public routers allow light use, one request a second. Requests alternate between the FOSSGIS router and the OSRM demo router, so a first run over the whole network takes about an hour. Their answers are kept in `osm-data/road-cache.json`, so a second run on the same data asks nothing again. Copy that file along to run on another copy of the same data.
+- **Backup and undo.** `--apply` first saves every route's id, code and path to `osm-data/backup-paths-<time>.json`. To undo, write those paths back. A route whose path changed since it was read is skipped.
+
+On a copy of production (2026-10-18), the script checked 5,650 stretches of 300 m or more on 261 routes:
+
+| Result | Stretches |
+|---|---|
+| Straight roads, kept | 5,522 |
+| Put on the road | 92 |
+| No close road, kept | 36 |
+
+49 routes changed; 45 of them by less than a tenth of their length. Examples:
+
+- X36 (Costa do Sol – Malhazine) went from 18.7 to 23.3 km. Its diagonal over the blocks now follows the streets.
+- 203 (Baixa – Kongolote) went from 38.0 to 43.3 km. Its 16 km line over the airport now follows the N1.
+- 47-0 (Baixa – Tchumene) no longer crosses the Rio Matola beside the N4.
+
+13 routes still have a jump of 1 km or more to redraw by hand. The longest are:
+
+- 214 (Tchumene – Magoanine), 18.7 km: the router went through the city centre, which its name rules out;
+- 504 (Novo Cemitério – Praça dos Combatentes), 13.4 km;
+- 216 (Patrice Lumumba – Praça dos Combatentes), 8.8 km.
+
+**Licence.** The roads come from OpenStreetMap (© OpenStreetMap contributors, ODbL), routed by OSRM on the FOSSGIS and OSRM demo servers.
+
+## Drivers for the imported vehicles
+
+The 340 vehicles added by the OpenStreetMap import have no driver. `transport-client/scripts/add-drivers.mjs` gives each vehicle without a driver a demo driver, like the 111 drivers of the first data:
+
+```bash
+cd transport-client
+DATABASE_URL=… node scripts/add-drivers.mjs                          # dry run: who would be created
+DATABASE_URL=… node scripts/add-drivers.mjs --apply                  # local databases only
+DATABASE_URL=… node scripts/add-drivers.mjs --apply --production     # a remote database
+```
+
+- **The records.** Names come from common Mozambican first names and surnames. Each driver has the same fields as the first demo drivers:
+  - BI `1102…` and licence `CC-<year>-…`;
+  - an `@transport.co.mz` email, a phone and an address;
+  - an emergency contact, issue and expiry dates, and the status `ativo`;
+  - the vehicle it drives.
+- **No photo and no PIN.** The apps show the initials instead of a photo. An administrator generates the PIN when a driver needs to sign in ([Admin dashboard](admin-dashboard.md#drivers-motoristas)).
+- **No clashes.** Numbers and emails continue after the highest existing ones, and phones are checked against every existing driver. A fixed seed means the same data always gives the same drivers.
+- **Backup and undo.** `--apply` first saves every `Motorista` row to `osm-data/backup-drivers-<time>.json`, then lists the created drivers' ids in `osm-data/created-drivers-<time>.json`. To undo, delete those drivers.
+- **Idempotent.** A second run creates nothing, because every vehicle then has a driver.
+
+On a copy of production (2026-10-18), it created 340 drivers: all 451 vehicles then had one, and the dashboard's "sem motorista" banner was gone.
+
 ## Schema changes and migrations
 
 The migration history lives in `prisma/migrations/` (six migrations, `20260430170348_init` to `20261016150000_vehicle_gps`). On a new database, `prisma migrate deploy` applies them all ([Getting started](getting-started.md#5-create-the-schema)).
@@ -542,7 +613,7 @@ Production on 2026-10-18, after the OpenStreetMap import:
 | Provincia / Cidade / Municipio | 11 / 0 / 2 |
 | Via / Paragem / ViaParagem | 261 / 1,902 / 17,287 |
 | Transporte / GeoLocation | 451 / 111 |
-| Motorista | 111 (the 340 vehicles of the imported routes have no driver yet) |
+| Motorista | 111 (the 340 vehicles of the imported routes have no driver until `scripts/add-drivers.mjs` runs, [above](#drivers-for-the-imported-vehicles)) |
 | Proprietario / TransporteProprietario | 11 / 0 (no vehicle has an owner linked yet) |
 | Tarifa | 1 |
 | Administrador | 3 |
