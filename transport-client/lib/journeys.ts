@@ -13,13 +13,14 @@ import {
 import { distanceMeters, groupPlaces, normalizeName, placeName, walkMinutes, type Place } from './places';
 
 /**
- * Journey planning on the bus network: the destinations a stop reaches directly or with changes
- * of bus, and journeys between two places, used by the web app and USSD.
+ * Planeamento de viagens na rede de autocarros: os destinos a que uma paragem chega directamente
+ * ou com transbordos, e as viagens entre dois locais, usados pela aplicação web e pelo USSD.
  *
- * Buses shuttle back and forth along their route, so a bus reaches every stop of its route from
- * any other. Options are first ranked with fixed speeds and a fixed wait per bus, then the best
- * ones are timed with the real positions of the buses (estimateBusTrip): GPS when fresh, else
- * the timetable, at the moment the passenger reaches each stop.
+ * Os autocarros vão e voltam ao longo da sua via, por isso um autocarro chega a todas as paragens
+ * da via a partir de qualquer outra. As opções são primeiro ordenadas com velocidades fixas e uma
+ * espera fixa por autocarro (rápido, para muitas candidatas); depois as melhores são cronometradas
+ * com as posições reais dos autocarros (estimateBusTrip): GPS quando recente, senão o horário, no
+ * momento em que o passageiro chega a cada paragem.
  */
 
 export interface NetStop {
@@ -35,8 +36,10 @@ export interface NetRoute {
   codigo: string;
   nome: string;
   cor: string;
+  /** Terminais de início e de fim, como o nome da via os diz (Via.terminalPartida, terminalChegada) */
+  terminals: [string, string];
   g: RouteGeometry;
-  /** Stops in path order, with their distance along the path */
+  /** Paragens pela ordem do percurso, com a distância ao longo do percurso */
   stops: { id: string; at: number }[];
   at: Map<string, number>;
   routeStops: RouteStop[];
@@ -45,28 +48,28 @@ export interface NetRoute {
 export interface Network {
   stops: Map<string, NetStop>;
   routes: Map<string, NetRoute>;
-  /** Other stops within WALK_TRANSFER_M of each stop, nearest first */
+  /** Outras paragens a menos de WALK_TRANSFER_M de cada paragem, a mais próxima primeiro */
   near: Map<string, { id: string; m: number }[]>;
   places: Place<NetStop>[];
 }
 
 const NETWORK_CACHE_MS = 5 * 60 * 1000;
-/** Longest walk between two stops to change buses */
+/** Caminhada mais longa entre duas paragens para mudar de autocarro */
 const WALK_TRANSFER_M = 400;
-/** Longest walk at the end, to a stop near the destination; and at the start, from the chosen stop
- * to a nearby one, only when no bus from the chosen stop gets there */
+/** Caminhada mais longa no fim, até uma paragem perto do destino; e no início, da paragem escolhida
+ * até uma próxima, só quando nenhum autocarro da paragem escolhida chega lá */
 const WALK_END_M = 300;
-/** Riding a bus for less than this is not worth a change */
+/** Andar menos do que isto num autocarro não compensa um transbordo */
 const MIN_RIDE_M = 300;
-/** Straight-line metres per second on foot (4.5 km/h, streets a quarter longer) */
+/** Metros em linha recta por segundo a pé (4,5 km/h, com as ruas um quarto mais longas) */
 const WALK_MPS = 1;
-/** Wait assumed per bus when ranking options, before real times are computed */
+/** Espera assumida por autocarro ao ordenar as opções, antes de calcular as horas reais */
 const BOARD_PENALTY_S = 10 * 60;
 const MAX_TIMED = 8;
 
 let cache: { at: number; network: Promise<Network> } | null = null;
 
-/** The network of routes that have buses, cached per server instance for a few minutes. */
+/** A rede das vias que têm autocarros, guardada em memória por instância do servidor durante uns minutos (evita ler a base de dados a cada pedido). */
 export function loadNetwork(): Promise<Network> {
   if (cache && Date.now() - cache.at < NETWORK_CACHE_MS) return cache.network;
   const network = buildNetwork().catch((error) => {
@@ -85,6 +88,8 @@ async function buildNetwork(): Promise<Network> {
       codigo: true,
       nome: true,
       cor: true,
+      terminalPartida: true,
+      terminalChegada: true,
       geoLocationPath: true,
       paragens: { select: { paragem: { select: { id: true, nome: true, codigo: true, geoLocation: true } } } },
     },
@@ -104,7 +109,7 @@ async function buildNetwork(): Promise<Network> {
     }
     if (own.size < 2) continue;
 
-    // Without a drawn path, the line through the stops stands in for it
+    // Sem percurso desenhado, a linha pelas paragens faz as vezes dele
     let g = routeGeometry(via.geoLocationPath);
     if (g.path.length < 2) g = routeGeometry([...own.values()]);
     const ordered = [...own].map(([id, point]) => ({ id, at: progressOf(g, point) })).sort((a, b) => a.at - b.at);
@@ -113,6 +118,7 @@ async function buildNetwork(): Promise<Network> {
       codigo: via.codigo,
       nome: via.nome,
       cor: via.cor,
+      terminals: [via.terminalPartida, via.terminalChegada],
       g,
       stops: ordered,
       at: new Map(ordered.map((s) => [s.id, s.at])),
@@ -123,7 +129,7 @@ async function buildNetwork(): Promise<Network> {
   return { stops, routes, near: nearbyPairs(stops), places: groupPlaces([...stops.values()]) };
 }
 
-/** For every stop, the stops within WALK_TRANSFER_M (grid of ~500 m cells). */
+/** Para cada paragem, as paragens a menos de WALK_TRANSFER_M (grelha de células de ~500 m, para não comparar todas com todas). */
 function nearbyPairs(stops: Map<string, NetStop>) {
   const cell = (p: LatLng) => `${Math.floor(p[0] / 0.005)},${Math.floor(p[1] / 0.005)}`;
   const grid = new Map<string, NetStop[]>();
@@ -151,7 +157,7 @@ function nearbyPairs(stops: Map<string, NetStop>) {
   return near;
 }
 
-/** "Avenida das Indústrias" → "Av. Indústrias": room for what tells same-name places apart. */
+/** "Avenida das Indústrias" → "Av. Indústrias": espaço para o que distingue locais com o mesmo nome. */
 function shortPlaceName(nome: string): string {
   return nome
     .replace(/^Avenida\b/i, 'Av.')
@@ -160,7 +166,7 @@ function shortPlaceName(nome: string): string {
     .trim();
 }
 
-/** The nearest place with another name (a long road's stops are far from any), else its first route. */
+/** O local mais próximo com outro nome (as paragens de uma estrada longa ficam longe de todos), senão a primeira via. */
 function landmarkOf(net: Network, place: Place<NetStop>): { nome: string; m: number | null } {
   const name = normalizeName(place.nome);
   let best: { nome: string; m: number } | null = null;
@@ -173,9 +179,9 @@ function landmarkOf(net: Network, place: Place<NetStop>): { nome: string; m: num
 }
 
 /**
- * The place's name, and when other places have the same name, what tells them apart: the
- * nearest place with another name ("Av. Indústrias - Machava-Sede"), with the distance to it
- * when two of them have the same one ("Av. Indústrias - Machava-Sede 960 m").
+ * O nome do local e, quando outros locais têm o mesmo nome, o que os distingue: o local mais
+ * próximo com outro nome ("Av. Indústrias - Machava-Sede"), com a distância até ele quando dois
+ * têm o mesmo ("Av. Indústrias - Machava-Sede 960 m").
  */
 export function placeLabel(net: Network, place: Place<NetStop>, max = Infinity): string {
   const name = normalizeName(place.nome);
@@ -185,8 +191,8 @@ export function placeLabel(net: Network, place: Place<NetStop>, max = Infinity):
   const shared = twins.some((t) => t !== place && landmarkOf(net, t).nome === own.nome);
   const distance = shared && own.m !== null ? ` ${Math.round(own.m / 10) * 10} m` : '';
   if (place.nome.length + own.nome.length + distance.length + 3 <= max) return `${place.nome} - ${own.nome}${distance}`;
-  // Short of room (USSD), the name is shortened first: the person typed it, the tail is new.
-  // The name keeps at least 10 characters; a landmark too long for the rest is cut too
+  // Com pouco espaço (USSD), encurta-se primeiro o nome: a pessoa escreveu-o, o resto é novo.
+  // O nome fica com pelo menos 10 caracteres; uma referência demasiado longa também é cortada
   const cut = (text: string, n: number) => (text.length > n ? `${text.slice(0, Math.max(1, n - 2)).trimEnd()}..` : text);
   let head = shortPlaceName(place.nome);
   head = cut(head, Math.max(Math.min(head.length, 10), max - own.nome.length - distance.length - 3));
@@ -209,7 +215,7 @@ async function vehiclesOn(routeIds: Iterable<string>): Promise<Map<string, Vehic
   return byRoute;
 }
 
-/** The first bus of `route` to take a passenger who is at `fromId` at `ready` to `toId`. */
+/** O primeiro autocarro de `route` que leva um passageiro que está em `fromId` às `ready` até `toId`. */
 function firstBus(route: NetRoute, vehicles: Vehicle[], fromId: string, toId: string, rule: FareRule, ready: Date) {
   let best: { vehicle: Vehicle; trip: NonNullable<ReturnType<typeof estimateBusTrip>> } | null = null;
   for (const vehicle of vehicles) {
@@ -219,13 +225,13 @@ function firstBus(route: NetRoute, vehicles: Vehicle[], fromId: string, toId: st
   return best;
 }
 
-/** End of the route in direction `dir`, which names the direction ("sentido Baixa"). */
+/** Fim da via no sentido `dir`, que dá o nome ao sentido ("sentido Baixa"). */
 export function towards(net: Network, route: NetRoute, dir: Direction): string {
   const end = dir === 1 ? route.stops[route.stops.length - 1] : route.stops[0];
   return placeName(net.stops.get(end.id)?.nome ?? '');
 }
 
-// ─── Destinations of one stop ─────────────────────────────────────────────────
+// ─── Destinos de uma paragem ──────────────────────────────────────────────────
 
 export interface StopRef {
   id: string;
@@ -248,7 +254,7 @@ export interface StopDestinations {
   }[];
 }
 
-/** Every stop reachable from `stopId` without changing bus, by route and direction, with the next bus. */
+/** Todas as paragens a que se chega a partir de `stopId` sem mudar de autocarro, por via e sentido, com o próximo autocarro. */
 export async function stopDestinations(stopId: string, now = new Date()): Promise<StopDestinations | null> {
   const net = await loadNetwork();
   const stop = net.stops.get(stopId);
@@ -296,7 +302,7 @@ export interface BusLeg {
   sentido: string;
   de: StopRef;
   para: StopRef;
-  /** Minutes from the moment the passenger is at the stop until the bus comes */
+  /** Minutos desde que o passageiro está na paragem até o autocarro chegar */
   esperaMin: number;
   embarque: string;
   chegada: string;
@@ -304,7 +310,7 @@ export interface BusLeg {
   metros: number;
   paragens: number;
   tarifa: number;
-  /** [lng, lat] points along the road, for drawing */
+  /** Pontos [lng, lat] ao longo da estrada, para desenhar */
   percurso: [number, number][];
 }
 
@@ -331,15 +337,15 @@ interface Plan {
   cost: number;
 }
 
-/** Anchor of journeys that start where the passenger is, rather than at a stop. */
+/** Ponto de partida das viagens que começam onde o passageiro está, e não numa paragem. */
 const ME = '@me';
-/** From the passenger's position: stops within this walk, the nearest MAX_START_STOPS */
+/** A partir da posição do passageiro: paragens dentro desta caminhada, as MAX_START_STOPS mais próximas */
 const WALK_FROM_POSITION_M = 800;
 const MAX_START_STOPS = 8;
 
 type Catchment = Map<string, { anchor: string; m: number }>;
 
-/** Each stop within `radius` of one of `ids` (them included), with the nearest of `ids` and the distance. */
+/** Cada paragem a menos de `radius` de uma das `ids` (incluídas), com a mais próxima das `ids` e a distância. */
 function catchment(net: Network, ids: string[], radius: number): Catchment {
   const out: Catchment = new Map();
   const put = (id: string, anchor: string, m: number) => {
@@ -354,7 +360,7 @@ function catchment(net: Network, ids: string[], radius: number): Catchment {
   return out;
 }
 
-/** The stops a passenger at `point` can walk to. */
+/** As paragens a que um passageiro em `point` pode ir a pé. */
 function catchmentOfPoint(net: Network, point: LatLng): Catchment {
   const near = [...net.stops.values()]
     .map((s) => ({ id: s.id, m: distanceMeters(point, s.point) }))
@@ -369,7 +375,7 @@ function candidatePlans(net: Network, origins: Catchment, dests: Catchment, rule
   const rideM = (r: NetRoute, a: string, b: string) => Math.abs(r.at.get(a)! - r.at.get(b)!);
   const routesAt = (ids: Iterable<string>) => new Set([...ids].flatMap((id) => net.stops.get(id)?.routeIds ?? []));
 
-  // Cheapest way to each stop of a route boarding at an origin, and from each stop to a destination
+  // Forma mais barata de chegar a cada paragem de uma via entrando numa origem, e de cada paragem a um destino
   const fromOrigins = (r: NetRoute) => {
     const best = new Map<string, { cost: number; o: string }>();
     for (const [o, w] of origins) {
@@ -402,14 +408,14 @@ function candidatePlans(net: Network, origins: Catchment, dests: Catchment, rule
 
   const firstRoutes = [...routesAt(origins.keys())].map((id) => net.routes.get(id)!).filter(Boolean);
   const lastRoutes = [...routesAt(dests.keys())].map((id) => net.routes.get(id)!).filter(Boolean);
-  const out = new Map<string, Plan>(); // best plan per sequence of routes
+  const out = new Map<string, Plan>(); // o melhor plano por sequência de vias
   const keep = (plan: Plan) => {
     const key = plan.segs.map((s) => s.route.id).join('>');
     const old = out.get(key);
     if (!old || plan.cost < old.cost) out.set(key, plan);
   };
 
-  // No change: origin and destination on the same route (a short ride is fine here)
+  // Sem transbordo: origem e destino na mesma via (aqui uma viagem curta serve)
   for (const r of firstRoutes) {
     for (const [o, wo] of origins) {
       if (!r.at.has(o)) continue;
@@ -424,7 +430,7 @@ function candidatePlans(net: Network, origins: Catchment, dests: Catchment, rule
   const first = new Map(firstRoutes.map((r) => [r.id, fromOrigins(r)]));
   const last = new Map(lastRoutes.map((r) => [r.id, toDests(r)]));
 
-  // One change
+  // Um transbordo
   for (const r1 of firstRoutes) {
     const a = first.get(r1.id)!;
     for (const r2 of lastRoutes) {
@@ -446,11 +452,11 @@ function candidatePlans(net: Network, origins: Catchment, dests: Catchment, rule
     }
   }
 
-  // More changes, only when one is not enough
+  // Mais transbordos, só quando um não chega
   if (out.size === 0) for (const plan of fewestBuses(net, origins, dests, v)) keep(plan);
 
   const plans = [...out.values()].sort((p, q) => p.cost - q.cost);
-  // A change is only offered when it is clearly better than the best direct bus
+  // Um transbordo só é oferecido quando é claramente melhor do que o melhor autocarro directo
   const direct = plans.find((p) => p.segs.length === 1);
   return plans
     .filter((p) => p.segs.length === 1 || !direct || p.cost < direct.cost - 10 * 60)
@@ -463,9 +469,9 @@ type Label =
   | { cost: number; prev: { type: 'walk'; from: string } };
 
 /**
- * Round by round, the cheapest way to every stop with 1, 2, … MAX_BUSES buses (one label per
- * stop and round, as in RAPTOR). Returns the plan of the first round that reaches a destination,
- * and of the next round when it is clearly faster.
+ * Ronda a ronda, a forma mais barata de chegar a cada paragem com 1, 2, … MAX_BUSES autocarros
+ * (uma etiqueta por paragem e ronda, como no RAPTOR). Devolve o plano da primeira ronda que
+ * chega a um destino, e o da ronda seguinte quando é claramente mais rápido.
  */
 function fewestBuses(
   net: Network,
@@ -515,7 +521,7 @@ function fewestBuses(
     }
     if (!best) continue;
 
-    // Walk the labels back to the origin
+    // Seguir as etiquetas para trás até à origem
     const segs: Segment[] = [];
     let stop = best.d;
     let origin = '';
@@ -544,19 +550,19 @@ function fewestBuses(
   return found;
 }
 
-// ─── Earliest arrival everywhere ─────────────────────────────────────────────
+// ─── Chegada mais cedo a todo o lado ──────────────────────────────────────────
 
-/** Most buses in one journey for the time-dependent search */
+/** Máximo de autocarros numa viagem na pesquisa dependente do tempo */
 const MAX_TIMED_BUSES = 4;
 /**
- * A start stop closer to the passenger wins over a farther one upstream on the same route when
- * its bus is at most this much later: the two are usually the same bus, and the estimates of
- * when it passes each stop differ a little.
+ * Uma paragem de partida mais perto do passageiro ganha a outra mais longe, a montante na mesma
+ * via, quando o seu autocarro chega no máximo este tempo mais tarde: normalmente são o mesmo
+ * autocarro, e as estimativas da passagem em cada paragem diferem um pouco.
  */
 const BOARD_SLACK_MS = 2 * 60000;
 
 interface TimedLabel {
-  /** When the passenger is at the stop (ms) */
+  /** Quando o passageiro está na paragem (ms) */
   t: number;
   prev:
     | { type: 'start'; anchor: string }
@@ -565,20 +571,22 @@ interface TimedLabel {
 }
 
 interface Arrivals {
-  /** rounds[k]: the stops whose earliest arrival improved with k buses */
+  /** rounds[k]: as paragens cuja chegada mais cedo melhorou com k autocarros */
   rounds: Map<string, TimedLabel>[];
-  /** The same, without the walk at the end of the round */
+  /** O mesmo, sem a caminhada no fim da ronda */
   byBus: Map<string, TimedLabel>[];
-  /** Earliest arrival at each stop, and the round it was reached in */
+  /** Chegada mais cedo a cada paragem, e a ronda em que foi alcançada */
   best: Map<string, { t: number; k: number }>;
 }
 
 /**
- * Earliest arrival at every stop from `origins`, with 1, 2, … MAX_TIMED_BUSES buses, using each
- * bus's real next pass (GPS when fresh, else the timetable) at the moment the passenger is at the
- * stop: a time-dependent RAPTOR. Each round scans every route through a stop improved in the
- * previous round, in both directions, staying on the bus already taken unless another one at a
- * later stop arrives sooner.
+ * Chegada mais cedo a todas as paragens a partir de `origins`, com 1, 2, … MAX_TIMED_BUSES
+ * autocarros, usando a próxima passagem real de cada autocarro (GPS quando recente, senão o
+ * horário) no momento em que o passageiro está na paragem: um RAPTOR dependente do tempo. Cada
+ * ronda percorre todas as vias que passam numa paragem melhorada na ronda anterior, nos dois
+ * sentidos, ficando no autocarro já apanhado a menos que outro, numa paragem seguinte, chegue
+ * mais cedo. Porquê RAPTOR: é o algoritmo usado em planeadores de transportes públicos, rápido
+ * numa rede deste tamanho e natural para contar transbordos (uma ronda = um autocarro).
  */
 function earliestArrivals(net: Network, origins: Catchment, vehicles: Map<string, Vehicle[]>, rule: FareRule, now: Date): Arrivals {
   const v = (rule.velocidadeViagemKmh * 1000) / 3600;
@@ -613,7 +621,7 @@ function earliestArrivals(net: Network, origins: Catchment, vehicles: Map<string
           if (cur && Math.abs(z.at - cur.at) >= MIN_RIDE_M && curAtZ < (best.get(z.id)?.t ?? Infinity) && curAtZ < (bus.get(z.id)?.t ?? Infinity)) {
             bus.set(z.id, { t: curAtZ, prev: { type: 'bus', route: r, from: cur.from } });
           }
-          // Board here when the passenger is here before the bus already taken
+          // Entrar aqui quando o passageiro chega antes do autocarro já apanhado
           const ready = marked.get(z.id);
           if (!ready || i === order.length - 1 || ready.t >= curAtZ || cameBy(k - 1, z.id) === r.id) continue;
           const closerStart = k === 1 && cur !== null && ready.t < (start.get(cur.from)?.t ?? Infinity);
@@ -631,7 +639,7 @@ function earliestArrivals(net: Network, origins: Catchment, vehicles: Map<string
       }
     }
 
-    // A short walk to the stops nearby, to change buses there
+    // Uma caminhada curta até às paragens próximas, para mudar de autocarro lá
     const reached = new Map<string, TimedLabel>(bus);
     for (const [z, label] of bus) {
       for (const { id: w, m } of net.near.get(z) ?? []) {
@@ -647,7 +655,7 @@ function earliestArrivals(net: Network, origins: Catchment, vehicles: Map<string
   return { rounds, byBus, best };
 }
 
-/** The buses taken to reach `stop`, read back from the labels (and the origin it started at). */
+/** Os autocarros apanhados para chegar a `stop`, lidos das etiquetas (e a origem onde começou). */
 function segmentsTo(a: Arrivals, stop: string): { origin: string; segs: Segment[] } | null {
   const reached = a.best.get(stop);
   if (!reached) return null;
@@ -687,18 +695,19 @@ export function pathBetween(r: NetRoute, a: number, b: number): [number, number]
   const lo = Math.min(a, b);
   const hi = Math.max(a, b);
   const inner = r.g.path.filter((_, i) => r.g.cumulative[i] > lo && r.g.cumulative[i] < hi);
-  // Cut exactly at the two stops: a simplified path can have one point for a whole avenue
+  // Cortar exactamente nas duas paragens: um percurso simplificado pode ter um só ponto para uma avenida inteira
   const pts = r.g.path.length > 1 ? [pointAlong(r.g, lo).point, ...inner, pointAlong(r.g, hi).point] : inner;
   const lngLat = pts.map(([lat, lng]) => [lng, lat] as [number, number]);
   return a <= b ? lngLat : lngLat.reverse();
 }
 
 /**
- * Journeys to `to` (stops of the same place, or one stop), best first. `from` is likewise a list
- * of stops, or the passenger's position as [lat, lng]: the journey then starts with a walk to a
- * nearby stop. From stops, the first bus is taken at one of them; only when no bus from there
- * gets to `to` does the journey start with a walk to a stop nearby. Walks between buses, and to
- * a stop near `to` at the end, are part of journeys.
+ * Viagens até `to` (paragens do mesmo local, ou uma paragem), a melhor primeiro. `from` é também
+ * uma lista de paragens, ou a posição do passageiro como [lat, lng]: a viagem começa então com uma
+ * caminhada até uma paragem próxima. A partir de paragens, o primeiro autocarro é apanhado numa
+ * delas; só quando nenhum autocarro de lá chega a `to` é que a viagem começa com uma caminhada
+ * até uma paragem próxima. As caminhadas entre autocarros, e até uma paragem perto de `to` no
+ * fim, fazem parte das viagens.
  */
 export async function planJourneys(
   from: string[] | LatLng,
@@ -712,7 +721,7 @@ export async function planJourneys(
   return there.length ? there : planFrom(from, to, now, limit, WALK_END_M);
 }
 
-/** planJourneys, with the first bus taken within `startRadius` of the start stops. */
+/** planJourneys, com o primeiro autocarro apanhado a menos de `startRadius` das paragens de partida. */
 async function planFrom(from: string[] | LatLng, to: string[], now: Date, limit: number, startRadius: number): Promise<Journey[]> {
   const [net, rule] = await Promise.all([loadNetwork(), getFareRule()]);
   const position = typeof from[0] === 'number' ? (from as LatLng) : null;
@@ -722,8 +731,8 @@ async function planFrom(from: string[] | LatLng, to: string[], now: Date, limit:
   const plans = candidatePlans(net, origins, dests, rule);
   const vehicles = await allVehicles();
 
-  // The earliest arrival with the buses' real times: it can beat every fixed-speed candidate (a bus
-  // that comes sooner), and it is what a stop's list of destinations shows
+  // A chegada mais cedo com as horas reais dos autocarros: pode ganhar a todas as candidatas de
+  // velocidade fixa (um autocarro que vem mais cedo), e é o que a lista de destinos de uma paragem mostra
   const arrivals = earliestArrivals(net, origins, vehicles, rule, now);
   let soonest: { id: string; t: number } | null = null;
   for (const [d, w] of dests) {
@@ -804,11 +813,11 @@ async function planFrom(from: string[] | LatLng, to: string[], now: Date, limit:
     });
   }
 
-  // Earliest arrival first. Options no other option beats on both arrival and changes come
-  // first, then the rest (other routes) in order of arrival
+  // A chegada mais cedo primeiro. As opções que nenhuma outra bate na chegada e nos transbordos
+  // vêm primeiro, depois as restantes (outras vias) por ordem de chegada
   timed.sort((a, b) => a.chegada.localeCompare(b.chegada) || a.transbordos - b.transbordos);
-  // A bus a minute or two later from a closer stop beats a longer walk to catch it upstream: the
-  // same rule as the list of destinations (BOARD_SLACK_MS), so the journey picked matches the list
+  // Um autocarro um ou dois minutos mais tarde numa paragem mais perto ganha a uma caminhada mais
+  // longa para o apanhar antes: a mesma regra da lista de destinos (BOARD_SLACK_MS), para que a viagem escolhida coincida com a lista
   if (timed.length) {
     const first = timed[0];
     const closer = timed
@@ -822,18 +831,18 @@ async function planFrom(from: string[] | LatLng, to: string[], now: Date, limit:
   return [...best, ...timed.filter((j) => !best.includes(j))].slice(0, limit);
 }
 
-// ─── Every destination of a stop ─────────────────────────────────────────────
+// ─── Todos os destinos de uma paragem ─────────────────────────────────────────
 
 export interface Destino {
-  /** The place's stops, to plan the journey to it */
+  /** As paragens do local, para planear a viagem até lá */
   ids: string[];
   nome: string;
   chegada: string;
   minutos: number;
   transbordos: number;
-  /** The buses' routes, in the order they are taken */
+  /** As vias dos autocarros, pela ordem em que são apanhados */
   vias: { codigo: string; nome: string; cor: string }[];
-  /** Where the first bus is taken (B in A → B → C), and the walk to it from the start */
+  /** Onde se apanha o primeiro autocarro (B em A → B → C), e a caminhada até lá desde o início */
   embarque: StopRef;
   metrosAtePrimeira: number;
 }
@@ -849,10 +858,11 @@ function labelOf(net: Network, place: Place<NetStop>): string {
 }
 
 /**
- * Every place reachable from `from` with up to MAX_TIMED_BUSES buses, earliest arrival first, with
- * the buses' real times. `from` is a stop (or the stops of a place), where the first bus is
- * taken, or a position: the first stop of each journey is then the one that gets there soonest,
- * within a short walk. Places within a short walk of the start are left out.
+ * Todos os locais a que se chega a partir de `from` com até MAX_TIMED_BUSES autocarros, a chegada
+ * mais cedo primeiro, com as horas reais dos autocarros. `from` é uma paragem (ou as paragens de
+ * um local), onde se apanha o primeiro autocarro, ou uma posição: a primeira paragem de cada
+ * viagem é então a que chega lá mais cedo, a uma caminhada curta. Os locais a uma caminhada curta
+ * do início ficam de fora.
  */
 export async function reachFrom(from: string[] | LatLng, now = new Date()): Promise<Destino[] | null> {
   const [net, rule, vehicles] = await Promise.all([loadNetwork(), getFareRule(), allVehicles()]);
@@ -867,7 +877,7 @@ export async function reachFrom(from: string[] | LatLng, now = new Date()): Prom
   const out: Destino[] = [];
   for (const place of net.places) {
     if (place.stops.some((s) => walkable.has(s.id))) continue;
-    // As planJourneys does: the place's stops, or a stop a short walk away from them
+    // Como em planJourneys: as paragens do local, ou uma paragem a uma caminhada curta delas
     let soonest: { id: string; t: number } | null = null;
     for (const [id, w] of catchment(net, place.stops.map((s) => s.id), WALK_END_M)) {
       const b = arrivals.best.get(id);
