@@ -5,16 +5,18 @@
  *   node scripts/snap-paths.mjs                        # dry run: what would change, nothing written
  *   node scripts/snap-paths.mjs --apply                # write to DATABASE_URL (local databases only)
  *   node scripts/snap-paths.mjs --apply --production   # also allows a remote database
- *   options: --min 300 (shortest segment checked, m), --verbose (every route changed)
+ *   options: --min 300 (shortest stretch checked, m), --verbose (every route changed)
  *
  * Some stored paths (Via.geoLocationPath) jump in a straight line between two points far apart:
  * where an OpenStreetMap route relation has a hole in it (the OSM import joined its ways in
- * order), and on routes drawn stop to stop by the first data scripts. For every segment of at
- * least --min metres, the script asks a public OSRM car router for the road between its two ends:
- * - the road stays within 50 m of the straight line: the road is straight, the segment is kept;
- * - otherwise the segment is replaced by the road, unless the road is more than 3 times as long
+ * order), and on routes drawn stop to stop by the first data scripts, whose straight lines are
+ * cut into points a few tens of metres apart. The path is first read as straight stretches (the
+ * points in one line, within 3 m). For every stretch of at least --min metres, the script asks a
+ * public OSRM car router for the road between its two ends:
+ * - the road stays within 50 m of the straight line: the road is straight, the stretch is kept;
+ * - otherwise the stretch is replaced by the road, unless the road is more than 3 times as long
  *   (+500 m), which means the two ends are not on one road (a river, a one-way street the wrong
- *   way): the segment is then kept and listed.
+ *   way): the stretch is then kept and counted.
  * The new path is simplified (4 m) and written only when it changed.
  *
  * The routers allow light use only, one request a second: requests alternate between the
@@ -40,6 +42,7 @@ const option = (name, fallback) => {
 const DATA = path.resolve(option('--data', path.join(__dirname, '..', 'osm-data')));
 const CACHE_FILE = path.join(DATA, 'road-cache.json');
 const MIN_SEGMENT_M = Number(option('--min', '300'));
+const IN_LINE_M = 3;
 const STRAIGHT_ROAD_M = 50;
 const MAX_DETOUR = 3;
 const MAX_DETOUR_EXTRA_M = 500;
@@ -159,33 +162,53 @@ async function fetchRoads(segments) {
 
 // ─── Plan ────────────────────────────────────────────────────────────────────
 
-function longSegments(points) {
+/** The path as straight stretches [i, j]: the points from i to j lie within IN_LINE_M of the line i–j */
+function stretches(points) {
   const out = [];
-  for (let i = 1; i < points.length; i++) if (meters(points[i - 1], points[i]) >= MIN_SEGMENT_M) out.push([points[i - 1], points[i]]);
+  let i = 0;
+  while (i < points.length - 1) {
+    let j = i + 1;
+    while (j + 1 < points.length) {
+      let inLine = true;
+      for (let k = i + 1; k <= j && inLine; k++) inLine = toSegment(points[k], points[i], points[j + 1]) <= IN_LINE_M;
+      if (!inLine) break;
+      j++;
+    }
+    out.push([i, j]);
+    i = j;
+  }
   return out;
 }
 
-/** The route's new path, and what was done to its long segments */
+function longStretches(points) {
+  return stretches(points)
+    .map(([i, j]) => [points[i], points[j]])
+    .filter(([a, b]) => meters(a, b) >= MIN_SEGMENT_M);
+}
+
+/** The route's new path, and what was done to its long stretches */
 function snapRoute(points) {
   const out = [points[0]];
   const stats = { replaced: 0, straight: 0, detour: 0, unknown: 0 };
-  for (let i = 1; i < points.length; i++) {
-    const a = points[i - 1];
-    const b = points[i];
+  for (const [i, j] of stretches(points)) {
+    const a = points[i];
+    const b = points[j];
     const m = meters(a, b);
+    let road = null;
     if (m >= MIN_SEGMENT_M) {
       const key = keyOf(a, b);
-      const road = key in cache ? cache[key] : undefined;
-      if (road === undefined) stats.unknown++;
-      else if (!road) stats.detour++;
-      else if (Math.max(...road.points.map((p) => toSegment(p, a, b))) <= STRAIGHT_ROAD_M) stats.straight++;
-      else if (road.m > MAX_DETOUR * m + MAX_DETOUR_EXTRA_M) stats.detour++;
+      const answer = key in cache ? cache[key] : undefined;
+      if (answer === undefined) stats.unknown++;
+      else if (!answer) stats.detour++;
+      else if (Math.max(...answer.points.map((p) => toSegment(p, a, b))) <= STRAIGHT_ROAD_M) stats.straight++;
+      else if (answer.m > MAX_DETOUR * m + MAX_DETOUR_EXTRA_M) stats.detour++;
       else {
         stats.replaced++;
-        out.push(...road.points);
+        road = answer;
       }
     }
-    out.push(b);
+    if (road) out.push(...road.points, b);
+    else out.push(...points.slice(i + 1, j + 1));
   }
   return { points: stats.replaced ? simplify(out, SIMPLIFY_M) : points, stats };
 }
@@ -206,7 +229,7 @@ const lengthKm = (points) => points.slice(1).reduce((s, p, i) => s + meters(poin
   try {
     const vias = await prisma.via.findMany({ select: { id: true, codigo: true, nome: true, geoLocationPath: true }, orderBy: { codigo: 'asc' } });
     const parsed = vias.map((v) => ({ ...v, points: parsePath(v.geoLocationPath) })).filter((v) => v.points.length >= 2);
-    await fetchRoads(parsed.flatMap((v) => longSegments(v.points)));
+    await fetchRoads(parsed.flatMap((v) => longStretches(v.points)));
 
     const changes = [];
     const total = { replaced: 0, straight: 0, detour: 0, unknown: 0 };
@@ -215,11 +238,11 @@ const lengthKm = (points) => points.slice(1).reduce((s, p, i) => s + meters(poin
       for (const k of Object.keys(total)) total[k] += stats[k];
       if (stats.replaced) changes.push({ v, points, stats, before: lengthKm(v.points), after: lengthKm(points) });
     }
-    console.log(`Routes: ${vias.length}; long segments (≥ ${MIN_SEGMENT_M} m): ${total.replaced + total.straight + total.detour + total.unknown}`);
+    console.log(`Routes: ${vias.length}; long straight stretches (≥ ${MIN_SEGMENT_M} m): ${total.replaced + total.straight + total.detour + total.unknown}`);
     console.log(`  put on the road: ${total.replaced}; straight roads, kept: ${total.straight}; no road close enough, kept: ${total.detour}; not asked yet: ${total.unknown}`);
     console.log(`Routes changed: ${changes.length}`);
     for (const c of flag('--verbose') ? changes : changes.slice(0, 15)) {
-      console.log(`  ${c.v.codigo.padEnd(10)} ${String(c.stats.replaced).padStart(3)} segments, ${c.before.toFixed(1)} → ${c.after.toFixed(1)} km  ${c.v.nome}`);
+      console.log(`  ${c.v.codigo.padEnd(10)} ${String(c.stats.replaced).padStart(3)} stretches, ${c.before.toFixed(1)} → ${c.after.toFixed(1)} km  ${c.v.nome}`);
     }
     if (!flag('--verbose') && changes.length > 15) console.log(`  … (--verbose lists all ${changes.length})`);
     if (!flag('--apply')) {
