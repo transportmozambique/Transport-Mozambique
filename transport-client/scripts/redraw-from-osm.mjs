@@ -5,7 +5,8 @@
  *   node scripts/redraw-from-osm.mjs                        # dry run: what would change, nothing written
  *   node scripts/redraw-from-osm.mjs --apply                # write to DATABASE_URL (local databases only)
  *   node scripts/redraw-from-osm.mjs --apply --production   # also allows a remote database
- *   options: --routes 214,504 (these routes instead of the ones found), --verbose
+ *   options: --routes 214,504 (these routes instead of the ones found), --verbose,
+ *            --unlink-far 503,X05 (unlink these routes' stops far from their path, below)
  *
  * Run it after scripts/snap-paths.mjs, with the OSM data from `import-osm.mjs --fetch` in
  * osm-data/. It takes the routes with a straight jump of 1 km or more that no road follows
@@ -23,9 +24,16 @@
  * stop, and within 30 m of the new path) are linked to the route if they were not; the stops
  * the old jump had picked up stay linked, and the ones now far from the path are listed.
  *
+ * --unlink-far 503,X05 unlinks, from the routes named, the linked stops more than 100 m from
+ * their path: the path drawn in this run, or the current one for a route redrawn before. A far
+ * stop that is a stop of the route's own OSM relations is kept: the bus comes back by another
+ * street there (the "v" direction), and the path holds only one direction. Only the routes
+ * named lose stops, so each removal is a decision taken route by route.
+ *
  * --apply first saves the routes' paths and stop links to osm-data/backup-redraw-<time>.json,
- * writes a path only if it is still the one read, and lists the links it added in
- * osm-data/created-redraw-<time>.json (to undo: write the paths back, delete those links).
+ * writes a path only if it is still the one read, and lists the links it added and removed in
+ * osm-data/created-redraw-<time>.json (to undo: write the paths back, delete the links added,
+ * create the links removed again).
  * Data © OpenStreetMap contributors (ODbL), routing by OSRM / FOSSGIS.
  */
 import fs from 'node:fs';
@@ -42,6 +50,7 @@ const option = (name, fallback) => {
 };
 const DATA = path.resolve(option('--data', path.join(__dirname, '..', 'osm-data')));
 const ONLY = option('--routes', '').split(',').map((s) => s.trim()).filter(Boolean);
+const UNLINK = option('--unlink-far', '').split(',').map((s) => s.trim()).filter(Boolean);
 const MIN_SEGMENT_M = 300;
 const JUMP_M = 1000;
 /** A stop in the database this close to an OSM stop is that stop */
@@ -159,6 +168,29 @@ function longestJump(points) {
       changes.push({ v, rel, points, dropped, add: [...add.values()], far, before: lengthM(current) / 1000, after: lengthM(points) / 1000 });
     }
 
+    // Stops far from the path, on the routes named by --unlink-far
+    const unlinks = [];
+    for (const codigo of UNLINK) {
+      const v = vias.find((x) => x.codigo === codigo);
+      if (!v) {
+        console.error(`--unlink-far: no route with the code ${codigo}.`);
+        process.exit(1);
+      }
+      const change = changes.find((c) => c.v.id === v.id);
+      const near = nearestOn(change?.points ?? parsePath(v.geoLocationPath));
+      const linked = new Set(v.paragens.map((p) => p.paragemId));
+      // Which OSM relations have a stop within 35 m of it: tells what a far stop was on
+      const onRelation = (p) =>
+        relationsOf(codigo)
+          .filter((r) => r.members.some((m) => m.type === 'node' && /stop|platform/.test(m.role) && nodes.has(m.ref) && meters(nodes.get(m.ref), p.point) <= SAME_STOP_M))
+          .map((r) => r.tags.ref);
+      const all = paragens
+        .filter((p) => linked.has(p.id))
+        .map((p) => ({ ...p, m: near(p.point), on: onRelation(p) }))
+        .filter((p) => p.m > FAR_M);
+      unlinks.push({ v, far: all.filter((p) => !p.on.length), kept: all.filter((p) => p.on.length), redrawn: Boolean(change) });
+    }
+
     console.log(`Routes with a straight jump of ${JUMP_M / 1000} km or more${ONLY.length ? ' (asked for)' : ''}: ${chosen.length}`);
     for (const c of changes) {
       console.log(
@@ -168,25 +200,34 @@ function longestJump(points) {
       if (flag('--verbose') && c.far.length) console.log(`           far: ${c.far.map((p) => `${p.codigo} ${p.nome}`).join(', ')}`);
     }
     for (const s of skipped) console.log(`  ${s.v.codigo.padEnd(8)} kept: ${s.why}  ${s.v.nome}`);
+    if (unlinks.length) console.log(`\nStops to unlink, more than ${FAR_M} m from the path (--unlink-far):`);
+    for (const u of unlinks) {
+      console.log(`  ${u.v.codigo.padEnd(8)} ${u.far.length} of ${u.v.paragens.length} linked stops${u.redrawn ? ' (from the path drawn now)' : ''}  ${u.v.nome}`);
+      for (const p of u.far) console.log(`           ${p.codigo} ${p.nome}, ${Math.round(p.m)} m`);
+      for (const p of u.kept) console.log(`           kept: ${p.codigo} ${p.nome}, ${Math.round(p.m)} m, a stop of OSM ${p.on.join(', ')} (the way back)`);
+    }
     if (!flag('--apply')) {
       console.log('\nDry run: nothing written. Add --apply to write.');
       return;
     }
-    if (!changes.length) return;
+    if (!changes.length && !unlinks.some((u) => u.far.length)) return;
 
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const ids = changes.map((c) => c.v.id);
+    const ids = [...new Set([...changes, ...unlinks].map((c) => c.v.id))];
     const links = await prisma.viaParagem.findMany({ where: { viaId: { in: ids } } });
     const backup = path.join(DATA, `backup-redraw-${stamp}.json`);
     fs.writeFileSync(backup, JSON.stringify({ at: stamp, vias: changes.map(({ v }) => ({ id: v.id, codigo: v.codigo, geoLocationPath: v.geoLocationPath })), viaParagem: links }));
     console.log(`\nBackup: ${changes.length} routes' paths and ${links.length} stop links → ${backup}`);
     let written = 0;
     const created = [];
+    const removed = [];
+    const notWritten = new Set();
     for (const c of changes) {
       const res = await prisma.via.updateMany({ where: { id: c.v.id, geoLocationPath: c.v.geoLocationPath }, data: { geoLocationPath: formatPath(c.points) } });
       written += res.count;
       if (!res.count) {
         console.log(`  ${c.v.codigo}: its path changed since it was read, left alone`);
+        notWritten.add(c.v.id);
         continue;
       }
       for (const p of c.add) {
@@ -196,9 +237,16 @@ function longestJump(points) {
         if (row) created.push({ id: row.id, via: c.v.codigo, paragem: p.codigo });
       }
     }
+    // Unlink only from a path that was written (or was already there)
+    for (const u of unlinks) {
+      if (notWritten.has(u.v.id) || !u.far.length) continue;
+      const rows = links.filter((l) => l.viaId === u.v.id && u.far.some((p) => p.id === l.paragemId));
+      await prisma.viaParagem.deleteMany({ where: { id: { in: rows.map((l) => l.id) } } });
+      removed.push(...rows.map((l) => ({ ...l, via: u.v.codigo })));
+    }
     const log = path.join(DATA, `created-redraw-${stamp}.json`);
-    fs.writeFileSync(log, JSON.stringify({ at: stamp, viaParagem: created }, null, 1));
-    console.log(`Written: ${written} routes, ${created.length} stop links (listed in ${log}).`);
+    fs.writeFileSync(log, JSON.stringify({ at: stamp, viaParagem: created, removed }, null, 1));
+    console.log(`Written: ${written} routes, ${created.length} stop links added, ${removed.length} removed (listed in ${log}).`);
   } finally {
     await prisma.$disconnect();
   }
