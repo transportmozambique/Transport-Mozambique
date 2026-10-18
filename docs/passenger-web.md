@@ -31,14 +31,14 @@ Each row says where to take the first bus ("Apanhe em Portão · 70 m a pé"), "
 
 ![Step 2: typing a destination](images/passenger-search.png)
 
-**3. See the journey: A → B → C.** It shows the walk to the stop (A → B), the bus with its plate, when it comes, and where and when to get off (B → C). The map draws the walk dashed and the bus in its route's colour. The other options are below, earliest arrival first.
+**3. See the journey: A → B → C.** It shows the walk to the stop (A → B), the bus with its plate, when it comes, and where and when to get off (B → C). The map draws the walk dotted along the streets and the bus in its route's colour. The other options are below, earliest arrival first.
 
 ![Step 3: walk 70 m to Portão, take the bus shown by its plate, get off at Makalela](images/passenger-journey-direct.png)
 
 **4. Follow the journey.** "Acompanhar viagem →" opens the whole journey on one map:
 
 - your position;
-- the walk to the stop, dashed;
+- the walk to the stop, dotted along the streets;
 - each bus leg in its route's colour;
 - every bus of the journey, moving.
 
@@ -68,9 +68,9 @@ Opening one shows each bus in turn. You walk to the first stop, ride to the chan
 
 ![Step 7: the stops near you](images/passenger-nearby.png)
 
-On a phone, the panel is a bottom sheet over the map:
+On a phone, the panel is a bottom sheet over the map. Drag its top up to fill the whole screen (the map is hidden; the title and "Voltar" move into the sheet), or down until only its top shows. A tap on the bar at its top raises it a step, or brings it back to half the screen from the whole screen.
 
-<img src="images/passenger-home-mobile.png" alt="The app on a phone: Partida, destination and every destination with where to take the first bus" width="320"> <img src="images/passenger-journey-mobile.png" alt="A journey on a phone: walk to Portão, then the bus" width="320">
+<img src="images/passenger-home-mobile.png" alt="The app on a phone: Partida, destination and every destination with where to take the first bus" width="320"> <img src="images/passenger-journey-mobile.png" alt="A journey on a phone: walk to Portão, then the bus" width="320"> <img src="images/passenger-sheet-full.png" alt="The sheet dragged up to the whole screen while following a journey: the steps, the buses and the SMS alert, the map hidden" width="320">
 
 ## The map (`/` and `/search`)
 
@@ -84,7 +84,7 @@ On a phone, the panel is a bottom sheet over the map:
   - the stops near you are green dots;
   - stops where buses pass are white dots;
   - stops no bus serves now (none of their routes has a vehicle) are grey. Their page says so, and they are not offered in the search or the nearby list.
-- **The panel** is a card on the left on a computer, with the title (bus count, "Entrar" or the avatar) at its top. On a phone it is a bottom sheet, and the bar at its top folds it away.
+- **The panel** is a card on the left on a computer, with the title (bus count, "Entrar" or the avatar) at its top. On a phone it is a bottom sheet with three heights: lowered (only its top shows), half the screen, and the whole screen. Drag its top between them, or tap the bar at its top (`app/components/Sheet.tsx`).
 
 | When | Request |
 |---|---|
@@ -151,7 +151,7 @@ Tapping one of those stops, or a search result, plans the journey from this stop
 
 ![A direct journey: three options, the chosen one drawn on the map](images/passenger-journey-direct.png)
 
-The top of the panel shows the Partida and the destination. Up to three options follow, earliest arrival first. When another option takes the same number of buses, needs less walking, and arrives at most 2 minutes later, it comes first. It is usually the same bus, caught at a closer stop, and it is the one the list of destinations showed. Each card shows the arrival ("Chega às 16:51", or "Chega amanhã às 06:32"), the total fare, "Directo" or the number of changes ("2 transbordos"), the total time from now and the walking distance, and the routes as coloured labels. The chosen option is drawn on the map: each bus in its route's colour, walks dashed, and only the buses of that journey stay on the map.
+The top of the panel shows the Partida and the destination. Up to three options follow, earliest arrival first. When another option takes the same number of buses, needs less walking, and arrives at most 2 minutes later, it comes first. It is usually the same bus, caught at a closer stop, and it is the one the list of destinations showed. Each card shows the arrival ("Chega às 16:51", or "Chega amanhã às 06:32"), the total fare, "Directo" or the number of changes ("2 transbordos"), the total time from now and the walking distance, and the routes as coloured labels. The chosen option is drawn on the map: each bus in its route's colour, walks dotted along the streets ([Walks along the streets](#walks-along-the-streets)), and only the buses of that journey stay on the map.
 
 ![A journey with one change, from the passenger's position](images/passenger-journey-transfer.png)
 
@@ -168,16 +168,24 @@ Each bus charges its own fare, with the fare rule (max(10 MT, ⌈km × 10 MT⌉)
 | From a stop or a picked start | `GET /api/journeys?from={stopIds}&to={stopIds}` |
 | From your position | `GET /api/journeys?lat=…&lng=…&to={stopIds}` |
 
+### Walks along the streets
+
+The map draws each walk along the streets, the way a person would go. The page asks `GET /api/walk` for the street path of each walk shown; until it arrives, or when there is none, the walk is a straight dotted line. The path comes from the OSRM foot router of FOSSGIS (`routing.openstreetmap.de`, OpenStreetMap data), through the passenger app's server ([API reference](api-reference.md#get-apiwalk)).
+
+- The points are rounded to about 45 m in the browser and to about 11 m on the server, then the path is cut at the exact ends. While you walk, the page asks again only every few dozen metres.
+- The walking distance and minutes on the cards still come from the planner (straight line, timed at 4.5 km/h with a quarter added for streets), so the line can be a little longer than the "Caminhe 300 m" it is drawn for.
+- FOSSGIS allows light use only, one request a second. The server waits its turn, keeps paths in memory, and the CDN keeps each answer a week. When the router is busy or down, walks are straight lines again ([Known limitations](known-limitations.md#journeys)).
+
 ## Following a journey (`/viagem`)
 
-![Following a journey from Av. Eduardo Mondlane: walk 60 m to Pandora, bus 17-0 to Laurentina, walk to the Terminal de Chapas da Baixa](images/passenger-follow-transfer.png)
+![Following a journey from Av. Eduardo Mondlane: walk 60 m to Pandora, bus X33 to Vitória, walk along the streets to the Terminal de Chapas da Baixa](images/passenger-follow-transfer.png)
 
 "Acompanhar viagem →" on a journey opens `/viagem` (`app/components/JourneyFollow.tsx`). The map takes the whole screen, like a ride-hailing app.
 
 **On the map:**
 
 - your position, with your initials or the person icon;
-- the walks, dashed;
+- the walks, dotted along the streets;
 - each bus leg in its route's colour, cut at the stops where you get on and off, with the stops in between;
 - the destination, as a dark dot;
 - every bus of the journey that is still to come, with its plate, moving.

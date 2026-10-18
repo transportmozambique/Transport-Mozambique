@@ -77,6 +77,7 @@ Endpoints that answer without any credential, on purpose:
 | `/api/startup`, `/api/simulation` (`GET`) | counts of buses and of the last arrival check |
 | `POST /api/simulation {"action":"check"}` | runs the arrival-SMS check now; only SMS that are due go out |
 | `/api/stops`, `/api/stops/{id}`, `/api/destinos`, `/api/journeys`, `/api/viagem`, `/api/buses`, `/api/bus/{id}` | the network (routes, stops, paths), journeys between stops, and vehicle positions, plates and fares. A position sent to `/api/journeys`, `/api/destinos` or `/api/viagem` is not saved in the database, but it is part of the URL, so it appears in Vercel's request logs. |
+| `/api/walk` | a street path between two points. The points, rounded to about 45 m by the page and 11 m by the server, are sent on to the FOSSGIS router (`routing.openstreetmap.de`) from the server, so FOSSGIS sees the server, not the passenger. The rounded points are in the URL, so they appear in Vercel's request logs, and the CDN keeps the answer a week for anyone asking for the same points. |
 | `POST /api/auth/register`, `/api/auth/login`, `/api/driver/login` | sign-in |
 | `/api/ussd` | the USSD menus (see [USSD callback](#ussd-callback)) |
 

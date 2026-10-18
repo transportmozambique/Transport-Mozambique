@@ -79,7 +79,7 @@ export default function UserAvatar() {
       {/* Avatar Button */}
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-100 transition-colors"
+        className="flex items-center space-x-3 p-2 rounded-xl hover:bg-slate-100 transition-colors"
       >
         <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center">
           <span className="text-white font-bold text-sm">
@@ -114,7 +114,7 @@ export default function UserAvatar() {
           <div className="p-2">
             <button
               onClick={handlePerfil}
-              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
             >
               <svg
                 className="w-5 h-5"
@@ -134,7 +134,7 @@ export default function UserAvatar() {
 
             <button
               onClick={handleMissoes}
-              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
             >
               <svg
                 className="w-5 h-5"
@@ -154,7 +154,7 @@ export default function UserAvatar() {
 
             <button
               onClick={handleSeguranca}
-              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
             >
               <svg
                 className="w-5 h-5"
@@ -177,7 +177,7 @@ export default function UserAvatar() {
           <div className="border-t border-slate-200 pt-2 px-2">
             <button
               onClick={handleLogout}
-              className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center space-x-3 transition-colors"
+              className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 rounded-xl flex items-center space-x-3 transition-colors"
             >
               <svg
                 className="w-5 h-5"

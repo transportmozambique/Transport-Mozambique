@@ -353,7 +353,7 @@ function UserInfoContent() {
               <nav className="p-2">
                 <button
                   onClick={() => setActiveTab("profile")}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
                     activeTab === "profile"
                       ? "bg-slate-800 text-white"
                       : "text-slate-700 hover:bg-slate-100"
@@ -367,7 +367,7 @@ function UserInfoContent() {
 
                 <button
                   onClick={() => setActiveTab("missions")}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
                     activeTab === "missions"
                       ? "bg-slate-800 text-white"
                       : "text-slate-700 hover:bg-slate-100"
@@ -386,7 +386,7 @@ function UserInfoContent() {
 
                 <button
                   onClick={() => setActiveTab("security")}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
                     activeTab === "security"
                       ? "bg-slate-800 text-white"
                       : "text-slate-700 hover:bg-slate-100"
@@ -412,7 +412,7 @@ function UserInfoContent() {
                     {!editingProfile && (
                       <button
                         onClick={() => setEditingProfile(true)}
-                        className="flex items-center space-x-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg transition-colors"
+                        className="flex items-center space-x-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl transition-colors"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -423,7 +423,7 @@ function UserInfoContent() {
                   </div>
 
                   {profileSuccess && (
-                    <div className="mb-6 bg-green-50 border-2 border-green-200 rounded-lg p-4 flex items-start space-x-3">
+                    <div className="mb-6 bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-start space-x-3">
                       <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -432,7 +432,7 @@ function UserInfoContent() {
                   )}
 
                   {profileError && (
-                    <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start space-x-3">
+                    <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start space-x-3">
                       <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -451,7 +451,7 @@ function UserInfoContent() {
                           type="text"
                           value={newNome}
                           onChange={(e) => setNewNome(e.target.value)}
-                          className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-slate-800 focus:outline-none transition-colors text-slate-900"
+                          className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-slate-800 focus:outline-none transition-colors text-slate-900"
                         />
                       ) : (
                         <p className="text-lg text-slate-900">{utente.nome}</p>
@@ -531,7 +531,7 @@ function UserInfoContent() {
                         <button
                           onClick={handleProfileUpdate}
                           disabled={savingProfile}
-                          className="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {savingProfile ? "A guardar..." : "Guardar Alterações"}
                         </button>
@@ -542,7 +542,7 @@ function UserInfoContent() {
                             setProfileError("");
                           }}
                           disabled={savingProfile}
-                          className="px-6 py-3 border-2 border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-6 py-3 border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Cancelar
                         </button>
@@ -568,7 +568,7 @@ function UserInfoContent() {
                   ) : (
                     <div className="space-y-4">
                       {missions.map((mission) => (
-                        <div key={mission.id} className="border-2 border-slate-200 rounded-lg p-6 hover:border-slate-300 transition-colors">
+                        <div key={mission.id} className="border-2 border-slate-200 rounded-xl p-6 hover:border-slate-300 transition-colors">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <h3 className="text-lg font-bold text-slate-900 mb-2">
@@ -643,13 +643,13 @@ function UserInfoContent() {
                                     });
                                   }
                                 }}
-                                className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg transition-colors"
+                                className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-xl transition-colors"
                               >
                                 Ver Detalhes
                               </button>
                               <button
                                 onClick={() => handleDeleteMission(mission.id)}
-                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center space-x-2"
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center space-x-2"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -671,7 +671,7 @@ function UserInfoContent() {
                   <h1 className="text-2xl font-bold text-slate-900 mb-6">Segurança</h1>
 
                   {passwordSuccess && (
-                    <div className="mb-6 bg-green-50 border-2 border-green-200 rounded-lg p-4 flex items-start space-x-3">
+                    <div className="mb-6 bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-start space-x-3">
                       <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -680,7 +680,7 @@ function UserInfoContent() {
                   )}
 
                   {passwordError && (
-                    <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start space-x-3">
+                    <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start space-x-3">
                       <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -704,7 +704,7 @@ function UserInfoContent() {
                         type="password"
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-slate-800 focus:outline-none transition-colors text-slate-900"
+                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-slate-800 focus:outline-none transition-colors text-slate-900"
                         placeholder="Digite sua senha atual"
                       />
                     </div>
@@ -717,7 +717,7 @@ function UserInfoContent() {
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-slate-800 focus:outline-none transition-colors text-slate-900"
+                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-slate-800 focus:outline-none transition-colors text-slate-900"
                         placeholder="Digite sua nova senha"
                       />
                     </div>
@@ -730,7 +730,7 @@ function UserInfoContent() {
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-slate-800 focus:outline-none transition-colors text-slate-900"
+                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-slate-800 focus:outline-none transition-colors text-slate-900"
                         placeholder="Confirme sua nova senha"
                       />
                     </div>
@@ -738,7 +738,7 @@ function UserInfoContent() {
                     <button
                       onClick={handlePasswordChange}
                       disabled={changingPassword}
-                      className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {changingPassword ? "A alterar..." : "Alterar Senha"}
                     </button>
@@ -777,13 +777,13 @@ function UserInfoContent() {
                 <>
                   <button
                     onClick={() => setModal({ show: false, type: 'alert', title: '', message: '' })}
-                    className="flex-1 px-4 py-2 border-2 border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+                    className="flex-1 px-4 py-2 border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors"
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={() => modal.onConfirm?.()}
-                    className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+                    className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-colors"
                   >
                     Remover
                   </button>
@@ -791,7 +791,7 @@ function UserInfoContent() {
               ) : (
                 <button
                   onClick={() => setModal({ show: false, type: 'alert', title: '', message: '' })}
-                  className="w-full px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-lg transition-colors"
+                  className="w-full px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-xl transition-colors"
                 >
                   OK
                 </button>

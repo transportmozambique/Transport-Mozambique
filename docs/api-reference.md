@@ -263,6 +263,23 @@ With one bus and no alighting stop (`b=BUS`, or `b=BUS~STOP`), it answers that b
 
 Errors: 400 `Indique os autocarros (b)`, `Cada autocarro precisa de BUS~DE~PARA`; 404 `Autocarro não encontrado`, `Paragem não encontrada`, `Paragem fora da rota deste autocarro`; 500 `Erro ao acompanhar viagem`.
 
+#### `GET /api/walk`
+
+A walk along the streets, to draw it on the map ([Passenger web app → Walks along the streets](passenger-web.md#walks-along-the-streets)).
+
+| Query | Meaning |
+|---|---|
+| `de` | start, `LAT,LNG` |
+| `para` | end, `LAT,LNG` |
+
+Both points are rounded to 4 decimals (about 11 m). The answer is the path as `[lng, lat]` points, from the start to the end, and its length along the streets:
+
+```json
+{"percurso": [[32.58, -25.9655], [32.579738, -25.965349], "… (12 items)"], "metros": 459}
+```
+
+`{"percurso": null}` when there is no street path now: the walk is longer than 3 km, or the router is busy, failing, or finds no way. A path is cached by the CDN for a week (`s-maxage=604800`); `null` is not cached. Errors: 400 `Indique de=LAT,LNG e para=LAT,LNG`.
+
 #### `GET /api/bus/{id}`
 
 One bus, with the trip figures between two stops when `?paragem=ORIGIN&destino=DEST` is given. The web app no longer calls it ([`GET /api/viagem`](#get-apiviagem) replaced it); it stays for scripts and tests.

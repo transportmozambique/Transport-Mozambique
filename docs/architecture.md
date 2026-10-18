@@ -5,7 +5,7 @@ Transport Mozambique is three Next.js applications sharing one PostgreSQL databa
 - **The shared database.** Every app reads and writes it through Prisma.
 - **One HTTP dependency.** The driver portal calls the passenger app's API.
 
-Outside services are Africa's Talking (USSD and SMS), OpenFreeMap (map tiles) and, for drawing new routes in the admin, the public OSRM router.
+Outside services are Africa's Talking (USSD and SMS), OpenFreeMap (map tiles), the public OSRM router (for drawing new routes in the admin) and the FOSSGIS foot router (walks along the streets on the passenger maps).
 
 **On this page:** [System diagram](#system-diagram) · [Components](#components) · [How the parts connect](#how-the-parts-connect) · [Design decisions](#design-decisions) · [Tech stack](#tech-stack) · [Repository layout](#repository-layout) · [Not deployed](#not-deployed-legacy-code)
 
@@ -34,6 +34,7 @@ flowchart LR
   DB[("Neon PostgreSQL<br/>one database")]
   T["OpenFreeMap<br/>vector tiles"]
   O["OSRM public router"]
+  W["FOSSGIS foot router<br/>routing.openstreetmap.de"]
 
   P -->|HTTPS| C
   F -->|dials the USSD code| AT
@@ -50,6 +51,7 @@ flowchart LR
   D -.->|tiles| T
   A -.->|tiles| T
   A -.->|"snap a new route to roads"| O
+  C -.->|"walks along the streets"| W
 ```
 
 ## Components
@@ -83,7 +85,7 @@ It is the platform's public backend.
 - **Passenger app → Africa's Talking.** SMS go out through the `africastalking` SDK (`lib/notifications.ts`). They are sent after the USSD reply with `waitUntil` from `@vercel/functions`, so the phone never waits for the SMS. See [Africa's Talking](africas-talking.md).
 - **GPS devices → passenger app.** A phone running Traccar Client, any tracker forwarded by a Traccar server, or the driver portal itself posts positions to `/api/gps` with a per-vehicle device code. See [GPS tracking](gps-tracking.md).
 - **Admin → passenger app: none.** The admin computes vehicle positions with its own copy of the position code (`transport-admin/lib/vehiclePosition.ts`). Its only reference to the passenger app is the GPS server URL it shows when a device code is created (`GPS_SERVER_URL`).
-- **Maps.** All three apps draw maps with MapLibre GL and OpenFreeMap vector tiles. Some admin forms use OpenStreetMap raster tiles. The admin's "Nova Via" page asks the public OSRM router to snap the points you click to the road network. Everywhere else, maps draw the stored path, which already follows the roads.
+- **Maps.** All three apps draw maps with MapLibre GL and OpenFreeMap vector tiles. Some admin forms use OpenStreetMap raster tiles. The admin's "Nova Via" page asks the public OSRM router to snap the points you click to the road network. Everywhere else, maps draw the stored path, which already follows the roads. Walks on the passenger maps are drawn along the streets with paths from the FOSSGIS foot router, asked by the passenger app's server (`/api/walk`).
 
 ## Design decisions
 
