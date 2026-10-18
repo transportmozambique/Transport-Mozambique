@@ -66,7 +66,7 @@ Abre-se um projecto a partir da vista geral da equipa. O menu da esquerda tem as
 ![Formulário Add Environment Variable](images/vercel-env-add.png)
 
 1. **Tipo.**
-   - **Secret:** o valor não se pode ver outra vez depois de gravado. Para palavras-passe, chaves de API, tokens e segredos de sessão.
+   - **Secret:** o valor não se pode ver outra vez depois de gravado. Para palavras-passe, chaves de API, tokens e segredos de sessão. Só em Production e Preview: a Vercel não aceita Secret em Development.
    - **Config:** os membros do projecto podem lê-lo. Para valores que não são segredo, como `AFRICASTALKING_USERNAME`.
 2. **Key** e **Value.** Os nomes que o código lê estão em [Configuração](configuracao.md).
 3. **Ambientes.**
