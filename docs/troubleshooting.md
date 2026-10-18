@@ -79,7 +79,7 @@ Symptoms, their usual causes and the fix, grouped by where you notice them. For 
 | "Nova Via": "Não foi possível calcular o percurso pelas estradas" | The public OSRM router did not answer (down or rate-limited). | Move or add a point to retry later. |
 | Map tiles missing | OpenFreeMap or OpenStreetMap blocked by the network. | Check access to `tiles.openfreemap.org`. |
 | "Não é possível eliminar …" | Deleting a record that still has dependants (a province with municipalities, a vehicle with a driver, …). | Remove the dependants first ([API reference → Deleting](api-reference.md#lists-and-records)). |
-| Header search does not find a driver by phone | Phones are matched as stored, with their spaces. | Type a part without spaces (`1581`) or with the stored spacing. |
+| Header search does not find a driver by phone | Fewer than 3 digits, or letters mixed in: only a search made of digits (spaces, `+` and `-` allowed) is compared with the phone's digits. | Type at least 3 digits of the number, e.g. `8718315` or `+258 87 183`. |
 
 ## Builds and deploys
 

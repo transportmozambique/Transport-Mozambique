@@ -83,7 +83,7 @@ For the tables and their conventions see [Database](database.md); for the flows 
 
    ![Result: rows per table](images/neon-guide-results.png)
 
-   On 2026-10-18 production had 261 routes, 1,902 stops, 17,287 route–stop links, 451 vehicles, 111 drivers, 8 passengers and 3 arrival alerts.
+   On 2026-10-18 production had 261 routes, 1,902 stops, 17,287 route–stop links, 451 vehicles, 451 drivers, 8 passengers and 3 arrival alerts. The screenshot was taken earlier that day, before the 340 demo drivers were added.
 
 **If it fails,** the error appears instead of the table:
 
@@ -216,7 +216,7 @@ LEFT JOIN "Motorista" d ON d."transporteId" = t.id;
 ![451 vehicles, 111 with a driver, none on a trip, no live GPS](images/neon-flow-vehicles.png)
 
 Read it as:
-- the 340 vehicles of the OpenStreetMap routes have no driver yet ([Database → Drivers for the imported vehicles](database.md#drivers-for-the-imported-vehicles));
+- 340 vehicles, those of the OpenStreetMap routes, had no driver when it was taken. Demo drivers were added the same day, so all 451 have one now ([Database → Drivers for the imported vehicles](database.md#drivers-for-the-imported-vehicles));
 - no driver is on a trip;
 - no vehicle has a live GPS position, so every bus on the map comes from the timetable ([GPS tracking](gps-tracking.md#how-a-position-is-chosen)).
 

@@ -1246,12 +1246,11 @@ function JourneysView({
 
   useEffect(() => {
     let cancelled = false;
-    const q = new URLSearchParams({ to: view.to.join(",") });
-    if ("me" in view.from) {
-      q.set("lat", String(view.from.me[0]));
-      q.set("lng", String(view.from.me[1]));
-    } else q.set("from", view.from.stopIds.join(","));
-    fetch(`/api/journeys?${q}`)
+    // POST, so the passenger's position stays out of the request logs
+    const body = "me" in view.from
+      ? { to: view.to, lat: view.from.me[0], lng: view.from.me[1] }
+      : { to: view.to, from: view.from.stopIds };
+    fetch("/api/journeys", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
       .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
       .then((d) => {
         if (cancelled) return;

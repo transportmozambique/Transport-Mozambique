@@ -155,10 +155,13 @@ test('Paragem com alerta de passageiro: eliminar remove também o alerta', async
   }
 });
 
+/** The public car routers the route drawer asks (FOSSGIS first, then the OSRM demo server) */
+const ROUTERS = /^https:\/\/(routing\.openstreetmap\.de|router\.project-osrm\.org)\//;
+
 test('Via: criar (desenhada no mapa), listar, ver, editar, eliminar', async ({ page }) => {
-  // The form asks the public OSRM server for a road-following path; answer it locally so the
-  // test does not depend on that service.
-  await page.route('https://router.project-osrm.org/**', (route) =>
+  // The form asks the public OSRM routers for a road-following path; answer them locally so the
+  // test does not depend on those services.
+  await page.route(ROUTERS, (route) =>
     route.fulfill({
       json: {
         code: 'Ok',
@@ -210,7 +213,7 @@ test('Via: criar (desenhada no mapa), listar, ver, editar, eliminar', async ({ p
   // Redrawing the path: a straight fallback cannot be saved, a road path replaces the old one.
   // Handlers registered later run first, so this one now answers the router.
   let routerUp = false;
-  await page.route('https://router.project-osrm.org/**', (route) =>
+  await page.route(ROUTERS, (route) =>
     routerUp
       ? route.fulfill({
           json: {

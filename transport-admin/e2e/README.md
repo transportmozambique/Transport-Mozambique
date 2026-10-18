@@ -6,6 +6,10 @@ it creates a row through the form, finds it with the list search, opens its deta
 it, and deletes it through the confirmation dialog. It also checks that the API answers 401
 without a session.
 
+The other specs: `gps.spec.ts` (live position and GPS device codes), `pin.spec.ts` (driver PIN),
+`search.spec.ts` (header search, and phones found by their digits) and `tarifa.spec.ts` (the
+fare page; it puts the original values back).
+
 The tests write to the database, so they only run against a **local** database:
 `e2e/global-setup.ts` stops if `E2E_DATABASE_URL` points anywhere else. Rows are named
 `E2E …` and every test deletes what it created.

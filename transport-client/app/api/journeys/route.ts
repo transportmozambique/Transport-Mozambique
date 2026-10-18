@@ -6,16 +6,34 @@ import { waitUntil } from '@vercel/functions';
 /**
  * Journeys to `to` with changes of bus when no single bus goes there. Starts at `from`, or,
  * with `lat` and `lng`, at the passenger's position (the journey starts with a walk).
- * `from` and `to` are stop ids; several, comma-separated, stand for one place.
+ * `from` and `to` are stop ids; several, comma-separated (or an array in a POST body), stand
+ * for one place.
+ *
+ * POST with a JSON body is what the app uses: a position in a GET query would be kept in the
+ * request logs. GET with the same fields in the query still works.
  */
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
-  const ids = (name: string) => (params.get(name) ?? '').split(',').map((s) => s.trim()).filter(Boolean);
-  const from = ids('from');
-  const to = ids('to');
-  const lat = Number(params.get('lat'));
-  const lng = Number(params.get('lng'));
-  const position = params.has('lat') && params.has('lng') && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+  return plan({ from: params.get('from'), to: params.get('to'), lat: params.get('lat'), lng: params.get('lng') });
+}
+
+export async function POST(request: NextRequest) {
+  const body = await request.json().catch(() => ({}));
+  return plan(body && typeof body === 'object' ? body : {});
+}
+
+type Input = { from?: unknown; to?: unknown; lat?: unknown; lng?: unknown };
+
+const ids = (value: unknown) =>
+  (Array.isArray(value) ? value.map(String) : String(value ?? '').split(',')).map((s) => s.trim()).filter(Boolean);
+
+async function plan(input: Input) {
+  const from = ids(input.from);
+  const to = ids(input.to);
+  const hasPoint = input.lat !== null && input.lat !== undefined && input.lat !== '' && input.lng !== null && input.lng !== undefined && input.lng !== '';
+  const lat = Number(input.lat);
+  const lng = Number(input.lng);
+  const position = hasPoint && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
     ? ([lat, lng] as [number, number])
     : null;
   if ((!from.length && !position) || !to.length) {

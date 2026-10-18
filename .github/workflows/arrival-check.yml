@@ -1,0 +1,25 @@
+# Arrival SMS without web traffic. The check that texts passengers when a bus is under 1 km from
+# their stop otherwise runs only while someone uses the passenger web app, so passengers who
+# asked by USSD at a quiet hour got no SMS. This calls it every 5 minutes (GitHub may start a
+# scheduled run a few minutes late). Vercel's Hobby plan allows cron jobs only once a day.
+# docs/data-flow.md#arrival-alert-and-sms
+name: Arrival SMS check
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: POST /api/simulation {"action":"check"}
+        run: |
+          curl -fsS --max-time 60 -X POST https://transport-mz.vercel.app/api/simulation \
+            -H "Content-Type: application/json" -d '{"action":"check"}' \
+            | head -c 500
+          echo

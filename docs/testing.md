@@ -1,20 +1,33 @@
 # Testing
 
-What can be checked automatically, how to run it, and how to test by hand the parts that have no automated tests (passenger app, USSD, GPS, driver portal). There is no CI: run the checks below before opening a pull request. Vercel's build then type-checks again ([Deployment → Builds](deployment.md#builds)).
+What can be checked automatically, how to run it, and how to test by hand the parts that have no automated tests (passenger app, USSD, GPS, driver portal). GitHub runs the type checks, a schema comparison and a documentation link check on every pull request ([CI](#ci-on-github)); run the admin's test suites yourself before opening one. Vercel's build then type-checks again ([Deployment → Builds](deployment.md#builds)).
 
-**On this page:** [Summary](#summary) · [A local test database](#a-local-test-database) · [Type checks and lint](#type-checks-and-lint) · [Admin: Jest](#admin-api-and-database-tests-jest) · [Admin: Playwright](#admin-end-to-end-tests-playwright) · [Passenger app and USSD by hand](#passenger-app-and-ussd-by-hand) · [GPS by hand](#gps-by-hand) · [Driver portal by hand](#driver-portal-by-hand) · [Legacy scripts](#legacy-test-scripts)
+**On this page:** [Summary](#summary) · [CI on GitHub](#ci-on-github) · [A local test database](#a-local-test-database) · [Type checks and lint](#type-checks-and-lint) · [Admin: Jest](#admin-api-and-database-tests-jest) · [Admin: Playwright](#admin-end-to-end-tests-playwright) · [Passenger app and USSD by hand](#passenger-app-and-ussd-by-hand) · [GPS by hand](#gps-by-hand) · [Driver portal by hand](#driver-portal-by-hand) · [Legacy scripts](#legacy-test-scripts)
 
 ---
 
 ## Summary
 
-| Check | Where | Command | Database | State on 2026-10-17 |
+| Check | Where | Command | Database | State on 2026-10-18 |
 |---|---|---|---|---|
-| Type check | each app | `npx tsc --noEmit` | none | passes in all three |
+| Type check | each app, and CI | `npx tsc --noEmit` | none | passes in all three |
+| Schemas agree | repository root, and CI | `node .github/scripts/check-schemas.mjs` | none | passes |
+| Documentation links | repository root, and CI | `python3 .github/scripts/check-doc-links.py .` | none | passes |
 | Lint | each app | `npm run lint` | none | many old findings, so not a gate ([below](#type-checks-and-lint)) |
 | Jest (API and database) | `transport-admin` | `npm test` | local only | 17 tests pass |
-| Playwright (end to end) | `transport-admin` | `npm run test:e2e` | local only | 16 tests pass |
+| Playwright (end to end) | `transport-admin` | `npm run test:e2e` | local only | 18 tests pass |
 | Passenger app, USSD, GPS, driver portal | `transport-client`, `transport-driver` | by hand, below | local or production (read-only) | no automated tests |
+
+## CI on GitHub
+
+`.github/workflows/ci.yml` runs on every pull request and every push to `main`. The pull request shows the result next to Vercel's:
+
+| Job | What it checks |
+|---|---|
+| Type check (transport-client, transport-admin, transport-driver) | `npm ci`, `npx prisma generate` (not for the driver portal) and `npx tsc --noEmit` in each app. |
+| Schemas and documentation | `node .github/scripts/check-schemas.mjs`: the three copies of the Prisma schema describe the same database. `python3 .github/scripts/check-doc-links.py .`: every relative link and image in `README.md` and `docs/*.md` exists, and every `#anchor` matches a heading. |
+
+Both scripts also run locally from the repository root, with the same commands. The admin's Jest and Playwright suites are not in CI, because they need a local copy of the database; run them before a pull request that touches the admin.
 
 ## A local test database
 
@@ -64,14 +77,15 @@ DATABASE_URL=postgresql://postgres@127.0.0.1:55432/transport_test npm test
 
 ## Admin: end-to-end tests (Playwright)
 
-`transport-admin/e2e/`, 16 tests in Chromium against a production build of the admin. Details and options are in `transport-admin/e2e/README.md`.
+`transport-admin/e2e/`, 18 tests in Chromium against a production build of the admin. Details and options are in `transport-admin/e2e/README.md`.
 
 | Spec | Covers |
 |---|---|
-| `crud.spec.ts` | For each of the nine entities: create through the form, find with the list search, open, edit, delete through the confirmation dialog. Also: drawing a route on the map (the OSRM call is answered locally), "Atribuir Transporte" on a route, deleting an owner who has a vehicle, deleting a stop that has a passenger alert, and 401 from the API without a session. |
+| `crud.spec.ts` | For each of the nine entities: create through the form, find with the list search, open, edit, delete through the confirmation dialog. Also: drawing a route on the map (the routers' answers are given locally), "Atribuir Transporte" on a route, deleting an owner who has a vehicle, deleting a stop that has a passenger alert, and 401 from the API without a session. |
 | `gps.spec.ts` | The vehicle page's live position, and creating, using and revoking a GPS device code. |
 | `pin.spec.ts` | Generating a driver PIN, shown once. |
-| `search.spec.ts` | The header search: vehicles, routes and drivers, Enter, no results. |
+| `search.spec.ts` | The header search: vehicles, routes and drivers, Enter, no results; a driver found by phone digits in three spellings. |
+| `tarifa.spec.ts` | The fare page: current values, the fare preview, a value out of range refused, saving (the original values are put back). |
 
 ```bash
 cd transport-admin
@@ -133,6 +147,7 @@ Build the portal with `NEXT_PUBLIC_API_URL` pointing at the local passenger app 
 
 - "Iniciar viagem" and "Terminar viagem" change the trip; USSD `6*<PIN>*2` shows the same state, and `6*<PIN>*1*1` toggles it ([Driver portal](driver-portal.md)).
 - With a device code saved in the info panel and location allowed, a trip sends positions; the admin's vehicle card turns "GPS ativo".
+- Assign the driver to another vehicle in the admin, then reload the portal (or wait 5 minutes): the new plate and route show without signing in again.
 - A wrong PIN answers "PIN incorreto"; a driver without a PIN gets "Ainda não tem PIN…".
 
 ## Legacy test scripts

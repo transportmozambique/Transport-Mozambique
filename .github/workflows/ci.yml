@@ -1,0 +1,50 @@
+# Checks every pull request and every push to main: the three apps type-check, the three copies
+# of the Prisma schema agree, and the documentation's links and anchors resolve.
+# The admin's Jest and Playwright suites need a local copy of the database and are run by hand
+# (docs/testing.md).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    name: Type check (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [transport-client, transport-admin, transport-driver]
+    defaults:
+      run:
+        working-directory: ${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ matrix.app }}/package-lock.json
+      - run: npm ci
+      # The Prisma client's types; transport-driver has no database access
+      - if: matrix.app != 'transport-driver'
+        run: npx prisma generate
+      - run: npx tsc --noEmit
+
+  consistency:
+    name: Schemas and documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: The three Prisma schemas agree
+        run: node .github/scripts/check-schemas.mjs
+      - name: Documentation links and anchors resolve
+        run: python3 .github/scripts/check-doc-links.py .
