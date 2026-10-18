@@ -54,7 +54,6 @@ interface Bus {
   latitude: number;
   longitude: number;
   status: string;
-  routePath: [number, number][];
 }
 
 type View =
@@ -101,6 +100,9 @@ export default function TripPlanner() {
   const map = useRef<maplibregl.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const busMarkers = useRef(new Map<string, maplibregl.Marker>());
+  // Route lines of the buses tapped so far ([lng, lat] pairs), fetched on the first tap
+  const busRoutes = useRef(new Map<string, [number, number][]>());
+  const lastTappedBus = useRef<string | null>(null);
   const meMarker = useRef<maplibregl.Marker | null>(null);
   const meFace = useRef<HTMLElement | null>(null);
   const centredOnMe = useRef(false);
@@ -154,7 +156,7 @@ export default function TripPlanner() {
         setIdleStops((data.semAutocarro ?? []).map((s) => ({ ...s, v: [], point: [s.lat, s.lng] as Point })));
       })
       .catch(() => setNetError(true));
-    fetch("/api/buses")
+    fetch("/api/buses?fields=map")
       .then((res) => res.json())
       .then((data) => setBuses(data.buses ?? []))
       .catch(() => setBuses([]));
@@ -359,13 +361,24 @@ export default function TripPlanner() {
           { text: "Acompanhar →", href: `/viagem?b=${bus.id}` },
         ]),
       );
-      el.addEventListener("click", () => {
-        const route = source("bus-route");
-        route?.setData(
-          bus.routePath?.length
-            ? { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: bus.routePath } }
-            : EMPTY,
-        );
+      el.addEventListener("click", async () => {
+        const show = (coords: [number, number][]) =>
+          source("bus-route")?.setData(
+            coords.length > 1 ? { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } } : EMPTY,
+          );
+        lastTappedBus.current = bus.id;
+        const known = busRoutes.current.get(bus.id);
+        if (known) return show(known);
+        show([]);
+        try {
+          const data = await fetch(`/api/bus/${bus.id}`).then((res) => (res.ok ? res.json() : null));
+          const coords: [number, number][] = data?.routeCoords ?? [];
+          busRoutes.current.set(bus.id, coords);
+          // Another bus may have been tapped while this one loaded
+          if (lastTappedBus.current === bus.id) show(coords);
+        } catch {
+          // No line this time; the next tap asks again
+        }
       });
       busMarkers.current.set(bus.id, new maplibregl.Marker({ element: el }).setLngLat([bus.longitude, bus.latitude]).setPopup(popup).addTo(m));
     }

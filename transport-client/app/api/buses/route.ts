@@ -58,6 +58,46 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ buses, total: buses.length });
     }
 
+    // The buses whose route serves one stop (an arrival alert's "track" button)
+    const servesStop = searchParams.get('servesStop');
+    if (servesStop) {
+      const rows = await prisma.transporte.findMany({
+        where: { via: { paragens: { some: { paragemId: servesStop } } } },
+        select: { id: true, matricula: true, via: { select: { nome: true } } },
+        orderBy: { matricula: 'asc' },
+      });
+      const buses = rows.map((t) => ({ id: t.id, matricula: t.matricula, via: t.via?.nome ?? '' }));
+      return NextResponse.json({ buses, total: buses.length });
+    }
+
+    // The passenger map's first load: what a marker and its popup show, without every bus's route
+    // path and stops (about 1 MB compressed). A tapped bus's path comes from /api/bus/[id].
+    if (searchParams.get('fields') === 'map') {
+      const [rows, paths] = await Promise.all([
+        prisma.transporte.findMany({
+          where: { viaId: { not: null } },
+          select: { ...POSITION_FIELDS, matricula: true, viaId: true, via: { select: { nome: true } } },
+        }),
+        routePaths(),
+      ]);
+      const now = new Date();
+      const buses = rows.flatMap((t) => {
+        const pos = vehiclePosition(t, paths.get(t.viaId!), now, rule);
+        return pos
+          ? [{
+              id: t.id,
+              matricula: t.matricula,
+              via: t.via?.nome ?? '',
+              latitude: pos.point[0],
+              longitude: pos.point[1],
+              fonte: pos.source,
+              status: !pos.moving && pos.source === 'horario' ? 'No terminal' : 'Em Circulação',
+            }]
+          : [];
+      });
+      return NextResponse.json({ buses, total: buses.length });
+    }
+
     // If no parameters, return all buses
     if (!paragemId && !viaId && !viaIds && !destinoId) {
       

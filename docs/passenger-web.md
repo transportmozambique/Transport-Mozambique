@@ -89,7 +89,8 @@ On a phone, the panel is a bottom sheet over the map. Drag its top up to fill th
 | When | Request |
 |---|---|
 | Page opens | `GET /api/stops` (every stop served by a bus, with its routes, and the stops no bus serves now; cached 5 min) |
-| Page opens | `GET /api/buses` (all buses with positions) |
+| Page opens | `GET /api/buses?fields=map` (every bus: plate, route name, position, status; about 20 KB) |
+| A bus is tapped | `GET /api/bus/{id}` (its route line, drawn on the map; kept for the next tap) |
 | Every 5 s | `GET /api/buses?fields=position` (light: id, latitude, longitude, source, heading; also triggers the arrival SMS check) |
 
 ## Partida and destinations
@@ -252,7 +253,7 @@ Three tabs, each reachable directly with `?tab=`:
 | Tab | `?tab=` | What it does | Requests |
 |---|---|---|---|
 | **Perfil** | `perfil` | Shows the profile; the name can be changed | `GET /api/user/{id}`, `PUT /api/user/{id}` `{"nome"}` |
-| **Missões** | `missoes` | Saved stops (arrival alerts). "Ver Detalhes" follows the first bus that serves that stop, with its next pass there; "Remover" deletes the alert. | `GET /api/user/missions`, `DELETE /api/user/missions/{id}`, `GET /api/buses` |
+| **Missões** | `missoes` | Saved stops (arrival alerts). "Ver Detalhes" follows the first bus that serves that stop, with its next pass there; "Remover" deletes the alert. | `GET /api/user/missions`, `DELETE /api/user/missions/{id}`, `GET /api/buses?servesStop=…` |
 | **Segurança** | `seguranca` | Changes the password (the current one is required) | `POST /api/user/{id}/change-password` |
 
 ![Account page: profile](images/passenger-profile.png)

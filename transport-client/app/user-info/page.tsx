@@ -600,37 +600,23 @@ function UserInfoContent() {
                                 onClick={async () => {
                                   // Find a transporte that serves this paragem
                                   try {
-                                    // Get all buses
-                                    const response = await fetch('/api/buses');
-                                    
+                                    const response = await fetch(`/api/buses?servesStop=${encodeURIComponent(mission.paragemId)}`);
+
                                     if (!response.ok) {
                                       throw new Error('Failed to fetch buses');
                                     }
-                                    
+
                                     const data = await response.json();
-                                    
-                                    if (data.buses && data.buses.length > 0) {
-                                      // Find a bus that has this stop
-                                      const busWithStop = data.buses.find((bus: any) => 
-                                        bus.stops?.some((stop: any) => stop.id === mission.paragemId)
-                                      );
-                                      
-                                      if (busWithStop) {
-                                        router.push(`/track/${busWithStop.id}?paragem=${mission.paragemId}`);
-                                      } else {
-                                        setModal({
-                                          show: true,
-                                          type: 'alert',
-                                          title: 'Aviso',
-                                          message: 'Nenhum transporte disponível para esta paragem',
-                                        });
-                                      }
+                                    const busWithStop = data.buses?.[0];
+
+                                    if (busWithStop) {
+                                      router.push(`/track/${busWithStop.id}?paragem=${mission.paragemId}`);
                                     } else {
                                       setModal({
                                         show: true,
                                         type: 'alert',
                                         title: 'Aviso',
-                                        message: 'Nenhum transporte disponível',
+                                        message: 'Nenhum transporte disponível para esta paragem',
                                       });
                                     }
                                   } catch (error) {

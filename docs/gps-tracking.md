@@ -50,7 +50,7 @@ A GPS fix does not change the route's shape or the timetable. When the fix becom
 
 | Consumer | Endpoint or code | Uses |
 |---|---|---|
-| Passenger live map | `GET /api/buses`, `GET /api/buses?fields=position` | position, `fonte` (`gps` or `horario`), heading |
+| Passenger live map | `GET /api/buses?fields=map`, then `GET /api/buses?fields=position` | position, `fonte` (`gps` or `horario`), heading |
 | Search results, following a journey | `GET /api/buses?paragemId=…`, `GET /api/viagem` | position, direction and place along the path → arrival time |
 | USSD options 1 and 5 | `/api/ussd` | arrival time; nearest stop to the bus |
 | Arrival SMS | `checkAndNotifyUsers()` (`lib/busSimulator.ts`) | distance from moving buses to the waiting stop |
