@@ -171,7 +171,7 @@ export default function NovoMotorista() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -669,7 +669,7 @@ export default function NovoMotorista() {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Botões de acção */}
           <div className="flex items-center justify-end space-x-4 pt-6 border-t border-slate-200">
             <button
               type="button"
@@ -700,7 +700,7 @@ export default function NovoMotorista() {
           </div>
         </form>
 
-        {/* Transport Selection Modal */}
+        {/* Janela de escolha do transporte */}
         {showTransportModal && (
           <div 
             className="fixed inset-0 z-50 backdrop-blur-sm min-h-screen" 
@@ -735,7 +735,7 @@ export default function NovoMotorista() {
                   />
                 </div>
 
-                {/* Transport List */}
+                {/* Lista de transportes */}
                 {loadingTransportes ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>

@@ -141,7 +141,7 @@ export default function Header() {
             <path strokeLinecap="round" strokeWidth={2} d="M4 7h16M4 12h16M4 17h16" />
           </svg>
         </button>
-        {/* Search Bar */}
+        {/* Barra de pesquisa */}
         <div className="min-w-0 flex-1 max-w-xl">
           <div className="relative" ref={searchRef}>
             <svg
@@ -203,7 +203,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Right Section */}
+        {/* Lado direito */}
         <div className="flex shrink-0 items-center">
           {/* Profile */}
           {admin && (
@@ -236,7 +236,7 @@ export default function Header() {
                 </svg>
               </button>
 
-              {/* Profile Dropdown */}
+              {/* Menu do perfil */}
               {showProfile && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 py-2">
                   <div className="px-4 py-3 border-b border-slate-200">

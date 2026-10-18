@@ -110,7 +110,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Validate required fields
+    // Confirmar os campos obrigatórios
     if (!body.nome || !body.codigo) {
       return NextResponse.json(
         { error: 'Nome e código são obrigatórios' },

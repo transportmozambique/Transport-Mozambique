@@ -190,7 +190,7 @@ export default function AtribuirMotoristasPage() {
           </div>
         )}
 
-        {/* Main Content */}
+        {/* Conteúdo principal */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Transportes sem Motorista */}
           <div className="bg-white rounded-xl border border-slate-200">
@@ -299,7 +299,7 @@ export default function AtribuirMotoristasPage() {
           </div>
         </div>
 
-        {/* Action Button */}
+        {/* Botão de acção */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="flex items-center justify-between">
             <div>

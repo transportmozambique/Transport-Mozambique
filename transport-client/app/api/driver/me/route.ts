@@ -19,7 +19,7 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS });
 }
 
-// GET /api/driver/me  (Authorization: Bearer <token from the login>)
+// GET /api/driver/me  (Authorization: Bearer <token da entrada>)
 export async function GET(request: Request) {
   const motoristaId = driverIdFromRequest(request);
   if (!motoristaId) return json({ error: 'Sessão inválida ou expirada. Entre de novo.' }, 401);

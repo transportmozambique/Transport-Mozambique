@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { nome, email, senha } = body;
 
-    // Validate required fields
+    // Confirmar os campos obrigatórios
     if (!nome || !email || !senha) {
       return NextResponse.json(
         { error: 'Campos obrigatórios: nome, email, senha' },
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Hash password
+    // Hash da palavra-passe
     const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash(senha, 10);
 

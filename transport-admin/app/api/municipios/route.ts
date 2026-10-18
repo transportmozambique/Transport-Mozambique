@@ -105,7 +105,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Validate required fields
+    // Confirmar os campos obrigatórios
     if (!body.nome || !body.codigo || !body.provinciaId) {
       return NextResponse.json(
         { error: 'Nome, código e província são obrigatórios' },

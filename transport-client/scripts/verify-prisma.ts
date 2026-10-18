@@ -2,19 +2,19 @@ import { prisma } from '../lib/prisma';
 
 async function main() {
   try {
-    console.log('🔍 Verifying Prisma Postgres connection...\n');
+    console.log('A verificar a ligação à base de dados...\n');
 
-    // Test connection
+    // Testar a ligação
     await prisma.$connect();
-    console.log('✅ Connected to Prisma Postgres\n');
+    console.log('Ligado à base de dados\n');
 
-    // Count records
+    // Contar os registos
     const transportCount = await prisma.transporte.count();
     const viaCount = await prisma.via.count();
     const paragemCount = await prisma.paragem.count();
     const utenteCount = await prisma.utente.count();
 
-    console.log('📊 Database Statistics:');
+    console.log('Linhas na base de dados:');
     console.log(`   - Transportes: ${transportCount}`);
     console.log(`   - Vias: ${viaCount}`);
     console.log(`   - Paragens: ${paragemCount}`);
@@ -28,15 +28,15 @@ async function main() {
     });
 
     if (transport) {
-      console.log('🚌 Sample Transport:');
+      console.log('Um transporte de exemplo:');
       console.log(`   - Matrícula: ${transport.matricula}`);
       console.log(`   - Via: ${transport.via?.nome ?? 'N/A'}`);
       console.log(`   - Localização: ${transport.currGeoLocation || 'N/A'}\n`);
     }
 
-    console.log('✅ Verification complete! Database is working correctly.\n');
+    console.log('Verificação concluída: a base de dados funciona.\n');
   } catch (error) {
-    console.error('❌ Error:', error);
+    console.error('Erro:', error);
     process.exit(1);
   } finally {
     await prisma.$disconnect();

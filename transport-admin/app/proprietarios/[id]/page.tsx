@@ -100,7 +100,7 @@ export default function ProprietarioDetalhes() {
 
     let filtered = proprietario.transportes || [];
 
-    // Apply search filter
+    // Aplicar o filtro da pesquisa
     if (debouncedSearchTerm) {
       const searchLower = debouncedSearchTerm.toLowerCase();
       filtered = filtered.filter(tp =>
@@ -111,11 +111,11 @@ export default function ProprietarioDetalhes() {
       );
     }
 
-    // Calculate pagination
+    // Calcular a paginação
     const total = Math.ceil(filtered.length / itemsPerPage);
     setTotalPages(total);
 
-    // Apply pagination
+    // Aplicar a paginação
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const paginated = filtered.slice(startIndex, endIndex);
@@ -168,7 +168,7 @@ export default function ProprietarioDetalhes() {
         );
         setShowAssociarModal(false);
         setSelectedTransportesIds([]);
-        fetchProprietario(params.id as string); // Refresh data
+        fetchProprietario(params.id as string); // Carregar os dados outra vez
       } else {
         showNotification('Erro ao associar alguns transportes', 'error');
       }
@@ -188,7 +188,7 @@ export default function ProprietarioDetalhes() {
 
       if (response.ok) {
         showNotification('Transporte desassociado com sucesso!', 'success');
-        fetchProprietario(params.id as string); // Refresh data
+        fetchProprietario(params.id as string); // Carregar os dados outra vez
       } else {
         showNotification('Erro ao desassociar transporte', 'error');
       }
@@ -282,7 +282,7 @@ export default function ProprietarioDetalhes() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -595,7 +595,7 @@ export default function ProprietarioDetalhes() {
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Conteúdo principal */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Foto e Info Rápida - Coluna Esquerda (1/4) */}
           <div className="lg:col-span-1 space-y-6">
@@ -632,7 +632,7 @@ export default function ProprietarioDetalhes() {
               </div>
             </div>
 
-            {/* Status Card */}
+            {/* Cartão do estado */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-4 pb-3 border-b border-slate-200">Status</h3>
               <div className="space-y-3 text-sm">
@@ -652,7 +652,7 @@ export default function ProprietarioDetalhes() {
             </div>
           </div>
 
-          {/* Informações Detalhadas - Colunas Direita (3/4) */}
+          {/* Informações detalhadas, colunas da direita (3/4) */}
           <div className="lg:col-span-3 space-y-6">
             {/* Informações Pessoais */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6">

@@ -153,7 +153,7 @@ export async function fetchRoutes(requests, label = 'roads') {
   });
   if (!todo.length) return;
   const routers = Object.values(ROUTERS).flat().length;
-  if (todo.length > 10) console.log(`Asking the routers for ${todo.length} ${label} (about ${Math.ceil(todo.length / Math.min(routers, 2) / 55)} min)…`);
+  if (todo.length > 10) console.log(`A pedir aos routers ${todo.length} ${label} (cerca de ${Math.ceil(todo.length / Math.min(routers, 2) / 55)} min)…`);
   let done = 0;
   let failures = 0;
   const queues = { car: todo.filter((r) => r.profile === 'car'), foot: todo.filter((r) => r.profile === 'foot') };
@@ -166,7 +166,7 @@ export async function fetchRoutes(requests, label = 'roads') {
         cache[keyOf(r.profile, r.points)] = await ask(base, r.points);
       } catch (e) {
         failures++;
-        if (failures <= 5) console.warn(`  ${e.message} (asked again on the next run)`);
+        if (failures <= 5) console.warn(`  ${e.message} (pede-se outra vez na corrida seguinte)`);
       }
       if (++done % 100 === 0) {
         saveCache();
@@ -177,7 +177,7 @@ export async function fetchRoutes(requests, label = 'roads') {
   };
   await Promise.all(Object.entries(ROUTERS).flatMap(([profile, bases]) => bases.map((base) => worker(profile, base))));
   saveCache();
-  if (failures) console.log(`  ${failures} requests failed; run again to finish them.`);
+  if (failures) console.log(`  ${failures} pedidos falharam; correr outra vez para os acabar.`);
 }
 
 // ─── Straight stretches ──────────────────────────────────────────────────────

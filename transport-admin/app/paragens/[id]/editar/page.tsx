@@ -158,7 +158,7 @@ export default function EditarParagem() {
       const data = await response.json();
       setParagem(data);
       
-      // Parse coordinates
+      // Ler as coordenadas
       const coords = data.geoLocation.split(',');
       
       setFormData({
@@ -194,7 +194,7 @@ export default function EditarParagem() {
     }
   }
 
-  // Calculate distance between two points using Haversine formula
+  // Distância entre dois pontos pela fórmula de Haversine
   function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371e3; // raio da Terra em metros
     const φ1 = lat1 * Math.PI / 180;
@@ -446,7 +446,7 @@ export default function EditarParagem() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -501,9 +501,9 @@ export default function EditarParagem() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Form Fields - Left Side */}
+            {/* Campos do formulário, à esquerda */}
             <div className="space-y-6">
-              {/* Basic Information */}
+              {/* Informação básica */}
               <div className="bg-white rounded-2xl border border-slate-200 p-6">
                 <h3 className="text-lg font-bold text-slate-900 mb-4">Informações Básicas</h3>
                 
@@ -655,7 +655,7 @@ export default function EditarParagem() {
               </div>
             </div>
 
-            {/* Map - Right Side */}
+            {/* Mapa, à direita */}
             <div className="lg:sticky lg:top-6 h-fit">
               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-200">
@@ -671,7 +671,7 @@ export default function EditarParagem() {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Botões de acção */}
           <div className="flex items-center justify-end space-x-4 pt-6 border-t border-slate-200">
             <button
               type="button"

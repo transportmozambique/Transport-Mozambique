@@ -146,7 +146,7 @@ export default function TripPlanner() {
   const stopById = useMemo(() => new Map([...stops, ...idleStops].map((s) => [s.id, s])), [stops, idleStops]);
   const places = useMemo(() => groupPlaces(stops), [stops]);
 
-  // ── Data ────────────────────────────────────────────────────────────────────
+  // ── Dados ────────────────────────────────────────────────────────────────────
   useEffect(() => {
     fetch("/api/stops")
       .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
@@ -344,7 +344,7 @@ export default function TripPlanner() {
     source("idle-stops")?.setData(points(idleStops));
   }, [mapReady, stops, idleStops]);
 
-  // Live buses
+  // Autocarros ao vivo
   useEffect(() => {
     if (!mapReady || !map.current) return;
     const m = map.current;
@@ -394,7 +394,7 @@ export default function TripPlanner() {
           if (marker) glideMarker(marker, [bus.longitude, bus.latitude]);
         }
       } catch {
-        // Next refresh will try again
+        // A actualização seguinte tenta outra vez
       }
     }, BUS_REFRESH_MS);
     return () => clearInterval(interval);
@@ -607,7 +607,7 @@ export default function TripPlanner() {
         {titleBar}
       </div>
 
-      {/* My location */}
+      {/* A minha localização */}
       <button
         onClick={() => {
           if (me && map.current) map.current.flyTo({ center: [me[1], me[0]], zoom: 15 });
@@ -1262,7 +1262,7 @@ function JourneysView({
     return () => {
       cancelled = true;
     };
-    // The view is replaced (new key) for every new search
+    // A vista é substituída (chave nova) a cada pesquisa nova
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -99,7 +99,7 @@ test('Paragem: criar, listar, ver, editar, eliminar', async ({ page }) => {
   let pos = { x: prev.x + (want.x - prevLanded.x), y: prev.y + (want.y - prevLanded.y) };
   for (let i = 0; i < 6; i++) {
     const landed = await clickAt(pos);
-    if (Math.hypot(want.x - landed.x, want.y - landed.y) < 2) break; // < ~35 m at zoom 12
+    if (Math.hypot(want.x - landed.x, want.y - landed.y) < 2) break; // < ~35 m no zoom 12
     const step = (axis: 'x' | 'y') => {
       const moved = landed[axis] - prevLanded[axis];
       const scale = Math.abs(moved) > 0.01 ? (pos[axis] - prev[axis]) / moved : 1;

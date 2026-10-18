@@ -61,7 +61,7 @@ export default function Provincias() {
     p.codigo?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
   );
 
-  // Pagination logic
+  // Paginação
   const totalPages = Math.ceil(filteredProvincias.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -148,7 +148,7 @@ export default function Provincias() {
 
       // Tirar as ligações (sem apagar as entidades)
       
-      // 1. Remove transporte associations (motorista, proprietarios, via)
+      // 1. Tirar as ligações dos transportes (motorista, proprietários, via)
       for (const transporte of transportesToUpdate) {
         try {
           // Tirar o motorista (a null)
@@ -156,7 +156,7 @@ export default function Provincias() {
             method: 'DELETE',
           }).catch(() => {});
           
-          // Remove proprietarios associations
+          // Tirar as ligações aos proprietários
           await fetch(`/api/transportes/${transporte.id}/proprietario`, {
             method: 'DELETE',
           }).catch(() => {});
@@ -239,7 +239,7 @@ export default function Provincias() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -393,7 +393,7 @@ export default function Provincias() {
       )}
       
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
-        {/* Header - 2 Columns Layout */}
+        {/* Cabeçalho em 2 colunas */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Esquerda: título e descrição */}
           <div className="flex items-center space-x-4">
@@ -411,7 +411,7 @@ export default function Provincias() {
             </div>
           </div>
 
-          {/* Right - Action Button */}
+          {/* À direita: botão de acção */}
           <button 
             onClick={handleCreate}
             className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 whitespace-nowrap"

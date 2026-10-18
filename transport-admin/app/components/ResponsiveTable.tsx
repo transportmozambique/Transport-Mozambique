@@ -55,7 +55,7 @@ export default function ResponsiveTable({
 
   return (
     <>
-      {/* Desktop Table View */}
+      {/* Tabela no computador */}
       <table className="w-full hidden lg:table">
         <thead className="bg-slate-50 border-b border-slate-200">
           <tr>
@@ -100,7 +100,7 @@ export default function ResponsiveTable({
         </tbody>
       </table>
 
-      {/* Mobile Card View - Simplified */}
+      {/* Cartões no telemóvel, simplificados */}
       <div className="lg:hidden divide-y divide-slate-200">
         {data.map((row, rowIndex) => (
           <div

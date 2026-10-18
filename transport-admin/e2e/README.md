@@ -1,53 +1,58 @@
-# Admin end-to-end tests (Playwright)
+# Testes ponta a ponta do painel (Playwright)
 
-`crud.spec.ts` drives the admin UI in Chromium. For each of the nine entities (províncias,
+`crud.spec.ts` conduz a interface do painel no Chromium. Para cada uma das nove entidades (províncias,
 municípios, paragens, vias, proprietários, motoristas, transportes, utentes, administradores)
-it creates a row through the form, finds it with the list search, opens its detail page, edits
-it, and deletes it through the confirmation dialog. It also checks that the API answers 401
-without a session.
+cria uma linha pelo formulário, encontra-a com a pesquisa da lista, abre a página de detalhe,
+edita-a, e apaga-a pela janela de confirmação. Também confirma que a API responde 401 sem sessão.
 
-The other specs: `gps.spec.ts` (live position and GPS device codes), `pin.spec.ts` (driver PIN),
-`search.spec.ts` (header search, and phones found by their digits) and `tarifa.spec.ts` (the
-fare page; it puts the original values back).
+Os outros ficheiros: `gps.spec.ts` (posição ao vivo e códigos de dispositivo GPS), `pin.spec.ts`
+(PIN do motorista), `search.spec.ts` (pesquisa do cabeçalho, e telefones encontrados pelos
+algarismos) e `tarifa.spec.ts` (a página da tarifa; volta a pôr os valores originais).
 
-The tests write to the database, so they only run against a **local** database:
-`e2e/global-setup.ts` stops if `E2E_DATABASE_URL` points anywhere else. Rows are named
-`E2E …` and every test deletes what it created.
+Porquê o Playwright: conduz um navegador real como um administrador, por isso apanha os erros que
+só aparecem com as páginas, os mapas e a API juntos.
 
-## Run
+Os testes escrevem na base de dados, por isso só correm contra uma base de dados **local**:
+`e2e/global-setup.ts` pára se `E2E_DATABASE_URL` apontar para outro sítio. As linhas chamam-se
+`E2E …` e cada teste apaga o que criou.
 
-1. Start a local PostgreSQL and create the schema:
+## Correr
+
+1. Arrancar um PostgreSQL local e criar o esquema:
 
    ```bash
    DATABASE_URL=postgresql://postgres@127.0.0.1:55432/transport_test npx prisma db push --schema ../prisma/schema.prisma
    ```
 
-   Load data into it (the forms need at least one province, municipality and route in their
-   dropdowns), e.g. a copy of the production data.
+   Carregar dados (os formulários precisam de pelo menos uma província, um município e uma rota
+   nas listas), por exemplo uma cópia dos dados de produção
+   ([docs/primeiros-passos.md](../../docs/primeiros-passos.md#trabalhar-com-uma-cópia-dos-dados-de-produção)).
 
-2. Build the app and run the tests (Playwright starts `next start` on port 3102 with the test
-   database and a test session secret):
+2. Compilar a aplicação e correr os testes (o Playwright arranca `next start` na porta 3102 com a
+   base de dados de teste e um segredo de sessão de teste):
 
    ```bash
    npm run build
-   npx playwright install chromium   # first time only
+   npx playwright install chromium   # só da primeira vez
    npm run test:e2e
    ```
 
-   `npx playwright show-report e2e/report` opens the HTML report; failed tests keep a trace and
-   a screenshot in `e2e/test-results/`.
+   `npx playwright show-report e2e/report` abre o relatório HTML; os testes que falham guardam um
+   rasto e uma captura em `e2e/test-results/`.
 
-## Settings
+## Definições
 
-| Variable | Default |
+| Variável | Por omissão |
 |---|---|
 | `E2E_DATABASE_URL` | `postgresql://postgres@127.0.0.1:55432/transport_test` |
 | `E2E_PORT` | `3102` |
 | `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` | `e2e-admin@local.test` / `e2e-local-only-pass` |
 
-The test admin is created (or its password reset) in the local database before each run. It
-does not exist in production, so a server that is not using the test database fails the login
-and no test runs.
+O administrador de teste é criado (ou a sua palavra-passe reposta) na base de dados local antes de
+cada corrida. Não existe na produção, por isso um servidor que não use a base de dados de teste
+falha a entrada e nenhum teste corre.
 
-The route test answers the public OSRM routing request itself, so it does not depend on that
-service. Map tiles still load from the internet.
+O teste das rotas responde ele próprio ao pedido ao router OSRM público, por isso não depende
+desse serviço. Os mosaicos do mapa continuam a vir da internet.
+
+Mais: [docs/testes.md](../../docs/testes.md#testes-ponta-a-ponta-do-painel-playwright).

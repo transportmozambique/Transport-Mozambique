@@ -3,14 +3,14 @@ import { roundPoint, walkRoute } from '@/lib/walkRoute';
 import type { Point } from '@/lib/places';
 
 /**
- * A walk along the streets, to draw it on the map.
+ * Uma caminhada pelas ruas, para a desenhar no mapa.
  *
  * GET /api/walk?de=LAT,LNG&para=LAT,LNG
- *   → {"percurso": [[lng, lat], …], "metros": 460}, or {"percurso": null} when the street path
- *     cannot be had now (the map then draws a straight line)
+ *   → {"percurso": [[lng, lat], …], "metros": 460}, ou {"percurso": null} quando agora não há
+ *     caminho pelas ruas (o mapa desenha então uma linha recta)
  *
- * The points are rounded to about 11 m, so the CDN can keep one answer for everyone asking for
- * the same walk.
+ * Os pontos arredondam-se a cerca de 11 m, para a CDN guardar uma só resposta para quem pedir a
+ * mesma caminhada. Porquê pelo servidor: o router da FOSSGIS vê o servidor e não o passageiro.
  */
 function parsePoint(value: string | null): Point | null {
   const [lat, lng] = (value ?? '').split(',').map(Number);

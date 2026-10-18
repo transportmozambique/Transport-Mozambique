@@ -18,11 +18,11 @@ function databaseUrl() {
 
 const url = databaseUrl();
 if (!url) {
-  throw new Error('DATABASE_URL is not set: point it at a local test database.');
+  throw new Error('DATABASE_URL não está definida: apontá-la para uma base de dados local de teste.');
 }
 const host = new URL(url).hostname;
 if (!LOCAL_HOSTS.has(host)) {
-  throw new Error(`The Jest suites write to the database; refusing to run against ${host}. Use a local database.`);
+  throw new Error(`Os testes Jest escrevem na base de dados; recusam correr contra ${host}. Usar uma base de dados local.`);
 }
 
 // Silenciar o console durante os testes (opcional)

@@ -124,7 +124,7 @@ export default function EditarVia() {
       console.log('Mapa carregado, via:', via);
       console.log('geoLocationPath:', via.geoLocationPath);
       
-      // Parse route coordinates
+      // Ler as coordenadas da via
       if (via.geoLocationPath) {
         let coordinates: [number, number][] = [];
         
@@ -151,7 +151,7 @@ export default function EditarVia() {
         console.log('Número de coordenadas:', coordinates.length);
 
         if (coordinates.length > 0) {
-          // Add route line
+          // Linha da via
           map.addSource('route', {
             type: 'geojson',
             data: {
@@ -182,7 +182,7 @@ export default function EditarVia() {
             }
           });
 
-          // Add route outline
+          // Contorno da via
           map.addLayer({
             id: 'route-outline',
             type: 'line',
@@ -200,7 +200,7 @@ export default function EditarVia() {
 
           console.log('Camadas da via juntadas');
 
-          // Add stops
+          // Paragens
           if (via.paragens && via.paragens.length > 0) {
             via.paragens.forEach((viaParagem) => {
               const stop = viaParagem.paragem;
@@ -233,7 +233,7 @@ export default function EditarVia() {
                   )
                   .addTo(map);
 
-                // Store marker reference
+                // Guardar a referência do marcador
                 markersRef.current.set(stop.id, marker);
 
                 // Clicar no marcador
@@ -346,7 +346,7 @@ export default function EditarVia() {
         municipioId: data.municipio?.id || '',
       });
       
-      // Initialize selected paragens
+      // Paragens escolhidas no início
       if (data.paragens) {
         setSelectedParagensIds(data.paragens.map((vp: any) => vp.paragem.id));
       }
@@ -399,7 +399,7 @@ export default function EditarVia() {
     }
   }
 
-  // Calculate distance between two points using Haversine formula
+  // Distância entre dois pontos pela fórmula de Haversine
   function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371e3; // raio da Terra em metros
     const φ1 = lat1 * Math.PI / 180;
@@ -516,7 +516,7 @@ export default function EditarVia() {
           return true;
         }
 
-        // Parse transporte's via route
+        // Ler o percurso da via do transporte
         let transporteViaCoordinates: [number, number][] = [];
         try {
           const parsed = JSON.parse(transporte.via.geoLocationPath);
@@ -580,7 +580,7 @@ export default function EditarVia() {
         );
         setShowTransporteModal(false);
         setSelectedTransportesIds([]);
-        fetchVia(params.id as string); // Refresh via data
+        fetchVia(params.id as string); // Carregar a via outra vez
       } else {
         showNotification('Erro ao atribuir alguns transportes', 'error');
       }
@@ -593,7 +593,7 @@ export default function EditarVia() {
   }
 
   async function handleUnassignTransporte(e: React.MouseEvent, transporteId: string) {
-    e.stopPropagation(); // Prevent card click event
+    e.stopPropagation(); // Não deixar o clique chegar ao cartão
     
     try {
       const response = await fetch(`/api/transportes/${transporteId}`, {
@@ -604,7 +604,7 @@ export default function EditarVia() {
 
       if (response.ok) {
         showNotification('Transporte desassociado com sucesso!', 'success');
-        fetchVia(params.id as string); // Refresh via data
+        fetchVia(params.id as string); // Carregar a via outra vez
       } else {
         showNotification('Erro ao desassociar transporte', 'error');
       }
@@ -701,7 +701,7 @@ export default function EditarVia() {
       const from = coordinates[i];
       const to = coordinates[i + 1];
       
-      // Haversine formula
+      // Fórmula de Haversine
       const R = 6371; // raio da Terra em km
       const dLat = (to.lat - from.lat) * Math.PI / 180;
       const dLon = (to.lng - from.lng) * Math.PI / 180;
@@ -763,7 +763,7 @@ export default function EditarVia() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -799,7 +799,7 @@ export default function EditarVia() {
         </div>
       )}
 
-      {/* Transporte Assignment Modal */}
+      {/* Janela de atribuição do transporte */}
       {showTransporteModal && (
         <div 
           className="fixed inset-0 z-50 backdrop-blur-sm min-h-screen" 
@@ -1035,7 +1035,7 @@ export default function EditarVia() {
           </div>
         </div>
 
-        {/* Via Information */}
+        {/* Informação da via */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
           <h3 className="text-lg font-bold text-slate-900 mb-4">Informações da Via</h3>
           
@@ -1122,7 +1122,7 @@ export default function EditarVia() {
 
         {/* Mapa e paragens lado a lado */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Paragens List - Left Side */}
+          {/* Lista de paragens, à esquerda */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 h-[600px] flex flex-col">
               <div className="flex items-center justify-between mb-4">
@@ -1190,7 +1190,7 @@ export default function EditarVia() {
             </div>
           </div>
 
-          {/* Map - Right Side */}
+          {/* Mapa, à direita */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-[600px]">
               <div className="p-4 border-b border-slate-200">

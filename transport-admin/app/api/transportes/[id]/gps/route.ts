@@ -34,7 +34,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 // POST: cria um código novo (substitui o anterior, que deixa de funcionar)
 export async function POST(_request: NextRequest, { params }: Params) {
   const { id } = await params;
-  const codigo = randomBytes(15).toString('base64url'); // 20 characters, 120 bits
+  const codigo = randomBytes(15).toString('base64url'); // 20 caracteres, 120 bits
   try {
     await prisma.transporte.update({
       where: { id },

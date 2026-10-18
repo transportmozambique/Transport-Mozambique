@@ -19,7 +19,7 @@ const maputo = (d: Date | null) =>
   d ? d.toLocaleString('pt-PT', { timeZone: 'Africa/Maputo', dateStyle: 'short', timeStyle: 'short' }) : '';
 
 const lists: Record<string, (arg?: string) => Promise<void>> = {
-  // Rows per table
+  // Linhas por tabela
   async counts() {
     const [vias, paragens, transportes, motoristas, utentes, alertas] = await Promise.all([
       prisma.via.count(),
@@ -57,7 +57,7 @@ const lists: Record<string, (arg?: string) => Promise<void>> = {
 
   // As paragens de uma rota, pela ordem de viagem
   async stops(codigo) {
-    if (!codigo) throw new Error('Usage: stops <route code>, e.g. stops VIA-0001');
+    if (!codigo) throw new Error('Uso: stops <código da rota>, por exemplo stops VIA-0001');
     const via = await prisma.via.findUnique({
       where: { codigo },
       select: {
@@ -66,7 +66,7 @@ const lists: Record<string, (arg?: string) => Promise<void>> = {
         paragens: { select: { paragem: { select: { codigo: true, nome: true, geoLocation: true } } } },
       },
     });
-    if (!via) throw new Error(`No route with code ${codigo}`);
+    if (!via) throw new Error(`Nenhuma rota com o código ${codigo}`);
     const ordered = orderStopsAlongRoute(
       via.paragens.map((p) => p.paragem),
       via.geoLocationPath,
@@ -150,7 +150,7 @@ async function main() {
   const [name, arg] = process.argv.slice(2);
   const list = name && lists[name];
   if (!list) {
-    console.log(`Usage: npx tsx scripts/queries.ts <${Object.keys(lists).join('|')}> [argument]`);
+    console.log(`Uso: npx tsx scripts/queries.ts <${Object.keys(lists).join('|')}> [argumento]`);
     process.exitCode = 1;
     return;
   }

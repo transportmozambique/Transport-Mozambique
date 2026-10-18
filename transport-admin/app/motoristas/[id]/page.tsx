@@ -203,7 +203,7 @@ export default function MotoristaDetalhes() {
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Conteúdo principal */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Foto e Info Rápida - Coluna Esquerda */}
           <div className="lg:col-span-1 space-y-6">
@@ -236,7 +236,7 @@ export default function MotoristaDetalhes() {
               </div>
             </div>
 
-            {/* Status Card */}
+            {/* Cartão do estado */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-4 pb-3 border-b border-slate-200">Status</h3>
               <div className="space-y-3 text-sm">
@@ -256,7 +256,7 @@ export default function MotoristaDetalhes() {
             <DriverPinCard motoristaId={motorista.id} />
           </div>
 
-          {/* Informações Detalhadas - Colunas Direita */}
+          {/* Informações detalhadas, colunas da direita */}
           <div className="lg:col-span-3 space-y-6">
             {/* Informações Pessoais */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
@@ -496,7 +496,7 @@ export default function MotoristaDetalhes() {
           </div>
         </div>
 
-        {/* Notification Toast */}
+        {/* Notificação */}
         {notification && (
           <div className="fixed top-4 right-4 z-50 animate-slide-in">
             <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${

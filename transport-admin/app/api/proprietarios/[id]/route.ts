@@ -60,7 +60,7 @@ export async function PUT(
 
     const { nome, bi, nacionalidade, birthDate, endereco, contacto1, contacto2, tipoProprietario } = body;
 
-    // Validate required fields
+    // Confirmar os campos obrigatórios
     if (!nome || !bi || !nacionalidade || !birthDate || !endereco || !contacto1) {
       return NextResponse.json(
         { error: 'Campos obrigatórios em falta' },

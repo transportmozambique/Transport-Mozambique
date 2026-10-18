@@ -114,7 +114,7 @@ export async function POST(request: Request) {
 
     console.log('A ligar à base de dados...');
     
-    // Test database connection
+    // Testar a ligação à base de dados
     try {
       await prisma.$connect();
       console.log('Ligado à base de dados');

@@ -42,7 +42,7 @@ export async function POST(
       );
     }
 
-    // Verify current password
+    // Confirmar a palavra-passe actual
     const isPasswordValid = await bcrypt.compare(currentPassword, utente.senha);
 
     if (!isPasswordValid) {

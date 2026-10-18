@@ -21,7 +21,7 @@ describe('Authentication API', () => {
   });
 
   afterAll(async () => {
-    // Cleanup
+    // Limpar
     await prisma.administrador.delete({ where: { id: testAdminId } });
     await prisma.$disconnect();
   });

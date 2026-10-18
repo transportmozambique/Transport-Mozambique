@@ -15,7 +15,7 @@ export default async function globalSetup(config: FullConfig) {
   const databaseUrl = process.env.E2E_DATABASE_URL || 'postgresql://postgres@127.0.0.1:55432/transport_test';
   const host = new URL(databaseUrl).hostname;
   if (!LOCAL_HOSTS.has(host)) {
-    throw new Error(`E2E tests write to the database; refusing to run against ${host}. Use a local database.`);
+    throw new Error(`Os testes E2E escrevem na base de dados; recusam correr contra ${host}. Usar uma base de dados local.`);
   }
 
   // O administrador de teste só existe na base de dados local, por isso a entrada abaixo também prova
@@ -40,7 +40,7 @@ export default async function globalSetup(config: FullConfig) {
     page.click('button[type=submit]'),
   ]);
   if (!response.ok()) {
-    throw new Error(`Login as ${E2E_ADMIN.email} failed (${response.status()}): is the server using the e2e database?`);
+    throw new Error(`A entrada como ${E2E_ADMIN.email} falhou (${response.status()}): o servidor está a usar a base de dados de teste?`);
   }
   await page.waitForURL((u) => !u.pathname.startsWith('/login'));
   fs.mkdirSync(path.dirname(String(storageState)), { recursive: true });

@@ -1,5 +1,5 @@
 # Verifica cada pull request e cada push para a main: os tipos das três aplicações, as três cópias
-# do esquema Prisma iguais, e as ligações e âncoras da documentação.
+# do esquema Prisma iguais, e as ligações, âncoras e navegação da documentação.
 # Os testes Jest e Playwright do painel precisam de uma cópia local da base de dados e correm-se à
 # mão (docs/testes.md). Porquê só isto aqui: não precisa de segredos nem de base de dados, por isso
 # corre em qualquer fork sem configuração.
@@ -49,3 +49,5 @@ jobs:
         run: node .github/scripts/check-schemas.mjs
       - name: As ligações e âncoras da documentação existem
         run: python3 .github/scripts/check-doc-links.py .
+      - name: A navegação da documentação está actualizada
+        run: python3 .github/scripts/docs-nav.py --check

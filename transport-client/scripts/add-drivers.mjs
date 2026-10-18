@@ -112,7 +112,7 @@ function makeDrivers(vehicles, first, taken, phones) {
   const url = process.env.DATABASE_URL ?? '';
   const local = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(url);
   if (flag('--apply') && !local && !flag('--production')) {
-    console.error('DATABASE_URL is not a local database: add --production to write to it.');
+    console.error('DATABASE_URL não é uma base de dados local: juntar --production para escrever nela.');
     process.exit(1);
   }
   const { PrismaClient } = (await import('@prisma/client')).default;
@@ -128,13 +128,13 @@ function makeDrivers(vehicles, first, taken, phones) {
     const phones = new Set(drivers.map((d) => d.telefone.replace(/\D/g, '')));
     const created = makeDrivers(vehicles, first, new Set(drivers.map((d) => d.nome)), phones);
 
-    console.log(`Drivers: ${drivers.length}; vehicles without a driver: ${vehicles.length}`);
+    console.log(`Motoristas: ${drivers.length}; veículos sem motorista: ${vehicles.length}`);
     for (const d of created.slice(0, flag('--verbose') ? created.length : 8)) {
       console.log(`  + ${d.matricula.padEnd(9)} ${d.nome.padEnd(24)} ${d.telefone}  ${d.email}`);
     }
-    if (!flag('--verbose') && created.length > 8) console.log(`  … (--verbose lists all ${created.length})`);
+    if (!flag('--verbose') && created.length > 8) console.log(`  … (--verbose lista os ${created.length})`);
     if (!flag('--apply')) {
-      console.log('\nDry run: nothing written. Add --apply to write.');
+      console.log('\nEnsaio: nada foi escrito. Juntar --apply para escrever.');
       return;
     }
     if (!created.length) return;
@@ -142,7 +142,7 @@ function makeDrivers(vehicles, first, taken, phones) {
     fs.mkdirSync(DATA, { recursive: true });
     const backupFile = path.join(DATA, `backup-drivers-${stamp}.json`);
     fs.writeFileSync(backupFile, JSON.stringify({ at: stamp, motoristas: await prisma.motorista.findMany() }));
-    console.log(`\nBackup: ${drivers.length} drivers → ${backupFile}`);
+    console.log(`\nCópia de segurança: ${drivers.length} motoristas → ${backupFile}`);
     const ids = [];
     try {
       for (const { matricula, ...data } of created) {
@@ -150,14 +150,14 @@ function makeDrivers(vehicles, first, taken, phones) {
         try {
           ids.push((await prisma.motorista.create({ data, select: { id: true } })).id);
         } catch (e) {
-          if (e.code === 'P2002') console.warn(`  skipped ${matricula}: ${e.meta?.target ?? 'already taken'}`);
+          if (e.code === 'P2002') console.warn(`  saltado ${matricula}: ${e.meta?.target ?? 'já usado'}`);
           else throw e;
         }
       }
     } finally {
       const logFile = path.join(DATA, `created-drivers-${stamp}.json`);
       fs.writeFileSync(logFile, JSON.stringify({ at: stamp, motoristas: ids }, null, 1));
-      console.log(`Written: ${ids.length} drivers, listed in ${logFile}`);
+      console.log(`Escrito: ${ids.length} motoristas, listados em ${logFile}`);
     }
   } finally {
     await prisma.$disconnect();

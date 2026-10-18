@@ -380,7 +380,7 @@ export default function JourneyFollow() {
     try {
       sessionStorage.removeItem(phaseKey);
     } catch {
-      // nothing kept
+      // nada guardado
     }
     router.push("/");
   };
@@ -433,7 +433,7 @@ export default function JourneyFollow() {
         )}
       </div>
 
-      {/* Mobile top bar */}
+      {/* Barra de cima no telemóvel */}
       <div className="md:hidden absolute top-3 left-3 right-3 z-40 flex items-center justify-between gap-2 rounded-2xl bg-white/95 px-3 py-2 shadow-lg">
         <button onClick={back} className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-800">
           ← Voltar

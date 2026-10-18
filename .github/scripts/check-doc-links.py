@@ -1,6 +1,9 @@
-"""Checks every relative link and image in README.md and docs/*.md: the file must exist, and a
-#anchor into a Markdown file must match one of its headings (GitHub's slugs). Exits 1 on a
-broken link.
+"""Verifica cada ligação relativa e imagem em README.md e docs/*.md: o ficheiro tem de existir, e
+uma #âncora para um ficheiro Markdown tem de corresponder a um dos seus títulos (as âncoras que o
+GitHub gera) ou a um <a id="…">. Sai com 1 quando há uma ligação partida.
+
+Porquê: as páginas ligam-se muito umas às outras e ao código; uma página ou um título com outro
+nome partiria as ligações sem ninguém dar por isso.
 
     python .github/scripts/check-doc-links.py .
 """
@@ -14,7 +17,7 @@ files = [os.path.join(root, "README.md")] + sorted(glob.glob(os.path.join(root, 
 
 
 def slugs(path):
-    """The anchors GitHub gives the headings of a Markdown file"""
+    """As âncoras que o GitHub dá aos títulos de um ficheiro Markdown, e os <a id> explícitos"""
     out, seen, in_fence = set(), {}, False
     with open(path, encoding="utf-8") as f:
         text = f.read()
@@ -47,14 +50,14 @@ for f in files:
         path, _, anchor = t.partition("#")
         target = os.path.normpath(os.path.join(os.path.dirname(f), path)) if path else f
         if not os.path.exists(target):
-            print(f"MISSING {os.path.relpath(f, root)} -> {t}")
+            print(f"FALTA   {os.path.relpath(f, root)} -> {t}")
             broken += 1
             continue
         if anchor and target.endswith(".md"):
             cache.setdefault(target, slugs(target))
             if anchor not in cache[target]:
-                print(f"ANCHOR  {os.path.relpath(f, root)} -> {t}")
+                print(f"ÂNCORA  {os.path.relpath(f, root)} -> {t}")
                 broken += 1
 
-print(f"{count} links checked, {broken} broken")
+print(f"{count} ligações verificadas, {broken} partidas")
 sys.exit(1 if broken else 0)

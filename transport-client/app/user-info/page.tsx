@@ -72,14 +72,14 @@ function UserInfoContent() {
     message: '',
   });
   
-  // Profile edit states
+  // Estado da edição do perfil
   const [editingProfile, setEditingProfile] = useState(false);
   const [newNome, setNewNome] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
   
-  // Password change states
+  // Estado da mudança de palavra-passe
   const [changingPassword, setChangingPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -328,7 +328,7 @@ function UserInfoContent() {
           {/* Barra lateral esquerda: escondida nos telemóveis, visível em ecrãs grandes */}
           <div className="hidden lg:block lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden sticky top-8">
-              {/* User Avatar */}
+              {/* Avatar do utilizador */}
               <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-8">
                 <div className="flex flex-col items-center">
                   <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-3">
@@ -404,7 +404,7 @@ function UserInfoContent() {
           {/* Conteúdo principal: largura inteira nos telemóveis, 3 colunas em ecrãs grandes */}
           <div className="lg:col-span-3">
             <div className="bg-white rounded-2xl shadow-lg p-8">
-              {/* Profile Tab */}
+              {/* Separador do perfil */}
               {activeTab === "profile" && (
                 <div>
                   <div className="flex items-center justify-between mb-6">
@@ -484,7 +484,7 @@ function UserInfoContent() {
                       <p className="text-lg text-slate-900 font-mono">{utente.mISSION}</p>
                     </div>
 
-                    {/* Subscription Status */}
+                    {/* Estado da subscrição */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Estado da Subscrição
@@ -511,7 +511,7 @@ function UserInfoContent() {
                       )}
                     </div>
 
-                    {/* Member Since */}
+                    {/* Membro desde */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Membro desde
@@ -525,7 +525,7 @@ function UserInfoContent() {
                       </p>
                     </div>
 
-                    {/* Action Buttons */}
+                    {/* Botões de acção */}
                     {editingProfile && (
                       <div className="flex space-x-3 pt-4">
                         <button
@@ -552,7 +552,7 @@ function UserInfoContent() {
                 </div>
               )}
 
-              {/* Missions Tab */}
+              {/* Separador das missões */}
               {activeTab === "missions" && (
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900 mb-6">Minhas Missões</h1>
@@ -651,7 +651,7 @@ function UserInfoContent() {
                 </div>
               )}
 
-              {/* Security Tab */}
+              {/* Separador da segurança */}
               {activeTab === "security" && (
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900 mb-6">Segurança</h1>
@@ -749,7 +749,7 @@ function UserInfoContent() {
             }}
           />
           
-          {/* Modal Content */}
+          {/* Conteúdo da janela */}
           <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 animate-in fade-in zoom-in duration-200">
             <h3 className="text-xl font-bold text-slate-900 mb-3">
               {modal.title}

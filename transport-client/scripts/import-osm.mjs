@@ -179,10 +179,10 @@ async function overpass(q) {
         console.error(`${url}: ${e.message}`);
       }
     }
-    console.error(`Overpass busy; again in ${wait}s`);
+    console.error(`Overpass ocupado; outra vez daqui a ${wait}s`);
     await new Promise((r) => setTimeout(r, wait * 1000));
   }
-  throw new Error('Overpass did not answer');
+  throw new Error('O Overpass não respondeu');
 }
 
 async function fetchData() {
@@ -202,7 +202,7 @@ out body;
 >;
 out skel geom qt;`);
   fs.writeFileSync(path.join(DATA, 'routes.json'), JSON.stringify(routes));
-  console.log(`Saved ${stops.elements.length} stop nodes and ${routes.elements.filter((e) => e.type === 'relation').length} routes in ${DATA}`);
+  console.log(`Guardados ${stops.elements.length} nós de paragens e ${routes.elements.filter((e) => e.type === 'relation').length} rotas em ${DATA}`);
 }
 
 // ─── Plan ────────────────────────────────────────────────────────────────────
@@ -299,7 +299,7 @@ async function plan(prisma) {
   const nodeAt = new Map([...osm.stops, ...osm.routes].filter((e) => e.type === 'node' && e.lat != null).map((n) => [n.id, [n.lat, n.lon]]));
   const rels = osm.routes.filter((e) => e.type === 'relation');
 
-  // Existing data
+  // Os dados que já existem
   const [paragens, vias, municipios] = await Promise.all([
     prisma.paragem.findMany({ select: { id: true, nome: true, codigo: true, geoLocation: true } }),
     prisma.via.findMany({ select: { id: true, codigo: true, nome: true, geoLocationPath: true, municipioId: true, paragens: { select: { paragemId: true } } } }),
@@ -352,7 +352,7 @@ async function plan(prisma) {
     // Pelas paragens da relação, de carro; as suas vias juntas por ordem quando não tem paragens
     const stopPoints = relationStops(main, nodeAt);
     const routed = stopPoints.length >= 2 ? await routeThrough(stopPoints) : null;
-    if (routed === null && stopPoints.length >= 2) throw new Error(`The routers did not answer for ${main.tags?.ref ?? main.id}: run again.`);
+    if (routed === null && stopPoints.length >= 2) throw new Error(`Os routers não responderam para ${main.tags?.ref ?? main.id}: correr outra vez.`);
     const points = routed?.points ?? relationPath(main, ways);
     if (points.length < 2) continue;
     const near = pathIndex(points);
@@ -588,7 +588,7 @@ async function apply(prisma, p, log) {
   const url = process.env.DATABASE_URL ?? '';
   const local = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(url);
   if (flag('--apply') && !local && !flag('--production')) {
-    console.error('DATABASE_URL is not a local database: add --production to write to it.');
+    console.error('DATABASE_URL não é uma base de dados local: juntar --production para escrever nela.');
     process.exit(1);
   }
   openCache(DATA);
@@ -597,31 +597,31 @@ async function apply(prisma, p, log) {
   try {
     const p = await plan(prisma);
     const attachCount = [...p.attach.values()].reduce((n, s) => n + s.size, 0);
-    console.log(`OSM stops: ${p.stops.length} (after folding stop positions and same-name pairs)`);
-    console.log(`  on a route: ${p.imported.length} → ${p.newStops.length} new, ${p.reused.length} already in the database`);
-    console.log(`  on no route (not imported): ${p.unserved.length}`);
-    console.log(`OSM routes: ${p.newRoutes.length} new, ${p.duplicates.length} already in the database`);
-    console.log(`  new routes' stops: ${p.newRoutes.reduce((n, r) => n + r.stops.length, 0)}; km: ${Math.round(p.newRoutes.reduce((n, r) => n + r.km, 0))}`);
-    console.log(`  stops added to existing routes: ${attachCount} on ${p.attach.size} routes`);
+    console.log(`Paragens do OSM: ${p.stops.length} (depois de juntar as posições de paragem e os pares com o mesmo nome)`);
+    console.log(`  numa rota: ${p.imported.length} → ${p.newStops.length} novas, ${p.reused.length} já na base de dados`);
+    console.log(`  sem rota (não importadas): ${p.unserved.length}`);
+    console.log(`Rotas do OSM: ${p.newRoutes.length} novas, ${p.duplicates.length} já na base de dados`);
+    console.log(`  paragens das rotas novas: ${p.newRoutes.reduce((n, r) => n + r.stops.length, 0)}; km: ${Math.round(p.newRoutes.reduce((n, r) => n + r.km, 0))}`);
+    console.log(`  paragens juntadas a rotas existentes: ${attachCount} em ${p.attach.size} rotas`);
     if (flag('--verbose')) {
-      for (const r of p.newRoutes) console.log(`  + ${r.codigo.padEnd(10)} ${r.nome} (${r.stops.length} stops, ${r.km.toFixed(1)} km, ${r.municipio.nome}) osm ${r.osmIds.join(',')}`);
+      for (const r of p.newRoutes) console.log(`  + ${r.codigo.padEnd(10)} ${r.nome} (${r.stops.length} paragens, ${r.km.toFixed(1)} km, ${r.municipio.nome}) osm ${r.osmIds.join(',')}`);
       for (const d of p.duplicates) console.log(`  = ${d.ref.padEnd(10)} ${d.name} → ${d.as}`);
     }
     if (flag('--json')) fs.writeFileSync(option('--json'), JSON.stringify({ newRoutes: p.newRoutes.map((r) => ({ ...r, stops: r.stops.map((s) => s.nome), points: undefined })), duplicates: p.duplicates }, null, 1));
     if (!flag('--apply')) {
-      console.log('\nDry run: nothing written. Add --apply to write.');
+      console.log('\nEnsaio: nada foi escrito. Juntar --apply para escrever.');
       return;
     }
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
     const saved = await backup(prisma, path.join(DATA, `backup-${stamp}.json`));
-    console.log(`\nBackup: ${saved.paragens} stops, ${saved.vias} routes, ${saved.viaParagens} links, ${saved.transportes} vehicles → ${path.join(DATA, `backup-${stamp}.json`)}`);
+    console.log(`\nCópia de segurança: ${saved.paragens} paragens, ${saved.vias} rotas, ${saved.viaParagens} ligações, ${saved.transportes} veículos → ${path.join(DATA, `backup-${stamp}.json`)}`);
     const log = { at: stamp, paragens: [], vias: [], transportes: [], ligacoesAVias: [] };
     try {
       const done = await apply(prisma, p, log);
-      console.log(`Written: ${done.stops} stops, ${done.routes} routes, ${done.links} route-stop links, ${done.buses} vehicles.`);
+      console.log(`Escrito: ${done.stops} paragens, ${done.routes} rotas, ${done.links} ligações rota-paragem, ${done.buses} veículos.`);
     } finally {
       fs.writeFileSync(path.join(DATA, `created-${stamp}.json`), JSON.stringify(log, null, 1));
-      console.log(`Created rows listed in ${path.join(DATA, `created-${stamp}.json`)}`);
+      console.log(`Linhas criadas listadas em ${path.join(DATA, `created-${stamp}.json`)}`);
     }
   } finally {
     await prisma.$disconnect();

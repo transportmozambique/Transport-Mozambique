@@ -111,7 +111,7 @@ export default function NovaParagem() {
           }
         });
       } catch (error) {
-        // Silent error
+        // Erro ignorado
       }
     });
   }
@@ -142,7 +142,7 @@ export default function NovaParagem() {
     }
   }
 
-  // Calculate distance between two points using Haversine formula
+  // Distância entre dois pontos pela fórmula de Haversine
   function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371e3; // raio da Terra em metros
     const φ1 = lat1 * Math.PI / 180;
@@ -231,7 +231,7 @@ export default function NovaParagem() {
 
         results.push({ via, minDistance });
       } catch (error) {
-        // Silent error
+        // Erro ignorado
       }
     });
 
@@ -258,7 +258,7 @@ export default function NovaParagem() {
   function initializeMap() {
     if (!mapRef.current) return;
 
-    // Initialize MapLibre map
+    // Criar o mapa MapLibre
     const map = new maplibregl.Map({
       container: mapRef.current,
       style: 'https://tiles.openfreemap.org/styles/positron',
@@ -270,11 +270,11 @@ export default function NovaParagem() {
 
     mapInstanceRef.current = map;
 
-    // Add navigation controls
+    // Controlos de navegação
     map.addControl(new maplibregl.NavigationControl(), "top-right");
 
     map.on("load", () => {
-      // Add 3D buildings
+      // Edifícios em 3D
       const layers = map.getStyle().layers;
       let firstSymbolId;
       for (const layer of layers) {
@@ -291,7 +291,7 @@ export default function NovaParagem() {
         });
       }
 
-      // Add 3D buildings layer
+      // Camada dos edifícios em 3D
       if (!map.getLayer('3d-buildings')) {
         map.addLayer(
           {
@@ -438,7 +438,7 @@ export default function NovaParagem() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -498,9 +498,9 @@ export default function NovaParagem() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Form Fields - Left Side */}
+            {/* Campos do formulário, à esquerda */}
             <div className="space-y-6">
-              {/* Basic Information */}
+              {/* Informação básica */}
               <div className="bg-white rounded-2xl border border-slate-200 p-6">
                 <h3 className="text-lg font-bold text-slate-900 mb-4">Informações Básicas</h3>
                 
@@ -681,7 +681,7 @@ export default function NovaParagem() {
               </div>
             </div>
 
-            {/* Map - Right Side */}
+            {/* Mapa, à direita */}
             <div className="lg:sticky lg:top-6 h-fit">
               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-200">
@@ -697,7 +697,7 @@ export default function NovaParagem() {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Botões de acção */}
           <div className="flex items-center justify-end space-x-4 pt-6 border-t border-slate-200">
             <button
               type="button"

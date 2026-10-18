@@ -1,65 +1,34 @@
-# Transportes Moçambique - Cliente
+# transport-client: aplicação dos passageiros
 
-Aplicação cliente para utentes pesquisarem e acompanharem transportes públicos em tempo real.
+Publicada como `transport-mz` em https://transport-mz.vercel.app. Junta, numa só aplicação Next.js:
 
-## Funcionalidades
+- a **web dos passageiros**: o mapa ao vivo, os destinos alcançáveis, as viagens com transbordos, acompanhar uma viagem, a conta e os alertas de chegada ([docs/app-passageiros.md](../docs/app-passageiros.md));
+- o **callback USSD** `/api/ussd`, chamado pela Africa's Talking ([docs/ussd.md](../docs/ussd.md));
+- a **API do motorista** `/api/driver/*`, usada pelo portal do motorista ([docs/portal-motorista.md](../docs/portal-motorista.md));
+- a **entrada das posições GPS** `/api/gps` ([docs/localizacao-gps.md](../docs/localizacao-gps.md));
+- todos os **SMS** e a verificação de chegadas.
 
-### 1. Pesquisa de Transportes
-- Seleção de município
-- Seleção de via
-- Seleção de direção (Terminal A → B ou B → A)
-- Seleção de paragem
-- Listagem de transportes disponíveis
+Porquê tudo junto: todas estas partes lêem a mesma rede e o mesmo estado das viagens, e uma só cópia do código das posições e das tarifas dá as mesmas respostas na web e no USSD.
 
-### 2. Visualização de Transportes Disponíveis
-- Lista de transportes em circulação
-- Distância até a paragem
-- Tempo estimado de chegada
-- Velocidade atual
-- Status do transporte
-
-### 3. Rastreamento em Tempo Real
-- Acompanhamento da localização do transporte
-- Atualização automática a cada 5 segundos
-- Visualização de:
-  - Tempo estimado de chegada
-  - Distância atual
-  - Velocidade
-  - Coordenadas GPS
-- Alertas quando o transporte está próximo
-- Notificação quando o transporte chega
-
-## Fluxo do Utilizador
-
-1. **Página Inicial**: Utente seleciona município, via, direção e paragem
-2. **Página de Pesquisa**: Mostra lista de transportes disponíveis com informações
-3. **Página de Rastreamento**: Acompanha transporte específico em tempo real até chegar
-
-## Tecnologias
-
-- Next.js 15
-- TypeScript
-- Tailwind CSS
-- React Hooks (useState, useEffect)
-
-## Como Executar
+## Correr
 
 ```bash
-cd transport-client
-npm install
-npm run dev
+npm install          # também corre prisma generate
+npm run dev          # http://localhost:3000
 ```
 
-Acesse: http://localhost:3000
+Precisa de um `.env` com `DATABASE_URL` ([docs/configuracao.md](../docs/configuracao.md)). Do zero, com dados de demonstração: [docs/primeiros-passos.md](../docs/primeiros-passos.md).
 
-## Próximos Passos
+## Onde está cada coisa
 
-- [ ] Integração com API real
-- [ ] Integração com Google Maps / Mapbox
-- [ ] Notificações push quando transporte está próximo
-- [ ] Histórico de pesquisas
-- [ ] Favoritos de rotas
-- [ ] Estimativa de preço
-- [ ] Partilha de localização
-- [ ] Modo offline
-- [ ] PWA (Progressive Web App)
+| Pasta | O que tem |
+|---|---|
+| `app/` | as páginas (`page.tsx`) e a API (`app/api/**/route.ts`) |
+| `app/components/` | o mapa e o planeador (`TripPlanner.tsx`), acompanhar a viagem (`JourneyFollow.tsx`), a folha arrastável (`Sheet.tsx`) |
+| `lib/` | a lógica: posições (`vehiclePosition.ts`), viagens (`journeys.ts`), tarifas (`fares.ts`), pesquisa de nomes (`places.ts`), leitura das teclas USSD (`ussdSteps.ts`), SMS (`notifications.ts`), sessões |
+| `scripts/` | importação do OpenStreetMap, percursos nas estradas, listas da base de dados, ecrãs USSD |
+| `prisma/` | cópia do esquema (igual a `../prisma/schema.prisma`) e os dados de demonstração |
+
+Cada ficheiro, com o que faz e onde é explicado: [docs/mapa-do-codigo.md](../docs/mapa-do-codigo.md#aplicação-dos-passageiros-transport-client).
+
+Os ficheiros `*.js` desta pasta são scripts antigos de uso único, não publicados ([docs/limitacoes.md](../docs/limitacoes.md#código-e-repositório)).

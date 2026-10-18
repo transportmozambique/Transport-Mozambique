@@ -1,16 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Optimize memory usage
+  // Gastar menos memória
   experimental: {
-    // Reduce memory usage during development
+    // Gastar menos memória em desenvolvimento
     optimizePackageImports: ['recharts', 'maplibre-gl'],
   },
   
   // Optimizar as versões de produção (o swcMinify já vem por omissão no Next.js 16)
   compress: true,
   
-  // Optimize images
+  // Optimizar as imagens
   images: {
     unoptimized: false,
   },

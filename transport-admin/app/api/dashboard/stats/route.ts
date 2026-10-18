@@ -141,8 +141,8 @@ export async function GET() {
   } catch (error) {
     console.error('Erro ao carregar as estatísticas do painel:', error);
     
-    // Provide more detailed error message
-    let errorMessage = 'Failed to fetch dashboard statistics';
+    // Dar uma mensagem de erro mais detalhada
+    let errorMessage = 'Falha ao carregar as estatísticas do painel';
     if (error instanceof Error) {
       errorMessage = error.message;
     }

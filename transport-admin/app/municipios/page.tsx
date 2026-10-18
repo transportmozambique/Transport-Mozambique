@@ -144,7 +144,7 @@ function MunicipiosContent() {
 
       // Tirar as ligações (sem apagar as entidades)
       
-      // 1. Remove transporte associations (motorista, proprietarios, via)
+      // 1. Tirar as ligações dos transportes (motorista, proprietários, via)
       for (const transporte of transportesToUpdate) {
         try {
           // Tirar o motorista (a null)
@@ -152,7 +152,7 @@ function MunicipiosContent() {
             method: 'DELETE',
           }).catch(() => {});
           
-          // Remove proprietarios associations
+          // Tirar as ligações aos proprietários
           await fetch(`/api/transportes/${transporte.id}/proprietario`, {
             method: 'DELETE',
           }).catch(() => {});
@@ -215,7 +215,7 @@ function MunicipiosContent() {
     m.codigo?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
   );
 
-  // Pagination logic
+  // Paginação
   const totalPages = Math.ceil(filteredMunicipios.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -247,7 +247,7 @@ function MunicipiosContent() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -504,7 +504,7 @@ function MunicipiosContent() {
           </button>
         </div>
 
-        {/* Filter Badge */}
+        {/* Etiqueta do filtro */}
         {provinciaFilter && (
           <div className="flex items-center space-x-2">
             <div className="inline-flex items-center space-x-2 bg-slate-100 border border-slate-300 rounded-xl px-4 py-2">

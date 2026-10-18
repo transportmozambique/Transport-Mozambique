@@ -87,12 +87,12 @@ function longestJump(points) {
   const url = process.env.DATABASE_URL ?? '';
   const local = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(url);
   if (flag('--apply') && !local && !flag('--production')) {
-    console.error('DATABASE_URL is not a local database: add --production to write to it.');
+    console.error('DATABASE_URL não é uma base de dados local: juntar --production para escrever nela.');
     process.exit(1);
   }
   for (const f of ['routes.json', 'stops.json']) {
     if (!fs.existsSync(path.join(DATA, f))) {
-      console.error(`${path.join(DATA, f)} is missing: run node scripts/import-osm.mjs --fetch first.`);
+      console.error(`${path.join(DATA, f)} não existe: correr primeiro node scripts/import-osm.mjs --fetch.`);
       process.exit(1);
     }
   }
@@ -175,7 +175,7 @@ function longestJump(points) {
     for (const codigo of UNLINK) {
       const v = vias.find((x) => x.codigo === codigo);
       if (!v) {
-        console.error(`--unlink-far: no route with the code ${codigo}.`);
+        console.error(`--unlink-far: nenhuma rota com o código ${codigo}.`);
         process.exit(1);
       }
       const change = changes.find((c) => c.v.id === v.id);
@@ -193,23 +193,23 @@ function longestJump(points) {
       unlinks.push({ v, far: all.filter((p) => !p.on.length), kept: all.filter((p) => p.on.length), redrawn: Boolean(change) });
     }
 
-    console.log(`Routes with a straight jump of ${JUMP_M / 1000} km or more${ONLY.length ? ' (asked for)' : ''}: ${chosen.length}`);
+    console.log(`Rotas com um salto recto de ${JUMP_M / 1000} km ou mais${ONLY.length ? ' (pedidas)' : ''}: ${chosen.length}`);
     for (const c of changes) {
       console.log(
         `  ${c.v.codigo.padEnd(8)} from ${c.rel.tags.ref.padEnd(7)} ${c.before.toFixed(1).padStart(5)} → ${c.after.toFixed(1).padStart(5)} km` +
           `; stops passed by: ${c.dropped}; stops linked: +${c.add.length}; linked stops now over ${FAR_M} m away: ${c.far.length}  ${c.v.nome}`,
       );
-      if (flag('--verbose') && c.far.length) console.log(`           far: ${c.far.map((p) => `${p.codigo} ${p.nome}`).join(', ')}`);
+      if (flag('--verbose') && c.far.length) console.log(`           longe: ${c.far.map((p) => `${p.codigo} ${p.nome}`).join(', ')}`);
     }
-    for (const s of skipped) console.log(`  ${s.v.codigo.padEnd(8)} kept: ${s.why}  ${s.v.nome}`);
-    if (unlinks.length) console.log(`\nStops to unlink, more than ${FAR_M} m from the path (--unlink-far):`);
+    for (const s of skipped) console.log(`  ${s.v.codigo.padEnd(8)} mantida: ${s.why}  ${s.v.nome}`);
+    if (unlinks.length) console.log(`\nParagens a desligar, a mais de ${FAR_M} m do percurso (--unlink-far):`);
     for (const u of unlinks) {
-      console.log(`  ${u.v.codigo.padEnd(8)} ${u.far.length} of ${u.v.paragens.length} linked stops${u.redrawn ? ' (from the path drawn now)' : ''}  ${u.v.nome}`);
+      console.log(`  ${u.v.codigo.padEnd(8)} ${u.far.length} de ${u.v.paragens.length} paragens ligadas${u.redrawn ? ' (pelo percurso desenhado agora)' : ''}  ${u.v.nome}`);
       for (const p of u.far) console.log(`           ${p.codigo} ${p.nome}, ${Math.round(p.m)} m`);
-      for (const p of u.kept) console.log(`           kept: ${p.codigo} ${p.nome}, ${Math.round(p.m)} m, a stop of OSM ${p.on.join(', ')} (the way back)`);
+      for (const p of u.kept) console.log(`           mantida: ${p.codigo} ${p.nome}, ${Math.round(p.m)} m, paragem do OSM ${p.on.join(', ')} (o sentido de volta)`);
     }
     if (!flag('--apply')) {
-      console.log('\nDry run: nothing written. Add --apply to write.');
+      console.log('\nEnsaio: nada foi escrito. Juntar --apply para escrever.');
       return;
     }
     if (!changes.length && !unlinks.some((u) => u.far.length)) return;
@@ -219,7 +219,7 @@ function longestJump(points) {
     const links = await prisma.viaParagem.findMany({ where: { viaId: { in: ids } } });
     const backup = path.join(DATA, `backup-redraw-${stamp}.json`);
     fs.writeFileSync(backup, JSON.stringify({ at: stamp, vias: changes.map(({ v }) => ({ id: v.id, codigo: v.codigo, geoLocationPath: v.geoLocationPath })), viaParagem: links }));
-    console.log(`\nBackup: ${changes.length} routes' paths and ${links.length} stop links → ${backup}`);
+    console.log(`\nCópia de segurança: percursos de ${changes.length} rotas e ${links.length} ligações a paragens → ${backup}`);
     let written = 0;
     const created = [];
     const removed = [];
@@ -228,7 +228,7 @@ function longestJump(points) {
       const res = await prisma.via.updateMany({ where: { id: c.v.id, geoLocationPath: c.v.geoLocationPath }, data: { geoLocationPath: formatPath(c.points) } });
       written += res.count;
       if (!res.count) {
-        console.log(`  ${c.v.codigo}: its path changed since it was read, left alone`);
+        console.log(`  ${c.v.codigo}: o percurso mudou depois de ser lido, ficou como estava`);
         notWritten.add(c.v.id);
         continue;
       }
@@ -248,7 +248,7 @@ function longestJump(points) {
     }
     const log = path.join(DATA, `created-redraw-${stamp}.json`);
     fs.writeFileSync(log, JSON.stringify({ at: stamp, viaParagem: created, removed }, null, 1));
-    console.log(`Written: ${written} routes, ${created.length} stop links added, ${removed.length} removed (listed in ${log}).`);
+    console.log(`Escrito: ${written} rotas, ${created.length} ligações a paragens juntadas, ${removed.length} tiradas (listadas em ${log}).`);
   } finally {
     await prisma.$disconnect();
   }

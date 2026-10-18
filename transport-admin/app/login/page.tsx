@@ -62,7 +62,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Form */}
+        {/* Formulário */}
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           {error && (
             <div className="bg-slate-100 border-2 border-slate-400 rounded-xl p-4 flex items-start space-x-3">

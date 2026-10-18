@@ -81,7 +81,7 @@ function snapRoute(points) {
   const url = process.env.DATABASE_URL ?? '';
   const local = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(url);
   if (flag('--apply') && !local && !flag('--production')) {
-    console.error('DATABASE_URL is not a local database: add --production to write to it.');
+    console.error('DATABASE_URL não é uma base de dados local: juntar --production para escrever nela.');
     process.exit(1);
   }
   openCache(DATA);
@@ -105,27 +105,27 @@ function snapRoute(points) {
       for (const k of Object.keys(total)) total[k] += stats[k];
       if (stats.road) changes.push({ v, points, stats, before: lengthM(v.points) / 1000, after: lengthM(points) / 1000 });
     }
-    console.log(`Routes: ${vias.length}; long straight stretches (≥ ${MIN_SEGMENT_M} m): ${total.road + total.straight + total.stray + total.unknown}`);
-    console.log(`  put on the road: ${total.road}; on a straight road, kept: ${total.straight}; no road along them, kept: ${total.stray}; not asked yet: ${total.unknown}`);
-    console.log(`Routes changed: ${changes.length}`);
+    console.log(`Rotas: ${vias.length}; troços rectos longos (≥ ${MIN_SEGMENT_M} m): ${total.road + total.straight + total.stray + total.unknown}`);
+    console.log(`  postos na estrada: ${total.road}; numa estrada recta, mantidos: ${total.straight}; sem estrada ao longo, mantidos: ${total.stray}; ainda por perguntar: ${total.unknown}`);
+    console.log(`Rotas alteradas: ${changes.length}`);
     for (const c of flag('--verbose') ? changes : changes.slice(0, 15)) {
-      console.log(`  ${c.v.codigo.padEnd(10)} ${String(c.stats.road).padStart(3)} stretches, ${c.before.toFixed(1)} → ${c.after.toFixed(1)} km  ${c.v.nome}`);
+      console.log(`  ${c.v.codigo.padEnd(10)} ${String(c.stats.road).padStart(3)} troços, ${c.before.toFixed(1)} → ${c.after.toFixed(1)} km  ${c.v.nome}`);
     }
-    if (!flag('--verbose') && changes.length > 15) console.log(`  … (--verbose lists all ${changes.length})`);
+    if (!flag('--verbose') && changes.length > 15) console.log(`  … (--verbose lista as ${changes.length})`);
     toRedraw.sort((x, y) => y.longest - x.longest);
-    console.log(`\nRoutes still with a straight jump of ${LIST_JUMP_M / 1000} km or more (redraw-from-osm.mjs, or the admin's Vias → Redesenhar percurso): ${toRedraw.length}`);
+    console.log(`\nRotas ainda com um salto recto de ${LIST_JUMP_M / 1000} km ou mais (redraw-from-osm.mjs, ou Vias → Redesenhar percurso no painel): ${toRedraw.length}`);
     for (const r of flag('--verbose') ? toRedraw : toRedraw.slice(0, 15)) {
       console.log(`  ${r.v.codigo.padEnd(10)} ${(r.longest / 1000).toFixed(1).padStart(5)} km  ${r.v.nome}`);
     }
-    if (!flag('--verbose') && toRedraw.length > 15) console.log(`  … (--verbose lists all ${toRedraw.length})`);
+    if (!flag('--verbose') && toRedraw.length > 15) console.log(`  … (--verbose lista as ${toRedraw.length})`);
     if (!flag('--apply')) {
-      console.log('\nDry run: nothing written. Add --apply to write.');
+      console.log('\nEnsaio: nada foi escrito. Juntar --apply para escrever.');
       return;
     }
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
     const file = path.join(DATA, `backup-paths-${stamp}.json`);
     fs.writeFileSync(file, JSON.stringify({ at: stamp, vias: vias.map(({ id, codigo, geoLocationPath }) => ({ id, codigo, geoLocationPath })) }));
-    console.log(`\nBackup: ${vias.length} routes' paths → ${file}`);
+    console.log(`\nCópia de segurança: percursos de ${vias.length} rotas → ${file}`);
     let written = 0;
     for (const c of changes) {
       const res = await prisma.via.updateMany({
@@ -134,7 +134,7 @@ function snapRoute(points) {
       });
       written += res.count;
     }
-    console.log(`Written: ${written} routes.`);
+    console.log(`Escrito: ${written} rotas.`);
   } finally {
     await prisma.$disconnect();
   }

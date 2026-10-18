@@ -20,9 +20,9 @@ export default function NovaProvincia() {
   const [formData, setFormData] = useState({
     nome: "",
     codigo: "",
-    geoLocation: "-25.9655,32.5892", // Default: Maputo
+    geoLocation: "-25.9655,32.5892", // Por omissão: Maputo
   });
-  const [radius, setRadius] = useState(50); // Default 50km radius
+  const [radius, setRadius] = useState(50); // Raio de 50 km por omissão
   const [municipios, setMunicipios] = useState<Municipio[]>([]);
   const [selectedMunicipios, setSelectedMunicipios] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -34,7 +34,7 @@ export default function NovaProvincia() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Initialize map
+  // Criar o mapa
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
@@ -72,7 +72,7 @@ export default function NovaProvincia() {
       bearing: 0,
     });
 
-    // Add navigation controls (zoom, rotation, pitch)
+    // Controlos de navegação (zoom, rotação, inclinação)
     map.addControl(new maplibregl.NavigationControl({
       visualizePitch: true,
       showZoom: true,
@@ -105,7 +105,7 @@ export default function NovaProvincia() {
     });
 
     map.on('load', () => {
-      // Add 3D buildings layer
+      // Camada dos edifícios em 3D
       map.addLayer({
         'id': '3d-buildings',
         'source': 'openmaptiles',
@@ -137,7 +137,7 @@ export default function NovaProvincia() {
         }
       });
 
-      // Add center point source
+      // Fonte do ponto central
       map.addSource('center-point', {
         type: 'geojson',
         data: {
@@ -150,7 +150,7 @@ export default function NovaProvincia() {
         } as any
       });
 
-      // Add center point circle layer
+      // Camada do círculo do ponto central
       map.addLayer({
         id: 'center-point',
         type: 'circle',
@@ -290,7 +290,7 @@ export default function NovaProvincia() {
       if (response.ok) {
         const provincia = await response.json();
         
-        // Associate selected municípios
+        // Associar os municípios escolhidos
         if (selectedMunicipios.length > 0) {
           await Promise.all(
             selectedMunicipios.map(municipioId =>
@@ -318,7 +318,7 @@ export default function NovaProvincia() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -366,9 +366,9 @@ export default function NovaProvincia() {
           </div>
         </div>
 
-        {/* Form */}
+        {/* Formulário */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Info */}
+          {/* Informação básica */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
             <h3 className="text-lg font-bold text-slate-900">Informações Básicas</h3>
             
@@ -405,11 +405,11 @@ export default function NovaProvincia() {
             </div>
           </div>
 
-          {/* Map Location */}
+          {/* Localização no mapa */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
             <h3 className="text-lg font-bold text-slate-900">Localização e Área de Cobertura</h3>
             
-            {/* GeoLocation Input */}
+            {/* Campo da localização */}
             <div>
               <label className="block text-sm font-medium text-slate-900 mb-2">
                 Coordenadas do Centro (Latitude,Longitude)
@@ -442,7 +442,7 @@ export default function NovaProvincia() {
               <p className="text-xs text-slate-500 mt-1">Clique no mapa para selecionar ou digite manualmente</p>
             </div>
 
-            {/* Radius Slider */}
+            {/* Controlo do raio */}
             <div>
               <label className="block text-sm font-medium text-slate-900 mb-2">
                 Raio de Cobertura: {radius} km

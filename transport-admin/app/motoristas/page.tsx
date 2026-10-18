@@ -135,7 +135,7 @@ export default function MotoristasPage() {
           method: 'DELETE',
         });
         
-        // It's ok if assignment doesn't exist (404), continue anyway
+        // Não faz mal se a atribuição não existir (404): continua
         if (!removeResponse.ok && removeResponse.status !== 404) {
           const error = await removeResponse.json();
           console.log('Erro ao remover atribuição:', error);
@@ -187,7 +187,7 @@ export default function MotoristasPage() {
     return matchesSearch && matchesStatus;
   });
 
-  // Pagination logic
+  // Paginação
   const totalPages = Math.ceil(filteredMotoristas.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -204,7 +204,7 @@ export default function MotoristasPage() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -353,7 +353,7 @@ export default function MotoristasPage() {
       )}
 
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
-        {/* Header - 2 Columns Layout */}
+        {/* Cabeçalho em 2 colunas */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Esquerda: título e descrição */}
           <div className="flex items-center space-x-4">
@@ -371,7 +371,7 @@ export default function MotoristasPage() {
             </div>
           </div>
 
-          {/* Right - Action Buttons */}
+          {/* À direita: botões de acção */}
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => router.push('/motoristas/atribuir')}
@@ -394,7 +394,7 @@ export default function MotoristasPage() {
           </div>
         </div>
 
-        {/* Filter Badge */}
+        {/* Etiqueta do filtro */}
         {statusFilter && (
           <div className="flex items-center space-x-2">
             <div className="inline-flex items-center space-x-2 bg-slate-100 border border-slate-300 rounded-xl px-4 py-2">
@@ -708,7 +708,7 @@ export default function MotoristasPage() {
                 </svg>
               </button>
               
-              {/* Page numbers */}
+              {/* Números das páginas */}
               <div className="flex items-center space-x-1">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum;

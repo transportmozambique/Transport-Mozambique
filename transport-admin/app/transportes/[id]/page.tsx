@@ -185,7 +185,7 @@ export default function TransporteDetalhes() {
     map.addControl(new maplibregl.NavigationControl(), "top-right");
 
     map.on('load', () => {
-      // Add 3D buildings
+      // Edifícios em 3D
       const layers = map.getStyle().layers;
       const labelLayerId = layers.find(
         (layer) => layer.type === 'symbol' && layer.layout && layer.layout['text-field']
@@ -235,7 +235,7 @@ export default function TransporteDetalhes() {
 
       // Desenhar a via
       function drawRoute(coordinates: [number, number][]) {
-        // Add route line
+        // Linha da via
         map.addSource('route', {
           type: 'geojson',
           data: {
@@ -263,7 +263,7 @@ export default function TransporteDetalhes() {
           }
         });
 
-        // Add animated route outline
+        // Contorno animado da via
         map.addLayer({
           id: 'route-outline',
           type: 'line',
@@ -283,7 +283,7 @@ export default function TransporteDetalhes() {
         if (transporte && transporte.stops && transporte.stops.length > 0) {
           transporte.stops.forEach((stop) => {
             // Estilo do marcador pelo tipo de paragem
-            let markerColor = "#6b7280"; // Default gray
+            let markerColor = "#6b7280"; // Cinzento por omissão
             let markerSize = "14px";
             let borderColor = "white";
             let markerIcon = "";
@@ -330,7 +330,7 @@ export default function TransporteDetalhes() {
           });
         }
 
-        // Add bus marker
+        // Marcador do autocarro
         addBusMarker();
 
         // Enquadrar o mapa na via inteira
@@ -509,7 +509,7 @@ export default function TransporteDetalhes() {
     setDeleting(true);
     
     try {
-      // First remove motorista association
+      // Primeiro tirar a ligação ao motorista
       if (transporte?.motorista) {
         const removeMotoristaResponse = await fetch(`/api/transportes/${params.id}/atribuir-motorista`, {
           method: 'DELETE'
@@ -835,7 +835,7 @@ export default function TransporteDetalhes() {
           </div>
         </div>
 
-        {/* Map - Full Width */}
+        {/* Mapa, largura inteira */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-4 border-b border-slate-200 bg-slate-50">
             <div className="flex items-center justify-between">
@@ -1167,7 +1167,7 @@ export default function TransporteDetalhes() {
 
       </div>
 
-      {/* Toast Notification */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed bottom-6 right-6 z-50 animate-fade-in">
           <div className={`px-6 py-4 rounded-xl shadow-lg border-2 ${

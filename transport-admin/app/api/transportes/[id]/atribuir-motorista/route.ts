@@ -99,7 +99,7 @@ export async function DELETE(
       );
     }
 
-    // Remove assignment
+    // Tirar a atribuição
     await prisma.motorista.update({
       where: { id: motorista.id },
       data: { transporteId: null as any }

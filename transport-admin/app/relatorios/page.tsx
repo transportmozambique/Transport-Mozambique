@@ -331,7 +331,7 @@ export default function Relatorios() {
 
   return (
     <div className="bg-slate-50 min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -383,7 +383,7 @@ export default function Relatorios() {
           {/* "Histórico" e "Agendar" ainda não existem (as suas páginas só o dizem), por isso não têm botão */}
         </div>
 
-        {/* Stats Cards */}
+        {/* Cartões das estatísticas */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-2xl border border-slate-300 p-6">
             <div className="flex items-center justify-between">
@@ -469,7 +469,7 @@ export default function Relatorios() {
           </div>
         </div>
 
-        {/* Reports Grid */}
+        {/* Grelha dos relatórios */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredRelatorios.length === 0 ? (
             <div className="col-span-full flex flex-col items-center justify-center py-12 text-slate-500">
@@ -561,11 +561,11 @@ export default function Relatorios() {
         </div>
       </div>
 
-      {/* Report Modal */}
+      {/* Janela do relatório */}
       {showReportModal && selectedReport && (
         <div className="fixed inset-0 bg-slate-900/70 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-            {/* Modal Header */}
+            {/* Cabeçalho da janela */}
             <div className="flex items-center justify-between p-6 border-b border-slate-300 bg-slate-100">
               <div>
                 <h2 className="text-2xl font-bold text-slate-900">{selectedReport.titulo}</h2>
@@ -592,7 +592,7 @@ export default function Relatorios() {
               </div>
             </div>
 
-            {/* Modal Content */}
+            {/* Conteúdo da janela */}
             <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
               {isLoadingData ? (
                 <div className="flex items-center justify-center py-12">

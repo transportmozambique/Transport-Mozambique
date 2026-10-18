@@ -248,7 +248,7 @@ export async function operationSummary(
 
   const dayMs = 86400000;
   const msOfDay = (((now.getTime() + MAPUTO_UTC_OFFSET_MIN * 60000) % dayMs) + dayMs) % dayMs;
-  const serviceStart = now.getTime() - msOfDay + SERVICE_START_MIN * 60000; // today 05:00 Maputo
+  const serviceStart = now.getTime() - msOfDay + SERVICE_START_MIN * 60000; // hoje às 05:00 de Maputo
   const nowS = Math.min(Math.max((now.getTime() - serviceStart) / 1000, 0), SERVICE_S);
 
   // Percorrer o dia de serviço em passos de 30 s

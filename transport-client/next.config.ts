@@ -1,13 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Ensure proper rendering
+  // Garantir que desenha bem
   reactStrictMode: true,
   
   // Optimizado para produção (a compressão já vem ligada por omissão no Next.js 16)
   compress: true,
 
-  // Image optimization
+  // Optimização das imagens
   images: {
     formats: ['image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200],

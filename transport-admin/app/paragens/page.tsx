@@ -208,7 +208,7 @@ export default function Paragens() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -362,7 +362,7 @@ export default function Paragens() {
       )}
 
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
-        {/* Header - 2 Columns Layout */}
+        {/* Cabeçalho em 2 colunas */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Esquerda: título e descrição */}
           <div className="flex items-center space-x-4">
@@ -380,7 +380,7 @@ export default function Paragens() {
             </div>
           </div>
 
-          {/* Right - Action Button */}
+          {/* À direita: botão de acção */}
           <button 
             onClick={handleCreate}
             className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 whitespace-nowrap"
@@ -680,7 +680,7 @@ export default function Paragens() {
                 </svg>
               </button>
               
-              {/* Page numbers */}
+              {/* Números das páginas */}
               <div className="flex items-center space-x-1">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum;

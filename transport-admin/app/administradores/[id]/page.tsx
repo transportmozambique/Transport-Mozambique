@@ -114,7 +114,7 @@ export default function AdministradorDetalhes() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -245,9 +245,9 @@ export default function AdministradorDetalhes() {
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Conteúdo principal */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Profile Card */}
+          {/* Cartão do perfil */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
               <div className="flex flex-col items-center">
@@ -284,7 +284,7 @@ export default function AdministradorDetalhes() {
 
           {/* Details */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Personal Information */}
+            {/* Informação pessoal */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Informações Pessoais</h3>
               
@@ -327,7 +327,7 @@ export default function AdministradorDetalhes() {
               </div>
             </div>
 
-            {/* Activity Summary */}
+            {/* Resumo da actividade */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Resumo de Atividade</h3>
               

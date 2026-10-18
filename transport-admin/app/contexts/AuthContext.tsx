@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Redirect logic
+    // Redireccionamento
     if (!loading) {
       const isLoginPage = pathname === "/login";
       const isRootPage = pathname === "/";

@@ -161,7 +161,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting província:', error);
+    console.error('Erro ao apagar a província:', error);
     return NextResponse.json(
       { error: 'Erro ao eliminar província' },
       { status: 500 }

@@ -17,8 +17,8 @@ export async function GET(
   try {
     const { id: busId } = await context.params;
     const searchParams = request.nextUrl.searchParams;
-    const paragemId = searchParams.get('paragem'); // User's origin (EMBARQUE)
-    const destinoId = searchParams.get('destino'); // User's destination (DESTINO)
+    const paragemId = searchParams.get('paragem'); // A origem do passageiro (embarque)
+    const destinoId = searchParams.get('destino'); // O destino do passageiro
 
     const transporte = await prisma.transporte.findUnique({
       where: { id: busId },

@@ -65,7 +65,7 @@ export async function PUT(
     const body = await request.json();
     const { nome, email, telefone, mISSION, subscrito, dataSubscricao, geoLocation, senha } = body;
 
-    // Validate required fields
+    // Confirmar os campos obrigatórios
     if (!nome || !email || !telefone || !mISSION) {
       return NextResponse.json(
         { error: 'Campos obrigatórios em falta' },

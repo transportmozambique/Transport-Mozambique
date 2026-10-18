@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     const { email, senha } = await request.json();
 
-    // Validate input
+    // Confirmar os dados recebidos
     if (!email || !senha) {
       return NextResponse.json(
         { error: "Email e senha são obrigatórios" },
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify password
+    // Confirmar a palavra-passe
     const isPasswordValid = await bcrypt.compare(senha, admin.senha);
 
     if (!isPasswordValid) {

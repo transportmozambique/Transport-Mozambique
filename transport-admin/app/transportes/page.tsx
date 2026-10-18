@@ -112,13 +112,13 @@ export default function Transportes() {
         fetchTransportes();
       } else {
         const error = await response.json();
-        console.log('Erro ao apagar:', error); // Debug log
+        console.log('Erro ao apagar:', error); // Registo para depuração
         // O erro é sobre alguma atribuição (motorista ou proprietários)?
         const hasAssignments = error.details?.includes('motorista') || 
                               error.details?.includes('proprietário') ||
                               error.error?.includes('motorista') || 
                               error.error?.includes('proprietário');
-        console.log('Tem atribuições:', hasAssignments); // Debug log
+        console.log('Tem atribuições:', hasAssignments); // Registo para depuração
         setDeleteError({
           message: error.error || 'Erro ao eliminar transporte',
           details: error.details,
@@ -144,7 +144,7 @@ export default function Transportes() {
         method: 'DELETE',
       });
       
-      // It's ok if motorista doesn't exist (404), continue anyway
+      // Não faz mal se o motorista não existir (404): continua
       if (!motoristaResponse.ok && motoristaResponse.status !== 404) {
         const error = await motoristaResponse.json();
         console.log('Erro ao remover motorista:', error);
@@ -214,7 +214,7 @@ export default function Transportes() {
     return matchesSearch;
   }) : [];
 
-  // Pagination logic
+  // Paginação
   const totalPages = Math.ceil(filteredTransportes.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -231,7 +231,7 @@ export default function Transportes() {
 
   return (
     <div className="bg-white min-h-screen overflow-x-hidden">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -380,7 +380,7 @@ export default function Transportes() {
       )}
 
       <div className="w-full max-w-[1600px] mx-auto p-4 lg:p-6 space-y-6">
-        {/* Header - 2 Columns Layout */}
+        {/* Cabeçalho em 2 colunas */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Esquerda: título e descrição */}
           <div className="flex items-center space-x-4">
@@ -398,7 +398,7 @@ export default function Transportes() {
             </div>
           </div>
 
-          {/* Right - Action Button */}
+          {/* À direita: botão de acção */}
           <button 
             onClick={() => router.push('/transportes/novo')}
             className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 whitespace-nowrap"
@@ -410,7 +410,7 @@ export default function Transportes() {
           </button>
         </div>
 
-        {/* Filter Badge */}
+        {/* Etiqueta do filtro */}
         {statusFilter && (
           <div className="flex items-center space-x-2">
             <div className="inline-flex items-center space-x-2 bg-slate-100 border border-slate-300 rounded-xl px-4 py-2">
@@ -536,7 +536,7 @@ export default function Transportes() {
             </div>
           ) : (
           <>
-            {/* Desktop Table View */}
+            {/* Tabela no computador */}
             <table className="w-full hidden lg:table min-w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
@@ -673,7 +673,7 @@ export default function Transportes() {
               </tbody>
             </table>
 
-            {/* Mobile Card View */}
+            {/* Cartões no telemóvel */}
             <div className="lg:hidden divide-y divide-slate-200">
               {filteredTransportes.length === 0 ? (
                 <div className="px-6 py-12 text-center">
@@ -807,7 +807,7 @@ export default function Transportes() {
               </svg>
             </button>
             
-            {/* Page numbers */}
+            {/* Números das páginas */}
             <div className="flex items-center space-x-1">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum;

@@ -91,7 +91,7 @@ export async function PATCH(
       codigo: body.codigo,
     };
 
-    // Add optional fields
+    // Juntar os campos opcionais
     if (body.provinciaId !== undefined) {
       updateData.provincia = body.provinciaId ? {
         connect: { id: body.provinciaId }
@@ -161,7 +161,7 @@ export async function DELETE(
       );
     }
 
-    // Count paragens through vias
+    // Contar as paragens através das vias
     const paragensCount = await prisma.viaParagem.count({
       where: {
         via: {
@@ -188,7 +188,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting município:', error);
+    console.error('Erro ao apagar o município:', error);
     return NextResponse.json(
       { error: 'Erro ao eliminar município' },
       { status: 500 }

@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Apply filter
+    // Aplicar o filtro
     if (filter === 'ativos') {
       whereClause.status = 'ativo';
     } else if (filter === 'inativos') {

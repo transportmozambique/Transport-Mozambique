@@ -159,7 +159,7 @@ export default function EditarAdministrador() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -209,7 +209,7 @@ export default function EditarAdministrador() {
           </div>
         </div>
 
-        {/* Form */}
+        {/* Formulário */}
         <form onSubmit={handleSubmit} className="max-w-3xl">
           <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
             <h3 className="text-lg font-bold text-slate-900 pb-3 border-b border-slate-200">

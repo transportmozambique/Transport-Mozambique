@@ -21,7 +21,7 @@ export default function Bus3D({ rotation = 0, scale = 1 }: Bus3DProps) {
     canvas.width = width;
     canvas.height = height;
 
-    // Setup scene
+    // Preparar a cena
     const scene = new THREE.Scene();
     scene.background = null;
 
@@ -31,7 +31,7 @@ export default function Bus3D({ rotation = 0, scale = 1 }: Bus3DProps) {
     camera.lookAt(0, 0.6, 0); // a olhar para o centro da carroçaria
     camera.up.set(0, 1, 0); // câmara direita
 
-    // Setup renderer
+    // Preparar o renderizador
     const renderer = new THREE.WebGLRenderer({ 
       canvas, 
       alpha: true,
@@ -64,7 +64,7 @@ export default function Bus3D({ rotation = 0, scale = 1 }: Bus3DProps) {
     body.castShadow = true;
     busGroup.add(body);
 
-    // Bus roof
+    // Tejadilho do autocarro
     const roofGeometry = new THREE.BoxGeometry(1.8, 0.3, 3.5);
     const roofMaterial = new THREE.MeshPhongMaterial({ 
       color: 0x1e40af 
@@ -74,7 +74,7 @@ export default function Bus3D({ rotation = 0, scale = 1 }: Bus3DProps) {
     roof.castShadow = true;
     busGroup.add(roof);
 
-    // Windows (front)
+    // Janelas (à frente)
     const windowGeometry = new THREE.BoxGeometry(1.9, 0.6, 0.1);
     const windowMaterial = new THREE.MeshPhongMaterial({ 
       color: 0xdbeafe,
@@ -86,7 +86,7 @@ export default function Bus3D({ rotation = 0, scale = 1 }: Bus3DProps) {
     frontWindow.position.set(0, 0.9, 2.05);
     busGroup.add(frontWindow);
 
-    // Side windows
+    // Janelas laterais
     const sideWindowGeometry = new THREE.BoxGeometry(0.1, 0.5, 0.8);
     for (let i = 0; i < 4; i++) {
       const leftWindow = new THREE.Mesh(sideWindowGeometry, windowMaterial);
@@ -105,10 +105,10 @@ export default function Bus3D({ rotation = 0, scale = 1 }: Bus3DProps) {
     });
 
     const wheelPositions = [
-      [-0.9, 0.3, 1.5],  // Front left
-      [0.9, 0.3, 1.5],   // Front right
-      [-0.9, 0.3, -1.5], // Back left
-      [0.9, 0.3, -1.5],  // Back right
+      [-0.9, 0.3, 1.5],  // À frente, à esquerda
+      [0.9, 0.3, 1.5],   // À frente, à direita
+      [-0.9, 0.3, -1.5], // Atrás, à esquerda
+      [0.9, 0.3, -1.5],  // Atrás, à direita
     ];
 
     wheelPositions.forEach(([x, y, z]) => {
@@ -118,7 +118,7 @@ export default function Bus3D({ rotation = 0, scale = 1 }: Bus3DProps) {
       wheel.castShadow = true;
       busGroup.add(wheel);
 
-      // Wheel rim
+      // Jante da roda
       const rimGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.32, 16);
       const rimMaterial = new THREE.MeshPhongMaterial({ 
         color: 0x4b5563 
@@ -163,7 +163,7 @@ export default function Bus3D({ rotation = 0, scale = 1 }: Bus3DProps) {
     // Render
     renderer.render(scene, camera);
 
-    // Cleanup
+    // Limpar
     return () => {
       renderer.dispose();
       scene.clear();

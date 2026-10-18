@@ -31,9 +31,9 @@ import { waitUntil } from '@vercel/functions';
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const paragemId = searchParams.get('paragemId'); // User's origin
-    const destinoId = searchParams.get('destinoId'); // User's destination
-    const viaId = searchParams.get('viaId'); // Single via (legacy)
+    const paragemId = searchParams.get('paragemId'); // A origem do passageiro
+    const destinoId = searchParams.get('destinoId'); // O destino do passageiro
+    const viaId = searchParams.get('viaId'); // Uma só via (formato antigo)
     const viaIds = searchParams.get('viaIds'); // várias vias
     const rule = await getFareRule();
 
@@ -173,7 +173,7 @@ export async function GET(request: NextRequest) {
     // É preciso a origem e o destino
     if (!paragemId || !destinoId) {
       return NextResponse.json(
-        { error: 'paragemId (origem) and destinoId are required' },
+        { error: 'Indique a origem (paragemId) e o destino (destinoId)' },
         { status: 400 }
       );
     }
@@ -256,7 +256,7 @@ export async function GET(request: NextRequest) {
           direcao: trip.sentido === 1
             ? `${stops[0].vp.paragem.nome} → ${stops[stops.length - 1].vp.paragem.nome}`
             : `${stops[stops.length - 1].vp.paragem.nome} → ${stops[0].vp.paragem.nome}`,
-          distancia: Math.round(trip.distanciaViagem), // User's journey distance
+          distancia: Math.round(trip.distanciaViagem), // A distância da viagem do passageiro
           tempoEstimado: trip.tempoChegada, // tempo até o autocarro chegar à origem
           tempoViagem: trip.tempoViagem, // tempo que o passageiro passa no autocarro
           velocidade: currentSpeedKmh(transporte, position, rule),

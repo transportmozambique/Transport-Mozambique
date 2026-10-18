@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { nome, email, telefone, senha, mISSION, subscrito, dataSubscricao, geoLocation } = body;
 
-    // Validate required fields
+    // Confirmar os campos obrigatórios
     if (!nome || !email || !telefone || !senha || !mISSION) {
       return NextResponse.json(
         { error: 'Campos obrigatórios em falta' },

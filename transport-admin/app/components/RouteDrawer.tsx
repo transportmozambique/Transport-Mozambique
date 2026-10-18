@@ -43,11 +43,11 @@ export interface RouteStop {
 
 /** O que o desenho dá à página: o percurso pelas estradas, e se pode ser guardado */
 export interface DrawnRoute {
-  /** Points clicked */
+  /** Os pontos clicados */
   points: number;
   /** O percurso pelas estradas, ou as linhas rectas entre os pontos enquanto é calculado ou quando falhou */
   path: Point[];
-  /** At least two points */
+  /** Pelo menos dois pontos */
   hasRoute: boolean;
   /** O percurso corresponde aos pontos actuais */
   ready: boolean;
@@ -354,7 +354,7 @@ export default function RouteDrawer({
     });
   }, [drawing.points, color, mapReady]);
 
-  // Road path line
+  // Linha do percurso pelas estradas
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;

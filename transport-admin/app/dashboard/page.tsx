@@ -104,7 +104,7 @@ function DashboardContent() {
       
       // Tempo limite para o pedido
       const controller = new AbortController();
-      timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      timeoutId = setTimeout(() => controller.abort(), 10000); // limite de 10 segundos
       
       const response = await fetch('/api/dashboard/stats', {
         signal: controller.signal
@@ -214,7 +214,7 @@ function DashboardContent() {
     }
   }, [searchParams, viasData]);
 
-  // Initialize map
+  // Criar o mapa
   useEffect(() => {
     if (!mapContainer.current || map.current || viasData.length === 0) return;
 
@@ -222,7 +222,7 @@ function DashboardContent() {
       container: mapContainer.current,
       style: 'https://tiles.openfreemap.org/styles/positron',
       attributionControl: { compact: true },
-      center: [32.5892, -25.9655], // Maputo center
+      center: [32.5892, -25.9655], // Centro de Maputo
       zoom: 11,
       pitch: 45, // mapa inclinado para ver os edifícios em 3D
       bearing: 0
@@ -231,7 +231,7 @@ function DashboardContent() {
     map.current.addControl(new maplibregl.NavigationControl(), "top-right");
 
     map.current.on('load', () => {
-      // Add 3D buildings
+      // Edifícios em 3D
       const layers = map.current!.getStyle().layers;
       let firstSymbolId: string | undefined;
       for (const layer of layers) {
@@ -249,7 +249,7 @@ function DashboardContent() {
         });
       }
 
-      // Add 3D buildings layer
+      // Camada dos edifícios em 3D
       map.current!.addLayer(
         {
           'id': '3d-buildings',
@@ -312,7 +312,7 @@ function DashboardContent() {
       const validColor = getValidColor(color);
       console.log(`Via ${viaId}: cor original="${color}", cor válida="${validColor}"`);
 
-      // Add source
+      // Fonte de dados do mapa
       if (!map.current.getSource(`route-${viaId}`)) {
         map.current.addSource(`route-${viaId}`, {
           type: 'geojson',
@@ -327,7 +327,7 @@ function DashboardContent() {
         });
       }
 
-      // Add layer
+      // Camada do mapa
       if (!map.current.getLayer(`route-${viaId}`)) {
         map.current.addLayer({
           id: `route-${viaId}`,
@@ -363,7 +363,7 @@ function DashboardContent() {
             map.current.setPaintProperty(`route-${via.id}`, 'line-width', 6);
             map.current.setPaintProperty(`route-${via.id}`, 'line-opacity', 1);
           } else {
-            // Hide other routes
+            // Esconder as outras vias
             map.current.setLayoutProperty(`route-${via.id}`, 'visibility', 'none');
           }
         }

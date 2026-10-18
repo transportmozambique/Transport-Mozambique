@@ -77,14 +77,14 @@ export default function ParagemDetalhes() {
 
     if (isNaN(lat) || isNaN(lng)) return;
 
-    // Dynamically import Leaflet
+    // Importar o Leaflet só no navegador
     const L = (await import('leaflet')).default;
     await import('leaflet/dist/leaflet.css');
 
-    // Initialize map
+    // Criar o mapa
     const map = L.map(mapRef.current).setView([lat, lng], 15);
 
-    // Add OpenStreetMap tiles
+    // Mosaicos do OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
       maxZoom: 19,
@@ -208,7 +208,7 @@ export default function ParagemDetalhes() {
         }
       `}</style>
       
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -295,7 +295,7 @@ export default function ParagemDetalhes() {
           onCancel={() => setShowDeleteDialog(false)}
         />
 
-        {/* Info Cards */}
+        {/* Cartões de informação */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center space-x-3 mb-4">
@@ -341,12 +341,12 @@ export default function ParagemDetalhes() {
           </div>
         </div>
 
-        {/* Location Info */}
+        {/* Localização */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6">
           <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Localização</h3>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Coordinates Info */}
+            {/* Coordenadas */}
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-slate-900 mb-1">Coordenadas GPS</label>
