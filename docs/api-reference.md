@@ -509,6 +509,20 @@ Paged lists answer `{"data": [...], "pagination": {"page", "limit", "total", "to
 
 Passwords and PINs are never returned: administrator and passenger queries leave out `senha`, and the admin's Prisma client omits `Motorista.password` from every query.
 
+### Routes
+
+#### `PATCH /api/vias/{id}`
+
+Changes the fields sent; the others stay.
+
+| Field | Meaning |
+|---|---|
+| `nome`, `terminalPartida`, `terminalChegada`, `cor`, `municipioId` | the route's details |
+| `geoLocationPath` | a new path: `"lng,lat;lng,lat;…"` or `[[lng, lat], …]`, stored as `lng,lat` with 6 decimals. Fewer than two valid points: 400 `{"error": "O percurso da via precisa de pelo menos dois pontos válidos"}`. The admin only sends a road path (Redesenhar percurso). |
+| `paragensIds` | the route's stops become exactly this list. Links to stops still in it are kept as they are (with their terminal flag); the others are deleted and the new ones created. |
+
+`{"geoLocationPath": "32.57,-25.95;32.575,-25.955;32.6,-25.97"}` answers the updated route with its stops and counts; 404 for an unknown route.
+
 ### Vehicles
 
 #### `PATCH /api/transportes/{id}`

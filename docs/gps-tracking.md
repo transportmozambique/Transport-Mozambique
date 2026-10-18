@@ -38,6 +38,8 @@ flowchart TD
 | Where each bus is in its cycle | offset by a hash (FNV-1a) of the vehicle's id, so buses on the same route are spread out |
 | Outside service hours | parked until 05:00, half of the buses at each terminal (also by the hash) |
 
+The bus follows the stored path exactly: where a path cuts across blocks, so does the bus on the map. Correcting a path ([Database → Putting route paths on the roads](database.md#putting-route-paths-on-the-roads), or "Redesenhar percurso" in the admin) moves the timetable positions and arrival times with it at once.
+
 The result depends only on the time, the vehicle's id, the path and the speed. Every endpoint, every serverless instance and the USSD menus therefore compute the same position without talking to each other, and nothing runs in the background. The timetable is an estimate, not a published schedule ([Known limitations](known-limitations.md)).
 
 **3. No path.** A route without a stored path cannot be followed. The vehicle is shown, not moving, at its last stored `currGeoLocation`. Without one, it has no position (the admin shows "Sem rota").

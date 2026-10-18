@@ -85,7 +85,7 @@ It is the platform's public backend.
 - **Passenger app → Africa's Talking.** SMS go out through the `africastalking` SDK (`lib/notifications.ts`). They are sent after the USSD reply with `waitUntil` from `@vercel/functions`, so the phone never waits for the SMS. See [Africa's Talking](africas-talking.md).
 - **GPS devices → passenger app.** A phone running Traccar Client, any tracker forwarded by a Traccar server, or the driver portal itself posts positions to `/api/gps` with a per-vehicle device code. See [GPS tracking](gps-tracking.md).
 - **Admin → passenger app: none.** The admin computes vehicle positions with its own copy of the position code (`transport-admin/lib/vehiclePosition.ts`). Its only reference to the passenger app is the GPS server URL it shows when a device code is created (`GPS_SERVER_URL`).
-- **Maps.** All three apps draw maps with MapLibre GL and OpenFreeMap vector tiles. Some admin forms use OpenStreetMap raster tiles. The admin's "Nova Via" page asks the public OSRM router to snap the points you click to the road network. Everywhere else, maps draw the stored path, which already follows the roads. Walks on the passenger maps are drawn along the streets with paths from the FOSSGIS foot router, asked by the passenger app's server (`/api/walk`).
+- **Maps.** All three apps draw maps with MapLibre GL and OpenFreeMap vector tiles. Some admin forms use OpenStreetMap raster tiles. The admin's "Nova Via" and "Redesenhar percurso" pages (`RouteDrawer`) ask the public OSRM router to snap the points you click to the road network. Everywhere else, maps draw the stored path, which already follows the roads. Walks on the passenger maps are drawn along the streets with paths from the FOSSGIS foot router, asked by the passenger app's server (`/api/walk`).
 
 ## Design decisions
 
@@ -140,7 +140,7 @@ These choices explain most of the code's shape.
 │   │   │                      + dashboard relatorios perfil login
 │   │   ├── api/               CRUD per entity, auth/admin/*, dashboard/stats, relatorios/stats,
 │   │   │                      transportes/[id]/{gps,posicao,operacao}, motoristas/[id]/pin
-│   │   └── components/        Sidebar, Header, GpsTrackerCard, DriverPinCard, ConfirmDialog
+│   │   └── components/        Sidebar, Header, GpsTrackerCard, DriverPinCard, ConfirmDialog, RouteDrawer
 │   ├── lib/                   adminSession, vehiclePosition (admin copy), routeOrder, prisma
 │   ├── proxy.ts               Session check on every /api/* call
 │   ├── __tests__/api/         Jest suites

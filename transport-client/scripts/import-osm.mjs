@@ -17,8 +17,12 @@
  *   within 30 m are one. A stop already in the database (same name within 30 m, or any within
  *   15 m) is reused, so nothing is duplicated; new ones get the code OSM-<node id>.
  * - Routes: the two directions of a route (X12i and X12v) are one Via, as the network treats
- *   every route as running both ways. Its path is the first direction's ways, joined in order.
- *   Its stops are the relation's stops near that path, and any stop within 20 m of it.
+ *   every route as running both ways. Its path goes through the first direction's stops in
+ *   order, by car on the public OSRM routers (scripts/roads.mjs, answers kept in
+ *   osm-data/road-cache.json): relations often list their ways out of order or miss some, and
+ *   joining them made straight jumps across the map. A relation without stops gets its ways
+ *   joined in order. Its stops are the relations' stops near that path, and any stop within
+ *   20 m of it.
  * - A route that is already in the database (its path within 60 m of one existing route's path
  *   for 85% of its length, and the other way round for 70%) is not added again. Its stops
  *   are attached to the existing route instead.
@@ -35,6 +39,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { openCache, routeThrough } from './roads.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -246,6 +251,13 @@ function osmStops(nodes) {
 }
 
 /** The relation's ways joined in order into one line */
+/** A relation's stops in travel order: its stop positions (on the road), else its platforms */
+function relationStops(rel, nodeAt) {
+  const pick = (role) => rel.members.filter((m) => m.type === 'node' && m.role.startsWith(role)).map((m) => nodeAt.get(m.ref)).filter(Boolean);
+  const positions = pick('stop');
+  return positions.length >= 2 ? positions : pick('platform');
+}
+
 function relationPath(rel, ways) {
   const line = [];
   for (const m of rel.members) {
@@ -281,6 +293,7 @@ async function plan(prisma) {
   const nodes = [...osm.stops, ...osm.routes.filter((e) => e.type === 'node' && e.tags)];
   const { stops, byNode } = osmStops(nodes);
   const ways = new Map(osm.routes.filter((e) => e.type === 'way').map((w) => [w.id, w]));
+  const nodeAt = new Map([...osm.stops, ...osm.routes].filter((e) => e.type === 'node' && e.lat != null).map((n) => [n.id, [n.lat, n.lon]]));
   const rels = osm.routes.filter((e) => e.type === 'relation');
 
   // Existing data
@@ -333,7 +346,11 @@ async function plan(prisma) {
   for (const g of groups.values()) {
     g.rels.sort((a, b) => (/(i)$/.test(b.tags?.ref ?? '') ? 1 : 0) - (/(i)$/.test(a.tags?.ref ?? '') ? 1 : 0));
     const main = g.rels[0];
-    const points = relationPath(main, ways);
+    // Through the relation's stops by road; its ways joined in order when it has none
+    const stopPoints = relationStops(main, nodeAt);
+    const routed = stopPoints.length >= 2 ? await routeThrough(stopPoints) : null;
+    if (routed === null && stopPoints.length >= 2) throw new Error(`The routers did not answer for ${main.tags?.ref ?? main.id}: run again.`);
+    const points = routed?.points ?? relationPath(main, ways);
     if (points.length < 2) continue;
     const near = pathIndex(points);
     // The relations' stops near the path, then every stop within 20 m of it
@@ -347,22 +364,30 @@ async function plan(prisma) {
     }
     for (const s of stops) if (!routeStops.has(s) && near(s.point) <= STOP_ON_PATH_M) routeStops.add(s);
 
-    // Already in the database?
-    const probe = samples(points);
-    let dup = null;
-    for (const v of existingRoutes) {
-      if (v.points.length < 2) continue;
-      const covered = probe.filter((p) => v.near(p) <= DUPLICATE_ROUTE_M).length / probe.length;
-      if (covered < 0.85) continue;
-      const back = samples(v.points);
-      const coveredBack = back.filter((p) => near(p) <= DUPLICATE_ROUTE_M).length / back.length;
-      if (coveredBack >= 0.7) {
-        dup = v;
-        break;
+    // Already in the database? Compared by the new path, and by the ways joined in order, as
+    // earlier imports drew it
+    const sameAs = (pts, ptsNear) => {
+      const probe = samples(pts);
+      for (const v of existingRoutes) {
+        if (v.points.length < 2) continue;
+        const covered = probe.filter((p) => v.near(p) <= DUPLICATE_ROUTE_M).length / probe.length;
+        if (covered < 0.85) continue;
+        const back = samples(v.points);
+        const coveredBack = back.filter((p) => ptsNear(p) <= DUPLICATE_ROUTE_M).length / back.length;
+        if (coveredBack >= 0.7) return v;
       }
-    }
+      return null;
+    };
     const t = main.tags ?? {};
     const name = (t.name ?? '').replace(/^[^:]*:\s*/, '').trim() || `${t.from ?? ''} - ${t.to ?? ''}`;
+    let dup = sameAs(points, near);
+    if (!dup && routed?.points) {
+      const joined = relationPath(main, ways);
+      if (joined.length >= 2) dup = sameAs(joined, pathIndex(joined));
+    }
+    // Or a route this import added, whose path was redrawn since (snap-paths, the admin)
+    const network = (g.network.split(';')[0] || 'OSM').slice(0, 3).toUpperCase();
+    dup ??= existingRoutes.find((v) => [g.ref, `${g.ref}-${network}`].includes(v.codigo) && similar(v.nome, name)) ?? null;
     if (dup) {
       duplicates.push({ ref: g.ref, name, as: `${dup.codigo} ${dup.nome}` });
       if (!attach.has(dup.id)) attach.set(dup.id, new Set());
@@ -563,6 +588,7 @@ async function apply(prisma, p, log) {
     console.error('DATABASE_URL is not a local database: add --production to write to it.');
     process.exit(1);
   }
+  openCache(DATA);
   const { PrismaClient } = (await import('@prisma/client')).default;
   const prisma = new PrismaClient();
   try {

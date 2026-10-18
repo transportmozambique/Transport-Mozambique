@@ -178,6 +178,7 @@ test('Via: criar (desenhada no mapa), listar, ver, editar, eliminar', async ({ p
   await expect(canvas).toBeVisible();
   const box = (await canvas.boundingBox())!;
   await page.waitForTimeout(2000); // map style and click handler
+  await page.addStyleTag({ content: '.maplibregl-marker { pointer-events: none; }' }); // clicks reach the map, not a stop
   await canvas.click({ position: { x: box.width * 0.4, y: box.height * 0.5 } });
   await canvas.click({ position: { x: box.width * 0.6, y: box.height * 0.5 } });
   const counts = page.getByTestId('route-counts');
@@ -205,6 +206,47 @@ test('Via: criar (desenhada no mapa), listar, ver, editar, eliminar', async ({ p
   await field(page, 'Nome da Via').fill(`E2E Via ${id} editada`);
   await submitEdit(page, `/api/vias/${vid}`, 'Guardar');
   await expectDetail(page, `/vias/${vid}`, `E2E Via ${id} editada`);
+
+  // Redrawing the path: a straight fallback cannot be saved, a road path replaces the old one.
+  // Handlers registered later run first, so this one now answers the router.
+  let routerUp = false;
+  await page.route('https://router.project-osrm.org/**', (route) =>
+    routerUp
+      ? route.fulfill({
+          json: {
+            code: 'Ok',
+            routes: [{ geometry: { type: 'LineString', coordinates: [[32.57, -25.95], [32.575, -25.955], [32.6, -25.97]] } }],
+          },
+        })
+      : route.abort(),
+  );
+  await page.getByRole('button', { name: 'Redesenhar percurso' }).click();
+  await expect(page).toHaveURL(new RegExp(`/vias/${vid}/percurso$`));
+  await expect(page.getByText(`VP-E2E-${id}`)).toBeVisible();
+  const map = page.locator('.maplibregl-canvas').first();
+  await expect(map).toBeVisible();
+  const mapBox = (await map.boundingBox())!;
+  await page.waitForTimeout(2000); // map style and click handler
+  await page.addStyleTag({ content: '.maplibregl-marker { pointer-events: none; }' });
+  await map.click({ position: { x: mapBox.width * 0.3, y: mapBox.height * 0.5 } });
+  await map.click({ position: { x: mapBox.width * 0.7, y: mapBox.height * 0.5 } });
+  await expect(page.getByTestId('route-status')).toContainText('Não foi possível calcular');
+  const saveButton = page.getByRole('button', { name: 'Guardar percurso' });
+  await expect(saveButton).toBeDisabled();
+
+  routerUp = true;
+  await page.getByRole('button', { name: 'Tentar de novo' }).click();
+  await expect(page.getByTestId('route-status')).toContainText('Percurso pelas estradas');
+  const patched = page.waitForResponse((r) => r.url().endsWith(`/api/vias/${vid}`) && r.request().method() === 'PATCH');
+  await saveButton.click();
+  expect((await patched).status()).toBe(200);
+  await expect(page).toHaveURL(new RegExp(`/vias/${vid}$`));
+  const redrawn = await (await page.request.get(`/api/vias/${vid}`)).json();
+  expect(redrawn.geoLocationPath).toBe('32.570000,-25.950000;32.575000,-25.955000;32.600000,-25.970000');
+  // A path the server cannot read is refused
+  const bad = await page.request.patch(`/api/vias/${vid}`, { data: { geoLocationPath: 'not a path' } });
+  expect(bad.status()).toBe(400);
+  expect((await page.request.patch('/api/vias/no-such-route', { data: { nome: 'x' } })).status()).toBe(404);
 
   await deleteFromDetail(page, `/vias/${vid}`, `/api/vias/${vid}`);
 });
