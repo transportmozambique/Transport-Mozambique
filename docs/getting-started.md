@@ -169,7 +169,7 @@ To run production builds instead, use `npm run build && npx next start -p <port>
 
    <img src="images/driver-login.png" alt="Driver portal sign-in: phone number and PIN" width="280">
 
-3. Press **"Iniciar"** to start a trip. The same trip state is visible in the USSD driver menu ([Driver portal](driver-portal.md)).
+3. Press **"Iniciar viagem"** to start a trip. The same trip state is visible in the USSD driver menu ([Driver portal](driver-portal.md)).
 
    <img src="images/driver-trip-active.png" alt="Driver portal with a trip in progress" width="280">
 

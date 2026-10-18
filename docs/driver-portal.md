@@ -24,7 +24,7 @@ For a GPS-sharing phone, the administrator also creates the vehicle's **device c
 
 <img src="images/driver-login.png" alt="Driver sign-in: phone number and PIN" width="320">
 
-"Número de Telefone" and "PIN", then "Entrar".
+"Número de telefone" and "PIN", then "Entrar".
 
 - The phone matches with or without `+258` and spaces. Driver phones are stored in mixed formats (`+258 87 123 4567`, `841234567`), so the server normalises both sides before comparing.
 - On success, the server returns the driver's profile, vehicle, route (with its stops in travel order and its road path) and a **session token** valid 30 days, signed with `DRIVER_SESSION_SECRET`. The portal stores all of it in `localStorage` and opens `/dashboard`.
@@ -37,15 +37,20 @@ For a GPS-sharing phone, the administrator also creates the vehicle's **device c
 
 ## Dashboard (`/dashboard`)
 
-<img src="images/driver-dashboard.png" alt="Driver dashboard: route map, Iniciar button, speed, waiting passengers and trip time" width="320">
+<img src="images/driver-dashboard.png" alt="Driver dashboard on a phone: the route on the map, the driver and Parado at the top, Iniciar viagem, the trip time, speed and passengers waiting, the GPS line and the route's stops" width="320"> <img src="images/driver-waiting.png" alt="The panel dragged up to the whole screen during a trip: Terminar viagem, the numbers, and the stops with 2 à espera at Esquina" width="320">
 
-- **Top left:** the driver's name and the vehicle's plate. Tapping it opens the info panel ([below](#sharing-the-phones-gps)).
-- **Top right:** "Iniciar" or "Finalizar" ([Trips](#starting-and-ending-a-trip)).
-- **Map:** MapLibre with an OpenFreeMap style, tilted 60° with 3D buildings from zoom 15. It draws the route's road path (`Via.geoLocationPath`) in blue. The bus marker is placed at the **start of the path** and does not move ([Known limitations](known-limitations.md)).
-- **Bottom bar:**
-  - **km/h:** the phone's own speed from the browser Geolocation API, rounded.
-  - **À espera:** passengers waiting along the route. Tap for the list.
-  - **Trip clock:** time since the trip started, counted from `viagemIniciadaEm` on the server, so it is right even after reloading the page or starting the trip by USSD. Tap for an "Info" sheet with the time and speed.
+The map takes the whole screen, with a panel over it: a bottom sheet on a phone, a card on the left on a computer. It looks like the passenger app.
+
+- **Top:** the driver's photo (or initials), name, plate and route code, with "Parado" or "Em viagem". Tapping it opens the profile ([below](#sharing-the-phones-gps)). On a computer this is the top of the card.
+- **Map:** MapLibre with an OpenFreeMap style, tilted 60° with 3D buildings from zoom 15. It draws the route's road path (`Via.geoLocationPath`) in blue, its stops (terminals as dark dots) with their names, and the bus. The bus is at the **phone's position** once the browser gives it, and at the start of the path until then. The round button centres the map on it.
+- **The panel**, from the top:
+  - **"Iniciar viagem"** (green) or **"Terminar viagem"** (dark) ([Trips](#starting-and-ending-a-trip));
+  - three numbers: **Tempo de viagem**, time since the trip started, counted from `viagemIniciadaEm` on the server, so it is right after reloading the page or starting the trip by USSD; **km/h**, the phone's own speed from the browser Geolocation API; and **À espera**, passengers waiting along the route ([below](#passengers-waiting-on-the-route));
+  - **GPS do telemóvel:** whether the phone shares its position, with the last send ("GPS enviado às 10:31") or "Sem código: toque para o configurar". Tapping it opens the profile;
+  - the route: its code, name and terminals, then its stops in travel order with "2 à espera" where passengers wait. Stops in a row with the same name (both sides of a street) are listed once.
+- **On a phone** the sheet has three heights, like the passenger app: lowered (only the trip button shows), half the screen, and the whole screen (the map hidden). Drag its top, or tap the bar on it.
+
+<img src="images/driver-desktop.png" alt="The driver portal on a computer: the panel on the left and the route with its stops and the bus on the map">
 
 | When | Request |
 |---|---|
@@ -55,9 +60,9 @@ For a GPS-sharing phone, the administrator also creates the vehicle's **device c
 
 ## Starting and ending a trip
 
-<img src="images/driver-trip-active.png" alt="Trip in progress: Finalizar button and running clock" width="320">
+<img src="images/driver-trip-active.png" alt="Trip in progress: Em viagem at the top, Terminar viagem and the trip clock running" width="320">
 
-"Iniciar" sends `POST {API}/api/driver/trip` with `{"action": "iniciar"}`; "Finalizar" sends `{"action": "encerrar"}`. The response is the new state, and the button and clock follow it.
+"Iniciar viagem" sends `POST {API}/api/driver/trip` with `{"action": "iniciar"}`; "Terminar viagem" sends `{"action": "encerrar"}`. The response is the new state, and the button, the "Em viagem" label and the clock follow it. An error shows under the button.
 
 | Action | Database change |
 |---|---|
@@ -78,15 +83,15 @@ SELECT nome, telefone, "emViagem", "viagemIniciadaEm" FROM "Motorista" WHERE "em
 
 ## Sharing the phone's GPS
 
-<img src="images/driver-info.png" alt="Info panel: vehicle, route, Código GPS do veículo with Guardar, and Sair" width="320">
+<img src="images/driver-info.png" alt="Profile: ID number and phone (blurred), vehicle, route, Código GPS do veículo with Guardar, and Sair" width="320">
 
-Tap the name to open the info panel: ID number, phone, vehicle, plate and route (blurred above), the **"Código GPS do veículo"** field, and **"Sair"** (sign out).
+Tap the name (or the "GPS do telemóvel" line) to open the profile: ID number and phone (blurred above), vehicle and route, the **"Código GPS do veículo"** field, and **"Sair"** (sign out). "Fechar" or a tap outside closes it.
 
 To make the phone the vehicle's GPS tracker:
 
 1. Paste the vehicle's device code from the admin and tap **"Guardar"**. The panel answers "Código guardado: a posição é enviada durante a viagem". The code stays on this phone (`localStorage['gpsCodigo']`); an empty value removes it.
 2. Allow location access when the browser asks. The page watches the position with high accuracy.
-3. Tap **"Iniciar"**. From then on, every new position (at most one every 15 s) is posted:
+3. Tap **"Iniciar viagem"**. From then on, every new position (at most one every 15 s) is posted:
 
 ```http
 POST https://transport-mz.vercel.app/api/gps
@@ -98,7 +103,7 @@ Content-Type: application/json
 
 `speed` is in km/h (the browser's m/s × 3.6), `accuracy` in metres, `timestamp` in milliseconds. The server stores it on the vehicle (`Transporte.currGeoLocation`, `gpsAtualizadoEm`, `gpsVelocidade`, `gpsDirecao`). From then on, passengers see that position instead of the timetable one for 3 minutes after each fix. The full rules (accuracy limit, old and future timestamps) are in [GPS tracking → JSON](gps-tracking.md#json-with-a-bearer-code).
 
-The status line under the field reports each send:
+The status line under the field, and the "GPS do telemóvel" line in the panel, report each send:
 
 | Status | Meaning |
 |---|---|
@@ -112,9 +117,7 @@ Browsers stop sending when the page is in the background or the screen is off. F
 
 ## Passengers waiting on the route
 
-<img src="images/driver-waiting.png" alt="Passageiros à espera: total and count per stop" width="320">
-
-"À espera" opens **"Passageiros à espera"**. It lists the route's stops in travel order with the number of arrival alerts (`MISSION` rows) created at each stop in the **last 3 hours**, from the web or USSD. Alerts already answered by an arrival SMS still count, because a passenger who was told the bus is 1 km away is still waiting. Stops with no alert show 0; several stops can share a name.
+"À espera" in the panel is the total. The route's stop list under it shows, at each stop, the number of arrival alerts (`MISSION` rows) created there in the **last 3 hours**, from the web or USSD ("2 à espera"); stops without one show nothing. Alerts already answered by an arrival SMS still count, because a passenger who was told the bus is 1 km away is still waiting. Stops in a row with the same name are listed once, with their counts added up. The numbers refresh every minute.
 
 `GET {API}/api/driver/seguidores` answers:
 

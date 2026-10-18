@@ -179,7 +179,7 @@ Each also has the same four pages: list, detail, new and edit. What differs is b
 | **GET** | List with `search` (name, BI, licence, phone) and `filter` (`ativos`, `inativos`, `comTransporte`). The PIN hash is never returned. |
 | **PUT** `/api/motoristas/{id}` | Every field, with the same checks. |
 | **DELETE** | Refused while assigned to a vehicle. The detail page sends `?force=true`, which unassigns the driver first. |
-| **PIN** | `POST /{id}/pin` creates a 6-digit PIN, shown once and stored as a bcrypt hash; the old one stops working. The driver signs in with phone number and PIN on the driver portal or USSD option 6. "Iniciar" and "Finalizar" there write `emViagem` (trip in progress). |
+| **PIN** | `POST /{id}/pin` creates a 6-digit PIN, shown once and stored as a bcrypt hash; the old one stops working. The driver signs in with phone number and PIN on the driver portal or USSD option 6. "Iniciar viagem" and "Terminar viagem" there write `emViagem` (trip in progress). |
 | **Shown** | Driver portal: their vehicle, route and municipality. Admin `/motoristas`, the vehicle page, the trip state. |
 </details>
 

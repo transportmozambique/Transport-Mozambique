@@ -49,85 +49,75 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        {/* Logo/Header */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <svg className="w-12 h-12 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-slate-100 p-4">
+      <div className="w-full max-w-md">
+        <div className="mb-6 flex items-center justify-center gap-3">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg">
+            <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
+          </span>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">Transportes Moçambique</h1>
+            <p className="text-sm text-slate-500">Portal do Motorista</p>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">TransportMZ</h1>
-          <p className="text-gray-400">Portal do Motorista</p>
         </div>
 
-        {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            Iniciar Sessão
-          </h2>
+        <div className="rounded-3xl bg-white p-6 shadow-xl sm:p-8">
+          <h2 className="mb-1 text-2xl font-bold text-slate-900">Entrar</h2>
+          <p className="mb-6 text-sm text-slate-500">Com o seu número de telefone e o PIN dado pelo administrador.</p>
 
-          {error && (
-            <div className="mb-6 p-4 bg-gray-100 border border-gray-300 rounded-lg">
-              <p className="text-sm text-gray-800 text-center">{error}</p>
-            </div>
-          )}
+          {error && <p className="mb-5 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Número de Telefone
+              <label htmlFor="telefone" className="mb-1.5 block text-sm font-semibold text-slate-800">
+                Número de telefone
               </label>
               <input
+                id="telefone"
                 type="tel"
+                autoComplete="tel"
                 required
                 value={formData.telefone}
                 onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
                 placeholder="Ex: 849123456"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900"
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-900"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="pin" className="mb-1.5 block text-sm font-semibold text-slate-800">
                 PIN
               </label>
               <input
+                id="pin"
                 type="password"
                 inputMode="numeric"
                 autoComplete="current-password"
                 required
                 value={formData.senha}
                 onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
-                placeholder="PIN de 6 dígitos dado pelo administrador"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900"
+                placeholder="6 dígitos"
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 tracking-widest text-slate-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-900"
               />
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-gray-900 text-white rounded-lg font-semibold hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              className="w-full rounded-full bg-slate-900 py-3.5 font-semibold text-white shadow-lg transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isLoading ? "Entrando..." : "Entrar"}
+              {isLoading ? "A entrar…" : "Entrar"}
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-sm text-gray-600 text-center">
-              Não tem PIN ou esqueceu-o?{" "}
-              <span className="text-gray-900 font-medium">Peça um novo PIN ao administrador.</span>
-            </p>
-          </div>
-        </div>
-
-        {/* Info */}
-        <div className="mt-6 bg-gray-800/50 rounded-lg p-4">
-          <p className="text-xs text-gray-400 text-center">
-            O motorista deve estar registado pelo administrador do sistema
+          <p className="mt-6 border-t border-slate-100 pt-5 text-center text-sm text-slate-600">
+            Não tem PIN ou esqueceu-o? <span className="font-semibold text-slate-900">Peça um novo PIN ao administrador.</span>
           </p>
         </div>
+
+        <p className="mt-5 text-center text-xs text-slate-500">O motorista deve estar registado pelo administrador do sistema.</p>
       </div>
     </div>
   );

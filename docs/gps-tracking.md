@@ -183,7 +183,7 @@ ORDER BY "gpsAtualizadoEm" DESC NULLS LAST;
 ## Limits
 
 - **Freshness is 3 minutes.** A device that reports less often than that makes the bus jump between its GPS point and its timetable point. Traccar Client's 15 s is well inside the limit.
-- **The trip flag does not gate trackers.** Traccar Client and trackers report whenever they run. Only the driver portal's browser sharing waits for "Iniciar".
+- **The trip flag does not gate trackers.** Traccar Client and trackers report whenever they run. Only the driver portal's browser sharing waits for "Iniciar viagem".
 - **One device per vehicle.** A new code replaces the previous one.
 - **No history.** Each fix overwrites the previous one; no track is kept. (`GeoLocation` holds data from the initial import only.)
 - **Off-route fixes are shown where they are.** The arrival time projects them onto the nearest point of the route's path.

@@ -131,7 +131,7 @@ Check that each screen starts with `CON` or `END` and stays within 182 character
 
 Build the portal with `NEXT_PUBLIC_API_URL` pointing at the local passenger app (it is read at build time), generate a PIN for a driver in the admin, then sign in on a phone-sized window:
 
-- "Iniciar" and "Finalizar" change the trip; USSD `6*<PIN>*2` shows the same state, and `6*<PIN>*1*1` toggles it ([Driver portal](driver-portal.md)).
+- "Iniciar viagem" and "Terminar viagem" change the trip; USSD `6*<PIN>*2` shows the same state, and `6*<PIN>*1*1` toggles it ([Driver portal](driver-portal.md)).
 - With a device code saved in the info panel and location allowed, a trip sends positions; the admin's vehicle card turns "GPS ativo".
 - A wrong PIN answers "PIN incorreto"; a driver without a PIN gets "Ainda não tem PIN…".
 
