@@ -616,7 +616,8 @@ function NowCard({
             : current.embarque
               ? `O autocarro passa ${at(current.embarque)}`
               : "Sem hora para este autocarro"}
-          {current.autocarro.metrosAteEmbarque ? ` · a ${formatDistance(current.autocarro.metrosAteEmbarque)}` : ""}
+          {/* How far it is only means something while it is on its way (not overnight) */}
+          {comes !== null && comes < 60 && current.autocarro.metrosAteEmbarque ? ` · a ${formatDistance(current.autocarro.metrosAteEmbarque)}` : ""}
         </p>
         {current.perde && current.embarque && (
           <p className="mt-1 text-xs font-semibold text-amber-300">Chega antes de si: apanha-o na passagem seguinte, {at(current.embarque)}.</p>
