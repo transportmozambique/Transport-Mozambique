@@ -320,13 +320,13 @@ Sign-in and registration return a token valid 90 days. Every `/api/user/*` call 
 
 #### `POST /api/auth/register`
 
-`{"nome", "email", "telefone", "senha"}`; the password needs at least 6 characters. A phone that already has a passwordless USSD account completes that account. Answers like sign-in.
+`{"nome", "email", "telefone", "senha"}`; the password needs at least 6 characters. The phone is stored without spaces, with `+258` in front of a Mozambican mobile number. A phone that already has a passwordless USSD account completes that account. Answers like sign-in.
 
 Errors (400): missing field; `A senha deve ter no mínimo 6 caracteres`; `Este número de telefone já está registado`; `Este email já está registado`. 500 `Sessão indisponível. Tente mais tarde.` when `USER_SESSION_SECRET` is missing in production.
 
 #### `POST /api/auth/login`
 
-`{"telefone": "849990777", "senha": "…"}`. The phone matches with or without `+258`.
+`{"telefone": "849990777", "senha": "…"}`. The phone matches on its digits, with or without `+258` and spaces (`84 999 0777`, `+258849990777`).
 
 ```json
 {"success": true, "utente": {"id": "cmvbi8o050004rhtj7h310jh9", "nome": "Ana Demo", "email": "ana.demo@local.test",

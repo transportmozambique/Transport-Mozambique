@@ -155,7 +155,7 @@ CON 2 transbordos, chega amanha 06:33
 
 - `2` shows the next option (from the second option on, `2` again shows the one after, and it wraps around); "2. Outra opcao" only appears when there is more than one.
 - `1` sends the option on screen by SMS, with every step: walks ("Caminhe 150 m ate …"), each bus's route and plate, where and when to take it and get off, and each fare. Then `END Detalhes enviados por SMS.`
-- **Writes:** each journey screen registers an arrival alert (`MISSION`) at the stop where the first bus is taken, so the passenger gets an SMS when a bus is under 1 km away. If the phone number has no account, it first creates a passwordless `Utente`. An alert for the same stop from the last 24 h is reused.
+- **Writes:** each journey screen registers an arrival alert (`MISSION`) at the stop where the first bus is taken, so the passenger gets an SMS when a bus is under 1 km away. If the phone number has no account, it first creates a passwordless `Utente`. A website account with the same number counts, whatever spaces or prefix it was saved with. An alert for the same stop from the last 24 h is reused.
 - **No connection:** `END Nao ha autocarro de … para ….` (a few routes form groups with no stop in common with the rest of the network).
 
 ## 2 Procurar rotas

@@ -12,6 +12,7 @@ import { maputoClock } from '@/lib/eta';
 import { loadNetwork, placeLabel, planJourneys, type BusLeg, type Journey, type NetStop } from '@/lib/journeys';
 import { searchPlaces, type Place } from '@/lib/places';
 import { timingSafeEqual } from 'crypto';
+import { findUtenteIdByPhone } from '@/lib/phones';
 
 // Africa's Talking USSD format
 interface USSDRequest {
@@ -730,9 +731,9 @@ async function findPlaceCoords(name: string): Promise<LatLng | null> {
 
 /** Arrival alert: the simulator texts the passenger when a bus nears `stop`. */
 async function createMissionForUser(phoneNumber: string, stop: { id: string; geoLocation: string }) {
-  let user = await prisma.utente.findFirst({
-    where: { telefone: phoneNumber }
-  });
+  // The same passenger as on the website, whatever spaces or prefix the number was saved with
+  const existingId = await findUtenteIdByPhone(phoneNumber);
+  let user = existingId ? await prisma.utente.findUnique({ where: { id: existingId } }) : null;
 
   if (!user) {
     user = await prisma.utente.create({

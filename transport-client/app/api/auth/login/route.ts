@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { createUserToken } from '@/lib/userSession';
+import { findUtenteIdByPhone } from '@/lib/phones';
 
 export async function POST(request: Request) {
   try {
@@ -15,11 +16,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Buscar utente pelo telefone, com ou sem o prefixo +258 (contas do USSD têm o prefixo)
-    const digits = String(telefone).replace(/\s+/g, '');
-    const local = digits.replace(/^\+?258/, '');
-    const utente = await prisma.utente.findFirst({
-      where: { telefone: { in: [digits, local, `+258${local}`, `258${local}`] } },
+    // Buscar utente pelo telefone, com ou sem o prefixo +258 e com ou sem espaços
+    // (contas do USSD têm o prefixo; contas antigas do site guardaram os espaços)
+    const id = await findUtenteIdByPhone(telefone);
+    const utente = id && await prisma.utente.findUnique({
+      where: { id },
       select: {
         id: true,
         nome: true,
