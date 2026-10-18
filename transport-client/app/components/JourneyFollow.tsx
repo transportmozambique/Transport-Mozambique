@@ -456,7 +456,7 @@ export default function JourneyFollow() {
           </>
         }
       >
-        <div className="pt-2 md:pt-0">{body}</div>
+        {body}
       </Sheet>
     </div>
   );
