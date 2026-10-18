@@ -12,6 +12,7 @@ What is incomplete, estimated or legacy on 2026-10-17, so that you do not mistak
 - **Few GPS devices.** Real positions need a device code per vehicle and a phone or tracker that reports. Until vehicles are equipped, the map shows timetable positions.
 - **No position history.** Each GPS fix overwrites the last one; there is no track to replay or analyse. `GeoLocation` holds rows from the initial import only.
 - **Distances use the stored path.** A route without `geoLocationPath` falls back to straight lines between stops × `fatorEstrada` (1.3 by default).
+- **Some route paths still cut corners.** `scripts/snap-paths.mjs` puts straight jumps on the roads, but keeps a jump when no road links its two ends closely enough (a river between them, a one-way street the wrong way), and segments under 300 m are not checked ([Database](database.md#putting-route-paths-on-the-roads)).
 - **Same speed everywhere.** Traffic, time of day and stop dwell times are not modelled; only the 5-minute stop at each terminal is.
 
 ## Journeys

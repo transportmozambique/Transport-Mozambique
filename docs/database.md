@@ -460,14 +460,14 @@ A USSD-only account becomes a full account when the same phone number registers 
 
 ## Importing stops and routes from OpenStreetMap
 
-The original network left much of central Maputo out. For example, it had one stop within 2 km of Av. Eduardo Mondlane. OpenStreetMap maps the city's buses and chapas: the Chapas, EMTPM, Corujas, REM and RCM networks. `transport-client/scripts/import-osm.js` brings them in.
+The original network left much of central Maputo out. For example, it had one stop within 2 km of Av. Eduardo Mondlane. OpenStreetMap maps the city's buses and chapas: the Chapas, EMTPM, Corujas, REM and RCM networks. `transport-client/scripts/import-osm.mjs` brings them in.
 
 ```bash
 cd transport-client
-node scripts/import-osm.js --fetch                       # download from Overpass into osm-data/ (git-ignored)
-DATABASE_URL=… node scripts/import-osm.js --verbose       # dry run: lists what it would add, writes nothing
-DATABASE_URL=… node scripts/import-osm.js --apply --buses 2                 # local databases only
-DATABASE_URL=… node scripts/import-osm.js --apply --buses 2 --production    # a remote database
+node scripts/import-osm.mjs --fetch                       # download from Overpass into osm-data/ (git-ignored)
+DATABASE_URL=… node scripts/import-osm.mjs --verbose       # dry run: lists what it would add, writes nothing
+DATABASE_URL=… node scripts/import-osm.mjs --apply --buses 2                 # local databases only
+DATABASE_URL=… node scripts/import-osm.mjs --apply --buses 2 --production    # a remote database
 ```
 
 What it does:
@@ -508,6 +508,64 @@ Speed after the import:
 
 **Licence.** OpenStreetMap data is © OpenStreetMap contributors, under the [Open Database License](https://www.openstreetmap.org/copyright) (ODbL). The map already credits OpenStreetMap at the bottom right. Under the ODbL's share-alike terms, the imported stops and routes stay under the ODbL; this script and the OSM data it reads are the way to rebuild them.
 
+## Putting route paths on the roads
+
+Some stored paths (`Via.geoLocationPath`) cut across the map in a straight line: over blocks, fields or a river. There are two causes:
+
+- **Holes in OpenStreetMap routes.** The import joins a relation's ways in order. Where a way is missing, the path jumps straight from the end of one way to the start of the next.
+- **The first routes** were drawn stop to stop by the first data scripts.
+
+`transport-client/scripts/snap-paths.mjs` puts these segments on the roads:
+
+```bash
+cd transport-client
+DATABASE_URL=… node scripts/snap-paths.mjs                          # dry run: what would change, writes nothing
+DATABASE_URL=… node scripts/snap-paths.mjs --apply                  # local databases only
+DATABASE_URL=… node scripts/snap-paths.mjs --apply --production     # a remote database
+```
+
+How it works:
+
+- **Segments checked.** Every segment of at least 300 m (`--min`). For each one it asks a public OSRM car router for the road between the two ends.
+- **Kept straight.** When the road stays within 50 m of the straight line, the road itself is straight and the segment is kept.
+- **Replaced.** Otherwise the segment is replaced by the road.
+- **Kept and listed.** When the road is more than 3 times as long, plus 500 m, the two ends are not on one road (a river between them, a one-way street the wrong way). The segment is kept and counted as "no road close enough".
+- **Simplified.** The new path is simplified to 4 m and written only when it changed.
+- **Routers.** The public routers allow light use, one request a second. Requests alternate between the FOSSGIS router and the OSRM demo router, so a first run over the whole network takes about 40 minutes. Their answers are kept in `osm-data/road-cache.json`, so a second run on the same data asks nothing again. Copy that file along to run on another copy of the same data.
+- **Backup and undo.** `--apply` first saves every route's id, code and path to `osm-data/backup-paths-<time>.json`. To undo, write those paths back. A route whose path changed since it was read is skipped.
+
+On a copy of production (2026-10-18), 4,152 segments of 300 m or more were checked on 261 routes. 51 routes changed, most by less than a tenth of their length. Examples:
+
+- X36 (Costa do Sol – Malhazine) went from 18.7 to 26.4 km. Its diagonal over the blocks now follows the streets.
+- 47-0 (Baixa – Tchumene) went from 40.0 to 49.5 km. It no longer crosses the Rio Matola beside the N4.
+
+The dry run lists the routes it would change, with their length before and after; `--verbose` lists them all.
+
+**Licence.** The roads come from OpenStreetMap (© OpenStreetMap contributors, ODbL), routed by OSRM on the FOSSGIS and OSRM demo servers.
+
+## Drivers for the imported vehicles
+
+The 340 vehicles added by the OpenStreetMap import have no driver. `transport-client/scripts/add-drivers.mjs` gives each vehicle without a driver a demo driver, like the 111 drivers of the first data:
+
+```bash
+cd transport-client
+DATABASE_URL=… node scripts/add-drivers.mjs                          # dry run: who would be created
+DATABASE_URL=… node scripts/add-drivers.mjs --apply                  # local databases only
+DATABASE_URL=… node scripts/add-drivers.mjs --apply --production     # a remote database
+```
+
+- **The records.** Names come from common Mozambican first names and surnames. Each driver has the same fields as the first demo drivers:
+  - BI `1102…` and licence `CC-<year>-…`;
+  - an `@transport.co.mz` email, a phone and an address;
+  - an emergency contact, issue and expiry dates, and the status `ativo`;
+  - the vehicle it drives.
+- **No photo and no PIN.** The apps show the initials instead of a photo. An administrator generates the PIN when a driver needs to sign in ([Admin dashboard](admin-dashboard.md#drivers-motoristas)).
+- **No clashes.** Numbers and emails continue after the highest existing ones, and phones are checked against every existing driver. A fixed seed means the same data always gives the same drivers.
+- **Backup and undo.** `--apply` first saves every `Motorista` row to `osm-data/backup-drivers-<time>.json`, then lists the created drivers' ids in `osm-data/created-drivers-<time>.json`. To undo, delete those drivers.
+- **Idempotent.** A second run creates nothing, because every vehicle then has a driver.
+
+On a copy of production (2026-10-18), it created 340 drivers: all 451 vehicles then had one, and the dashboard's "sem motorista" banner was gone.
+
 ## Schema changes and migrations
 
 The migration history lives in `prisma/migrations/` (six migrations, `20260430170348_init` to `20261016150000_vehicle_gps`). On a new database, `prisma migrate deploy` applies them all ([Getting started](getting-started.md#5-create-the-schema)).
@@ -542,7 +600,7 @@ Production on 2026-10-18, after the OpenStreetMap import:
 | Provincia / Cidade / Municipio | 11 / 0 / 2 |
 | Via / Paragem / ViaParagem | 261 / 1,902 / 17,287 |
 | Transporte / GeoLocation | 451 / 111 |
-| Motorista | 111 (the 340 vehicles of the imported routes have no driver yet) |
+| Motorista | 111 (the 340 vehicles of the imported routes have no driver until `scripts/add-drivers.mjs` runs, [above](#drivers-for-the-imported-vehicles)) |
 | Proprietario / TransporteProprietario | 11 / 0 (no vehicle has an owner linked yet) |
 | Tarifa | 1 |
 | Administrador | 3 |
