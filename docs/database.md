@@ -513,9 +513,9 @@ Speed after the import:
 Some stored paths (`Via.geoLocationPath`) cut across the map in a straight line: over blocks, fields or a river. There are two causes:
 
 - **Holes in OpenStreetMap routes.** The import joins a relation's ways in order. Where a way is missing, the path jumps straight from the end of one way to the start of the next.
-- **The first routes** were drawn stop to stop by the first data scripts.
+- **The first routes** were drawn stop to stop by the first data scripts. Their straight lines are cut into points a few tens of metres apart.
 
-`transport-client/scripts/snap-paths.mjs` puts these segments on the roads:
+`transport-client/scripts/snap-paths.mjs` puts these jumps on the roads:
 
 ```bash
 cd transport-client
@@ -526,20 +526,33 @@ DATABASE_URL=… node scripts/snap-paths.mjs --apply --production     # a remote
 
 How it works:
 
-- **Segments checked.** Every segment of at least 300 m (`--min`). For each one it asks a public OSRM car router for the road between the two ends.
-- **Kept straight.** When the road stays within 50 m of the straight line, the road itself is straight and the segment is kept.
-- **Replaced.** Otherwise the segment is replaced by the road.
-- **Kept and listed.** When the road is more than 3 times as long, plus 500 m, the two ends are not on one road (a river between them, a one-way street the wrong way). The segment is kept and counted as "no road close enough".
+- **Straight stretches.** The path is read as straight stretches: consecutive points that lie within 3 m of one line. Every stretch of at least 300 m (`--min`) is checked. For each one, the script asks a public OSRM car router for the road between its two ends.
+- **Kept: a straight road.** When the road stays within 50 m of the line, the road itself is straight (Av. das Indústrias, the Marginal), and the stretch is kept.
+- **Replaced.** When the road stays within a quarter of the stretch's length of the line (at least 300 m), the stretch is replaced by the road.
+- **Kept and listed: no close road.** A road that strays further, or is more than 3 times as long (+500 m), is the router's own way between two far points: a ring road, or the city centre. It is not the bus's way, so the stretch is kept. The dry run lists the routes left with a jump of 1 km or more, to redraw in the admin's route editor (Vias → Editar).
 - **Simplified.** The new path is simplified to 4 m and written only when it changed.
-- **Routers.** The public routers allow light use, one request a second. Requests alternate between the FOSSGIS router and the OSRM demo router, so a first run over the whole network takes about 40 minutes. Their answers are kept in `osm-data/road-cache.json`, so a second run on the same data asks nothing again. Copy that file along to run on another copy of the same data.
+- **Routers.** The public routers allow light use, one request a second. Requests alternate between the FOSSGIS router and the OSRM demo router, so a first run over the whole network takes about an hour. Their answers are kept in `osm-data/road-cache.json`, so a second run on the same data asks nothing again. Copy that file along to run on another copy of the same data.
 - **Backup and undo.** `--apply` first saves every route's id, code and path to `osm-data/backup-paths-<time>.json`. To undo, write those paths back. A route whose path changed since it was read is skipped.
 
-On a copy of production (2026-10-18), 4,152 segments of 300 m or more were checked on 261 routes. 51 routes changed, most by less than a tenth of their length. Examples:
+On a copy of production (2026-10-18), the script checked 5,650 stretches of 300 m or more on 261 routes:
 
-- X36 (Costa do Sol – Malhazine) went from 18.7 to 26.4 km. Its diagonal over the blocks now follows the streets.
-- 47-0 (Baixa – Tchumene) went from 40.0 to 49.5 km. It no longer crosses the Rio Matola beside the N4.
+| Result | Stretches |
+|---|---|
+| Straight roads, kept | 5,522 |
+| Put on the road | 92 |
+| No close road, kept | 36 |
 
-The dry run lists the routes it would change, with their length before and after; `--verbose` lists them all.
+49 routes changed; 45 of them by less than a tenth of their length. Examples:
+
+- X36 (Costa do Sol – Malhazine) went from 18.7 to 23.3 km. Its diagonal over the blocks now follows the streets.
+- 203 (Baixa – Kongolote) went from 38.0 to 43.3 km. Its 16 km line over the airport now follows the N1.
+- 47-0 (Baixa – Tchumene) no longer crosses the Rio Matola beside the N4.
+
+13 routes still have a jump of 1 km or more to redraw by hand. The longest are:
+
+- 214 (Tchumene – Magoanine), 18.7 km: the router went through the city centre, which its name rules out;
+- 504 (Novo Cemitério – Praça dos Combatentes), 13.4 km;
+- 216 (Patrice Lumumba – Praça dos Combatentes), 8.8 km.
 
 **Licence.** The roads come from OpenStreetMap (© OpenStreetMap contributors, ODbL), routed by OSRM on the FOSSGIS and OSRM demo servers.
 

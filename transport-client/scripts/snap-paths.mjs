@@ -14,9 +14,10 @@
  * points in one line, within 3 m). For every stretch of at least --min metres, the script asks a
  * public OSRM car router for the road between its two ends:
  * - the road stays within 50 m of the straight line: the road is straight, the stretch is kept;
- * - otherwise the stretch is replaced by the road, unless the road is more than 3 times as long
- *   (+500 m), which means the two ends are not on one road (a river, a one-way street the wrong
- *   way): the stretch is then kept and counted.
+ * - otherwise the stretch is replaced by the road, unless the road strays from the straight line
+ *   by more than a quarter of its length (at least 300 m), or is more than 3 times as long
+ *   (+500 m). Such a road is the router's own way between two far points (a ring road, the city
+ *   centre), not the bus's: the stretch is then kept and counted, to be redrawn by hand.
  * The new path is simplified (4 m) and written only when it changed.
  *
  * The routers allow light use only, one request a second: requests alternate between the
@@ -45,6 +46,8 @@ const MIN_SEGMENT_M = Number(option('--min', '300'));
 const IN_LINE_M = 3;
 const STRAIGHT_ROAD_M = 50;
 const MAX_DETOUR = 3;
+const CORRIDOR_SHARE = 0.25;
+const CORRIDOR_MIN_M = 300;
 const MAX_DETOUR_EXTRA_M = 500;
 const SIMPLIFY_M = 4;
 const USER_AGENT = 'TransportesMocambique/1.0 (+https://github.com/transportmozambique/Transport-Mozambique)';
@@ -190,6 +193,8 @@ function longStretches(points) {
 function snapRoute(points) {
   const out = [points[0]];
   const stats = { replaced: 0, straight: 0, detour: 0, unknown: 0 };
+  /** Lengths (m) of the stretches kept straight for want of a close road */
+  const kept = [];
   for (const [i, j] of stretches(points)) {
     const a = points[i];
     const b = points[j];
@@ -199,18 +204,26 @@ function snapRoute(points) {
       const key = keyOf(a, b);
       const answer = key in cache ? cache[key] : undefined;
       if (answer === undefined) stats.unknown++;
-      else if (!answer) stats.detour++;
-      else if (Math.max(...answer.points.map((p) => toSegment(p, a, b))) <= STRAIGHT_ROAD_M) stats.straight++;
-      else if (answer.m > MAX_DETOUR * m + MAX_DETOUR_EXTRA_M) stats.detour++;
-      else {
-        stats.replaced++;
-        road = answer;
+      else if (!answer) {
+        stats.detour++;
+        kept.push(m);
+      } else {
+        const off = Math.max(...answer.points.map((p) => toSegment(p, a, b)));
+        if (off <= STRAIGHT_ROAD_M) stats.straight++;
+        else if (off > Math.max(CORRIDOR_MIN_M, CORRIDOR_SHARE * m) || answer.m > MAX_DETOUR * m + MAX_DETOUR_EXTRA_M) {
+          stats.detour++;
+          kept.push(m);
+        }
+        else {
+          stats.replaced++;
+          road = answer;
+        }
       }
     }
     if (road) out.push(...road.points, b);
     else out.push(...points.slice(i + 1, j + 1));
   }
-  return { points: stats.replaced ? simplify(out, SIMPLIFY_M) : points, stats };
+  return { points: stats.replaced ? simplify(out, SIMPLIFY_M) : points, stats, kept };
 }
 
 const lengthKm = (points) => points.slice(1).reduce((s, p, i) => s + meters(points[i], p), 0) / 1000;
@@ -232,19 +245,29 @@ const lengthKm = (points) => points.slice(1).reduce((s, p, i) => s + meters(poin
     await fetchRoads(parsed.flatMap((v) => longStretches(v.points)));
 
     const changes = [];
+    const toRedraw = [];
     const total = { replaced: 0, straight: 0, detour: 0, unknown: 0 };
     for (const v of parsed) {
-      const { points, stats } = snapRoute(v.points);
+      const { points, stats, kept } = snapRoute(v.points);
+      const longest = Math.max(0, ...kept);
+      if (longest >= 1000) toRedraw.push({ v, longest });
       for (const k of Object.keys(total)) total[k] += stats[k];
       if (stats.replaced) changes.push({ v, points, stats, before: lengthKm(v.points), after: lengthKm(points) });
     }
     console.log(`Routes: ${vias.length}; long straight stretches (≥ ${MIN_SEGMENT_M} m): ${total.replaced + total.straight + total.detour + total.unknown}`);
-    console.log(`  put on the road: ${total.replaced}; straight roads, kept: ${total.straight}; no road close enough, kept: ${total.detour}; not asked yet: ${total.unknown}`);
+    console.log(`  put on the road: ${total.replaced}; straight roads, kept: ${total.straight}; no road close enough, kept (redraw by hand): ${total.detour}; not asked yet: ${total.unknown}`);
     console.log(`Routes changed: ${changes.length}`);
     for (const c of flag('--verbose') ? changes : changes.slice(0, 15)) {
       console.log(`  ${c.v.codigo.padEnd(10)} ${String(c.stats.replaced).padStart(3)} stretches, ${c.before.toFixed(1)} → ${c.after.toFixed(1)} km  ${c.v.nome}`);
     }
     if (!flag('--verbose') && changes.length > 15) console.log(`  … (--verbose lists all ${changes.length})`);
+    toRedraw.sort((x, y) => y.longest - x.longest);
+    console.log(`
+Routes still with a straight jump of 1 km or more, to redraw in the admin (Vias → Editar): ${toRedraw.length}`);
+    for (const r of flag('--verbose') ? toRedraw : toRedraw.slice(0, 15)) {
+      console.log(`  ${r.v.codigo.padEnd(10)} ${(r.longest / 1000).toFixed(1).padStart(5)} km  ${r.v.nome}`);
+    }
+    if (!flag('--verbose') && toRedraw.length > 15) console.log(`  … (--verbose lists all ${toRedraw.length})`);
     if (!flag('--apply')) {
       console.log('\nDry run: nothing written. Add --apply to write.');
       return;
