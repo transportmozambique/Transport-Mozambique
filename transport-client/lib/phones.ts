@@ -17,14 +17,18 @@ export function storedPhone(raw: string) {
   return /^8\d{8}$/.test(local) ? `+258${local}` : String(raw).replace(/\s+/g, '');
 }
 
-/** The id of the passenger with this number, however it was written, or null */
+/**
+ * The id of the passenger with this number, however it was written, or null. Before numbers were
+ * matched this way, one number could get two passengers (a USSD one and a website one): the one
+ * with a password comes first.
+ */
 export async function findUtenteIdByPhone(raw: string): Promise<string | null> {
   const local = localPhone(raw);
   if (!local) return null;
   const rows = await prisma.$queryRaw<{ id: string }[]>`
     SELECT id FROM "Utente"
     WHERE regexp_replace(regexp_replace(telefone, '\\s', '', 'g'), '^\\+?258', '') = ${local}
-    ORDER BY "createdAt"
+    ORDER BY (senha ~ '^\\$2[aby]\\$') DESC, "createdAt"
     LIMIT 1`;
   return rows[0]?.id ?? null;
 }
