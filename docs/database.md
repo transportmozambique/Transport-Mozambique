@@ -571,13 +571,15 @@ DATABASE_URL=… node scripts/redraw-from-osm.mjs                          # dry
 DATABASE_URL=… node scripts/redraw-from-osm.mjs --apply                  # local databases only
 DATABASE_URL=… node scripts/redraw-from-osm.mjs --apply --production     # a remote database
 DATABASE_URL=… node scripts/redraw-from-osm.mjs --routes 214,504         # only these routes
+DATABASE_URL=… node scripts/redraw-from-osm.mjs --unlink-far 503,X05      # also unlink these routes' far stops
 ```
 
 How it works:
 
 - **Which routes.** The routes with a jump of 1 km or more that no road follows, by the same test as `snap-paths.mjs`, and that have an OpenStreetMap relation with their number (`214` → `214i`, `214v`). A route without one is kept and listed.
 - **The path.** The car road through the stops of the "i" relation (the direction the import used), in travel order: the stop positions on the road, or the platforms when the relation has none. Like every stored path, it is one direction; the buses come back along it. A stop the router only reaches by going round a block is passed by.
-- **Stops.** The relations' stops now on the path (a stop in the database within 35 m of the OSM stop, and within 30 m of the new path) are linked to the route if they were not. Stops already linked stay linked. The dry run counts, for each route, the linked stops now more than 100 m from the path (`--verbose` names them); unlink them on the route's "Redesenhar percurso" page if the route no longer serves them.
+- **Stops.** The relations' stops now on the path (a stop in the database within 35 m of the OSM stop, and within 30 m of the new path) are linked to the route if they were not. Stops already linked stay linked. The dry run counts, for each route, the linked stops now more than 100 m from the path (`--verbose` names them).
+- **Unlinking far stops.** `--unlink-far 503,X05` unlinks, from the routes named only, the linked stops more than 100 m from the path. A far stop of the route's own OSM relations is kept: it is on the way back, which takes another street, and the stored path holds one direction. Each route is named on purpose, after reading the dry run; the route's "Redesenhar percurso" page in the admin does the same by hand.
 - **Backup and undo.** `--apply` first saves the routes' paths and stop links to `osm-data/backup-redraw-<time>.json`, writes a path only if it is still the one read, and lists the links it added in `osm-data/created-redraw-<time>.json`. To undo, write the paths back and delete those links.
 
 On a copy of production (2026-10-18), after `snap-paths.mjs`:
@@ -593,6 +595,8 @@ On a copy of production (2026-10-18), after `snap-paths.mjs`:
 | 114 Museu – Padaria Boane | 19.1 km | 18.9 km | +8 |
 | 113 Baixa – Padaria Boane | 17.9 km | 17.7 km | +8 |
 | X45 Praça dos Combatentes – Escola Graça Machel | 14.5 km | 7.8 km | |
+
+With `--unlink-far 503,X05`, 5 stops the old jumps had picked up were unlinked: Dom Nhelete and Casa Branca from 503; Ronil, Cine África / Ministério and Cooperativa from X05. Entrada de Facim (503) and Correios (X05) stay: they are stops of 503v and X05v, the way back.
 
 A second `snap-paths.mjs` dry run then lists one route: V086 (Rua dos Bons Amigos – Antena), which is not from OpenStreetMap. Its 2 km straight line is a real street that OpenStreetMap maps with a break, so no router follows it; it stays as drawn.
 
