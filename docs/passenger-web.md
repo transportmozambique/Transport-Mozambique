@@ -233,7 +233,7 @@ Without a position, it assumes you took the bus at its time. "Já entrei no auto
 
 `/auth` signs in with **phone number and password**, or registers with name, email, phone and password ("Registe-se").
 
-- The phone can be typed with or without `+258`. Accounts created by USSD are stored with the prefix and are still found.
+- The phone can be typed with or without `+258`, with or without spaces. Registration stores it without spaces, with `+258` in front of a Mozambican mobile number (`+258840000000`), as USSD does. Older accounts saved with spaces are still found.
 - Someone who has only used USSD already has a passwordless account (created by option 1). Registering with the same phone **completes that account** and keeps their alerts. Signing in before registering answers "Este número ainda não tem senha. Faça o registo para criar uma."
 - The password needs at least 6 characters and is stored as a bcrypt hash.
 - Sign-in and registration return a **session token** (HMAC-signed, valid 90 days). Every `/api/user/*` request sends it as `Authorization: Bearer <token>` and can only read or change that passenger's own data ([Security](security.md#passengers)).

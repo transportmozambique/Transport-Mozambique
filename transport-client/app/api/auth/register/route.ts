@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { createUserToken } from '@/lib/userSession';
+import { findUtenteIdByPhone, storedPhone } from '@/lib/phones';
 
 export async function POST(request: Request) {
   try {
@@ -25,11 +26,8 @@ export async function POST(request: Request) {
 
     // Verificar se o telefone já existe. Números vindos do USSD estão gravados com +258;
     // o formulário pode não ter o prefixo.
-    const digits = String(telefone).replace(/\s+/g, '');
-    const local = digits.replace(/^\+?258/, '');
-    const existingUtente = await prisma.utente.findFirst({
-      where: { telefone: { in: [digits, local, `+258${local}`, `258${local}`] } },
-    });
+    const existingId = await findUtenteIdByPhone(telefone);
+    const existingUtente = existingId ? await prisma.utente.findUnique({ where: { id: existingId } }) : null;
     // Quem só usou o USSD tem uma conta sem senha: o registo completa essa conta
     const contaUssd = existingUtente && !/^\$2[aby]\$/.test(existingUtente.senha);
 
@@ -65,7 +63,7 @@ export async function POST(request: Request) {
     };
     const utente = contaUssd && existingUtente
       ? await prisma.utente.update({ where: { id: existingUtente.id }, data: dados })
-      : await prisma.utente.create({ data: { ...dados, telefone, mISSION: `USER-${Date.now()}` } });
+      : await prisma.utente.create({ data: { ...dados, telefone: storedPhone(telefone), mISSION: `USER-${Date.now()}` } });
 
     const token = createUserToken(utente.id);
     if (!token) {
