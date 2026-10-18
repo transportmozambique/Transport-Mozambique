@@ -45,7 +45,7 @@ Every screen, the paging keys (`7` next, `0` back) and what each option reads an
 
 The production database is on Neon. [Database → Connecting](docs/database.md#connecting) shows four ways in, step by step:
 
-- **Neon SQL Editor** in the browser, for SQL;
+- **Neon SQL Editor** in the browser, for SQL ([step by step, with screenshots](docs/neon-guide.md));
 - **`psql`**;
 - **Prisma Studio**, to browse tables without SQL;
 - **ready-made lists with Prisma Client**, for example `npx tsx scripts/queries.ts routes matola` in `transport-client` ([Prisma Client in a script](docs/database.md#prisma-client-in-a-script)).

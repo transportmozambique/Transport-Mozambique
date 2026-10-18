@@ -130,4 +130,4 @@ These values are fixed in code. Change them with a code change and a deploy.
 
 ---
 
-[← Database](database.md) · [Documentation index](README.md) · Next: [Passenger web app →](passenger-web.md)
+[← Viewing the data in Neon](neon-guide.md) · [Documentation index](README.md) · Next: [Passenger web app →](passenger-web.md)
