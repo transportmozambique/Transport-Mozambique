@@ -68,7 +68,7 @@ Symptoms, their usual causes and the fix, grouped by where you notice them. For 
 | "A localização está desativada…" | The browser's location permission was refused. The list then follows the map centre. | Allow the location in the site settings, then the round button at the bottom right. Browsers only give the location on HTTPS or localhost. |
 | "Está fora da área servida" | The position is more than 80 km from Maputo. | Expected outside the area: move the map or tap a stop. |
 | Stops listed in an odd order | The order is computed along the route's path; a stop far from the path can move. | Check the stop's position and the path in the admin. |
-| "Você precisa estar logado para salvar transportes" | No session on the tracking page. | Sign in at `/auth`. |
+| "Entre na sua conta para receber o SMS." | No session when asking for the SMS alert while following a journey. | Sign in at `/auth`. |
 | Times say "amanhã às 05:12" | Evening or night search: buses run 05:00–21:00. | Expected. |
 
 ## Admin

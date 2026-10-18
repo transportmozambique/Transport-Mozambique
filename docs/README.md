@@ -20,7 +20,7 @@ Each topic has its own page. The pages assume a technical reader: they cite file
 
 | Page | What it covers |
 |---|---|
-| [Passenger web app](passenger-web.md) | Live map with your position, stops near you, a stop's destinations, journeys with changes of bus, tracking page, account and arrival alerts, with the API call behind each screen. |
+| [Passenger web app](passenger-web.md) | Live map with your position, stops near you, a stop's destinations, journeys with changes of bus, following a journey with all its buses, account and arrival alerts, with the API call behind each screen. |
 | [USSD service](ussd.md) | The full menu tree with real screens, pagination rules, what each option reads, writes and sends by SMS, and how to test it. |
 | [Driver portal](driver-portal.md) | PIN sign-in, starting and ending a trip (shared with USSD), sharing the phone's GPS, passengers waiting along the route. |
 | [Admin dashboard](admin-dashboard.md) | Every back-office page: network data, vehicles with live position, GPS trackers, driver PINs, reports. |

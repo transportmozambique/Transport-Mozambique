@@ -2,7 +2,7 @@
 
 This page follows the data through each flow of the platform, from the first request to the rows it reads or writes. Each flow names the endpoint, the code that handles it (`transport-client/...` or `transport-admin/...`) and the tables involved. Table and field meanings are in [Database](database.md).
 
-**On this page:** [Journey planning](#journey-planning) · [Arrival time](#arrival-time) · [Live map](#live-map) · [Tracking page](#tracking-page) · [Arrival alert and SMS](#arrival-alert-and-sms) · [USSD session](#ussd-session) · [Driver sign-in and trip](#driver-sign-in-and-trip) · [GPS position](#gps-position) · [Admin changes](#admin-changes) · [PIN and device code](#driver-pin-and-gps-device-code) · [Who writes what](#who-writes-each-table)
+**On this page:** [Journey planning](#journey-planning) · [Arrival time](#arrival-time) · [Live map](#live-map) · [Following a journey](#following-a-journey) · [Arrival alert and SMS](#arrival-alert-and-sms) · [USSD session](#ussd-session) · [Driver sign-in and trip](#driver-sign-in-and-trip) · [GPS position](#gps-position) · [Admin changes](#admin-changes) · [PIN and device code](#driver-pin-and-gps-device-code) · [Who writes what](#who-writes-each-table)
 
 ---
 
@@ -30,7 +30,7 @@ sequenceDiagram
   Note over C: candidates ranked on fixed speeds + 10 min per bus,<br/>then timed with estimateBusTrip() at each stop's arrival time
   C->>DB: Transporte of the candidate routes (+ active Tarifa, cached 60 s)
   C-->>B: up to 3 journeys: walks + buses with times, fares, paths
-  B->>B: draws the chosen journey; "Acompanhar" → /track/{busId}?paragem=…&destino=…
+  B->>B: draws the chosen journey; "Acompanhar viagem" → /viagem?b=BUS~DE~PARA,…
 ```
 
 **The network** (`loadNetwork`) is built once per server instance and kept 5 minutes: each route with a bus, its road path, its stops ordered along the path with their distance along it, and for every stop the stops within 400 m (a grid of ~500 m cells). Stops with the same name within 400 m of each other form a *place* (`lib/places.ts`), which is what the name search returns.
@@ -56,7 +56,7 @@ The production network has 1,855 served stops and 261 routes. A journey or a lis
 
 ## Arrival time
 
-The same numbers serve the journeys, the stop's "próximo autocarro", the tracking page and USSD.
+The same numbers serve the journeys, the stop's "próximo autocarro", the journey being followed and USSD.
 
 How the numbers are made (`lib/vehiclePosition.ts`, `lib/fares.ts`):
 
@@ -86,32 +86,36 @@ sequenceDiagram
 
 `fonte` is `"gps"` when a real fix younger than 3 minutes exists, otherwise `"horario"` (timetable). The map opens on the area where the buses are: the 10th–90th percentile of their positions.
 
-## Tracking page
+## Following a journey
 
 ```mermaid
 sequenceDiagram
   autonumber
-  participant B as Browser (/track/{id})
+  participant B as Browser (/viagem)
   participant C as transport-client
   participant DB as PostgreSQL
-  loop every 10 s
-    B->>C: GET /api/bus/{id}?paragem=ORIGIN&destino=DEST
-    C->>DB: Transporte + Via + ViaParagem + Paragem + Tarifa
-    C-->>B: position, route line, stops (isPickup / isDestination),<br/>tempoEstimado, distancia, tempoViagem, distanciaViagem, fare, jaPassou
-  end
-  opt passenger signed in
-    B->>C: GET /api/user/missions (Bearer token)
-    C-->>B: alerts, to mark this stop as already saved
+  B->>B: watchPosition (the passenger's position)
+  loop every 10 s, and when the step changes
+    B->>C: GET /api/viagem?b=BUS~DE~PARA,…&lat,lng&a=STEP&bordo=0|1
+    C->>DB: the journey's Transporte (position fields) + Tarifa; network cached 5 min
+    C-->>B: each walk and bus: done / now / later, times from now,<br/>bus positions, where each bus is on its leg (antes / entre / depois)
+    B->>B: on board when the bus is past the stop and the passenger is with it;<br/>off when the bus is past the exit stop
   end
 ```
 
-The same `estimateBusTrip()` serves `/api/buses`, `/api/bus/[id]`, `/api/stops/{id}`, `/api/journeys` and USSD option 1, so the web and USSD always agree.
+`followJourney` (`lib/follow.ts`) times the chosen buses in order, from the moment the passenger can be at each stop:
+
+- the walk to the next bus is measured from the passenger's position;
+- each bus's next pass after that moment comes from `estimateBusTrip`;
+- for the bus the passenger is on, the arrival at the exit stop is its pass there (`minutesUntilPass`).
+
+The same `estimateBusTrip()` serves `/api/buses`, `/api/viagem`, `/api/stops/{id}`, `/api/journeys` and USSD option 1, so the web and USSD always agree.
 
 ## Arrival alert and SMS
 
 A `MISSION` row is "this passenger is waiting at this stop". There are two ways to create one:
 
-- on the web: the tracking page's "Adicionar aos Meus Transportes" calls `POST /api/user/missions/save` with the passenger's token;
+- on the web: "Avisar-me por SMS…" on the page that follows a journey calls `POST /api/user/missions/save` with the passenger's token;
 - by USSD: option 1's journey screen, at the stop where the first bus is taken. That screen also creates a passwordless `Utente` for the phone number if none exists.
 
 ```mermaid

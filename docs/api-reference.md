@@ -205,9 +205,67 @@ Three uses, chosen by the query:
 
 Errors: 400 `paragemId (origem) and destinoId are required`; 404 `Origem not found` / `Destino not found`.
 
+#### `GET /api/viagem`
+
+Following a journey: the same buses, leg after leg, timed again now. The page calls it every 10 seconds and whenever the step changes ([Passenger web app → Following a journey](passenger-web.md#following-a-journey-viagem)).
+
+| Query | Meaning |
+|---|---|
+| `b` | the journey's buses, comma-separated, each `BUS~BOARDING_STOP~ALIGHTING_STOP` |
+| `lat`, `lng` | the passenger's position now: the walk to the next bus is measured from it |
+| `de` | the start stop, when the journey started at a stop |
+| `para` | the destination stop, for the last walk |
+| `a` | the leg the passenger is on, from 0; `a` = the number of buses means every bus is done |
+| `bordo` | `1` when the passenger is on that leg's bus |
+
+Each step has `estado`: `feito`, `agora` or `depois`. Times are ISO dates (UTC):
+
+- `embarque` is `null` once the passenger is on board;
+- `chegada` is `null` for a bus already done.
+
+`autocarro` is where the bus is now. `trecho` says where it is on this leg: `antes` (still to reach the boarding stop), `entre` (between the two stops, going the passenger's way) or `depois` (past the alighting stop). `perde` is true when the bus will pass the boarding stop before the passenger can be there; the times shown are then its next pass.
+
+```json
+{"viagem": {
+ "chegada": "2026-10-19T05:49:28.153Z", "duracaoMin": 9, "tarifa": 32, "atualizadoEm": "2026-10-19T05:40:28.153Z",
+ "etapas": [
+  {"tipo": "pe", "estado": "agora", "de": {"id": "", "nome": "A sua localização", "lat": -25.9655, "lng": 32.58},
+   "para": {"id": "cmvcydc4b001qac7zobizic5z", "nome": "Pandora", "lat": -25.9658942, "lng": 32.5795913}, "metros": 60, "minutos": 1},
+  {"tipo": "autocarro", "estado": "agora",
+   "via": {"id": "cmvcydd2906u1ac7z7f709kvg", "codigo": "409", "nome": "Baixa - Costa do Sol", "cor": "#1ABC9C"},
+   "transporte": {"id": "cmvcydd2n06w9ac7zd1q8j5t0", "matricula": "ADA-190M"}, "sentido": "P. Trabalhadores",
+   "de": {"id": "cmvcydc4b001qac7zobizic5z", "nome": "Pandora", "…": "…"}, "para": {"id": "cmvcydc4e00knac7zeu34eck1", "nome": "P. Trabalhadores (C9)", "…": "…"},
+   "embarque": "2026-10-19T05:43:28.153Z", "chegada": "2026-10-19T05:48:28.153Z", "perde": false,
+   "viagemMin": 5, "metros": 2164, "tarifa": 22,
+   "paragens": [{"id": "cmvcydc4b001rac7z7vi09sdj", "nome": "Pandora", "lat": -25.966035, "lng": 32.5790374}, "…"],
+   "percurso": [[32.57954182989588, -25.96596586559796], "…"],
+   "autocarro": {"lat": -25.9687197, "lng": 32.5671726, "heading": 212.86, "fonte": "horario", "trecho": "antes",
+                 "minutosAteEmbarque": 3, "metrosAteEmbarque": 1250}},
+  "… (the next bus, the last walk)"
+ ]
+}}
+```
+
+With one bus and no alighting stop (`b=BUS`, or `b=BUS~STOP`), it answers that bus on its own. `proximas` lists the next 12 stops in the direction it is going, with the minutes until it passes each. `paragem`, when a stop was given, is its next pass there, in either direction.
+
+```json
+{"autocarro": {
+ "transporte": {"id": "cmvcydd2n06w9ac7zd1q8j5t0", "matricula": "ADA-190M"},
+ "via": {"id": "cmvcydd2906u1ac7z7f709kvg", "codigo": "409", "nome": "Baixa - Costa do Sol", "cor": "#1ABC9C"},
+ "sentido": "P. Trabalhadores",
+ "autocarro": {"lat": -25.9687364, "lng": 32.5671605, "heading": 212.86, "fonte": "horario"},
+ "percurso": [[32.565032, -25.971083], "…"],
+ "proximas": [{"paragem": {"id": "cmvcydc4b001dac7zvyzznlww", "nome": "Laurentina", "lat": -25.9695161, "lng": 32.5669147}, "minutos": 0}, "…"],
+ "paragem": {"paragem": {"id": "cmvcydc4b001qac7zobizic5z", "nome": "Pandora", "…": "…"}, "minutos": 10, "sentido": "Costa do Sol"},
+ "atualizadoEm": "2026-10-19T05:43:28.419Z"
+}}
+```
+
+Errors: 400 `Indique os autocarros (b)`, `Cada autocarro precisa de BUS~DE~PARA`; 404 `Autocarro não encontrado`, `Paragem não encontrada`, `Paragem fora da rota deste autocarro`; 500 `Erro ao acompanhar viagem`.
+
 #### `GET /api/bus/{id}`
 
-One bus, for the tracking page (polled every 10 s). With `?paragem=ORIGIN&destino=DEST`, it adds the trip figures and marks the two stops.
+One bus, with the trip figures between two stops when `?paragem=ORIGIN&destino=DEST` is given. The web app no longer calls it ([`GET /api/viagem`](#get-apiviagem) replaced it); it stays for scripts and tests.
 
 ```json
 {

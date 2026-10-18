@@ -3,13 +3,14 @@ import { getFareRule, parseLatLng, type FareRule, type LatLng, type RouteStop } 
 import {
   POSITION_FIELDS,
   estimateBusTrip,
+  pointAlong,
   progressOf,
   routeGeometry,
   type Direction,
   type PositionedVehicle,
   type RouteGeometry,
 } from './vehiclePosition';
-import { distanceMeters, groupPlaces, normalizeName, walkMinutes, type Place } from './places';
+import { distanceMeters, groupPlaces, normalizeName, placeName, walkMinutes, type Place } from './places';
 
 /**
  * Journey planning on the bus network: the destinations a stop reaches directly or with changes
@@ -191,7 +192,7 @@ export function placeLabel(net: Network, place: Place<NetStop>, max = Infinity):
   return `${head} - ${cut(own.nome, max - head.length - distance.length - 3)}${distance}`;
 }
 
-type Vehicle = PositionedVehicle & { matricula: string; viaId: string | null };
+export type Vehicle = PositionedVehicle & { matricula: string; viaId: string | null };
 
 async function vehiclesOn(routeIds: Iterable<string>): Promise<Map<string, Vehicle[]>> {
   const rows = await prisma.transporte.findMany({
@@ -218,9 +219,9 @@ function firstBus(route: NetRoute, vehicles: Vehicle[], fromId: string, toId: st
 }
 
 /** End of the route in direction `dir`, which names the direction ("sentido Baixa"). */
-function towards(net: Network, route: NetRoute, dir: Direction): string {
+export function towards(net: Network, route: NetRoute, dir: Direction): string {
   const end = dir === 1 ? route.stops[route.stops.length - 1] : route.stops[0];
-  return net.stops.get(end.id)?.nome ?? '';
+  return placeName(net.stops.get(end.id)?.nome ?? '');
 }
 
 // ─── Destinations of one stop ─────────────────────────────────────────────────
@@ -232,7 +233,7 @@ export interface StopRef {
   lng: number;
 }
 
-const ref = (s: NetStop): StopRef => ({ id: s.id, nome: s.nome, lat: s.point[0], lng: s.point[1] });
+export const ref = (s: NetStop): StopRef => ({ id: s.id, nome: s.nome, lat: s.point[0], lng: s.point[1] });
 
 export interface StopDestinations {
   paragem: StopRef & { codigo: string };
@@ -681,10 +682,12 @@ async function allVehicles(): Promise<Map<string, Vehicle[]>> {
   return byRoute;
 }
 
-function pathBetween(r: NetRoute, a: number, b: number): [number, number][] {
+export function pathBetween(r: NetRoute, a: number, b: number): [number, number][] {
   const lo = Math.min(a, b);
   const hi = Math.max(a, b);
-  const pts = r.g.path.filter((_, i) => r.g.cumulative[i] >= lo && r.g.cumulative[i] <= hi);
+  const inner = r.g.path.filter((_, i) => r.g.cumulative[i] > lo && r.g.cumulative[i] < hi);
+  // Cut exactly at the two stops: a simplified path can have one point for a whole avenue
+  const pts = r.g.path.length > 1 ? [pointAlong(r.g, lo).point, ...inner, pointAlong(r.g, hi).point] : inner;
   const lngLat = pts.map(([lat, lng]) => [lng, lat] as [number, number]);
   return a <= b ? lngLat : lngLat.reverse();
 }

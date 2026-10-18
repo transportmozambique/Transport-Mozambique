@@ -142,7 +142,7 @@ Each also has the same four pages: list, detail, new and edit. What differs is b
 | **GET** | List: 10 per page; `search` also matches the municipality. Each route comes with its number of stops and vehicles, plus totals over the search. One route: with its municipality, stops and vehicles. |
 | **PATCH** `/api/vias/{id}` | Name, terminals, colour, municipality. `paragensIds` replaces every stop link. The path cannot be redrawn. |
 | **DELETE** | Removes its stop links (cascade). Its vehicles stay, without a route (`viaId = NULL`): they leave the map until they get a new one. |
-| **Shown** | Passenger map: the route line when a bus is tapped, the coloured route labels at a stop and in journeys, the path of each bus leg. Tracking page map. USSD options 1–4. Driver portal map. Admin `/vias`, with the path on a map. |
+| **Shown** | Passenger map: the route line when a bus is tapped, the coloured route labels at a stop and in journeys, the path of each bus leg. The map of a journey being followed. USSD options 1–4. Driver portal map. Admin `/vias`, with the path on a map. |
 </details>
 
 <details>
@@ -167,7 +167,7 @@ Each also has the same four pages: list, detail, new and edit. What differs is b
 | **PUT** `/api/transportes/{id}` | Every field; a new plate is checked for duplicates. **PATCH** changes only the route (`{"viaId"}`, or `null` to take it off). |
 | **DELETE** | Refused while a driver or an owner is assigned (400: remove them first). Also removes the vehicle's imported `GeoLocation` rows. |
 | **GPS** | `POST /{id}/gps` creates a device code, shown once and stored as a SHA-256 hash. The device sends positions to the passenger app's `/api/gps`, which writes `currGeoLocation`, `gpsAtualizadoEm`, speed and heading. `DELETE /{id}/gps` revokes the code and clears them. |
-| **Shown** | Passenger map: a marker per bus, gliding every 5 s; the plate on journey legs. Tracking page. USSD option 5 (by plate) and journey screens. Driver portal. Admin `/transportes`, with what each bus is doing now. |
+| **Shown** | Passenger map: a marker per bus, gliding every 5 s; the plate on journey legs. The buses of a journey being followed. USSD option 5 (by plate) and journey screens. Driver portal. Admin `/transportes`, with what each bus is doing now. |
 </details>
 
 <details>
@@ -201,7 +201,7 @@ Each also has the same four pages: list, detail, new and edit. What differs is b
 |---|---|
 | **Created** | On the web, by registering (`POST /api/auth/register`): bcrypt password, 90-day session token. By USSD, without a password, when option 1 shows a journey; registering later with that phone completes the same account. By the admin (`POST /api/utentes`). |
 | **Read and updated** | The passenger's own page (`/user-info`): name and password, through `/api/user/*` with their Bearer token, which only reaches their own record. The admin: `/utentes`, `PUT /api/utentes/{id}`. The password hash is never returned. |
-| **Alerts** | Saved as a `MISSION` at a stop, from "Adicionar aos Meus Transportes" on the tracking page (`POST /api/user/missions/save`) or the USSD journey screen. Saving the same stop again restarts it. The arrival check sends one SMS when a bus is under 1 km away and records `notificadoEm`; alerts older than 24 hours are ignored. "Remover" deletes the alert. |
+| **Alerts** | Saved as a `MISSION` at a stop, from "Avisar-me por SMS…" while following a journey (`POST /api/user/missions/save`) or the USSD journey screen. Saving the same stop again restarts it. The arrival check sends one SMS when a bus is under 1 km away and records `notificadoEm`; alerts older than 24 hours are ignored. "Remover" deletes the alert. |
 | **DELETE** (admin) | Refused while the passenger has alerts. The detail page sends `?force=true`, which deletes the alerts first. |
 | **Shown** | Passenger account page (profile, "Missões"). SMS. Driver portal: passengers waiting along the route. Admin passenger and stop pages. |
 </details>
@@ -226,7 +226,7 @@ Each also has the same four pages: list, detail, new and edit. What differs is b
 | Has a position, or picks a start (Partida) | `GET /api/destinos?lat=…&lng=…` (or `from=`): every place reachable, earliest arrival first, each with the stop where the first bus is taken | nothing |
 | Taps a stop | `GET /api/stops/{id}`: each route through it, each direction's next bus and stops, and every place reachable from it (with changes of bus), earliest arrival first | nothing |
 | Chooses a destination | `GET /api/journeys?lat=…&lng=…&to=…` (or `from=`): up to 3 journeys, each bus leg timed for the moment you reach its stop | nothing |
-| Follows a bus | `GET /api/bus/{id}?paragem=…&destino=…`, every 10 s | a `MISSION` when they save the alert |
+| Follows the journey | `GET /api/viagem?b=BUS~DE~PARA,…&lat=…&lng=…&a=…&bordo=…`, every 10 s: every bus of the journey, the walks, and the step the passenger is on | a `MISSION` when they save the alert |
 | Dials the USSD code | Africa's Talking posts each step to `/api/ussd` (with `?key=`). Every step resends all the answers so far in `text`, so the server keeps no session. | Option 1: a `MISSION`, and an `Utente` for a new phone. Option 6: `Motorista.emViagem`. SMS go out through Africa's Talking. |
 | Driver signs in and starts a trip | `POST /api/driver/login` (phone and PIN; 30-day token); `GET /api/driver/seguidores` (waiting passengers) | `Motorista.emViagem`, `viagemIniciadaEm` |
 | A GPS device reports | `POST /api/gps` with the device code. Fixes less accurate than 200 m, or older than the stored one, are ignored. | `Transporte.currGeoLocation`, `gpsAtualizadoEm`, speed, heading |
