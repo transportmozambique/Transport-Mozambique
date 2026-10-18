@@ -27,26 +27,19 @@ Production on 2026-10-18 ([counted in Neon](neon-guide.md#3-paste-a-query-and-ru
 | Routes | 261: the 91 first ones, and 170 from OpenStreetMap |
 | Stops | 1,902, in Maputo (185 routes) and Matola (76) |
 | Vehicles | 451: the 111 first ones, and 340 for the imported routes (plates `ADA-001M` to `ADA-340M`) |
-| Drivers | 111, so the 340 imported vehicles have none yet |
+| Drivers | 451, one per vehicle: the 111 first ones, and 340 demo drivers for the imported vehicles |
 | Passengers, alerts | 8 passengers, 3 arrival alerts, all from testing |
 | Fare rule | 10 MT minimum, 10 MT per km, 30 km/h |
 
+The data scripts' changes were applied to production on 2026-10-18, as one SQL statement in the [Neon SQL Editor](neon-guide.md): 340 demo drivers ([add-drivers.mjs](database.md#drivers-for-the-imported-vehicles)), 51 route paths put on the roads ([snap-paths.mjs](database.md#putting-route-paths-on-the-roads) and [redraw-from-osm.mjs](database.md#redrawing-routes-from-their-openstreetmap-stops)), 86 stops linked to 6 redrawn routes, and 5 far stops unlinked from 503 and X05. The longest straight stretch left on any route is 7.2 km, along the straight EN1 to Manhiça.
+
 ## Waiting for action
 
-Changes that are merged and tested on a copy of production, but that only the owner can run on production, plus account settings:
+Things only the owner can do, in the apps or the accounts:
 
-1. **Run the data scripts on production.** Back up first (Neon → Branches → create a branch of `production`). Then, from `transport-client` with `DATABASE_URL` set to the direct connection string, run each script as a dry run, then with `--apply --production`:
-
-   | Script | Effect | Details |
-   |---|---|---|
-   | `add-drivers.mjs` | a demo driver for each of the 340 vehicles without one | [Database](database.md#drivers-for-the-imported-vehicles) |
-   | `snap-paths.mjs` | 49 routes' straight jumps put on the roads | [Database](database.md#putting-route-paths-on-the-roads) |
-   | `redraw-from-osm.mjs --unlink-far 503,X05` | 9 routes redrawn from their OSM stops, 86 stops linked, 5 far stops unlinked | [Database](database.md#redrawing-routes-from-their-openstreetmap-stops) |
-
-   A last `snap-paths.mjs` dry run should then list only V086.
-2. **Redraw V086 by hand** (Rua dos Bons Amigos – Antena), in the admin: the route → "Redesenhar percurso" ([Admin dashboard](admin-dashboard.md#routes-vias)).
-3. **Reset the Neon database password**, then update `DATABASE_URL` in `transport-mz` and `transport-mz-admin` and redeploy both ([Vercel guide](vercel-guide.md#environment-variables)).
-4. **Store the session secrets as Secrets.** Vercel marks `USER_SESSION_SECRET` and `DRIVER_SESSION_SECRET` on `transport-mz` "Needs Attention" because they are readable Config values ([Vercel guide](vercel-guide.md#environment-variables)).
+1. **Redraw V086 by hand** (Rua dos Bons Amigos – Antena), in the admin: the route → "Redesenhar percurso" ([Admin dashboard](admin-dashboard.md#routes-vias)).
+2. **Reset the Neon database password**, then update `DATABASE_URL` in `transport-mz` and `transport-mz-admin` and redeploy both ([Vercel guide](vercel-guide.md#environment-variables)).
+3. **Store the session secrets as Secrets.** Vercel marks `USER_SESSION_SECRET` and `DRIVER_SESSION_SECRET` on `transport-mz` "Needs Attention" because they are readable Config values ([Vercel guide](vercel-guide.md#environment-variables)).
 
 ## Next steps
 
@@ -82,6 +75,9 @@ The pull requests merged into `main` of [transportmozambique/Transport-Mozambiqu
 | 35 | 2026-10-18 | `--unlink-far` for a route's far stops |
 | 36 | 2026-10-18 | USSD route lists start with the route's code; ordinals in GSM-7 |
 | 37 | 2026-10-18 | Step-by-step guides for Africa's Talking and Vercel, how a USSD request is handled, glossary, this page, documentation navigation |
+| 38 | 2026-10-18 | Admin in white, black and grey; no emojis or decorative arrows |
+| 39 | 2026-10-18 | Admin menu over the whole screen on phones and tablets |
+| 40 | 2026-10-18 | This page: the data fixes applied to production |
 
 ---
 
