@@ -84,7 +84,7 @@ export default function GpsTrackerCard({ transporteId }: { transporteId: string 
         </div>
         <span
           className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
-            status?.ativo ? "bg-green-100 text-green-800" : status?.configurado ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-700"
+            status?.ativo ? "bg-slate-900 text-white" : status?.configurado ? "bg-slate-200 text-slate-800" : "bg-slate-100 text-slate-600"
           }`}
         >
           {status?.ativo ? "GPS ativo" : status?.configurado ? "Sem sinal recente" : "Não configurado"}
@@ -119,7 +119,7 @@ export default function GpsTrackerCard({ transporteId }: { transporteId: string 
         </div>
       )}
 
-      {erro && <p className="mb-3 text-sm text-red-700">{erro}</p>}
+      {erro && <p className="mb-3 text-sm text-slate-800">{erro}</p>}
 
       <div className="flex flex-wrap gap-3">
         <button
@@ -137,7 +137,7 @@ export default function GpsTrackerCard({ transporteId }: { transporteId: string 
                 type="button"
                 onClick={revogar}
                 disabled={busy}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium disabled:opacity-50"
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-medium disabled:opacity-50"
               >
                 Confirmar revogação
               </button>

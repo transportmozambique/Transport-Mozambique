@@ -261,7 +261,7 @@ export default function NovaParagem() {
     // Initialize MapLibre map
     const map = new maplibregl.Map({
       container: mapRef.current,
-      style: 'https://tiles.openfreemap.org/styles/liberty',
+      style: 'https://tiles.openfreemap.org/styles/positron',
       center: [32.83, -26.85], // Ponta do Ouro area where we know there are vias
       zoom: 12,
       pitch: 60,
@@ -442,30 +442,30 @@ export default function NovaParagem() {
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
-            notification.type === 'success' ? 'bg-green-50 border border-green-200' :
-            notification.type === 'error' ? 'bg-red-50 border border-red-200' :
-            'bg-blue-50 border border-blue-200'
+            notification.type === 'success' ? 'bg-slate-50 border border-slate-200' :
+            notification.type === 'error' ? 'bg-slate-100 border border-slate-400' :
+            'bg-slate-50 border border-slate-200'
           }`}>
             <div className="flex items-center space-x-3">
               {notification.type === 'success' && (
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               )}
               {notification.type === 'error' && (
-                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               )}
               {notification.type === 'info' && (
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               )}
               <p className={`text-sm font-medium ${
-                notification.type === 'success' ? 'text-green-800' :
-                notification.type === 'error' ? 'text-red-800' :
-                'text-blue-800'
+                notification.type === 'success' ? 'text-slate-800' :
+                notification.type === 'error' ? 'text-slate-900' :
+                'text-slate-800'
               }`}>
                 {notification.message}
               </p>
@@ -553,12 +553,12 @@ export default function NovaParagem() {
                 <h3 className="text-lg font-bold text-slate-900 mb-4">Localização</h3>
                 
                 <div className="space-y-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
                     <div className="flex items-start space-x-3">
-                      <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-slate-900 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <p className="text-sm text-blue-800">
+                      <p className="text-sm text-slate-800">
                         Clique no mapa à direita para selecionar a localização da paragem
                       </p>
                     </div>
@@ -593,16 +593,6 @@ export default function NovaParagem() {
                       />
                     </div>
                   </div>
-
-                  {formData.latitude && formData.longitude && (
-                    <button
-                      type="button"
-                      onClick={() => filterViasByLocation(parseFloat(formData.latitude), parseFloat(formData.longitude))}
-                      className="w-full px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-xl text-sm font-medium"
-                    >
-                      🔍 Testar Filtro de Vias (ver console)
-                    </button>
-                  )}
                 </div>
               </div>
 
@@ -642,12 +632,12 @@ export default function NovaParagem() {
                     </div>
                   </div>
                 ) : filteredVias.length === 0 ? (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
                     <div className="flex items-start space-x-3">
-                      <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-slate-900 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
-                      <p className="text-sm text-yellow-800">
+                      <p className="text-sm text-slate-800">
                         Nenhuma via encontrada nesta localização. Tente clicar mais perto de uma rota existente.
                       </p>
                     </div>

@@ -163,25 +163,25 @@ export default function EditarAdministrador() {
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
-            notification.type === 'success' ? 'bg-green-50 border border-green-200' :
-            notification.type === 'error' ? 'bg-red-50 border border-red-200' :
-            'bg-blue-50 border border-blue-200'
+            notification.type === 'success' ? 'bg-slate-50 border border-slate-200' :
+            notification.type === 'error' ? 'bg-slate-100 border border-slate-400' :
+            'bg-slate-50 border border-slate-200'
           }`}>
             <div className="flex items-center space-x-3">
               {notification.type === 'success' && (
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               )}
               {notification.type === 'error' && (
-                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               )}
               <p className={`text-sm font-medium ${
-                notification.type === 'success' ? 'text-green-800' :
-                notification.type === 'error' ? 'text-red-800' :
-                'text-blue-800'
+                notification.type === 'success' ? 'text-slate-800' :
+                notification.type === 'error' ? 'text-slate-900' :
+                'text-slate-800'
               }`}>
                 {notification.message}
               </p>
@@ -219,38 +219,38 @@ export default function EditarAdministrador() {
             {/* Nome */}
             <div>
               <label className="block text-sm font-semibold text-slate-900 mb-2">
-                Nome Completo <span className="text-red-600">*</span>
+                Nome Completo <span className="text-slate-900">*</span>
               </label>
               <input
                 type="text"
                 value={formData.nome}
                 onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                 className={`w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 placeholder:text-slate-600 ${
-                  errors.nome ? 'border-red-500' : 'border-slate-300'
+                  errors.nome ? 'border-slate-700' : 'border-slate-300'
                 }`}
                 placeholder="Nome completo do administrador"
               />
               {errors.nome && (
-                <p className="mt-1 text-sm text-red-600">{errors.nome}</p>
+                <p className="mt-1 text-sm text-slate-900">{errors.nome}</p>
               )}
             </div>
 
             {/* Email */}
             <div>
               <label className="block text-sm font-semibold text-slate-900 mb-2">
-                Email <span className="text-red-600">*</span>
+                Email <span className="text-slate-900">*</span>
               </label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className={`w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 placeholder:text-slate-600 ${
-                  errors.email ? 'border-red-500' : 'border-slate-300'
+                  errors.email ? 'border-slate-700' : 'border-slate-300'
                 }`}
                 placeholder="email@exemplo.com"
               />
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                <p className="mt-1 text-sm text-slate-900">{errors.email}</p>
               )}
             </div>
 
@@ -270,12 +270,12 @@ export default function EditarAdministrador() {
                   value={formData.senha}
                   onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
                   className={`w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 placeholder:text-slate-600 ${
-                    errors.senha ? 'border-red-500' : 'border-slate-300'
+                    errors.senha ? 'border-slate-700' : 'border-slate-300'
                   }`}
                   placeholder="Mínimo 6 caracteres"
                 />
                 {errors.senha && (
-                  <p className="mt-1 text-sm text-red-600">{errors.senha}</p>
+                  <p className="mt-1 text-sm text-slate-900">{errors.senha}</p>
                 )}
               </div>
 
@@ -289,12 +289,12 @@ export default function EditarAdministrador() {
                   value={formData.confirmarSenha}
                   onChange={(e) => setFormData({ ...formData, confirmarSenha: e.target.value })}
                   className={`w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 placeholder:text-slate-600 ${
-                    errors.confirmarSenha ? 'border-red-500' : 'border-slate-300'
+                    errors.confirmarSenha ? 'border-slate-700' : 'border-slate-300'
                   }`}
                   placeholder="Repita a nova senha"
                 />
                 {errors.confirmarSenha && (
-                  <p className="mt-1 text-sm text-red-600">{errors.confirmarSenha}</p>
+                  <p className="mt-1 text-sm text-slate-900">{errors.confirmarSenha}</p>
                 )}
               </div>
             </div>

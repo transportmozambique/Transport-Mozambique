@@ -44,7 +44,7 @@ export default function DriverPinCard({ motoristaId }: { motoristaId: string }) 
         Para entrar no portal do motorista e no menu USSD de motorista.
       </p>
       <p className="text-sm mb-4">
-        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${definido ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}`}>
+        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${definido ? "bg-slate-100 text-slate-800" : "bg-slate-100 text-slate-800"}`}>
           {definido === null ? "…" : definido ? "PIN definido" : "Sem PIN: não pode entrar"}
         </span>
       </p>
@@ -56,7 +56,7 @@ export default function DriverPinCard({ motoristaId }: { motoristaId: string }) 
           <p className="text-xs text-slate-600 mt-1">Entregue-o ao motorista. O PIN anterior deixou de funcionar.</p>
         </div>
       )}
-      {erro && <p className="text-sm text-red-700 mb-3">{erro}</p>}
+      {erro && <p className="text-sm text-slate-800 mb-3">{erro}</p>}
 
       <button
         type="button"

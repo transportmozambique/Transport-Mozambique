@@ -444,7 +444,7 @@ export default function RouteDrawer({
             </button>
           </div>
         </div>
-        <p className={`text-xs ${routingFailed ? "text-red-700" : "text-slate-600"}`} data-testid="route-status">
+        <p className={`text-xs ${routingFailed ? "text-slate-800" : "text-slate-600"}`} data-testid="route-status">
           {!hasRoute && "Adicione pelo menos dois pontos."}
           {hasRoute && !routeReady && "A calcular o percurso pelas estradas…"}
           {routeReady && !routingFailed && `Percurso pelas estradas: ${pathKm(routedPath).toFixed(1)} km`}

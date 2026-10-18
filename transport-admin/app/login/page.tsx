@@ -65,11 +65,11 @@ export default function LoginPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           {error && (
-            <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start space-x-3">
-              <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-slate-100 border-2 border-slate-400 rounded-xl p-4 flex items-start space-x-3">
+              <svg className="w-5 h-5 text-slate-900 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p className="text-sm text-red-800">{error}</p>
+              <p className="text-sm text-slate-900">{error}</p>
             </div>
           )}
 

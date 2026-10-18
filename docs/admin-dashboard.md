@@ -63,7 +63,7 @@ Every list page also has its own search box and pagination.
 
 ![Dashboard: greeting and shortcuts, counters, route map, what the vehicles are doing now, route list, bars and status](images/admin-dashboard-full.png)
 
-At the top: a greeting with the admin's first name and the shortcuts "+ Transporte", "+ Via", "+ Motorista" (each opens its creation form) and "Actualizar" (reloads the numbers). When some vehicles have no driver, an amber banner says how many and links to `/motoristas/atribuir`.
+At the top: a greeting with the admin's first name and the shortcuts "+ Transporte", "+ Via", "+ Motorista" (each opens its creation form) and "Actualizar" (reloads the numbers). When some vehicles have no driver, a banner says how many and links to `/motoristas/atribuir`.
 
 Everything except "Agora" comes from one request, `GET /api/dashboard/stats`, **cached 5 minutes** per server instance. A change can take up to 5 minutes to show there, while the list pages show it at once.
 

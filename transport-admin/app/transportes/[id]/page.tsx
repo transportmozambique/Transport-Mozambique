@@ -174,7 +174,7 @@ export default function TransporteDetalhes() {
 
     const map = new maplibregl.Map({
       container: mapRef.current,
-      style: 'https://tiles.openfreemap.org/styles/liberty',
+      style: 'https://tiles.openfreemap.org/styles/positron',
       center: [transporte.longitude || 32.5892, transporte.latitude || -25.9655],
       zoom: 15,
       pitch: 60,
@@ -318,7 +318,7 @@ export default function TransporteDetalhes() {
 
             let popupContent = `<strong>${stop.nome}</strong>`;
             if (stop.isTerminal) {
-              popupContent += `<br><span style="color: #6b7280;">🏁 Terminal</span>`;
+              popupContent += `<br><span style="color: #6b7280;">Terminal</span>`;
             }
 
             new maplibregl.Marker({ element: el })
@@ -356,7 +356,7 @@ export default function TransporteDetalhes() {
             font-size: 20px;
             cursor: default;
           `;
-          el.textContent = '🚌';
+          el.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 10h16M8 17v3M16 17v3"/></svg>';
 
           busMarkerRef.current = new maplibregl.Marker({ element: el })
             .setLngLat([transporte.longitude, transporte.latitude])
@@ -650,7 +650,7 @@ export default function TransporteDetalhes() {
             </button>
             <button
               onClick={() => setShowDeleteModal(true)}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center space-x-2"
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium flex items-center space-x-2"
               style={{ transition: 'none' }}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -674,9 +674,9 @@ export default function TransporteDetalhes() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className={`flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4 ${
-                  hasAssociations ? 'bg-gradient-to-br from-red-50 to-red-100/30' : 'bg-red-100'
+                  hasAssociations ? 'bg-gradient-to-br from-slate-100 to-slate-200/30' : 'bg-slate-200'
                 }`}>
-                  <svg className={`w-6 h-6 ${hasAssociations ? 'text-red-600' : 'text-red-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-6 h-6 ${hasAssociations ? 'text-slate-900' : 'text-slate-900'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     {hasAssociations ? (
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     ) : (
@@ -695,7 +695,7 @@ export default function TransporteDetalhes() {
                       {deleteError}
                     </p>
                     <div className="bg-white rounded-xl p-4">
-                      <p className="text-sm text-red-600 text-center font-medium">
+                      <p className="text-sm text-slate-900 text-center font-medium">
                         Clique em <strong>"Remover e Eliminar"</strong> para remover as associações e eliminar o transporte.
                       </p>
                     </div>
@@ -714,7 +714,7 @@ export default function TransporteDetalhes() {
                       <button
                         onClick={handleRemoveAssociationsAndDelete}
                         disabled={deleting}
-                        className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {deleting ? (
                           <>
@@ -737,7 +737,7 @@ export default function TransporteDetalhes() {
                     <p className="text-slate-600 text-center mb-6">
                       Tem certeza que deseja eliminar o transporte <strong className="text-slate-900">"{transporte.matricula}"</strong>?
                       <br />
-                      <span className="text-sm text-red-600 font-medium">Esta ação não pode ser desfeita.</span>
+                      <span className="text-sm text-slate-900 font-medium">Esta ação não pode ser desfeita.</span>
                     </p>
 
                     <div className="flex items-center space-x-3">
@@ -751,7 +751,7 @@ export default function TransporteDetalhes() {
                       <button
                         onClick={handleDelete}
                         disabled={deleting}
-                        className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {deleting ? (
                           <>
@@ -845,7 +845,7 @@ export default function TransporteDetalhes() {
               </div>
               <div className="flex items-center space-x-2">
                 <span className="px-3 py-1 bg-slate-100 text-slate-900 rounded-full text-xs font-semibold flex items-center" data-testid="position-status">
-                  <span className={`w-2 h-2 rounded-full mr-2 ${posicao?.emMovimento ? 'bg-green-600 animate-pulse' : 'bg-slate-500'}`}></span>
+                  <span className={`w-2 h-2 rounded-full mr-2 ${posicao?.emMovimento ? 'bg-slate-900 animate-pulse' : 'bg-slate-500'}`}></span>
                   {!posicao
                     ? 'Sem localização'
                     : posicao.foraDeServico
@@ -915,7 +915,7 @@ export default function TransporteDetalhes() {
                       <div className="flex-1 min-w-0">
                         <h5 className="font-bold text-slate-900 text-base mb-1.5">{transporte.motorista.nome}</h5>
                         <span className={`inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full ${
-                          (transporte.motorista as any).status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'
+                          (transporte.motorista as any).status === 'ativo' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-800'
                         }`}>
                           {(transporte.motorista as any).status || 'ativo'}
                         </span>
@@ -926,7 +926,7 @@ export default function TransporteDetalhes() {
                         e.stopPropagation();
                         handleRemoverMotorista();
                       }}
-                      className="text-slate-400 hover:text-red-600 flex-shrink-0 ml-2 transition-colors"
+                      className="text-slate-400 hover:text-slate-900 flex-shrink-0 ml-2 transition-colors"
                       title="Remover motorista"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -996,7 +996,7 @@ export default function TransporteDetalhes() {
                         e.stopPropagation();
                         handleRemoverProprietario(transporte.proprietarios[0].proprietario.id);
                       }}
-                      className="text-slate-400 hover:text-red-600 flex-shrink-0 ml-2 transition-colors"
+                      className="text-slate-400 hover:text-slate-900 flex-shrink-0 ml-2 transition-colors"
                       title="Remover proprietário"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1070,7 +1070,7 @@ export default function TransporteDetalhes() {
             <div>
               <p className="text-xs text-slate-900 uppercase tracking-wide font-medium mb-2">Estado</p>
               <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold inline-block ${
-                !transporte.via ? 'bg-amber-100 text-amber-800' : posicao?.foraDeServico ? 'bg-slate-100 text-slate-800' : 'bg-green-100 text-green-800'
+                !transporte.via ? 'bg-slate-100 text-slate-600' : posicao?.foraDeServico ? 'bg-slate-200 text-slate-800' : 'bg-slate-900 text-white'
               }`}>
                 {!transporte.via ? 'Sem rota' : posicao?.foraDeServico ? 'Fora de serviço' : 'Em serviço'}
               </span>
@@ -1171,23 +1171,23 @@ export default function TransporteDetalhes() {
       {notification && (
         <div className="fixed bottom-6 right-6 z-50 animate-fade-in">
           <div className={`px-6 py-4 rounded-xl shadow-lg border-2 ${
-            notification.type === 'success' ? 'bg-green-50 border-green-500 text-green-900' :
-            notification.type === 'error' ? 'bg-red-50 border-red-500 text-red-900' :
-            'bg-blue-50 border-blue-500 text-blue-900'
+            notification.type === 'success' ? 'bg-slate-50 border-slate-600 text-slate-900' :
+            notification.type === 'error' ? 'bg-slate-100 border-slate-700 text-slate-900' :
+            'bg-slate-50 border-slate-600 text-slate-900'
           }`}>
             <div className="flex items-center space-x-3">
               {notification.type === 'success' && (
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               )}
               {notification.type === 'error' && (
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               )}
               {notification.type === 'info' && (
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               )}

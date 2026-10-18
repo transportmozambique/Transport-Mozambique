@@ -233,20 +233,20 @@ export default function PerfilPage() {
                   <h1 className="text-2xl font-bold text-slate-900 mb-6">Informações do Perfil</h1>
 
                   {success && (
-                    <div className="mb-6 bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-start space-x-3">
-                      <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="mb-6 bg-slate-50 border-2 border-slate-200 rounded-xl p-4 flex items-start space-x-3">
+                      <svg className="w-5 h-5 text-slate-900 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <p className="text-sm text-green-800">{success}</p>
+                      <p className="text-sm text-slate-800">{success}</p>
                     </div>
                   )}
 
                   {error && (
-                    <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start space-x-3">
-                      <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="mb-6 bg-slate-100 border-2 border-slate-400 rounded-xl p-4 flex items-start space-x-3">
+                      <svg className="w-5 h-5 text-slate-900 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <p className="text-sm text-red-800">{error}</p>
+                      <p className="text-sm text-slate-900">{error}</p>
                     </div>
                   )}
 
@@ -339,20 +339,20 @@ export default function PerfilPage() {
                   <h1 className="text-2xl font-bold text-slate-900 mb-6">Segurança</h1>
 
                   {passwordSuccess && (
-                    <div className="mb-6 bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-start space-x-3">
-                      <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="mb-6 bg-slate-50 border-2 border-slate-200 rounded-xl p-4 flex items-start space-x-3">
+                      <svg className="w-5 h-5 text-slate-900 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <p className="text-sm text-green-800">{passwordSuccess}</p>
+                      <p className="text-sm text-slate-800">{passwordSuccess}</p>
                     </div>
                   )}
 
                   {passwordError && (
-                    <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start space-x-3">
-                      <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="mb-6 bg-slate-100 border-2 border-slate-400 rounded-xl p-4 flex items-start space-x-3">
+                      <svg className="w-5 h-5 text-slate-900 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <p className="text-sm text-red-800">{passwordError}</p>
+                      <p className="text-sm text-slate-900">{passwordError}</p>
                     </div>
                   )}
 
@@ -431,7 +431,7 @@ export default function PerfilPage() {
                             <h3 className="font-semibold text-slate-900">Versão do Sistema</h3>
                             <p className="text-sm text-slate-600">TransportMZ Admin v1.0.0</p>
                           </div>
-                          <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
+                          <span className="px-3 py-1 bg-slate-100 text-slate-800 text-sm font-medium rounded-full">
                             Atualizado
                           </span>
                         </div>

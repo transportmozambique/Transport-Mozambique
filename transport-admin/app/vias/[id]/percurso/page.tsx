@@ -153,10 +153,10 @@ export default function RedesenharPercurso() {
           <div
             className={`rounded-xl shadow-lg p-4 min-w-[300px] border ${
               notification.type === "success"
-                ? "bg-green-50 border-green-200 text-green-800"
+                ? "bg-slate-50 border-slate-200 text-slate-800"
                 : notification.type === "error"
-                  ? "bg-red-50 border-red-200 text-red-800"
-                  : "bg-blue-50 border-blue-200 text-blue-800"
+                  ? "bg-slate-100 border-slate-400 text-slate-900"
+                  : "bg-slate-50 border-slate-200 text-slate-800"
             }`}
           >
             <p className="text-sm font-medium">{notification.message}</p>
