@@ -54,7 +54,7 @@ Opening one shows each bus in turn. You walk to the first stop, ride to the chan
 
 ![A journey with one change: two buses, each with its plate and times](images/passenger-journey-transfer.png)
 
-**6. Start somewhere else.** Tap **Partida** and type a stop or place. The list of destinations is then worked out from there, and each row says where to take the first bus. That is the start itself, or a stop a short walk away.
+**6. Start somewhere else.** Tap **Partida** and type a stop or place. The list of destinations is then worked out from there, and each row says where to take the first bus: one of that place's stops, so the journey starts on a bus there, not with a walk.
 
 ![Step 6: choosing another start](images/passenger-start.png)
 
@@ -101,7 +101,7 @@ The top of the panel has two fields:
 
 Below them, the **"Para onde ir"** tab lists every place reachable from the start, with up to 4 buses, earliest arrival first. Each row has:
 
-- **where to take the first bus**: "Apanhe em Portão · 70 m a pé". From your position, this is the stop within 800 m that gets you there soonest, counting the walk. When the same bus passes a closer stop at most 2 minutes later, the closer stop is chosen. From a picked place, it is that place or a stop within 300 m.
+- **where to take the first bus**: "Apanhe em Portão · 70 m a pé". From your position, this is the stop within 800 m that gets you there soonest, counting the walk. When the same bus passes a closer stop at most 2 minutes later, the closer stop is chosen. From a picked place or a stop, it is that place or stop: the first bus is taken there.
 - "Directo", or how many buses it takes ("2 autocarros");
 - the codes of the routes, in their colours;
 - the arrival ("Chega 07:54", "Chega amanhã 05:37") and the time from now.
@@ -151,7 +151,7 @@ Tapping one of those stops, or a search result, plans the journey from this stop
 
 ![A direct journey: three options, the chosen one drawn on the map](images/passenger-journey-direct.png)
 
-The top of the panel shows the Partida and the destination. Up to three options follow, earliest arrival first. When another option takes the same number of buses, needs less walking, and arrives at most 2 minutes later, it comes first. It is usually the same bus, caught at a closer stop, and it is the one the list of destinations showed. Each card shows the arrival ("Chega às 16:51", or "Chega amanhã às 06:32"), the total fare, "Directo" or the number of changes ("2 transbordos"), the total time from now and the walking distance, and the routes as coloured labels. The chosen option is drawn on the map: each bus in its route's colour, walks dotted along the streets ([Walks along the streets](#walks-along-the-streets)), and only the buses of that journey stay on the map.
+The top of the panel shows the Partida and the destination. Up to three options follow, earliest arrival first. From a stop or a picked place, every option takes its first bus there: straight to the destination, or to the stop where you change. Only when no bus from there gets to the destination do the options start with a walk to a stop nearby, and a note says so ("Nenhum autocarro de Pandora chega lá…"). From your position, the journey starts with the walk to the best stop. When another option takes the same number of buses, needs less walking, and arrives at most 2 minutes later, it comes first. It is usually the same bus, caught at a closer stop, and it is the one the list of destinations showed. Each card shows the arrival ("Chega às 16:51", or "Chega amanhã às 06:32"), the total fare, "Directo" or the number of changes ("2 transbordos"), the total time from now and the walking distance, and the routes as coloured labels. The chosen option is drawn on the map: each bus in its route's colour, walks dotted along the streets ([Walks along the streets](#walks-along-the-streets)), and only the buses of that journey stay on the map.
 
 ![A journey with one change, from the passenger's position](images/passenger-journey-transfer.png)
 

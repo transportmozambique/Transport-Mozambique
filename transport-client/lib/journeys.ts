@@ -53,7 +53,8 @@ export interface Network {
 const NETWORK_CACHE_MS = 5 * 60 * 1000;
 /** Longest walk between two stops to change buses */
 const WALK_TRANSFER_M = 400;
-/** Longest walk from the chosen stop to a nearby stop with a better bus (and at the end) */
+/** Longest walk at the end, to a stop near the destination; and at the start, from the chosen stop
+ * to a nearby one, only when no bus from the chosen stop gets there */
 const WALK_END_M = 300;
 /** Riding a bus for less than this is not worth a change */
 const MIN_RIDE_M = 300;
@@ -695,7 +696,9 @@ export function pathBetween(r: NetRoute, a: number, b: number): [number, number]
 /**
  * Journeys to `to` (stops of the same place, or one stop), best first. `from` is likewise a list
  * of stops, or the passenger's position as [lat, lng]: the journey then starts with a walk to a
- * nearby stop. Walks to a nearby stop at either end, and between buses, are part of journeys.
+ * nearby stop. From stops, the first bus is taken at one of them; only when no bus from there
+ * gets to `to` does the journey start with a walk to a stop nearby. Walks between buses, and to
+ * a stop near `to` at the end, are part of journeys.
  */
 export async function planJourneys(
   from: string[] | LatLng,
@@ -703,11 +706,18 @@ export async function planJourneys(
   now = new Date(),
   limit = 3,
 ): Promise<Journey[]> {
+  if (typeof from[0] === 'number') return planFrom(from, to, now, limit, 0);
+  if ((from as string[]).some((id) => to.includes(id))) return [];
+  const there = await planFrom(from, to, now, limit, 0);
+  return there.length ? there : planFrom(from, to, now, limit, WALK_END_M);
+}
+
+/** planJourneys, with the first bus taken within `startRadius` of the start stops. */
+async function planFrom(from: string[] | LatLng, to: string[], now: Date, limit: number, startRadius: number): Promise<Journey[]> {
   const [net, rule] = await Promise.all([loadNetwork(), getFareRule()]);
   const position = typeof from[0] === 'number' ? (from as LatLng) : null;
   const fromIds = position ? [] : (from as string[]);
-  if (fromIds.some((id) => to.includes(id))) return [];
-  const origins = position ? catchmentOfPoint(net, position) : catchment(net, fromIds, WALK_END_M);
+  const origins = position ? catchmentOfPoint(net, position) : catchment(net, fromIds, startRadius);
   const dests = catchment(net, to, WALK_END_M);
   const plans = candidatePlans(net, origins, dests, rule);
   const vehicles = await allVehicles();
@@ -840,22 +850,23 @@ function labelOf(net: Network, place: Place<NetStop>): string {
 
 /**
  * Every place reachable from `from` with up to MAX_TIMED_BUSES buses, earliest arrival first, with
- * the buses' real times. `from` is a stop (or the stops of a place), or a position: the first
- * stop of each journey is then the one that gets there soonest, within a short walk. Places
- * within a short walk of the start are left out.
+ * the buses' real times. `from` is a stop (or the stops of a place), where the first bus is
+ * taken, or a position: the first stop of each journey is then the one that gets there soonest,
+ * within a short walk. Places within a short walk of the start are left out.
  */
 export async function reachFrom(from: string[] | LatLng, now = new Date()): Promise<Destino[] | null> {
   const [net, rule, vehicles] = await Promise.all([loadNetwork(), getFareRule(), allVehicles()]);
   const position = typeof from[0] === 'number' ? (from as LatLng) : null;
   const ids = position ? [] : (from as string[]);
   if (!position && !ids.some((id) => net.stops.has(id))) return null;
-  const origins = position ? catchmentOfPoint(net, position) : catchment(net, ids, WALK_END_M);
+  const origins = position ? catchmentOfPoint(net, position) : catchment(net, ids, 0);
   if (!origins.size) return [];
   const arrivals = earliestArrivals(net, origins, vehicles, rule, now);
+  const walkable = position ? origins : catchment(net, ids, WALK_END_M);
 
   const out: Destino[] = [];
   for (const place of net.places) {
-    if (place.stops.some((s) => origins.has(s.id))) continue;
+    if (place.stops.some((s) => walkable.has(s.id))) continue;
     // As planJourneys does: the place's stops, or a stop a short walk away from them
     let soonest: { id: string; t: number } | null = null;
     for (const [id, w] of catchment(net, place.stops.map((s) => s.id), WALK_END_M)) {

@@ -37,7 +37,7 @@ sequenceDiagram
 
 **Finding journeys** (`planJourneys`):
 
-1. **Start and end.** The chosen stops and every stop within 300 m of them, or, from the passenger's position, the 8 nearest stops within 800 m. Walking counts at 1 m/s straight-line (4.5 km/h with a quarter added for streets).
+1. **Start and end.** At the start, the chosen stops: the first bus is taken there. Only when no journey from them is found is the search run again with every stop within 300 m of them. From the passenger's position, the 8 nearest stops within 800 m. At the end, the destination's stops and every stop within 300 m of them. Walking counts at 1 m/s straight-line (4.5 km/h with a quarter added for streets).
 2. **Direct**: every route through a start and an end stop (buses shuttle along their route, so either direction works).
 3. **One change**: every pair of routes, one through a start stop and one through an end stop, that meet at a common stop or two stops within 400 m. Each bus leg rides at least 300 m. The best change point is kept per pair of routes.
 4. **Earliest arrival with the real times** (`earliestArrivals`): a time-dependent round-by-round search (RAPTOR) from the start stops, up to 4 buses.
