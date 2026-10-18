@@ -154,6 +154,8 @@ Four ways in:
 
 #### Neon console
 
+[Viewing the data in Neon](neon-guide.md) walks through the console step by step, with a screenshot for each step and queries that follow each data flow. In short:
+
 Sign in at https://console.neon.tech, open the **TransportMZ** project, and check the branch at the top left (`production` is the live data).
 
 - **SQL Editor** (left menu): choose the database `neondb`, paste a query from [Example queries](#example-queries), press **Run**. The editor opens with Neon's own sample `CREATE TABLE … INSERT …`; replace it rather than running it, or it creates a table in production.
@@ -660,4 +662,4 @@ Production on 2026-10-18, after the OpenStreetMap import:
 
 ---
 
-[← Data flow](data-flow.md) · [Documentation index](README.md) · Next: [Configuration →](configuration.md)
+[← Data flow](data-flow.md) · [Documentation index](README.md) · Next: [Viewing the data in Neon →](neon-guide.md)

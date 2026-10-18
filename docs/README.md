@@ -14,6 +14,7 @@ Each topic has its own page. The pages assume a technical reader: they cite file
 | [Architecture](architecture.md) | The three deployed apps, what each one owns, how they talk to each other and to the outside services, the tech stack and the repository layout. |
 | [Data flow](data-flow.md) | Sequence diagrams for every flow: journey planning and arrival time, live map, arrival SMS, USSD session, driver trip, GPS position, admin changes. |
 | [Database](database.md) | Entity diagram, every table, storage conventions, how to connect (psql, Prisma Studio, Neon console), tested example queries, migrations. |
+| [Viewing the data in Neon](neon-guide.md) | Step by step with screenshots: open the project, paste and run SQL, download results, browse a table, and follow each data flow through the tables. |
 | [Configuration](configuration.md) | Every environment variable of every app, Vercel and Neon settings, the fare rule, timetable constants. |
 
 ### Using each part
@@ -42,7 +43,7 @@ Each topic has its own page. The pages assume a technical reader: they cite file
 
 - **You want to see it working:** open the [live apps](../README.md#live-apps), then follow [Getting started](getting-started.md).
 - **You will change the code:** [Architecture](architecture.md) → [Data flow](data-flow.md) → [Database](database.md) → [API reference](api-reference.md) → [Testing](testing.md).
-- **You will query or analyse the data:** [Database](database.md) (connection, conventions, example SQL) → [GPS tracking](gps-tracking.md) (how positions are derived).
+- **You will query or analyse the data:** [Viewing the data in Neon](neon-guide.md) (step by step) → [Database](database.md) (connection, conventions, example SQL) → [GPS tracking](gps-tracking.md) (how positions are derived).
 - **You will operate the platform:** [Configuration](configuration.md) → [Deployment](deployment.md) → [Africa's Talking](africas-talking.md) → [Security](security.md) → [Troubleshooting](troubleshooting.md).
 
 ## Language
