@@ -274,7 +274,7 @@ export default function Header() {
                   <div className="border-t border-slate-200 pt-2">
                     <button
                       onClick={logout}
-                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-3 font-medium"
+                      className="w-full px-4 py-2 text-left text-sm text-slate-900 hover:bg-slate-100 flex items-center space-x-3 font-medium"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path

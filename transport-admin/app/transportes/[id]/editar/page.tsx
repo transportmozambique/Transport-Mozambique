@@ -104,7 +104,7 @@ export default function EditarTransporte() {
 
     const map = new maplibregl.Map({
       container: mapRef.current,
-      style: 'https://tiles.openfreemap.org/styles/liberty',
+      style: 'https://tiles.openfreemap.org/styles/positron',
       center: [formData.longitude, formData.latitude],
       zoom: 13,
       pitch: 60,
@@ -195,7 +195,7 @@ export default function EditarTransporte() {
       font-size: 20px;
       cursor: default;
     `;
-    el.textContent = '🚌';
+    el.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 10h16M8 17v3M16 17v3"/></svg>';
 
     markerRef.current = new maplibregl.Marker({ element: el })
       .setLngLat([formData.longitude, formData.latitude])
@@ -743,7 +743,7 @@ export default function EditarTransporte() {
                             <div className="flex-1 min-w-0">
                               <h5 className="font-bold text-slate-900 text-base mb-1.5">{transporte.motorista.nome}</h5>
                               <span className={`inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full ${
-                                (transporte.motorista as any).status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'
+                                (transporte.motorista as any).status === 'ativo' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-800'
                               }`}>
                                 {(transporte.motorista as any).status || 'ativo'}
                               </span>
@@ -890,7 +890,7 @@ export default function EditarTransporte() {
                   </div>
 
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                    <p className="text-xs text-slate-900 font-medium mb-2">💡 Dica</p>
+                    <p className="text-xs text-slate-900 font-medium mb-2">Dica</p>
                     <p className="text-xs text-slate-900">Clique no mapa abaixo para definir a localização automaticamente.</p>
                   </div>
                 </div>
@@ -1044,23 +1044,23 @@ export default function EditarTransporte() {
       {notification && (
         <div className="fixed bottom-6 right-6 z-50 animate-fade-in">
           <div className={`px-6 py-4 rounded-xl shadow-lg border-2 ${
-            notification.type === 'success' ? 'bg-green-50 border-green-500 text-green-900' :
-            notification.type === 'error' ? 'bg-red-50 border-red-500 text-red-900' :
-            'bg-blue-50 border-blue-500 text-blue-900'
+            notification.type === 'success' ? 'bg-slate-50 border-slate-600 text-slate-900' :
+            notification.type === 'error' ? 'bg-slate-100 border-slate-700 text-slate-900' :
+            'bg-slate-50 border-slate-600 text-slate-900'
           }`}>
             <div className="flex items-center space-x-3">
               {notification.type === 'success' && (
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               )}
               {notification.type === 'error' && (
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               )}
               {notification.type === 'info' && (
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               )}
@@ -1083,8 +1083,8 @@ export default function EditarTransporte() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start space-x-4 mb-6">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </div>
@@ -1103,7 +1103,7 @@ export default function EditarTransporte() {
                 </button>
                 <button
                   onClick={confirmModal.onConfirm}
-                  className="px-4 py-2 bg-red-600 text-white rounded-xl font-semibold"
+                  className="px-4 py-2 bg-slate-900 text-white rounded-xl font-semibold"
                   style={{ transition: 'none' }}
                 >
                   Confirmar

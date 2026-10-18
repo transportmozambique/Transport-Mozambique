@@ -58,7 +58,7 @@ export default function NovoTransporte() {
 
     const map = new maplibregl.Map({
       container: mapRef.current,
-      style: 'https://tiles.openfreemap.org/styles/liberty',
+      style: 'https://tiles.openfreemap.org/styles/positron',
       center: [formData.longitude, formData.latitude],
       zoom: 13,
       pitch: 60,
@@ -149,7 +149,7 @@ export default function NovoTransporte() {
       font-size: 20px;
       cursor: default;
     `;
-    el.textContent = '🚌';
+    el.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 10h16M8 17v3M16 17v3"/></svg>';
 
     markerRef.current = new maplibregl.Marker({ element: el })
       .setLngLat([formData.longitude, formData.latitude])
@@ -214,25 +214,25 @@ export default function NovoTransporte() {
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
-            notification.type === 'success' ? 'bg-green-50 border border-green-200' :
-            notification.type === 'error' ? 'bg-red-50 border border-red-200' :
-            'bg-blue-50 border border-blue-200'
+            notification.type === 'success' ? 'bg-slate-50 border border-slate-200' :
+            notification.type === 'error' ? 'bg-slate-100 border border-slate-400' :
+            'bg-slate-50 border border-slate-200'
           }`}>
             <div className="flex items-center space-x-3">
               {notification.type === 'success' && (
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               )}
               {notification.type === 'error' && (
-                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               )}
               <p className={`text-sm font-medium ${
-                notification.type === 'success' ? 'text-green-800' :
-                notification.type === 'error' ? 'text-red-800' :
-                'text-blue-800'
+                notification.type === 'success' ? 'text-slate-800' :
+                notification.type === 'error' ? 'text-slate-900' :
+                'text-slate-800'
               }`}>
                 {notification.message}
               </p>

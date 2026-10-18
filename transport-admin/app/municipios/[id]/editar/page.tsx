@@ -455,25 +455,25 @@ export default function EditarMunicipio() {
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
-            notification.type === 'success' ? 'bg-green-50 border border-green-200' :
-            notification.type === 'error' ? 'bg-red-50 border border-red-200' :
-            'bg-blue-50 border border-blue-200'
+            notification.type === 'success' ? 'bg-slate-50 border border-slate-200' :
+            notification.type === 'error' ? 'bg-slate-100 border border-slate-400' :
+            'bg-slate-50 border border-slate-200'
           }`}>
             <div className="flex items-center space-x-3">
               {notification.type === 'success' && (
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               )}
               {notification.type === 'error' && (
-                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               )}
               <p className={`text-sm font-medium ${
-                notification.type === 'success' ? 'text-green-800' :
-                notification.type === 'error' ? 'text-red-800' :
-                'text-blue-800'
+                notification.type === 'success' ? 'text-slate-800' :
+                notification.type === 'error' ? 'text-slate-900' :
+                'text-slate-800'
               }`}>
                 {notification.message}
               </p>
@@ -663,7 +663,7 @@ export default function EditarMunicipio() {
             {/* Map */}
             <div ref={mapRef} className="w-full h-96 rounded-xl border border-slate-300" />
             <p className="text-xs text-slate-500">
-              💡 Dica: Clique no mapa para definir o centro do município
+              Dica: Clique no mapa para definir o centro do município
             </p>
           </div>
 

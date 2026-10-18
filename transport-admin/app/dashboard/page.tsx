@@ -220,7 +220,7 @@ function DashboardContent() {
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: 'https://tiles.openfreemap.org/styles/liberty',
+      style: 'https://tiles.openfreemap.org/styles/positron',
       attributionControl: { compact: true },
       center: [32.5892, -25.9655], // Maputo center
       zoom: 11,
@@ -475,21 +475,21 @@ function DashboardContent() {
         </div>
 
         {stats.transportesSemMotorista > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-300 bg-white px-5 py-4">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700" aria-hidden>
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white" aria-hidden>
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" />
                 </svg>
               </span>
               <div>
-                <p className="font-semibold text-amber-900">
+                <p className="font-semibold text-slate-900">
                   {stats.transportesSemMotorista} {stats.transportesSemMotorista === 1 ? 'transporte está' : 'transportes estão'} sem motorista
                 </p>
-                <p className="text-sm text-amber-800">Cada transporte precisa de um motorista atribuído para operar.</p>
+                <p className="text-sm text-slate-800">Cada transporte precisa de um motorista atribuído para operar.</p>
               </div>
             </div>
-            <button onClick={() => router.push('/motoristas/atribuir')} className="rounded-full bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">
+            <button onClick={() => router.push('/motoristas/atribuir')} className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
               Atribuir motoristas
             </button>
           </div>
@@ -501,7 +501,6 @@ function DashboardContent() {
             label="Transportes"
             value={stats.transportes}
             note={stats.transportesSemMotorista > 0 ? `${stats.transportesSemMotorista} sem motorista` : 'todos com motorista'}
-            tone="blue"
             icon={ICONS.bus}
             onClick={() => router.push('/transportes')}
           />
@@ -509,12 +508,11 @@ function DashboardContent() {
             label="Motoristas"
             value={stats.motoristas}
             note={`${stats.motoristasActivos} activos (${motoristasPercentage}%)`}
-            tone="emerald"
             icon={ICONS.driver}
             onClick={() => router.push('/motoristas')}
           />
-          <Kpi label="Vias" value={stats.vias} note={`${viasComVeiculos} com veículos`} tone="violet" icon={ICONS.route} onClick={() => router.push('/vias')} />
-          <Kpi label="Paragens" value={stats.paragens} note="pontos de paragem" tone="amber" icon={ICONS.stop} onClick={() => router.push('/paragens')} />
+          <Kpi label="Vias" value={stats.vias} note={`${viasComVeiculos} com veículos`} icon={ICONS.route} onClick={() => router.push('/vias')} />
+          <Kpi label="Paragens" value={stats.paragens} note="pontos de paragem" icon={ICONS.stop} onClick={() => router.push('/paragens')} />
         </div>
 
         {/* The map, what the vehicles are doing now, and the routes */}
@@ -538,10 +536,10 @@ function DashboardContent() {
             <Card title="Agora" subtitle="O que cada veículo está a fazer (GPS ou horário)">
               {agora ? (
                 <div className="grid grid-cols-2 gap-2">
-                  <MiniStat value={agora.circulacao} label="Em circulação" tone="emerald" />
-                  <MiniStat value={agora.parados} label="Parados" tone="slate" />
-                  <MiniStat value={agora.gps} label="Com GPS activo" tone="blue" />
-                  <MiniStat value={agora.semPosicao} label="Sem rota" tone="amber" />
+                  <MiniStat value={agora.circulacao} label="Em circulação" />
+                  <MiniStat value={agora.parados} label="Parados" />
+                  <MiniStat value={agora.gps} label="Com GPS activo" />
+                  <MiniStat value={agora.semPosicao} label="Sem rota" />
                 </div>
               ) : (
                 <p className="text-sm text-slate-500">A carregar…</p>
@@ -581,7 +579,7 @@ function DashboardContent() {
             <BarList items={paragensMunicipioData.map((m) => ({ label: m.name, value: m.count }))} total={stats.paragens} />
           </Card>
           <Card title="Vias com mais veículos">
-            <BarList items={viasData.slice(0, 5).map((v) => ({ label: v.name, value: v.count, color: getValidColor(v.color) }))} total={maxVia} />
+            <BarList items={viasData.slice(0, 5).map((v) => ({ label: v.name, value: v.count }))} total={maxVia} />
           </Card>
           <Card title="Estado">
             <dl className="space-y-3 text-sm">
@@ -610,25 +608,15 @@ const ICONS = {
   stop: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z',
 };
 
-const TONES: Record<string, string> = {
-  blue: 'bg-blue-50 text-blue-700',
-  emerald: 'bg-emerald-50 text-emerald-700',
-  violet: 'bg-violet-50 text-violet-700',
-  amber: 'bg-amber-50 text-amber-700',
-  slate: 'bg-slate-100 text-slate-700',
-};
 
-function Kpi({ label, value, note, tone, icon, onClick }: { label: string; value: number; note: string; tone: string; icon: string; onClick: () => void }) {
+function Kpi({ label, value, note, icon, onClick }: { label: string; value: number; note: string; icon: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="group rounded-3xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5">
-      <div className="flex items-center justify-between">
-        <span className={`flex h-11 w-11 items-center justify-center rounded-2xl ${TONES[tone]}`} aria-hidden>
+    <button onClick={onClick} className="rounded-3xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5">
+      <div className="flex items-center">
+        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-900" aria-hidden>
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icon} />
           </svg>
-        </span>
-        <span className="text-slate-300 transition group-hover:text-slate-600" aria-hidden>
-          →
         </span>
       </div>
       <p className="mt-4 text-sm font-medium text-slate-500">{label}</p>
@@ -653,9 +641,9 @@ function Card({ title, subtitle, action, className = '', children }: { title: st
   );
 }
 
-function MiniStat({ value, label, tone }: { value: number; label: string; tone: string }) {
+function MiniStat({ value, label }: { value: number; label: string }) {
   return (
-    <div className={`rounded-2xl px-3 py-3 ${TONES[tone]}`}>
+    <div className="rounded-2xl bg-slate-100 px-3 py-3 text-slate-900">
       <p className="text-2xl font-bold tabular-nums">{value}</p>
       <p className="text-xs font-medium opacity-80">{label}</p>
     </div>
@@ -663,7 +651,7 @@ function MiniStat({ value, label, tone }: { value: number; label: string; tone: 
 }
 
 /** Horizontal bars, each as a share of `total` */
-function BarList({ items, total }: { items: { label: string; value: number; color?: string }[]; total: number }) {
+function BarList({ items, total }: { items: { label: string; value: number }[]; total: number }) {
   if (!items.length) return <p className="text-sm text-slate-500">Sem dados.</p>;
   return (
     <ul className="space-y-3">
@@ -674,7 +662,7 @@ function BarList({ items, total }: { items: { label: string; value: number; colo
             <span className="shrink-0 font-semibold tabular-nums text-slate-900">{item.value}</span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-            <div className="h-full rounded-full" style={{ width: `${Math.min(100, (item.value / Math.max(total, 1)) * 100)}%`, background: item.color ?? '#0f172a' }} />
+            <div className="h-full rounded-full bg-slate-900" style={{ width: `${Math.min(100, (item.value / Math.max(total, 1)) * 100)}%` }} />
           </div>
         </li>
       ))}
@@ -694,7 +682,7 @@ function Split({ label, a, b, bLabel }: { label: string; a: number; b: number; b
         </dd>
       </div>
       <div className="flex h-2 overflow-hidden rounded-full bg-slate-100">
-        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${(a / total) * 100}%` }} />
+        <div className="h-full rounded-full bg-slate-900" style={{ width: `${(a / total) * 100}%` }} />
       </div>
     </div>
   );

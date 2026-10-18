@@ -25,19 +25,19 @@ export default function ConfirmDialog({
 
   const colors = {
     danger: {
-      icon: 'text-red-600',
-      bg: 'bg-red-50',
-      button: 'bg-red-600 hover:bg-red-700'
+      icon: 'text-slate-900',
+      bg: 'bg-slate-100',
+      button: 'bg-slate-900 hover:bg-slate-800'
     },
     warning: {
-      icon: 'text-yellow-600',
-      bg: 'bg-yellow-50',
-      button: 'bg-yellow-600 hover:bg-yellow-700'
+      icon: 'text-slate-900',
+      bg: 'bg-slate-50',
+      button: 'bg-slate-900 hover:bg-slate-800'
     },
     info: {
-      icon: 'text-blue-600',
-      bg: 'bg-blue-50',
-      button: 'bg-blue-600 hover:bg-blue-700'
+      icon: 'text-slate-900',
+      bg: 'bg-slate-50',
+      button: 'bg-slate-900 hover:bg-slate-800'
     }
   };
 
