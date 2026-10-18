@@ -5,6 +5,7 @@ import {
   haversineMeters,
   parseLatLng,
   parseRoutePath,
+  projectOnPath,
   type FareRule,
   type LatLng,
   type RouteStop,
@@ -100,7 +101,7 @@ function bearing([lat1, lng1]: LatLng, [lat2, lng2]: LatLng): number {
 }
 
 /** Point at `distance` metres along the path, with the bearing of that segment. */
-function pointAlong(g: RouteGeometry, distance: number): { point: LatLng; heading: number } {
+export function pointAlong(g: RouteGeometry, distance: number): { point: LatLng; heading: number } {
   let i = 1;
   while (i < g.path.length - 1 && g.cumulative[i] < distance) i++;
   const segment = g.cumulative[i] - g.cumulative[i - 1];
@@ -127,9 +128,11 @@ function nearestIndex(g: RouteGeometry, point: LatLng): number {
   return best;
 }
 
-/** Metres along the path to the point nearest `point`. */
+/** Metres along the path to the point of the path nearest `point`. */
 export function progressOf(g: RouteGeometry, point: LatLng): number {
-  return g.path.length ? g.cumulative[nearestIndex(g, point)] : 0;
+  if (g.path.length < 2) return 0;
+  const { segment, t } = projectOnPath(g.path, point);
+  return g.cumulative[segment] + t * (g.cumulative[segment + 1] - g.cumulative[segment]);
 }
 
 /**
@@ -226,7 +229,7 @@ export function vehiclePosition(
     let direction: Direction | null = null;
     if (g.path.length > 1) {
       const i = nearestIndex(g, point);
-      progress = g.cumulative[i];
+      progress = progressOf(g, point);
       // Direction from the GPS bearing compared with the path's own bearing there
       if (moving && vehicle.gpsDirecao != null) {
         const a = i < g.path.length - 1 ? i : i - 1;
@@ -364,6 +367,23 @@ export function estimateBusTrip(args: {
     position,
     sentido: travel,
   };
+}
+
+/**
+ * Minutes until this bus, at `position`, passes `target` metres along its path moving in
+ * direction `travel`: the arrival at a stop for a passenger already on board, or the next
+ * passes of a bus at the stops ahead of it.
+ */
+export function minutesUntilPass(
+  position: VehiclePosition,
+  length: number,
+  target: number,
+  travel: Direction,
+  rule?: Pick<FareRule, 'velocidadeViagemKmh'>,
+): number {
+  const { meters, turns } = distanceUntilPass(position, length, target, travel);
+  const seconds = position.waitS + meters / speedMps(rule) + turns * TERMINAL_STOP_S;
+  return Math.max(0, Math.round(seconds / 60));
 }
 
 /** Fields to select on Transporte to compute its position. */

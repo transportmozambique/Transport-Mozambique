@@ -102,6 +102,33 @@ export function parseRoutePath(path: string | null | undefined): LatLng[] {
  * routes, which made stop-to-stop distances (and fares) far too long.
  * Keeps the given order when the route has no path.
  */
+/**
+ * Where `point` falls along `path`: the nearest segment, and how far along it (0 to 1). Paths
+ * can have long straight segments (a simplified avenue), so points are projected on the
+ * segments, not snapped to the nearest vertex. Flat-earth distances are enough to compare.
+ */
+export function projectOnPath(path: LatLng[], point: LatLng): { segment: number; t: number } {
+  const k = Math.cos((point[0] * Math.PI) / 180);
+  const px = point[1] * k;
+  const py = point[0];
+  let best = { segment: 0, t: 0 };
+  let bestDist = Infinity;
+  for (let i = 0; i < path.length - 1; i++) {
+    const ax = path[i][1] * k;
+    const ay = path[i][0];
+    const dx = path[i + 1][1] * k - ax;
+    const dy = path[i + 1][0] - ay;
+    const len = dx * dx + dy * dy;
+    const t = len ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len)) : 0;
+    const d = (px - ax - t * dx) ** 2 + (py - ay - t * dy) ** 2;
+    if (d < bestDist) {
+      bestDist = d;
+      best = { segment: i, t };
+    }
+  }
+  return best;
+}
+
 export function orderStopsAlongRoute<T>(
   stops: T[],
   geoLocationPath: string | null | undefined,
@@ -110,23 +137,12 @@ export function orderStopsAlongRoute<T>(
   const path = parseRoutePath(geoLocationPath);
   if (path.length < 2) return stops;
 
-  // Index of the nearest path vertex (flat-earth distance is enough to compare)
+  // Segment and fraction along it, as one number that sorts in path order
   const positionOnPath = (geo: string | null | undefined) => {
     const pt = parseLatLng(geo);
     if (!pt) return path.length;
-    const k = Math.cos((pt[0] * Math.PI) / 180);
-    let best = 0;
-    let bestDist = Infinity;
-    for (let i = 0; i < path.length; i++) {
-      const dLat = path[i][0] - pt[0];
-      const dLng = (path[i][1] - pt[1]) * k;
-      const dist = dLat * dLat + dLng * dLng;
-      if (dist < bestDist) {
-        bestDist = dist;
-        best = i;
-      }
-    }
-    return best;
+    const { segment, t } = projectOnPath(path, pt);
+    return segment + t;
   };
 
   return stops

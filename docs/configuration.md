@@ -124,7 +124,7 @@ These values are fixed in code. Change them with a code change and a deploy.
 | Route path cache | 5 min | `transport-client/lib/vehiclePosition.ts` (`routePaths`) | Live map position polling. |
 | Dashboard stats cache | 5 min | `transport-admin/app/api/dashboard/stats/route.ts` | |
 | Session lifetimes | passenger 90 days, driver 30 days, admin 12 h | `lib/userSession.ts`, `lib/driverSession.ts`, `transport-admin/lib/adminSession.ts` | |
-| Polling | home map 5 s, tracking page 10 s, driver trip 30 s, waiting passengers 60 s, admin vehicle list 30 s, admin vehicle position 15 s, admin GPS card 30 s, admin vehicle operation 60 s, driver portal GPS send ≥ 15 s | page components | |
+| Polling | home map 5 s, journey being followed 10 s, driver trip 30 s, waiting passengers 60 s, admin vehicle list 30 s, admin vehicle position 15 s, admin GPS card 30 s, admin vehicle operation 60 s, driver portal GPS send ≥ 15 s | page components | |
 
 ---
 

@@ -10,7 +10,7 @@ It works like a ride-hailing app (Uber, Bolt, Yango), but for public transport. 
 
 You can follow your bus until it arrives, and save a stop to get an SMS when a bus is close. Browsing and planning need no account; saving alerts and the account page need one. Every screen below is followed by the requests it makes. The full request and response formats are in the [API reference](api-reference.md#passenger-app-transport-client).
 
-**On this page:** [How to use it](#how-to-use-it-step-by-step) · [The map](#the-map--and-search) · [Partida and destinations](#partida-and-destinations) · [Stops near you](#stops-near-you) · [A stop's destinations](#a-stops-destinations) · [Journeys](#journeys) · [Tracking a bus](#tracking-a-bus-trackid) · [Account and sign-in](#account-and-sign-in) · [Account page and alerts](#account-page-and-alerts-user-info) · [Browser storage](#what-the-browser-stores)
+**On this page:** [How to use it](#how-to-use-it-step-by-step) · [The map](#the-map--and-search) · [Partida and destinations](#partida-and-destinations) · [Stops near you](#stops-near-you) · [A stop's destinations](#a-stops-destinations) · [Journeys](#journeys) · [Following a journey](#following-a-journey-viagem) · [Account and sign-in](#account-and-sign-in) · [Account page and alerts](#account-page-and-alerts-user-info) · [Browser storage](#what-the-browser-stores)
 
 ---
 
@@ -33,11 +33,18 @@ Each row says where to take the first bus ("Apanhe em Portão · 70 m a pé"), "
 
 **3. See the journey: A → B → C.** It shows the walk to the stop (A → B), the bus with its plate, when it comes, and where and when to get off (B → C). The map draws the walk dashed and the bus in its route's colour. The other options are below, earliest arrival first.
 
-![Step 3: walk 70 m to Portão, take bus ACF-004M at 07:51, get off at Makalela at 07:55](images/passenger-journey-direct.png)
+![Step 3: walk 70 m to Portão, take the bus shown by its plate, get off at Makalela](images/passenger-journey-direct.png)
 
-**4. Follow the bus.** "Acompanhar este autocarro →" opens the tracking page: the wait, the distance to the bus, the arrival, the fare and the route map. These refresh every 10 seconds.
+**4. Follow the journey.** "Acompanhar viagem →" opens the whole journey on one map:
 
-![Step 4: tracking the bus](images/passenger-track.png)
+- your position;
+- the walk to the stop, dashed;
+- each bus leg in its route's colour;
+- every bus of the journey, moving.
+
+The dark card says what to do now: "Caminhe até Portão", then "Espere em Portão" with the minutes until the bus comes, then "Saia em Makalela às …" once you are on board. Every step is listed under it, with live times.
+
+![Step 4: following the journey: the walk to Portão, the bus and when it reaches the stop](images/passenger-track.png)
 
 **5. Destinations that take more than one bus** are in the same list ("2 autocarros", with each route's code). "Ver mais destinos" shows more.
 
@@ -51,9 +58,9 @@ Opening one shows each bus in turn. You walk to the first stop, ride to the chan
 
 ![Step 6: choosing another start](images/passenger-start.png)
 
-![Every destination from Igreja; for Agostinho Neto the first bus is taken at Makalela, 240 m away](images/passenger-start-chosen.png)
+![Every destination from Igreja, each with the stop where the first bus is taken](images/passenger-start-chosen.png)
 
-![The journey from Igreja: walk 240 m to Makalela, then the bus to Agostinho Neto](images/passenger-journey-from-start.png)
+![The journey from Igreja to Agostinho Neto](images/passenger-journey-from-start.png)
 
 "A sua localização" (under the Partida field) brings the start back to your position.
 
@@ -151,7 +158,7 @@ The top of the panel shows the Partida and the destination. Up to three options 
 The chosen option lists its steps:
 
 - **Walks**: "Caminhe 100 m (2 min) até Portão", from your position to the first stop, between two stops to change buses (up to 400 m), or from the last stop.
-- **Buses**: the route and its direction, with the bus's plate as a number-plate badge on the right; where and when to take it ("Apanhe em Portão às 16:47 (daqui a 5 min)", and for the next buses the wait at the stop: "espera 35 min"); where and when to get off; the number of stops, time on board, distance and fare. "Acompanhar este autocarro →" opens the tracking page with that bus's two stops.
+- **Buses**: the route and its direction, with the bus's plate as a number-plate badge on the right; where and when to take it ("Apanhe em Portão às 16:47 (daqui a 5 min)", and for the next buses the wait at the stop: "espera 35 min"); where and when to get off; the number of stops, time on board, distance and fare. "Acompanhar viagem →" under the steps follows the whole journey, every bus of it ([Following a journey](#following-a-journey-viagem)).
 - When the journey only finishes the next morning (buses run 05:00–21:00), a note says so.
 
 Each bus charges its own fare, with the fare rule (max(10 MT, ⌈km × 10 MT⌉) by default, [Configuration](configuration.md#fare-rule-tarifa)). Times use the same model as everywhere else: real GPS when fresh, else the timetable, worked out for the moment you reach each stop. How the options are found is in [Data flow → Journey planning](data-flow.md#journey-planning). When the two places are not connected by any chain of buses (a few routes form separate groups), the panel says "Não há ligação de autocarro entre estes dois locais".
@@ -161,29 +168,56 @@ Each bus charges its own fare, with the fare rule (max(10 MT, ⌈km × 10 MT⌉)
 | From a stop or a picked start | `GET /api/journeys?from={stopIds}&to={stopIds}` |
 | From your position | `GET /api/journeys?lat=…&lng=…&to={stopIds}` |
 
-## Tracking a bus (`/track/[id]`)
+## Following a journey (`/viagem`)
 
-![Tracking page: arrival time, distances, price and the route map](images/passenger-track.png)
+![Following a journey from Av. Eduardo Mondlane: walk 60 m to Pandora, bus 17-0 to Laurentina, walk to the Terminal de Chapas da Baixa](images/passenger-follow-transfer.png)
 
-- **Status banner.** For example "Chegando — O transporte está próximo da sua paragem", or "Transporte já passou" when the bus passed your stop and comes back on its next lap.
-- **Six figures:**
-  - **Tempo de chegada** and **Distância autocarro**: the wait, and how far the bus still drives to reach you;
-  - **Chegada ao destino**: the expected clock time at your destination;
-  - **Preço**;
-  - **Tempo de viagem** and **Distância viagem**: minutes and distance on board.
-- **Rota completa.** The route's road path. The bus marker glides along it; your origin and destination are highlighted. The full-screen button enlarges the map.
-- **"Adicionar aos Meus Transportes"** saves an arrival alert for your origin stop. You get an SMS when a bus on a route through that stop is less than 1 km away ([Data flow → Arrival alert](data-flow.md#arrival-alert-and-sms)). Without a session the button answers "Você precisa estar logado para salvar transportes". An expired session clears the stored account so you can sign in again.
-- **"Parar Rastreamento"** goes back to the map (`/search`). The footer shows the refresh period and the time of the last update.
+"Acompanhar viagem →" on a journey opens `/viagem` (`app/components/JourneyFollow.tsx`). The map takes the whole screen, like a ride-hailing app.
+
+**On the map:**
+
+- your position, with your initials or the person icon;
+- the walks, dashed;
+- each bus leg in its route's colour, cut at the stops where you get on and off, with the stops in between;
+- the destination, as a dark dot;
+- every bus of the journey that is still to come, with its plate, moving.
+
+"Ver a viagem toda" fits the whole journey on the screen, and the round button centres the map on you.
+
+**The dark card** is the step you are on:
+
+| Step | What it says |
+|---|---|
+| Walking to the stop | "Caminhe até Portão", the distance and minutes, and the bus: "O autocarro chega à paragem em 10 min · a 4.6 km". When the bus will pass before you can be there: "Chega antes de si: apanha-o na passagem seguinte, às 08:31". |
+| At the stop (within 50 m) | "Espere em Portão", with the same line about the bus |
+| On board | "Saia em Laurentina às 07:52", the minutes and stops left, and the direction |
+| After the last bus | "Caminhe até …", then "Chegou ao destino" |
+
+![On board: where and when to get off, and the stops left](images/passenger-follow-onboard.png)
+
+**Moving on by itself.** The page knows the step from your position and the bus's:
+
+- you are on board when the bus has passed your stop and you are within 120 m of it;
+- you are off when the bus has passed your exit stop, or you are at that stop and the bus has moved on.
+
+Without a position, it assumes you took the bus at its time. "Já entrei no autocarro", "Já saí" and "Ainda não entrei" correct it. The step is kept for the browser tab (`sessionStorage`), so a reload does not lose it.
+
+**Under the card**, every step of the journey with a status dot (done, now, later). Each bus has its route code and colour, plate, where and when to get on and off, stops, minutes, distance and fare. For a later bus: "Este autocarro está a 7 min da paragem agora".
+
+**Buttons:**
+
+- "Avisar-me por SMS quando o autocarro estiver perto de Portão" saves an arrival alert for the first boarding stop. An SMS comes when a bus is under 1 km away ([Data flow → Arrival alert](data-flow.md#arrival-alert-and-sms)). Without a session it says to sign in, and an expired session clears the stored account.
+- "Terminar viagem" goes back to the map.
+
+**One bus on its own.** "Acompanhar →" on a bus of the map opens `/viagem?b={busId}`. It shows that bus's route, where the bus is, and the next 12 stops it reaches with the minutes to each. The account page's alerts open `/track/{busId}?paragem={stopId}`, which redirects here and adds "A sua paragem": the bus's next pass there, either way. Old `/track/{id}?paragem=…&destino=…` links redirect to a one-bus journey.
+
+<img src="images/passenger-track-mobile.png" alt="Following a journey on a phone: the map on top, the step and the bus in the bottom sheet" width="320"> <img src="images/passenger-follow-bus.png" alt="One bus followed on a phone: its route, your stop and the next stops with minutes" width="320">
 
 | When | Request |
 |---|---|
-| Every 10 s | `GET /api/bus/{id}?paragem=ORIGIN&destino=DEST` |
-| Signed in, on open | `GET /api/user/missions` (Bearer) to show whether the stop is already saved |
-| "Adicionar aos Meus Transportes" | `POST /api/user/missions/save` (Bearer) `{"transporteId", "paragemId"}` |
-
-On a phone:
-
-<img src="images/passenger-track-mobile.png" alt="Tracking page on a phone" width="320">
+| On open, every 10 s, and when the step changes | `GET /api/viagem?b=BUS~DE~PARA,…&lat=…&lng=…&a=STEP&bordo=0\|1&para=STOP` |
+| One bus | `GET /api/viagem?b=BUS` or `?b=BUS~STOP` |
+| The alert button | `POST /api/user/missions/save` (Bearer) `{"transporteId", "paragemId"}` |
 
 ## Account and sign-in
 
@@ -210,7 +244,7 @@ Three tabs, each reachable directly with `?tab=`:
 | Tab | `?tab=` | What it does | Requests |
 |---|---|---|---|
 | **Perfil** | `perfil` | Shows the profile; the name can be changed | `GET /api/user/{id}`, `PUT /api/user/{id}` `{"nome"}` |
-| **Missões** | `missoes` | Saved stops (arrival alerts). "Ver Detalhes" opens the tracking page of the first bus that serves that stop; "Remover" deletes the alert. | `GET /api/user/missions`, `DELETE /api/user/missions/{id}`, `GET /api/buses` |
+| **Missões** | `missoes` | Saved stops (arrival alerts). "Ver Detalhes" follows the first bus that serves that stop, with its next pass there; "Remover" deletes the alert. | `GET /api/user/missions`, `DELETE /api/user/missions/{id}`, `GET /api/buses` |
 | **Segurança** | `seguranca` | Changes the password (the current one is required) | `POST /api/user/{id}/change-password` |
 
 ![Account page: profile](images/passenger-profile.png)
@@ -223,7 +257,7 @@ Three tabs, each reachable directly with `?tab=`:
 |---|---|---|
 | `utente` | The passenger's profile (id, name, email, phone, subscription) plus the session `token` | sign-in and registration; refreshed by the account page |
 
-Signing out (avatar menu) clears it. A token that is expired or signed with a rotated secret makes `/api/user/*` answer 401. The account and tracking pages then clear the stored account, and the passenger signs in again.
+Signing out (avatar menu) clears it. A token that is expired or signed with a rotated secret makes `/api/user/*` answer 401. The account page and the alert button then clear the stored account, and the passenger signs in again.
 
 ---
 
