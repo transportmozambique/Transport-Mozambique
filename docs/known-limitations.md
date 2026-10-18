@@ -53,10 +53,10 @@ What is incomplete, estimated or legacy on 2026-10-17, so that you do not mistak
 
 ## Driver portal
 
-- **The bus marker does not move.** The portal's map draws the route and places the bus at the start of the path ([Driver portal → Dashboard](driver-portal.md#dashboard-dashboard)).
+- **The bus marker is the phone's position.** The portal's map places the bus where the phone is, and at the start of the route's path until the browser gives a position. It is not the position passengers see, which comes from the vehicle's GPS or the timetable ([Driver portal → Dashboard](driver-portal.md#dashboard-dashboard)).
 - **Browser GPS stops in the background.** Sharing the phone's position from the portal only works while the page is open and the screen on; use Traccar Client for continuous tracking ([GPS tracking](gps-tracking.md#traccar-client-on-a-phone)).
 - **Stale route after reassignment.** The route and vehicle are those of the sign-in; after the admin moves the driver, the driver signs out and in again.
-- **Trip state does not affect positions.** "Iniciar" and "Finalizar" are a flag shared with USSD; they do not start or stop the bus on the map.
+- **Trip state does not affect positions.** "Iniciar viagem" and "Terminar viagem" are a flag shared with USSD; they do not start or stop the bus on the map.
 
 ## USSD and SMS
 
