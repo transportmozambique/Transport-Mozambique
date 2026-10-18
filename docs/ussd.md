@@ -44,7 +44,7 @@ When `USSD_CALLBACK_KEY` is set, the request URL must also carry `?key=<that val
 | `8` | previous page ("Anterior") |
 | `0` | back ("Voltar") |
 
-Typed answers (a place name in option 1, a plate number, a driver's PIN) are not navigation keys; on a typed step only `0` goes back. Long names are cut with `..` so the screen stays within **182 characters** (the text after `CON `/`END `). Accents are removed (`toGsm`), because one accented letter would make the message Unicode.
+Typed answers (a place name in option 1, a plate number, a driver's PIN) are not navigation keys; on a typed step only `0` goes back. Long names are cut with `..` so the screen stays within **182 characters** (the text after `CON `/`END `). Accents are removed, and ordinals and typographic signs become plain letters (`1º`/`1⁰` → `1o`, `2ª` → `2a`, `–` → `-`) by `toGsm`, because one character outside GSM-7 would make the message Unicode.
 
 **SMS.** Options 1 to 6 can send the result by SMS too. The SMS is sent after the response, with `waitUntil`, so the screen never waits for it. Without `AFRICASTALKING_API_KEY` the SMS is only logged.
 
@@ -165,17 +165,19 @@ Which routes leave from a place, with their length and full-route fare.
 ![Option 2 in the simulator: origin, routes, summary](images/at-sim-routes-flow.png)
 
 ```text
-text="2*3"                              text="2*3*1"
-CON Rotas de Av. Metical:               END Rota 81
-1. Boane (105) (Rota 81)                De: Av. Metical
-0. Voltar                               Para: Boane (105)
-                                        Paragens: 15
-                                        Distancia: 50.9 km
-                                        Tarifa (percurso todo): 510 MT
-                                        Autocarros: 2
+text="2*7*6"  (7: next page of origins, 6: Baixa)   text="2*7*6*1"
+CON Rotas de Baixa:                                 END Baixa - 1o de Maio
+1. 209 1o de Maio                                   De: Baixa
+2. 223 2a Rotunda ( V..                             Para: 1o de Maio
+3. 401 Albazine (Via ..                             Paragens: 100
+4. 402 Albazine                                     Distancia: 19.9 km
+5. 53-0 Albazine(via ..                             Tarifa (percurso todo): 199 MT
+6. 66-0 Albazine(via ..                             Autocarros: 2
+7. Proximo
+0. Voltar
 ```
 
-Distance is measured along the route's road path. The same text is sent by SMS.
+Each route starts with its code, the number on the bus. Several routes go from Baixa to Albazine, and the code tells them apart when the rest of the name is cut to fit the screen. Distance is measured along the route's road path. The same text is sent by SMS.
 
 ## 3 Paragens de uma rota
 
