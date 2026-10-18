@@ -97,7 +97,13 @@ const PAGE_SIZE = 6;
  * either break the screen or cut its length in half, so strip them.
  */
 function toGsm(text: string): string {
-  return text.normalize('NFD').replace(/[̀-ͯ]/g, '');
+  return text
+    .replace(/[º⁰]/g, 'o') // ordinals, as in "1º de Maio" (also typed with a superscript zero)
+    .replace(/ª/g, 'a') // "2ª Rotunda"
+    .replace(/[–—]/g, '-')
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 
 function cutText(text: string, max: number): string {
@@ -366,7 +372,9 @@ async function routesMenu(phoneNumber: string, inputs: string[], pages: number[]
   const routes = await getRoutesFrom(origin);
   if (inputs.length === 2) {
     if (routes.length === 0) return `END Nenhuma rota encontrada de ${origin}.`;
-    return paginateList(`Rotas de ${origin}:`, routes.map((r) => `${r.terminalChegada} (${r.nome})`), currPg);
+    // The route's code first: routes to the same place differ by code and by "(via …)", and
+    // a long name is cut to fit the screen
+    return paginateList(`Rotas de ${origin}:`, routes.map((r) => `${r.codigo} ${r.nome.replace(/^.*? - /, '')}`), currPg);
   }
 
   const route = pickFromList(routes, pages[2], inputs[2]);
@@ -601,6 +609,7 @@ async function getRoutesFrom(origin: string) {
   const vias = await prisma.via.findMany({
     where: { terminalPartida: origin, transportes: { some: {} } },
     select: {
+      codigo: true,
       nome: true,
       terminalPartida: true,
       terminalChegada: true,
@@ -608,10 +617,11 @@ async function getRoutesFrom(origin: string) {
       paragens: { select: { paragem: { select: { geoLocation: true } } } },
       _count: { select: { transportes: true } },
     },
-    orderBy: { terminalChegada: 'asc' },
+    orderBy: [{ terminalChegada: 'asc' }, { codigo: 'asc' }],
   });
 
   return vias.map((via) => ({
+    codigo: via.codigo,
     nome: via.nome,
     terminalPartida: via.terminalPartida,
     terminalChegada: via.terminalChegada,
