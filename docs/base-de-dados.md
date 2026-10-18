@@ -470,6 +470,41 @@ FROM "Utente";
 
 Uma conta só de USSD passa a conta completa quando o mesmo número se regista na web ([Aplicação dos passageiros → Conta e entrada](app-passageiros.md#conta-e-entrada)).
 
+**Apagar os passageiros de teste.** Cada ensaio da opção 1 no [simulador](africas-talking.md#usar-o-menu-no-simulador) cria um passageiro só de USSD com o número de teste, e um alerta de chegada (`MISSION`) na paragem onde a viagem começa. Porquê apagá-los: a verificação de chegadas continua a enviar-lhes SMS. Primeiro vê-se o que existe (só leitura):
+
+```sql
+SELECT u.telefone, u.nome, u."createdAt" AS criado, count(m.id) AS alertas
+FROM "Utente" u
+LEFT JOIN "MISSION" m ON m."utenteId" = u.id
+WHERE u.senha = 'temp'
+  AND regexp_replace(u.telefone, '[^0-9+]', '', 'g') IN ('+258840000000', '+258840000001', '+258840000009', '+258840000077', '+258840000099', '+254711000001')
+GROUP BY u.id
+ORDER BY u."createdAt";
+```
+
+Depois apaga-se numa só instrução, que devolve uma cópia em JSON das linhas apagadas. Só apanha contas criadas pelo USSD (`senha = 'temp'`, nunca registadas na web) com estes números de teste; correr duas vezes não apaga mais nada:
+
+```sql
+WITH alvo AS (
+  SELECT id FROM "Utente"
+  WHERE senha = 'temp'
+    AND regexp_replace(telefone, '[^0-9+]', '', 'g') IN ('+258840000000', '+258840000001', '+258840000009', '+258840000077', '+258840000099', '+254711000001')
+),
+alertas AS (
+  DELETE FROM "MISSION" WHERE "utenteId" IN (SELECT id FROM alvo) RETURNING *
+),
+passageiros AS (
+  DELETE FROM "Utente" WHERE id IN (SELECT id FROM alvo) RETURNING *
+)
+SELECT
+  (SELECT count(*) FROM passageiros) AS passageiros_apagados,
+  (SELECT count(*) FROM alertas) AS alertas_apagados,
+  (SELECT json_agg(p) FROM passageiros p) AS copia_passageiros,
+  (SELECT json_agg(a) FROM alertas a) AS copia_alertas;
+```
+
+Porquê uma só instrução: o [SQL Editor da Neon](guia-neon.md#4-várias-instruções-de-uma-vez) mostra um resultado por instrução, e assim os alertas e os passageiros saem juntos ou não sai nada. A cópia em JSON descarrega-se do resultado ([Guia da Neon → Descarregar](guia-neon.md#5-descarregar-histórico-e-consultas-guardadas)). Outro número de teste junta-se às duas listas.
+
 ## Mudar dados
 
 - **Usar o painel de administração** para os dados da rede e da frota: rotas, paragens, veículos, motoristas, proprietários. Porquê: mantém as linhas relacionadas coerentes (as colunas `codigo*`, as ligações `ViaParagem`).
@@ -590,7 +625,7 @@ Mudaram 49 rotas; 45 delas em menos de um décimo do comprimento. Exemplos:
 - 203 (Baixa – Kongolote) passou de 38,0 para 43,3 km: a linha de 16 km por cima do aeroporto segue agora a N1.
 - 47-0 (Baixa – Tchumene) já não atravessa o Rio Matola ao lado da N4.
 
-Ficaram 10 rotas com um salto de 1 km ou mais. Nove são rotas do OpenStreetMap, redesenhadas pelo script seguinte; a décima, V086, redesenha-se à mão. Os saltos mais longos eram:
+Ficaram 10 rotas com um salto de 1 km ou mais. Nove são rotas do OpenStreetMap, redesenhadas pelo script seguinte; a décima, V086, já estava numa rua recta ([abaixo](#uma-rota-listada-que-já-está-na-estrada-v086)). Os saltos mais longos eram:
 
 - 214 (Tchumene – Magoanine), 18,7 km: o router ia pelo centro da cidade, que o nome da rota exclui;
 - 504 (Novo Cemitério – Praça dos Combatentes), 13,4 km;
@@ -637,7 +672,41 @@ Numa cópia da produção (2026-10-18), depois do `snap-paths.mjs`:
 
 Com `--unlink-far 503,X05` foram desligadas 5 paragens que os saltos antigos tinham apanhado: Dom Nhelete e Casa Branca da 503; Ronil, Cine África / Ministério e Cooperativa da X05. Entrada de Facim (503) e Correios (X05) ficam: são paragens da 503v e da X05v, o regresso.
 
-Um segundo ensaio do `snap-paths.mjs` lista então uma só rota: V086 (Rua dos Bons Amigos – Antena), que não é do OpenStreetMap. A sua linha recta de 2 km é uma rua real que o OpenStreetMap mapeia com uma interrupção, por isso nenhum router a segue; fica como desenhada até ser redesenhada à mão.
+Um segundo ensaio do `snap-paths.mjs` lista então uma só rota: V086 (Rua dos Bons Amigos – Antena), que não é do OpenStreetMap. Fica como está, porque a linha já segue uma rua.
+
+### Uma rota listada que já está na estrada (V086)
+
+O teste do `snap-paths.mjs` pergunta ao router só pelas duas pontas de cada troço recto ([`classify` em `roads.mjs`](../transport-client/scripts/roads.mjs)). Quando há uma estrada mais rápida por outro lado, o router de carro vai por ela, e o troço é contado como "sem estrada ao longo" mesmo estando numa rua. Porquê o teste é assim: um pedido por troço chega para quase todas as rotas, e as que sobram são poucas para se verem uma a uma.
+
+Antes de redesenhar à mão uma rota listada, confirma-se se a linha está numa rua. Para a V086 (2026-10-18), com o troço de 2 km entre `32.637187,-25.7552` e `32.637655,-25.773438` (longitude, latitude):
+
+1. **Há estrada debaixo da linha?** O serviço `nearest` do OSRM dá a estrada mais próxima de um ponto:
+
+   ```bash
+   curl -s "https://routing.openstreetmap.de/routed-car/nearest/v1/driving/32.637474,-25.766142"
+   ```
+
+   A resposta traz `"distance"` em metros: 1,1 m neste ponto, e 1 a 2 m nos outros pontos do troço.
+
+2. **O router segue a linha quando passa pelos pontos dela?** O serviço `route`, com os pontos do próprio percurso como pontos de passagem:
+
+   ```bash
+   curl -s "https://routing.openstreetmap.de/routed-car/route/v1/driving/32.637187,-25.7552;32.637385,-25.762486;32.637447,-25.764931;32.637474,-25.766142;32.637503,-25.767554;32.63756,-25.769724;32.637655,-25.773438?overview=false"
+   ```
+
+   | Pedaço | Linha recta | Pela estrada |
+   |---|---|---|
+   | 1 | 806 m | 808 m |
+   | 2 | 270 m | 271 m |
+   | 3 | 134 m | 134 m |
+   | 4 | 156 m | 156 m |
+   | 5 | 240 m | 240 m |
+   | 6 | 411 m | 412 m |
+   | Total | 2017 m | 2021 m |
+
+   Só com as duas pontas, o mesmo router dá 3800 m: a estrada mais rápida por outro lado.
+
+Os dois resultados juntos dizem que a linha é a rua: nada a redesenhar. Se o primeiro desse dezenas de metros, ou o segundo um total muito maior do que a linha, a rota redesenhava-se no painel ([Painel → Redesenhar o percurso de uma rota](painel-admin.md#tarefa-redesenhar)).
 
 **Rotas novas.** A importação desenha as rotas novas pelas suas paragens, e o painel só guarda percursos pelas estradas ("Nova Via", "Redesenhar percurso"), por isso já não entram saltos rectos. Os scripts antigos `create-*.js` dos primeiros dados ([Visão geral → Código antigo](visao-geral.md#código-antigo-não-publicado)) ainda escrevem linhas rectas de paragem em paragem: não os usar para rotas novas.
 

@@ -42,6 +42,8 @@ Estavam nesta lista e já não são limitações:
 | Sem CI | Cada pull request verifica os tipos das três aplicações, compara os três esquemas e confirma as ligações e a navegação da documentação ([Testes → CI no GitHub](testes.md#ci-no-github)). |
 | No USSD, um nome mal escrito ("chipamanine", "makalala") não encontrava nada, e uma lista errada obrigava a voltar atrás | A pesquisa aceita abreviaturas, sons iguais e erros, e escrever outro nome numa lista faz uma nova pesquisa ([Serviço USSD → Pesquisa tolerante](ussd.md#pesquisa-tolerante)). |
 | A documentação e os comentários do código estavam em inglês | Estão em português, com o porquê de cada escolha; só os ficheiros antigos por apagar ficam em inglês ([abaixo](#código-e-repositório)). |
+| A V086 (Rua dos Bons Amigos – Antena) parecia cortar 2 km em linha recta | A linha já segue a rua: o router dá o mesmo comprimento quando passa pelos pontos do percurso. Nada a redesenhar ([Base de dados → Uma rota listada que já está na estrada](base-de-dados.md#uma-rota-listada-que-já-está-na-estrada-v086)). |
+| `USER_SESSION_SECRET` e `DRIVER_SESSION_SECRET` estavam como variáveis legíveis na Vercel | Valores novos, guardados como Secret ([Segurança → Mudar segredos](seguranca.md#mudar-segredos)). |
 
 ## Posições e horas
 
@@ -51,8 +53,6 @@ Estavam nesta lista e já não são limitações:
   *Contornar:* juntar uma tabela de posições (veículo, hora, ponto, velocidade), escrita por `POST /api/gps` ao lado da actualização que já faz, e apagar as linhas antigas num agendamento. O plano gratuito da Neon guarda cerca de 0,5 GB, por isso guardam-se semanas, não anos.
 - **As distâncias usam o percurso guardado.** Uma rota sem `geoLocationPath` usa linhas rectas entre paragens × `fatorEstrada` (1,3 por omissão).
   *Contornar:* todas as rotas de produção têm percurso. "Nova Via" no painel guarda sempre um.
-- **Um percurso ainda corta uma esquina.** A V086 (Rua dos Bons Amigos – Antena) tem uma linha recta de 2 km: a rua existe, mas o OpenStreetMap tem-na com um corte, por isso nenhum router a segue.
-  *Contornar:* Painel → Vias → V086 → **Redesenhar percurso** → "Começar pelo percurso atual", e arrastar os pontos do troço recto para as ruas por onde o autocarro passa ([Painel → Redesenhar o percurso de uma rota](painel-admin.md#tarefa-redesenhar)). Ou juntar os dois pedaços da rua no OpenStreetMap (qualquer pessoa com conta pode editar) e correr outra vez `scripts/snap-paths.mjs` mais tarde.
 - **Os routers são serviços públicos gratuitos.** Desenhar rotas no painel e as caminhadas no mapa dos passageiros usam os servidores da FOSSGIS e de demonstração do OSRM, que só permitem uso leve. Quando os dois estão em baixo, "Nova Via" e "Redesenhar percurso" não gravam, e as caminhadas desenham-se como linhas rectas.
   *Contornar:* esperar e tentar outra vez, o que chega para um administrador. Para muito tráfego, correr um servidor OSRM ou Valhalla com o extracto de Moçambique do OpenStreetMap (chega uma máquina virtual pequena) e definir `WALK_ROUTER_URL` para as caminhadas; os routers do painel são `ROUTERS` em [`RouteDrawer.tsx`](../transport-admin/app/components/RouteDrawer.tsx).
 - **A mesma velocidade em todo o lado.** O trânsito, a hora do dia e o tempo parado nas paragens não estão no modelo; só a paragem de 5 minutos em cada terminal.

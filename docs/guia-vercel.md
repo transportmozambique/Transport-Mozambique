@@ -77,7 +77,7 @@ Abre-se um projecto a partir da vista geral da equipa. O menu da esquerda tem as
    As chaves que enviam SMS reais ou escrevem na produção ficam fora de Preview. Porquê: qualquer ramo, mesmo um em teste, tem uma pré-visualização.
 4. **Save**, depois [publicar outra vez](#publicações). As funções em execução ficam com os valores com que arrancaram até à publicação seguinte.
 
-**"Needs Attention".** A Vercel marca os segredos guardados como Config. Em `transport-mz`, `USER_SESSION_SECRET` e `DRIVER_SESSION_SECRET` estão marcados. Para os corrigir:
+**"Needs Attention".** A Vercel marca os segredos guardados como Config. `USER_SESSION_SECRET` e `DRIVER_SESSION_SECRET` de `transport-mz` estiveram marcados até 2026-10-18; foram corrigidos assim, e o mesmo serve para qualquer outro:
 
 1. juntar cada um outra vez como **Secret**, com um valor aleatório novo (`openssl rand -base64 32`);
 2. apagar o de tipo Config;
@@ -85,7 +85,15 @@ Abre-se um projecto a partir da vista geral da equipa. O menu da esquerda tem as
 
 Os segredos de sessão novos fazem todos os passageiros e motoristas sair da conta uma vez ([Segurança → Mudar segredos](seguranca.md#mudar-segredos)).
 
-**Mudar `DATABASE_URL`** (depois de repor a palavra-passe da Neon, por exemplo) é igual: editá-la em `transport-mz` e `transport-mz-admin`, e publicar os dois outra vez.
+O mesmo pela [CLI da Vercel](https://vercel.com/docs/cli), numa pasta ligada ao projecto (`vercel link --project transport-mz`). O valor vai directo do gerador para a Vercel, sem aparecer no ecrã:
+
+```bash
+openssl rand -base64 32 | tr -d '\r\n' | vercel env add USER_SESSION_SECRET production --sensitive --force --yes
+```
+
+Porquê o `tr`: no Windows o `openssl` termina a linha com `\r\n`, e a Vercel guardaria esses caracteres no segredo. `--sensitive` é o tipo Secret; `--force` substitui o valor que existe. Repete-se para `preview`.
+
+**Mudar `DATABASE_URL`** (depois de repor a palavra-passe da Neon, por exemplo) é igual: juntá-la outra vez como Secret em `transport-mz` e `transport-mz-admin`, apagar as linhas antigas, e publicar os dois outra vez.
 
 ## Publicações
 
