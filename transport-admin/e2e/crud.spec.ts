@@ -84,6 +84,9 @@ test('Paragem: criar, listar, ver, editar, eliminar', async ({ page }) => {
   // The map is tilted (pitch 60), so the flat projection is only a first guess: click, read
   // where the click landed, and refine per axis with the secant method.
   const lat = page.getByPlaceholder('-25.9655'), lng = page.getByPlaceholder('32.5892');
+  // Each click leaves the new stop's marker where it landed, right where the next, refined click
+  // goes: let clicks through the markers to the map
+  await page.addStyleTag({ content: '.maplibregl-marker { pointer-events: none; }' });
   const clickAt = async (pos: { x: number; y: number }) => {
     await canvas.click({ position: pos });
     await expect(lat).not.toHaveValue('');
