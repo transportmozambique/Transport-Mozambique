@@ -6,7 +6,7 @@ The back office. Administrators manage the network (provinces, municipalities, r
 
 The interface is in Portuguese. Screenshots on this page were taken on a local copy of the production data, with phone and ID numbers blurred.
 
-**On this page:** [Sign-in](#sign-in-and-session) · [Layout and search](#layout-and-search) · [Dashboard](#dashboard-dashboard) · [Vehicles](#vehicles-transportes) · [Routes](#routes-vias) · [Stops](#stops-paragens) · [Drivers](#drivers-motoristas) · [Owners](#owners-proprietarios) · [Provinces and municipalities](#provinces-and-municipalities) · [Passengers](#passengers-utentes) · [Administrators](#administrators-and-profile) · [Reports](#reports-relatorios) · [API used by each page](#api-used-by-each-page)
+**On this page:** [Sign-in](#sign-in-and-session) · [Common tasks, step by step](#common-tasks-step-by-step) · [Layout and search](#layout-and-search) · [Dashboard](#dashboard-dashboard) · [Vehicles](#vehicles-transportes) · [Routes](#routes-vias) · [Stops](#stops-paragens) · [Drivers](#drivers-motoristas) · [Owners](#owners-proprietarios) · [Provinces and municipalities](#provinces-and-municipalities) · [Passengers](#passengers-utentes) · [Administrators](#administrators-and-profile) · [Reports](#reports-relatorios) · [Fare rule](#fare-rule-tarifa) · [API used by each page](#api-used-by-each-page)
 
 ---
 
@@ -28,6 +28,78 @@ node create-admin.js   # asks for name, email and password (at least 10 characte
 
 It writes to the database named by `DATABASE_URL` (environment or `.env`). Run it again with an existing email to set a new password. After that, administrators are managed in the app ([below](#administrators-and-profile)). All administrators have the same rights.
 
+## Common tasks, step by step
+
+Each task below is the shortest way through the screens. The sections after this one describe every page in full.
+
+<a id="task-route"></a>**Add a route**
+
+1. Sidebar → **Vias** → **Nova Via**.
+2. Type the name (for example "Baixa - Museu"), a code that no other route uses (`V120`) and choose the municipality.
+3. Click the map at the first terminal, then at each turn the bus takes, up to the last terminal. The line follows the roads after each click. Drag a point to move it; click it to remove it.
+4. Check the list "Paragens da Rota": the stops within 50 m of the line are ticked. Untick any the bus does not stop at.
+5. Press **Criar Via**. If it refuses with "Não foi possível calcular o percurso pelas estradas…", the routers did not answer: move a point to try again ([details](#routes-vias)).
+
+<a id="task-redraw"></a>**Fix a route whose line cuts across blocks**
+
+1. **Vias** → open the route → **Redesenhar percurso**.
+2. Press **Começar pelo percurso atual**. The current line is dashed in grey, the new one follows the roads.
+3. Where the new line leaves the bus's way, drag a point onto the right street, or click to add one.
+4. Check the two stop lists (stops on the new line; linked stops it no longer passes) and press **Guardar percurso**. Fares, times and positions use the new line at once ([details](#routes-vias)).
+
+<a id="task-stop"></a>**Add a stop**
+
+1. **Paragens** → **Nova Paragem**.
+2. Type the name and a code, and click the map where the stop is. The routes passing within 100 m are offered.
+3. Tick the routes that stop there (and "Esta paragem é um terminal" if it is a terminal) and press **Criar Paragem**.
+
+<a id="task-vehicle"></a>**Add a vehicle and put it on a route**
+
+1. **Transportes** → **Novo Transporte**.
+2. Fill in plate, model, make, colour, year, capacity and status, choose the **route**, and press **Criar Transporte**.
+3. From the next minute, the vehicle shows on the passenger map at its timetable position on that route ([GPS tracking](gps-tracking.md#how-a-position-is-chosen)).
+4. To move an existing vehicle to another route: **Vias** → the new route → **Editar** → **Atribuir Transporte**.
+
+<a id="task-driver"></a>**Add a driver and let them sign in**
+
+1. **Motoristas** → **Novo Motorista**. Fill in the personal, document and contact fields and press **Criar Motorista**.
+2. Give them a vehicle: **Motoristas** → **Atribuir Motoristas**. Pick the vehicle on the left and the driver on the right, then **Atribuir Motorista**. (Or, on the vehicle's page, "Atribuir Motorista".)
+3. Open the driver's page and press **Gerar PIN** in the "PIN de Acesso" card. Write the 6 digits down: they are shown once.
+4. Give the driver the PIN and the portal's address, https://transport-mz-driver.vercel.app. They sign in with their phone number and the PIN ([Driver portal](driver-portal.md#a-drivers-day-step-by-step)). The same PIN works in USSD option 6.
+
+<a id="task-pin"></a>**Reset a forgotten PIN**
+
+Driver's page → **Gerar novo PIN**. The old PIN stops working at once; give the driver the new one.
+
+<a id="task-reassign"></a>**Move a driver to another vehicle**
+
+On the old vehicle's page, press × next to the driver; then assign them to the new vehicle as in [Add a driver](#task-driver), step 2. An open driver portal shows the new vehicle and route within 5 minutes, without signing out.
+
+<a id="task-gps"></a>**Make a vehicle report real GPS positions**
+
+1. **Transportes** → open the vehicle → card **Rastreador GPS** → **Gerar código do dispositivo**.
+2. Copy the 20-character code shown (it is shown once) and the settings under it.
+3. Put the code in a GPS tracker or in the Traccar Client app on a phone that travels in the vehicle ([GPS tracking](gps-tracking.md#1-create-the-device-code)). Or the driver pastes it in the driver portal's profile ("Código GPS do veículo").
+4. When positions arrive, the card says **GPS ativo** and passengers see the real position instead of the timetable one.
+
+<a id="task-fare"></a>**Change the fares or the speeds**
+
+1. Sidebar → Configuração → **Tarifa**.
+2. Change the minimum fare, the price per km or a speed. The grey line shows what 2, 5 and 15 km cost with the values typed.
+3. Press **Guardar tarifa**. The web app and USSD use the new values within a minute ([details](#fare-rule-tarifa)).
+
+<a id="task-find"></a>**Find a vehicle, route or driver**
+
+Type in the search box at the top of any page: a plate (`ADA-1`), a route code or name (`V062`, `Museu`), a driver's name or ID, or at least 3 digits of a phone number in any spacing (`8718315`). Enter opens the first match.
+
+<a id="task-report"></a>**Print a list**
+
+**Relatórios** → **Gerar PDF** on the card you want → **Imprimir**, and choose "Save as PDF" in the print dialog.
+
+<a id="task-admin"></a>**Add another administrator**
+
+**Administradores** → **Novo Administrador**: name, email and a password typed twice, then **Criar Administrador**. Every administrator can do everything, including this.
+
 ## Layout and search
 
 The sidebar groups the sections:
@@ -38,6 +110,7 @@ The sidebar groups the sections:
 | Pessoas | Proprietários, Motoristas, Utentes, Administradores |
 | Território | Províncias, Municípios |
 | Análise | Relatórios |
+| Configuração | Tarifa |
 
 On a computer (1024 px wide or more) the sidebar stays on the left; the arrow at its edge folds it down to icons. On a phone, a tablet or a narrower window there is no sidebar: the button at the top left ("Abrir o menu") opens the menu over the whole screen, and choosing a section, the X in the same corner, or Esc closes it. The avatar menu at the top right has "Meu Perfil" and "Sair".
 
@@ -53,7 +126,7 @@ The list tables show fewer columns on narrower screens, so that they fit without
 | Vias | name, code, municipality | `/vias/{id}` |
 | Motoristas | name, ID number (BI), licence number, phone | `/motoristas/{id}` |
 
-Case does not matter. Enter opens the first match and Esc closes the list. Phones are matched as stored, with their spaces (`87 183`).
+Case does not matter. Enter opens the first match and Esc closes the list. A search made of at least 3 digits (spaces, `+` and `-` allowed) also matches drivers' phones by their digits, whatever the stored spacing and with or without `258`: `8718315`, `87 183 15` and `+258871831` all find `+258 87 183 1581`. The Motoristas and Utentes lists search phones the same way.
 
 ![Header search for "mat": vehicles on Matola routes, then Matola's routes](images/admin-header-search.png)
 
@@ -148,7 +221,7 @@ How to set up the phone or tracker is in [GPS tracking](gps-tracking.md#1-create
 
 1. Fill in name, code and municipality. The terminals can stay empty: the first and last stop of the path are used.
 2. Click the map, or a stop, to add a point. Drag a point to move it; click it to remove it. "Desfazer", "Refazer" and "Limpar Rota" work on the points.
-3. After each change, the points are sent to the public OSRM router (`router.project-osrm.org`), which returns the road path through them. "Percurso pelas estradas" shows its length. If OSRM fails, the line is drawn dashed between the points and "Criar Via" refuses to save ("Não foi possível calcular o percurso pelas estradas…"); move or add a point to try again.
+3. After each change, the points are sent to a public OSRM router, which returns the road path through them: the FOSSGIS car router (`routing.openstreetmap.de`) first, and the OSRM demo router (`router.project-osrm.org`) when FOSSGIS does not answer. "Percurso pelas estradas" shows its length. If both fail, the line is drawn dashed between the points and "Criar Via" refuses to save ("Não foi possível calcular o percurso pelas estradas…"); move or add a point to try again.
 4. Stops within **50 m** of the road path are listed under "Paragens da Rota", in travel order, and are linked to the route when it is created. Untick any you do not want.
 5. "Criar Via" stores the road path in `Via.geoLocationPath` as `lng,lat;lng,lat;…` ([Database → Conventions](database.md#conventions-read-this-before-querying)).
 
@@ -259,7 +332,23 @@ Nine reports: one per entity (Transportes, Vias, Paragens, Proprietários, Motor
 2. A preview opens with the first 8 fields of up to 100 rows (passwords are never shown).
 3. **"Imprimir"** opens the browser's print dialog; choose "Save as PDF" to get the file.
 
-The search and category filters on top choose among the report cards; they do not filter the data. "Histórico" and "Agendar" open pages that only say the feature is "em desenvolvimento" ([Known limitations](known-limitations.md)).
+The search and category filters on top choose among the report cards; they do not filter the data.
+
+## Fare rule (`/tarifa`)
+
+<img src="images/admin-tarifa.png" alt="Tarifa page: minimum fare, price per km, travel and arrival speeds, road factor, the fares for 2, 5 and 15 km, and Guardar tarifa" width="720">
+
+The rule behind every fare, travel time and timetable position, on the web, in USSD and in this dashboard ([Configuration → Fare rule](configuration.md#fare-rule-tarifa)). Sidebar → Configuração → **Tarifa**.
+
+| Field | Default | Effect |
+|---|---|---|
+| Tarifa mínima | 10 MT | The fare of any short trip. Whole meticais, 0 to 1000. |
+| Preço por km | 10 MT/km | Fare = the larger of the minimum and ⌈km × price⌉, km measured along the route's road path. |
+| Velocidade de viagem | 30 km/h | Speed of the buses without GPS: their positions, arrival times and trip times. 5 to 120. |
+| Velocidade de chegada | 45 km/h | Only for routes without a road path. 5 to 120. |
+| Factor de estrada | 1.3 | Road distance ÷ straight line, only for routes without a road path. 1 to 3. |
+
+The grey line under the fields shows what 2, 5 and 15 km cost with the values typed, before saving. **"Guardar tarifa"** saves (`PUT /api/tarifa`); a value out of range is refused with the allowed range. The passenger app and USSD read the rule through a 60-second cache, so the new fares show within a minute. The admin's own timetable views use the travel speed at once.
 
 ## API used by each page
 
@@ -270,7 +359,7 @@ All under `transport-admin/app/api`, all behind the session cookie. Request and 
 | Header search | `GET /api/transportes?search=`, `GET /api/vias?search=`, `GET /api/motoristas?search=` |
 | Dashboard | `GET /api/dashboard/stats`, `GET /api/transportes/estado` |
 | Vehicles | `GET/POST /api/transportes`, `GET/PUT/PATCH/DELETE /api/transportes/{id}`, `GET /api/transportes/estado`, `GET /api/transportes/{id}/posicao`, `GET /api/transportes/{id}/operacao`, `GET/POST/DELETE /api/transportes/{id}/gps`, `POST/DELETE /api/transportes/{id}/atribuir-motorista`, `POST/DELETE /api/transportes/{id}/atribuir-proprietario`, `POST/DELETE /api/transportes/{id}/proprietario` |
-| Routes | `GET/POST /api/vias`, `GET/PATCH/DELETE /api/vias/{id}`, `PATCH /api/transportes/{id}`; the public OSRM router from the browser |
+| Routes | `GET/POST /api/vias`, `GET/PATCH/DELETE /api/vias/{id}`, `PATCH /api/transportes/{id}`; from the browser, the FOSSGIS car router, or the OSRM demo router when it fails |
 | Stops | `GET/POST /api/paragens`, `GET/PATCH/DELETE /api/paragens/{id}` |
 | Drivers | `GET/POST /api/motoristas`, `GET/PUT/DELETE /api/motoristas/{id}`, `GET/POST/DELETE /api/motoristas/{id}/pin`, `GET/POST/DELETE /api/motoristas/atribuir` |
 | Owners | `GET/POST /api/proprietarios`, `GET/PUT/DELETE /api/proprietarios/{id}` |
@@ -278,6 +367,7 @@ All under `transport-admin/app/api`, all behind the session cookie. Request and 
 | Passengers | `GET/POST /api/utentes`, `GET/PUT/DELETE /api/utentes/{id}` |
 | Administrators, profile | `GET/POST /api/administradores`, `GET/PATCH/DELETE /api/administradores/{id}`, `POST /api/administradores/{id}/change-password` |
 | Reports | the list endpoints above with `?limit=5000`, `GET /api/relatorios/stats` |
+| Fare rule | `GET/PUT /api/tarifa` |
 | Sign-in | `POST /api/auth/admin/login`, `POST /api/auth/admin/logout`, `GET /api/auth/admin/session` |
 
 ---

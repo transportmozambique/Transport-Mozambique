@@ -380,26 +380,7 @@ export default function Relatorios() {
               <p className="hidden lg:block text-slate-600 mt-1">Gere relatórios e análises do sistema</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => router.push('/relatorios/historico')}
-              className="bg-slate-800 hover:bg-slate-800 text-white px-4 py-2 rounded-xl font-medium flex items-center space-x-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>Histórico</span>
-            </button>
-            <button
-              onClick={() => router.push('/relatorios/agendar')}
-              className="bg-slate-800 hover:bg-slate-800 text-white px-4 py-2 rounded-xl font-medium flex items-center space-x-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>Agendar</span>
-            </button>
-          </div>
+          {/* "Histórico" and "Agendar" are not built yet (their pages only say so), so they have no button */}
         </div>
 
         {/* Stats Cards */}

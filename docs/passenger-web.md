@@ -166,8 +166,8 @@ Each bus charges its own fare, with the fare rule (max(10 MT, ⌈km × 10 MT⌉)
 
 | When | Request |
 |---|---|
-| From a stop or a picked start | `GET /api/journeys?from={stopIds}&to={stopIds}` |
-| From your position | `GET /api/journeys?lat=…&lng=…&to={stopIds}` |
+| From a stop or a picked start | `POST /api/journeys` `{"from": [stopIds], "to": [stopIds]}` |
+| From your position | `POST /api/journeys` `{"lat", "lng", "to": [stopIds]}`: the position is in the body, so it is not kept in the request logs |
 
 ### Walks along the streets
 
@@ -224,7 +224,7 @@ Without a position, it assumes you took the bus at its time. "Já entrei no auto
 
 | When | Request |
 |---|---|
-| On open, every 10 s, and when the step changes | `GET /api/viagem?b=BUS~DE~PARA,…&lat=…&lng=…&a=STEP&bordo=0\|1&para=STOP` |
+| On open, every 10 s, and when the step changes | `POST /api/viagem?b=BUS~DE~PARA,…&a=STEP&bordo=0\|1&para=STOP` with `{"lat", "lng"}` in the body |
 | One bus | `GET /api/viagem?b=BUS` or `?b=BUS~STOP` |
 | The alert button | `POST /api/user/missions/save` (Bearer) `{"transporteId", "paragemId"}` |
 

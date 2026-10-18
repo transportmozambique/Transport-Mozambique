@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { idsByPhoneDigits } from '@/lib/phoneSearch';
 import bcrypt from 'bcryptjs';
 
 export async function GET(request: Request) {
@@ -11,7 +12,8 @@ export async function GET(request: Request) {
 
     const skip = (page - 1) * limit;
 
-    // Build where clause for search
+    // Build where clause for search; a phone number also matches phones stored with spaces
+    const phoneIds = search ? await idsByPhoneDigits('Utente', search) : [];
     const where = search
       ? {
           OR: [
@@ -19,6 +21,7 @@ export async function GET(request: Request) {
             { email: { contains: search, mode: 'insensitive' as const } },
             { telefone: { contains: search, mode: 'insensitive' as const } },
             { mISSION: { contains: search, mode: 'insensitive' as const } },
+            ...(phoneIds.length ? [{ id: { in: phoneIds } }] : []),
           ],
         }
       : {};

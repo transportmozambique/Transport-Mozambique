@@ -5,7 +5,7 @@ Transport Mozambique is three Next.js applications sharing one PostgreSQL databa
 - **The shared database.** Every app reads and writes it through Prisma.
 - **One HTTP dependency.** The driver portal calls the passenger app's API.
 
-Outside services are Africa's Talking (USSD and SMS), OpenFreeMap (map tiles), the public OSRM router (for drawing new routes in the admin) and the FOSSGIS foot router (walks along the streets on the passenger maps).
+Outside services are Africa's Talking (USSD and SMS), OpenFreeMap (map tiles), the public OSRM routers of FOSSGIS and of the OSRM project (for drawing routes in the admin, and walks along the streets on the passenger maps) and GitHub Actions (the arrival-check schedule). Where the data itself came from is in [Data sources](data-sources.md).
 
 **On this page:** [System diagram](#system-diagram) · [Components](#components) · [How the parts connect](#how-the-parts-connect) · [Design decisions](#design-decisions) · [Tech stack](#tech-stack) · [Repository layout](#repository-layout) · [Not deployed](#not-deployed-legacy-code)
 
@@ -71,7 +71,7 @@ flowchart LR
 The passenger app does more than its name says. Besides the passenger web pages it hosts:
 
 - the **USSD endpoint** (`/api/ussd`);
-- the **driver API** (`/api/driver/login`, `/api/driver/trip`, `/api/driver/seguidores`);
+- the **driver API** (`/api/driver/login`, `/api/driver/me`, `/api/driver/trip`, `/api/driver/seguidores`);
 - **GPS ingestion** (`/api/gps`);
 - the **arrival SMS check**.
 
@@ -85,7 +85,7 @@ It is the platform's public backend.
 - **Passenger app → Africa's Talking.** SMS go out through the `africastalking` SDK (`lib/notifications.ts`). They are sent after the USSD reply with `waitUntil` from `@vercel/functions`, so the phone never waits for the SMS. See [Africa's Talking](africas-talking.md).
 - **GPS devices → passenger app.** A phone running Traccar Client, any tracker forwarded by a Traccar server, or the driver portal itself posts positions to `/api/gps` with a per-vehicle device code. See [GPS tracking](gps-tracking.md).
 - **Admin → passenger app: none.** The admin computes vehicle positions with its own copy of the position code (`transport-admin/lib/vehiclePosition.ts`). Its only reference to the passenger app is the GPS server URL it shows when a device code is created (`GPS_SERVER_URL`).
-- **Maps.** All three apps draw maps with MapLibre GL and OpenFreeMap vector tiles. Some admin forms use OpenStreetMap raster tiles. The admin's "Nova Via" and "Redesenhar percurso" pages (`RouteDrawer`) ask the public OSRM router to snap the points you click to the road network. Everywhere else, maps draw the stored path, which already follows the roads. Walks on the passenger maps are drawn along the streets with paths from the FOSSGIS foot router, asked by the passenger app's server (`/api/walk`).
+- **Maps.** All three apps draw maps with MapLibre GL and OpenFreeMap vector tiles. Some admin forms use OpenStreetMap raster tiles. The admin's "Nova Via" and "Redesenhar percurso" pages (`RouteDrawer`) ask a public OSRM router (FOSSGIS first, the OSRM demo server when it fails) to snap the points you click to the road network. Everywhere else, maps draw the stored path, which already follows the roads. Walks on the passenger maps are drawn along the streets with paths from the FOSSGIS foot router, asked by the passenger app's server (`/api/walk`).
 
 ## Design decisions
 
@@ -99,7 +99,7 @@ These choices explain most of the code's shape.
 2. **The USSD service is stateless.** Africa's Talking resends the whole input history in `text` (`1*3*1`). The server rebuilds the menu path from it on every request, so it keeps no session storage. See [USSD](ussd.md#how-a-session-works).
 3. **Sessions are signed tokens, not database rows.** Passengers (90 days) and drivers (30 days) get `id.expiry.signature` tokens, signed with HMAC-SHA256. Admins get the same kind of token in an `HttpOnly` cookie (12 hours). Without the secret in production, sign-in is refused (fails closed). See [Security](security.md).
 4. **Prices and speeds live in the database.** The active `Tarifa` row sets the minimum fare, the price per km, the road factor and the speeds. The web and USSD share it through `getFareRule()`, cached for 60 s. Distances are measured along the route's road path. See [Configuration → Fare rule](configuration.md#fare-rule-tarifa).
-5. **Periodic work rides on traffic.** The arrival SMS check (`checkAndNotifyUsers`) runs when the live map polls positions (`/api/buses?fields=position`) and when a stop or a journey is requested (`/api/stops/{id}`, `/api/journeys`). It runs at most once every 30 s per server instance, so no cron job is needed. See [Data flow → Arrival alert](data-flow.md#arrival-alert-and-sms).
+5. **Periodic work: a GitHub schedule, plus traffic.** A GitHub Actions workflow calls the arrival SMS check (`checkAndNotifyUsers`, through `POST /api/simulation`) every 5 minutes, because Vercel's Hobby plan only allows daily cron jobs. The check also runs when the live map polls positions (`/api/buses?fields=position`) and when a stop or a journey is requested, at most once every 30 s per server instance. See [Data flow → Arrival alert](data-flow.md#arrival-alert-and-sms).
 6. **Secrets are stored hashed where possible.** Driver PINs and passenger and admin passwords are bcrypt hashes. GPS device codes are stored as SHA-256 hashes. The PIN and the device code are shown once, when the admin creates them.
 
 ## Tech stack

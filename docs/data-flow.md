@@ -26,7 +26,7 @@ sequenceDiagram
   B->>C: GET /api/stops/{id}
   C->>DB: every Transporte (position fields)
   C-->>B: routes × directions: next bus, stops reached;<br/>every place reachable, earliest arrival first
-  B->>C: GET /api/journeys?from={stop} or lat,lng & to={stops}
+  B->>C: POST /api/journeys {from: stops, or lat, lng; to: stops}
   Note over C: candidates ranked on fixed speeds + 10 min per bus,<br/>then timed with estimateBusTrip() at each stop's arrival time
   C->>DB: Transporte of the candidate routes (+ active Tarifa, cached 60 s)
   C-->>B: up to 3 journeys: walks + buses with times, fares, paths
@@ -100,7 +100,7 @@ sequenceDiagram
   participant DB as PostgreSQL
   B->>B: watchPosition (the passenger's position)
   loop every 10 s, and when the step changes
-    B->>C: GET /api/viagem?b=BUS~DE~PARA,…&lat,lng&a=STEP&bordo=0|1
+    B->>C: POST /api/viagem?b=BUS~DE~PARA,…&a=STEP&bordo=0|1 {lat, lng}
     C->>DB: the journey's Transporte (position fields) + Tarifa; network cached 5 min
     C-->>B: each walk and bus: done / now / later, times from now,<br/>bus positions, where each bus is on its leg (antes / entre / depois)
     B->>B: on board when the bus is past the stop and the passenger is with it;<br/>off when the bus is past the exit stop
@@ -125,7 +125,7 @@ A `MISSION` row is "this passenger is waiting at this stop". There are two ways 
 ```mermaid
 sequenceDiagram
   autonumber
-  participant T as Trigger (the 5-second position poll, a stop or a journey request)
+  participant T as Trigger (GitHub Actions every 5 min, or the 5-second position poll, a stop or a journey request)
   participant C as transport-client (lib/busSimulator.ts)
   participant DB as PostgreSQL
   participant AT as Africa's Talking
@@ -142,6 +142,8 @@ sequenceDiagram
     end
   end
 ```
+
+**What starts the check.** A GitHub Actions workflow (`.github/workflows/arrival-check.yml`) calls `POST /api/simulation {"action":"check"}` every 5 minutes, so passengers waiting through USSD get their SMS even when nobody has the web app open. GitHub can start a scheduled run a few minutes late, and it pauses the schedules of a repository with no activity for 60 days (turn it back on under Actions → Arrival SMS check → Enable workflow). While the web app is used, the 5-second position poll and the stop and journey requests also run it, at most once every 30 s per server instance. Vercel's Hobby plan only allows daily cron jobs, which is why the schedule is on GitHub.
 
 The alert is marked before the SMS is sent, so a failing SMS is not retried every 30 s. Asking again on the web for the same stop restarts the alert (new `createdAt`, `notificadoEm` cleared). USSD reuses an alert for that stop from the last 24 h, or creates a new one. `POST /api/simulation {"action":"check"}` runs the check on demand.
 
@@ -184,6 +186,11 @@ sequenceDiagram
   C->>DB: Motorista by phone (ignores spaces and +258), bcrypt.compare(PIN)
   C-->>D: token (30 days) + driver, vehicle, route, stops, trip state
   D->>D: localStorage["motorista"] = response
+  loop on open and every 5 min
+    D->>C: GET /api/driver/me (Bearer)
+    C-->>D: driver, vehicle, route, stops as they are now
+    D->>D: redraw only if the vehicle or route changed
+  end
   D->>C: POST /api/driver/trip {action: "iniciar"} (Bearer)
   C->>DB: UPDATE Motorista SET emViagem = true, viagemIniciadaEm = now()
   loop every 30 s

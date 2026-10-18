@@ -13,17 +13,33 @@ import { maybeCheckArrivals } from '@/lib/busSimulator';
  *   a      the leg the passenger is on (0-based); bordo=1 when they are on its bus
  *
  * GET /api/viagem?b=BUS[&paragem=STOP]: one bus on its own, with the stops ahead
+ *
+ * POST with the same query and the position in a JSON body {"lat", "lng"} is what the app uses:
+ * a position in the query would be kept in the request logs.
  */
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
+  return follow(params, point(params.get('lat'), params.get('lng')));
+}
+
+export async function POST(request: NextRequest) {
+  const body = await request.json().catch(() => null);
+  return follow(request.nextUrl.searchParams, point(body?.lat, body?.lng));
+}
+
+function point(latValue: unknown, lngValue: unknown): [number, number] | null {
+  if (latValue === null || latValue === undefined || latValue === '' || lngValue === null || lngValue === undefined || lngValue === '') return null;
+  const lat = Number(latValue);
+  const lng = Number(lngValue);
+  return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? [lat, lng] : null;
+}
+
+async function follow(params: URLSearchParams, position: [number, number] | null) {
   const legs = (params.get('b') ?? '')
     .split(',')
     .map((s) => s.split('~').map((x) => x.trim()))
     .filter(([busId]) => busId);
   if (!legs.length) return NextResponse.json({ error: 'Indique os autocarros (b)' }, { status: 400 });
-  const lat = Number(params.get('lat'));
-  const lng = Number(params.get('lng'));
-  const position = params.has('lat') && Number.isFinite(lat) && Number.isFinite(lng) ? ([lat, lng] as [number, number]) : null;
   waitUntil(maybeCheckArrivals());
 
   try {

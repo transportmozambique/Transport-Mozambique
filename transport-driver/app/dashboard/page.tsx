@@ -24,6 +24,17 @@ interface MotoristaData {
 // Passengers waiting along the route (stop alerts asked for in the last 3 hours)
 interface Waiting { total: number; paragens: Array<{ nome: string; aEspera: number; }>; }
 
+/** What the admin can change about a driver: when it differs, the portal shows the new data */
+function assignmentKey(m: MotoristaData) {
+  const t = m.transporte;
+  const v = m.via;
+  return JSON.stringify([
+    m.nome, m.telefone, m.status,
+    t ? [t.id, t.matricula, t.marca, t.modelo] : null,
+    v ? [v.id, v.nome, v.codigo, v.geoLocationPath, v.paragens.map((p) => p.id)] : null,
+  ]);
+}
+
 const BUS_SVG = `<svg width="40" height="48" viewBox="0 0 48 56" style="display:block;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.45))">
   <ellipse cx="24" cy="52" rx="18" ry="3" fill="#000" opacity="0.25"/>
   <rect x="8" y="16" width="32" height="34" rx="7" fill="#0f172a" stroke="#fff" stroke-width="2"/>
@@ -279,6 +290,31 @@ export default function DashboardPage() {
     const i = setInterval(load, 60000);
     return () => { cancelled = true; clearInterval(i); };
   }, [sessionToken]);
+
+  // The vehicle and route as the admin has them now: asked on open and every 5 minutes, so a
+  // reassignment shows without signing out. The map is redrawn only when they changed.
+  useEffect(() => {
+    if (!sessionToken) return;
+    let cancelled = false;
+    const load = () => fetch(`${API_BASE}/api/driver/me`, { headers: { Authorization: `Bearer ${sessionToken}` } })
+      .then((r) => {
+        if (r.status === 401 && !cancelled) handleLogout();
+        return r.ok ? r.json() : null;
+      })
+      .then((fresh: MotoristaData | null) => {
+        if (!fresh || cancelled) return;
+        setMotorista((current) => {
+          if (!current || assignmentKey(current) === assignmentKey(fresh)) return current;
+          const next = { ...fresh, token: current.token };
+          try { localStorage.setItem('motorista', JSON.stringify(next)); } catch {}
+          return next;
+        });
+      })
+      .catch(() => {});
+    load();
+    const i = setInterval(load, 5 * 60000);
+    return () => { cancelled = true; clearInterval(i); };
+  }, [sessionToken, handleLogout]);
 
   const toggleRide = async () => {
     if (!motorista || tripBusy) return;

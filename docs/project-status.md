@@ -17,6 +17,7 @@ Where the project stands on 2026-10-18: what runs, what data it has, what is wai
 | Bus positions | The **timetable model** for every bus. GPS intake works (`/api/gps`, Traccar Client, the driver portal), but no vehicle has a device yet ([GPS tracking](gps-tracking.md)). |
 | Database | Neon Postgres, branch `production` ([Neon guide](neon-guide.md)). |
 | Hosting | Three Vercel projects; every merge into `main` deploys them ([Vercel guide](vercel-guide.md)). |
+| Checks and schedule | GitHub Actions: CI on every pull request ([Testing → CI](testing.md#ci-on-github)), and the arrival-SMS check every 5 minutes ([Deployment](deployment.md#projects)). |
 
 ## The data
 
@@ -29,7 +30,9 @@ Production on 2026-10-18 ([counted in Neon](neon-guide.md#3-paste-a-query-and-ru
 | Vehicles | 451: the 111 first ones, and 340 for the imported routes (plates `ADA-001M` to `ADA-340M`) |
 | Drivers | 451, one per vehicle: the 111 first ones, and 340 demo drivers for the imported vehicles |
 | Passengers, alerts | 8 passengers, 3 arrival alerts, all from testing |
-| Fare rule | 10 MT minimum, 10 MT per km, 30 km/h |
+| Fare rule | 10 MT minimum, 10 MT per km, 30 km/h; changed on the admin's Tarifa page |
+
+Where each piece came from, and what is made up, is in [Data sources](data-sources.md).
 
 The data scripts' changes were applied to production on 2026-10-18, as one SQL statement in the [Neon SQL Editor](neon-guide.md): 340 demo drivers ([add-drivers.mjs](database.md#drivers-for-the-imported-vehicles)), 51 route paths put on the roads ([snap-paths.mjs](database.md#putting-route-paths-on-the-roads) and [redraw-from-osm.mjs](database.md#redrawing-routes-from-their-openstreetmap-stops)), 86 stops linked to 6 redrawn routes, and 5 far stops unlinked from 503 and X05. The longest straight stretch left on any route is 7.2 km, along the straight EN1 to Manhiça.
 
@@ -37,7 +40,7 @@ The data scripts' changes were applied to production on 2026-10-18, as one SQL s
 
 Things only the owner can do, in the apps or the accounts:
 
-1. **Redraw V086 by hand** (Rua dos Bons Amigos – Antena), in the admin: the route → "Redesenhar percurso" ([Admin dashboard](admin-dashboard.md#routes-vias)).
+1. **Redraw V086 by hand** (Rua dos Bons Amigos – Antena), in the admin: the route → "Redesenhar percurso" → "Começar pelo percurso atual", then drag the points of the 2 km straight stretch onto the streets ([Admin dashboard → Fix a route](admin-dashboard.md#task-redraw)).
 2. **Reset the Neon database password**, then update `DATABASE_URL` in `transport-mz` and `transport-mz-admin` and redeploy both ([Vercel guide](vercel-guide.md#environment-variables)).
 3. **Store the session secrets as Secrets.** Vercel marks `USER_SESSION_SECRET` and `DRIVER_SESSION_SECRET` on `transport-mz` "Needs Attention" because they are readable Config values ([Vercel guide](vercel-guide.md#environment-variables)).
 
@@ -47,8 +50,9 @@ These need decisions, accounts or money, not code:
 
 - **Go live with USSD and SMS** on the Mozambican networks: a production Africa's Talking app, a service code, credit ([Africa's Talking → Going live](africas-talking.md#going-live)).
 - **Equip vehicles with GPS:** Traccar Client on each driver's phone, or trackers. The map then shows real positions instead of the timetable ([GPS tracking → Connecting a device](gps-tracking.md#connecting-a-device)).
-- **Real drivers and vehicles** for the imported routes, in place of the demo ones.
-- **Arrival SMS without web traffic:** a scheduled call to the arrival check ([Known limitations](known-limitations.md)).
+- **Real drivers and vehicles** in place of the demo ones ([Data sources](data-sources.md#vehicles-drivers-and-owners)), entered in the admin ([Common tasks](admin-dashboard.md#common-tasks-step-by-step)).
+- **Better stop names** where the reverse-geocoded street name repeats, by someone who knows the landmarks ([Known limitations → Data](known-limitations.md#data)).
+- **Fares that match what chapas charge**, set on the Tarifa page.
 
 ## History
 
@@ -78,6 +82,8 @@ The pull requests merged into `main` of [transportmozambique/Transport-Mozambiqu
 | 38 | 2026-10-18 | Admin in white, black and grey; no emojis or decorative arrows |
 | 39 | 2026-10-18 | Admin menu over the whole screen on phones and tablets |
 | 40 | 2026-10-18 | This page: the data fixes applied to production |
+| 41 | 2026-10-18 | Passenger home map loads 20 KB instead of 1 MB; a tapped bus loads its own route |
+| 42 | 2026-10-18 | Fare rule page; driver portal follows reassignments; phone search by digits; route drawing with a second router; passenger position out of the request logs; arrival check every 5 min on GitHub Actions; CI; data sources, step-by-step tasks, and how to overcome each known limitation |
 
 ---
 

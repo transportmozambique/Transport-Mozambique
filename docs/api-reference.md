@@ -4,7 +4,7 @@ Every HTTP endpoint of the two apps that have an API. The driver portal has none
 
 The example responses were recorded on a local copy of the production data on 2026-10-17, with long arrays cut to two items (`"… (238 items)"`) and long strings shortened (`…`).
 
-**On this page:** [Conventions](#conventions) · [Passenger app](#passenger-app-transport-client) ([map and journeys](#map-and-journeys) · [passenger account](#passenger-account) · [driver](#driver) · [GPS](#gps) · [USSD](#ussd)) · [Admin app](#admin-app-transport-admin) ([session](#session) · [lists and records](#lists-and-records) · [vehicles](#vehicles) · [drivers](#drivers) · [statistics](#statistics))
+**On this page:** [Conventions](#conventions) · [Passenger app](#passenger-app-transport-client) ([map and journeys](#map-and-journeys) · [passenger account](#passenger-account) · [driver](#driver) · [GPS](#gps) · [USSD](#ussd)) · [Admin app](#admin-app-transport-admin) ([session](#session) · [lists and records](#lists-and-records) · [vehicles](#vehicles) · [drivers](#drivers) · [fare rule](#fare-rule) · [statistics](#statistics))
 
 ---
 
@@ -111,15 +111,24 @@ The entries have the same fields as `destinos` in [`GET /api/stops/{id}`](#get-a
 
 A position with no stop within 800 m gives `{"destinos": []}`. Errors: 400 `Indique a partida (from, ou lat e lng)`; 404 `Paragem não encontrada` (no `from` id is a stop with a bus); 500 `Erro ao listar destinos`.
 
-#### `GET /api/journeys`
+#### `GET|POST /api/journeys`
 
 Journeys to a destination, with changes of bus when no single bus goes there ([Data flow → Journey planning](data-flow.md#journey-planning)).
 
-| Query | Meaning |
+The web app sends a `POST` with a JSON body, so that the passenger's position stays out of the request logs. `GET` takes the same fields in the query string.
+
+| Field | Meaning |
 |---|---|
-| `to` | destination stop id; several, comma-separated, for one place (same-name stops) |
+| `to` | destination stop id; several for one place (same-name stops): an array in the body, comma-separated in the query |
 | `from` | origin stop id, or several for one place (a start picked in the Partida field) |
 | `lat`, `lng` | instead of `from`: the passenger's position; the journey starts with a walk to one of the 8 nearest stops within 800 m |
+
+```http
+POST /api/journeys
+Content-Type: application/json
+
+{"to": ["cmoveoxl100cz14lnx9owv74d"], "lat": -25.7844, "lng": 32.5893}
+```
 
 Up to 3 options, earliest arrival first. Times are ISO dates (UTC). `partida` is when the first bus is boarded, `chegada` the arrival at the destination stop, and `duracaoMin` counts from now, walks and waits included; `esperaMin` is the wait at that stop once the passenger is there. Each bus leg has its own `tarifa`, and `percurso` is its road path as `[lng, lat]` points.
 
@@ -213,11 +222,13 @@ Five uses, chosen by the query:
 
 Errors: 400 `paragemId (origem) and destinoId are required`; 404 `Origem not found` / `Destino not found`.
 
-#### `GET /api/viagem`
+#### `GET|POST /api/viagem`
 
 Following a journey: the same buses, leg after leg, timed again now. The page calls it every 10 seconds and whenever the step changes ([Passenger web app → Following a journey](passenger-web.md#following-a-journey-viagem)).
 
-| Query | Meaning |
+The web app sends a `POST` with the fields below in the query string and the position in a JSON body, `{"lat": -25.78, "lng": 32.59}` (or `{}` before the browser gives one), so that the position stays out of the request logs. `GET` takes `lat` and `lng` in the query string instead.
+
+| Field | Meaning |
 |---|---|
 | `b` | the journey's buses, comma-separated, each `BUS~BOARDING_STOP~ALIGHTING_STOP` |
 | `lat`, `lng` | the passenger's position now: the walk to the next bus is measured from it |
@@ -290,7 +301,7 @@ Both points are rounded to 4 decimals (about 11 m). The answer is the path as `[
 
 #### `GET /api/bus/{id}`
 
-One bus, with the trip figures between two stops when `?paragem=ORIGIN&destino=DEST` is given. The web app no longer calls it ([`GET /api/viagem`](#get-apiviagem) replaced it); it stays for scripts and tests.
+One bus, with the trip figures between two stops when `?paragem=ORIGIN&destino=DEST` is given. The web app no longer calls it ([`/api/viagem`](#getpost-apiviagem) replaced it); it stays for scripts and tests.
 
 ```json
 {
@@ -375,7 +386,7 @@ Removes one of the passenger's alerts → `{"message": "Missão removida com suc
 
 ### Driver
 
-All three answer `Access-Control-Allow-Origin: *` and `OPTIONS` 204, because the driver portal is on another domain. The session token (30 days) goes in `Authorization: Bearer`.
+All four answer `Access-Control-Allow-Origin: *` and `OPTIONS` 204, because the driver portal is on another domain. The session token (30 days) goes in `Authorization: Bearer`.
 
 #### `POST /api/driver/login`
 
@@ -398,6 +409,10 @@ All three answer `Access-Control-Allow-Origin: *` and `OPTIONS` 204, because the
 ```
 
 `via.paragens` are in travel order. Errors: 400 missing field; 401 `Motorista não encontrado. Contacte o administrador.`, `Ainda não tem PIN. Peça ao administrador para gerar o seu PIN.`, `PIN incorreto`; 500 `Sessão indisponível. Contacte o administrador.` (no `DRIVER_SESSION_SECRET`).
+
+#### `GET /api/driver/me`
+
+The signed-in driver as the database has them now: the same object as the sign-in answer, without `token`. The portal asks for it when it opens and every 5 minutes, so a new vehicle or route set in the admin shows without signing out. 401 `Sessão inválida ou expirada. Entre de novo.`; 404 `Motorista não encontrado` (the driver was deleted).
 
 #### `GET /api/driver/trip`, `POST /api/driver/trip`
 
@@ -488,7 +503,7 @@ Each entity has a list endpoint and a record endpoint:
 |---|---|---|
 | `page`, `limit` | all except vehicles | page number (from 1) and size; default 10 (passengers and administrators: 25) |
 | `limit` | vehicles | maximum rows; default 1000 |
-| `search` | all | text filter; case-insensitive except owners. Routes also match the municipality; vehicles match plate, model, make and route name; drivers match name, ID, licence and phone. |
+| `search` | all | text filter; case-insensitive except owners. Routes also match the municipality; vehicles match plate, model, make and route name; drivers match name, ID, licence and phone. On drivers and passengers, a search of only digits (at least 3, spaces, `+` and `-` allowed) also matches the phone's digits whatever its stored spacing, with or without `258`. |
 | `countOnly=true` | provinces, municipalities, routes, stops, drivers, owners | counts only, e.g. `{"total": 91}` |
 | `filter` | drivers | `ativos`, `inativos` or `comTransporte` |
 | `availableOnly=true`, `includeTransportId` | vehicles | vehicles without a driver (plus one given vehicle), for the driver form |
@@ -599,6 +614,25 @@ The vehicle's day by the timetable:
 
 `GET` lists vehicles without a driver and active drivers without a vehicle; `POST {"motoristaId", "transporteId"}` pairs them; `DELETE` undoes a pairing.
 
+### Fare rule
+
+#### `GET|PUT /api/tarifa`
+
+The active fare rule (`Tarifa`), which every fare, travel time and timetable position uses ([Configuration → Fare rule](configuration.md#fare-rule-tarifa)). The "Tarifa" page reads and saves it.
+
+`GET` → the rule, `{"id", "nome": "padrao", "tarifaMinima": 10, "precoPorKm": 10, "fatorEstrada": 1.3, "velocidadeViagemKmh": 30, "velocidadeChegadaKmh": 45, "ativa": true, "createdAt", "updatedAt"}`; 404 `Não há tarifa activa` when no row is active.
+
+`PUT` with any of the five values updates the active rule (the most recently updated active row), or creates `padrao` when there is none, and answers the saved row:
+
+| Field | Accepted |
+|---|---|
+| `tarifaMinima` | whole meticais, 0 to 1000 |
+| `precoPorKm` | meticais per km, 0 to 1000 |
+| `velocidadeViagemKmh`, `velocidadeChegadaKmh` | km/h, 5 to 120 |
+| `fatorEstrada` | 1 to 3 |
+
+A value out of range answers 400 with the field's rule, e.g. `Tarifa mínima: indique um número inteiro entre 0 e 1000`; a body with none of the fields answers 400 `Nada para alterar`. The passenger app and USSD read the rule through a 60-second cache.
+
 ### Administrators
 
 #### `POST /api/administradores/{id}/change-password`
@@ -617,7 +651,7 @@ The vehicle's day by the timetable:
 | Endpoint | Content |
 |---|---|
 | `GET /api/dashboard/stats` | Everything the dashboard shows except the "Agora" card: counters, vehicles per municipality, every route with its path and vehicle count, routes and stops per municipality. Cached 5 minutes per instance. |
-| `GET /api/relatorios/stats` | The "Estatísticas Gerais" report: `{"totalTransportes": 111, "totalVias": 91, "totalParagens": 1079, "totalProprietarios": 11, "totalMotoristas": 111, "totalProvincias": 11, "totalMunicipios": 2, "totalUtentes": 8, "transportComMotorista": 111, "transportSemMotorista": 0, "motoristasAtivos": 111, "utentesSubscritos": 6}` |
+| `GET /api/relatorios/stats` | The "Estatísticas Gerais" report: `{"totalTransportes": 451, "totalVias": 261, "totalParagens": 1902, "totalProprietarios": 11, "totalMotoristas": 451, "totalProvincias": 11, "totalMunicipios": 2, "totalUtentes": 8, "transportComMotorista": 451, "transportSemMotorista": 0, "motoristasAtivos": 451, "utentesSubscritos": 6}` (production, 2026-10-18) |
 
 ---
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { idsByPhoneDigits } from '@/lib/phoneSearch';
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,11 +41,14 @@ export async function GET(request: NextRequest) {
     let whereClause: any = {};
     
     if (search) {
+      // A phone number also matches phones stored with spaces ("+258 84 123 4567")
+      const phoneIds = await idsByPhoneDigits('Motorista', search);
       whereClause.OR = [
         { nome: { contains: search, mode: 'insensitive' as const } },
         { bi: { contains: search, mode: 'insensitive' as const } },
         { cartaConducao: { contains: search, mode: 'insensitive' as const } },
         { telefone: { contains: search } },
+        ...(phoneIds.length ? [{ id: { in: phoneIds } }] : []),
       ];
     }
 

@@ -18,19 +18,22 @@ All three use the Next.js preset with the default commands (`npm install`, `npm 
 
 The root `vercel.json` belongs to the legacy root app; no project builds it ([Architecture → Not deployed](architecture.md#not-deployed-legacy-code)).
 
+**Scheduled job.** `.github/workflows/arrival-check.yml` calls `POST https://transport-mz.vercel.app/api/simulation {"action":"check"}` every 5 minutes from GitHub Actions, so arrival SMS go out without web traffic ([Data flow → Arrival alert](data-flow.md#arrival-alert-and-sms)). Vercel's Hobby plan only allows daily cron jobs. Its runs are under the repository's Actions tab → "Arrival SMS check", where "Run workflow" also starts one by hand. GitHub pauses schedules after 60 days without activity in the repository; "Enable workflow" on the same page turns it back on.
+
 ## How a change reaches production
 
 ```mermaid
 flowchart LR
   B["Push a branch"] --> P["Preview deploys<br/>of all three projects"]
-  P --> R["Pull request:<br/>review + previews"]
+  P --> R["Pull request:<br/>CI, review, previews"]
   R --> M["Merge into main"]
   M --> D["Production deploys<br/>of all three projects (~1 min)"]
 ```
 
 1. **Branch.** Every push to any branch builds a **preview** of each of the three projects, with its own URL (`transport-<hash>-transportmozambique.vercel.app`, plus a stable `…-git-<branch>-…` alias). Vercel links them from the pull request.
 2. **Review** the change on the previews. Previews use the **Preview** environment variables: the passenger app's preview has no Africa's Talking key (no SMS), and its `DATABASE_URL` is a separate sensitive value; check which database it points to before testing anything that writes ([Configuration → Where values live](configuration.md#where-values-live)).
-3. **Merge into `main`.** Each project builds a **production** deployment and moves its production domain to it when the build succeeds. Builds take 30–60 s.
+3. **Checks.** GitHub's CI type-checks the three apps, compares the three schemas and checks the documentation's links ([Testing → CI](testing.md#ci-on-github)). Merge when they and the three Vercel previews are green.
+4. **Merge into `main`.** Each project builds a **production** deployment and moves its production domain to it when the build succeeds. Builds take 30–60 s.
 
 Every push rebuilds all three projects, even if only one app's folder changed.
 

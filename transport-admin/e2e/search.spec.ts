@@ -35,3 +35,23 @@ test('Pesquisa no cabeçalho: encontra transporte, via e motorista', async ({ pa
   await search.fill('zzzz-nada-assim');
   await expect(page.getByText('Sem resultados para "zzzz-nada-assim"')).toBeVisible();
 });
+
+// A phone is found by its digits, whatever spacing it was stored with
+test('Pesquisa por telefone: os dígitos encontram o motorista', async ({ page }) => {
+  const motoristas = await (await page.request.get('/api/motoristas?limit=1')).json();
+  const motorista = motoristas.data[0];
+  const phoneDigits = motorista.telefone.replace(/\D/g, '').replace(/^258/, '');
+  const part = phoneDigits.slice(-7);
+  const spaced = `${part.slice(0, 2)} ${part.slice(2, 5)} ${part.slice(5)}`;
+
+  for (const query of [part, spaced, `+258${phoneDigits}`]) {
+    const found = await (await page.request.get(`/api/motoristas?limit=50&search=${encodeURIComponent(query)}`)).json();
+    expect(found.data.map((m: { id: string }) => m.id)).toContain(motorista.id);
+  }
+
+  await page.goto('/dashboard');
+  await page.getByLabel('Pesquisar transportes, vias e motoristas').fill(spaced);
+  await expect(
+    page.getByRole('group', { name: 'Motoristas' }).getByRole('button', { name: new RegExp(escapeRegExp(motorista.nome)) })
+  ).toBeVisible();
+});

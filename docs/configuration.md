@@ -97,13 +97,13 @@ Prices and the speeds used for arrival times live in the database, in the newest
 | `velocidadeChegadaKmh` | 45 km/h | Arrival time in the fallback estimate used when a route has no path. |
 | `ativa` | true | Only active rows are considered; the most recently updated one wins. |
 
-There is no admin screen for it. Change it with SQL ([Database → Changing data](database.md#changing-data)), for example:
+Change it on the admin's **Tarifa** page (sidebar → Configuração → Tarifa, [Admin dashboard → Fare rule](admin-dashboard.md#fare-rule-tarifa)). The page checks each value against a sensible range and shows what 2, 5 and 15 km cost with the values typed. The apps use the new values within 60 s. With SQL it is ([Database → Changing data](database.md#changing-data)):
 
 ```sql
 UPDATE "Tarifa" SET "precoPorKm" = 12, "updatedAt" = now() WHERE ativa;
 ```
 
-If the table has no active row, the defaults above are used.
+If the table has no active row, the defaults above are used, and the Tarifa page offers them; saving there creates the row.
 
 ## Constants in code
 

@@ -6,7 +6,7 @@ A phone web app for drivers. The driver signs in with a PIN, starts and ends tri
 
 The same trip flag can be changed from any phone through USSD option 6 ([USSD → Driver menu](ussd.md#6-area-do-motorista)). The portal and USSD always agree because both read and write `Motorista.emViagem`.
 
-**On this page:** [Before the first sign-in](#before-the-first-sign-in) · [Sign-in](#sign-in-) · [Dashboard](#dashboard-dashboard) · [Trips](#starting-and-ending-a-trip) · [Phone as GPS](#sharing-the-phones-gps) · [Waiting passengers](#passengers-waiting-on-the-route) · [Browser storage](#what-the-browser-stores) · [Errors](#errors)
+**On this page:** [Before the first sign-in](#before-the-first-sign-in) · [A driver's day](#a-drivers-day-step-by-step) · [Sign-in](#sign-in-) · [Dashboard](#dashboard-dashboard) · [Trips](#starting-and-ending-a-trip) · [Phone as GPS](#sharing-the-phones-gps) · [Waiting passengers](#passengers-waiting-on-the-route) · [Browser storage](#what-the-browser-stores) · [Errors](#errors)
 
 ---
 
@@ -19,6 +19,20 @@ A driver cannot register. An administrator must:
 3. Give the PIN to the driver. **"Gerar novo PIN"** replaces it and the old one stops working; that is also how a forgotten PIN is reset.
 
 For a GPS-sharing phone, the administrator also creates the vehicle's **device code** (**Transportes → vehicle → Rastreador GPS**, see [GPS tracking](gps-tracking.md#1-create-the-device-code)).
+
+## A driver's day, step by step
+
+What a driver does, on a phone. The administrator must have done [the steps before the first sign-in](#before-the-first-sign-in).
+
+1. **Open the portal** at https://transport-mz-driver.vercel.app. On Android, Chrome's menu → "Adicionar ao ecrã principal" puts it on the home screen like an app.
+2. **Sign in** with the phone number the administrator registered (with or without `+258`, spaces do not matter) and the 6-digit PIN. The portal remembers the driver for 30 days.
+3. **Check the top of the screen:** your name, the vehicle's plate and the route's code. If they are wrong, ask the administrator; once they change it, the portal shows the new vehicle and route within 5 minutes.
+4. **Optional, once per phone: share the phone's GPS.** Tap your name → paste the vehicle's GPS code from the administrator in "Código GPS do veículo" → **Guardar**. Allow location when the browser asks ([details](#sharing-the-phones-gps)).
+5. **At the first terminal, tap "Iniciar viagem".** The button turns dark, "Em viagem" shows at the top and the clock starts. With a GPS code saved, the phone now sends its position: keep the portal open and the screen on.
+6. **During the trip,** "À espera" shows how many passengers asked to be told about this route's stops in the last 3 hours, and the stop list shows where ("2 à espera"). Drag the panel up to see all the stops.
+7. **At the end, tap "Terminar viagem".**
+8. **No data or no smartphone?** Dial the USSD code, choose 6, type the PIN, and 1 → 1 starts or ends the trip ([USSD → Driver menu](ussd.md#6-area-do-motorista)). The portal shows the same state within 30 seconds.
+9. **Sign out** (tap your name → **Sair**) on a shared phone. A forgotten PIN is reset by the administrator ("Gerar novo PIN").
 
 ## Sign-in (`/`)
 
@@ -55,6 +69,7 @@ The map takes the whole screen, with a panel over it: a bottom sheet on a phone,
 | When | Request |
 |---|---|
 | Page opens, then every 30 s | `GET {API}/api/driver/trip` (Bearer session token) → `{"emViagem", "viagemIniciadaEm"}` |
+| Page opens, then every 5 min | `GET {API}/api/driver/me` (Bearer session token) → the driver, vehicle and route as the admin has them now; the map is redrawn only when they changed |
 | Page opens, then every 60 s | `GET {API}/api/driver/seguidores` (Bearer session token) |
 | During a trip, at most every 15 s | `POST {API}/api/gps` (Bearer **device code**), only if a device code is saved |
 
@@ -141,10 +156,10 @@ GROUP BY p.id, p.nome ORDER BY a_espera DESC;
 
 | `localStorage` key | Content | Set by | Removed by |
 |---|---|---|---|
-| `motorista` | The sign-in response: profile, vehicle, route with stops and path, session `token` | sign-in | "Sair", or any 401 from `/api/driver/trip` |
+| `motorista` | The sign-in response: profile, vehicle, route with stops and path, session `token`; refreshed from `/api/driver/me` when the admin changes the vehicle or route | sign-in | "Sair", or any 401 from `/api/driver/trip` or `/api/driver/me` |
 | `gpsCodigo` | The vehicle's device code | "Guardar" | saving an empty value |
 
-The route and vehicle are those of the sign-in. If the admin moves the driver to another vehicle or edits the route, the driver signs out and in again to see the change.
+When the admin moves the driver to another vehicle, or edits the vehicle's route or its stops, the portal picks it up within 5 minutes (or at once on reload), without signing out.
 
 ## Errors
 

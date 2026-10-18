@@ -6,12 +6,32 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 /**
  * The map where a route is drawn: the admin clicks points (or stops), and the path between them
- * follows the roads (the public OSRM router). Only a road path can be saved: when the router
- * fails, the line is dashed and the page that uses it refuses to save. Used to create a route
+ * follows the roads (a public OSRM router). Only a road path can be saved: when no router
+ * answers, the line is dashed and the page that uses it refuses to save. Used to create a route
  * (/vias/novo) and to redraw one (/vias/[id]/percurso).
  */
 
 export type Point = [number, number]; // [lng, lat]
+
+/** Public OSRM car routers, tried in order: FOSSGIS's (openstreetmap.de), then the OSRM demo server */
+const ROUTERS = [
+  "https://routing.openstreetmap.de/routed-car/route/v1/driving",
+  "https://router.project-osrm.org/route/v1/driving",
+];
+
+/** The road path through `pointsKey` ("lng,lat;lng,lat;…"), or null when no router has one */
+async function routeThroughPoints(pointsKey: string): Promise<Point[] | null> {
+  for (const base of ROUTERS) {
+    try {
+      const res = await fetch(`${base}/${pointsKey}?overview=full&geometries=geojson`);
+      const data = await res.json();
+      if (data.code === "Ok" && data.routes?.[0]) return data.routes[0].geometry.coordinates;
+    } catch (error) {
+      console.error(`Router ${base} failed:`, error);
+    }
+  }
+  return null;
+}
 
 export interface RouteStop {
   id: string;
@@ -166,7 +186,7 @@ export default function RouteDrawer({
   const stopMarkersRef = useRef(new Map<string, maplibregl.Marker>());
   const [drawing, dispatch] = useReducer(drawingReducer, { points: [], past: [], future: [] });
   const [route, setRoute] = useState<{ key: string; path: Point[]; failed: boolean } | null>(null);
-  const [routeAttempt, setRouteAttempt] = useState(0); // "Tentar de novo" asks OSRM again
+  const [routeAttempt, setRouteAttempt] = useState(0); // "Tentar de novo" asks the routers again
 
   // Road-following path for the clicked points. Each answer is tied to the points it was asked
   // for, so a slow answer for older points never replaces the path of the current ones.
@@ -175,17 +195,9 @@ export default function RouteDrawer({
     const points = pointsKey ? pointsKey.split(";").map((p) => p.split(",").map(Number) as Point) : [];
     if (points.length < 2) return;
     let cancelled = false;
-    fetch(`https://router.project-osrm.org/route/v1/driving/${pointsKey}?overview=full&geometries=geojson`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (cancelled) return;
-        if (data.code === "Ok" && data.routes?.[0]) setRoute({ key: pointsKey, path: data.routes[0].geometry.coordinates, failed: false });
-        else setRoute({ key: pointsKey, path: points, failed: true });
-      })
-      .catch((error) => {
-        console.error("Error fetching route:", error);
-        if (!cancelled) setRoute({ key: pointsKey, path: points, failed: true });
-      });
+    routeThroughPoints(pointsKey).then((path) => {
+      if (!cancelled) setRoute(path ? { key: pointsKey, path, failed: false } : { key: pointsKey, path: points, failed: true });
+    });
     return () => {
       cancelled = true;
     };
@@ -214,7 +226,7 @@ export default function RouteDrawer({
               type: "raster",
               tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
               tileSize: 256,
-              attribution: "© OpenStreetMap contributors",
+              attribution: "© OpenStreetMap contributors · Rotas: OSRM / FOSSGIS",
               maxzoom: 19,
             },
           },

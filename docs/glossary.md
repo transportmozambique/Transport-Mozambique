@@ -75,6 +75,10 @@ The code, the database and the screens use Portuguese words, and the docs use En
 | GSM-7 | The character set of plain SMS and USSD. One character outside it makes a message Unicode, which halves its length. |
 | OSM, relation | OpenStreetMap, and its record of one bus line in one direction (`214i`, `214v`). |
 | OSRM, FOSSGIS | The open routing engine, and the public servers that run it, used to put paths on the roads. |
+| Overpass, Nominatim | OpenStreetMap's query service (used to download stops and routes) and its geocoder (used to name the first stops) ([Data sources](data-sources.md)). |
+| ODbL | The Open Database License of OpenStreetMap data: free to use with credit; a shared derived database stays under it. |
+| OpenFreeMap | The free vector map tiles all three apps draw on. |
+| demo data | The made-up vehicles, drivers and owners ([Data sources → Vehicles, drivers and owners](data-sources.md#vehicles-drivers-and-owners)). |
 | Neon branch | An instant copy of the database, for trying a change ([Neon guide](neon-guide.md)). |
 | pooled, direct host | The two addresses of the Neon database: pooled for the apps, direct for scripts and `psql`. |
 | Preview, Production | A branch's deployment on Vercel, and the live one ([Vercel guide](vercel-guide.md)). |

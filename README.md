@@ -218,7 +218,7 @@ Each also has the same four pages: list, detail, new and edit. What differs is b
 | `Provincia` | `POST` needs `nome` and a unique `codigo`. `PATCH`. `DELETE` is refused while it has municipalities; the detail page's `?force=true` detaches them first. | admin |
 | `Municipio` | `POST` needs `nome`, a unique `codigo` and `provinciaId`. `PATCH`. `DELETE` is refused while it has routes: move or delete them first. | admin; route search; driver portal |
 | `Administrador` | `POST` needs name, email (unique) and password (bcrypt). `PATCH`. `DELETE`. Changing one's own password checks the current one. | admin sign-in, `/administradores` |
-| `Tarifa` | No screen: one active row, changed with SQL ([Configuration → Fare rule](docs/configuration.md#fare-rule-tarifa)). Cached 60 s. | every fare, speed and arrival time |
+| `Tarifa` | One active row, changed on the admin's "Tarifa" page (`PUT /api/tarifa`, values checked against limits) ([Configuration → Fare rule](docs/configuration.md#fare-rule-tarifa)). Cached 60 s. | every fare, speed and arrival time |
 | `GeoLocation` | Written once by the initial import. Positions now live on `Transporte`. | nothing current |
 </details>
 
@@ -229,12 +229,12 @@ Each also has the same four pages: list, detail, new and edit. What differs is b
 | Passenger opens the map | `GET /api/stops`: every served stop, with its routes. `GET /api/buses`: every bus, positioned now. Then the positions every 5 s. | nothing; the 5-second poll also starts the arrival check |
 | Has a position, or picks a start (Partida) | `GET /api/destinos?lat=…&lng=…` (or `from=`): every place reachable, earliest arrival first, each with the stop where the first bus is taken | nothing |
 | Taps a stop | `GET /api/stops/{id}`: each route through it, each direction's next bus and stops, and every place reachable from it (with changes of bus), earliest arrival first | nothing |
-| Chooses a destination | `GET /api/journeys?lat=…&lng=…&to=…` (or `from=`): up to 3 journeys, each bus leg timed for the moment you reach its stop | nothing |
-| Follows the journey | `GET /api/viagem?b=BUS~DE~PARA,…&lat=…&lng=…&a=…&bordo=…`, every 10 s: every bus of the journey, the walks, and the step the passenger is on | a `MISSION` when they save the alert |
+| Chooses a destination | `POST /api/journeys {to, lat, lng}` (or `from`): up to 3 journeys, each bus leg timed for the moment you reach its stop. The position goes in the body, so it stays out of the request logs. | nothing |
+| Follows the journey | `POST /api/viagem?b=BUS~DE~PARA,…&a=…&bordo=…` with `{lat, lng}` in the body, every 10 s: every bus of the journey, the walks, and the step the passenger is on | a `MISSION` when they save the alert |
 | Dials the USSD code | Africa's Talking posts each step to `/api/ussd` (with `?key=`). Every step resends all the answers so far in `text`, so the server keeps no session. | Option 1: a `MISSION`, and an `Utente` for a new phone. Option 6: `Motorista.emViagem`. SMS go out through Africa's Talking. |
-| Driver signs in and starts a trip | `POST /api/driver/login` (phone and PIN; 30-day token); `GET /api/driver/seguidores` (waiting passengers) | `Motorista.emViagem`, `viagemIniciadaEm` |
+| Driver signs in and starts a trip | `POST /api/driver/login` (phone and PIN; 30-day token); `GET /api/driver/me` every 5 min (vehicle and route as the admin has them now); `GET /api/driver/seguidores` (waiting passengers) | `Motorista.emViagem`, `viagemIniciadaEm` |
 | A GPS device reports | `POST /api/gps` with the device code. Fixes less accurate than 200 m, or older than the stored one, are ignored. | `Transporte.currGeoLocation`, `gpsAtualizadoEm`, speed, heading |
-| Arrival check (at most every 30 s per instance) | alerts of the last 24 h, and the bus positions | `MISSION.notificadoEm`; an SMS through Africa's Talking |
+| Arrival check (every 5 min from a GitHub Actions schedule, and at most every 30 s per instance while the web app is used) | alerts of the last 24 h, and the bus positions | `MISSION.notificadoEm`; an SMS through Africa's Talking |
 
 More detail:
 
@@ -261,21 +261,21 @@ Every page, in reading order. The [documentation index](docs/README.md) says wha
 | | Pages |
 |---|---|
 | **1. Start here** | [Getting started](docs/getting-started.md) · [Architecture](docs/architecture.md) · [Glossary](docs/glossary.md) · [Project status](docs/project-status.md) |
-| **2. How it works** | [Data flow](docs/data-flow.md) · [Database](docs/database.md) · [GPS tracking](docs/gps-tracking.md) |
-| **3. Using each app** | [Passenger web app](docs/passenger-web.md) · [USSD service](docs/ussd.md) ([inside the handler](docs/ussd.md#inside-the-handler)) · [Driver portal](docs/driver-portal.md) · [Admin dashboard](docs/admin-dashboard.md) |
+| **2. How it works** | [Data flow](docs/data-flow.md) · [Database](docs/database.md) · [Data sources](docs/data-sources.md) · [GPS tracking](docs/gps-tracking.md) |
+| **3. Using each app** | [Passenger web app](docs/passenger-web.md) · [USSD service](docs/ussd.md) ([inside the handler](docs/ussd.md#inside-the-handler)) · [Driver portal](docs/driver-portal.md) ([a driver's day](docs/driver-portal.md#a-drivers-day-step-by-step)) · [Admin dashboard](docs/admin-dashboard.md) ([common tasks](docs/admin-dashboard.md#common-tasks-step-by-step)) |
 | **4. Step-by-step guides, with screenshots** | [Africa's Talking](docs/africas-talking.md) ([setup](docs/africas-talking.md#how-it-was-set-up-step-by-step), [simulator](docs/africas-talking.md#use-the-menu-in-the-simulator)) · [Viewing the data in Neon](docs/neon-guide.md) · [Vercel](docs/vercel-guide.md) |
 | **5. Reference and operations** | [Configuration](docs/configuration.md) · [API reference](docs/api-reference.md) · [Deployment](docs/deployment.md) · [Testing](docs/testing.md) · [Security](docs/security.md) · [Troubleshooting](docs/troubleshooting.md) · [Known limitations](docs/known-limitations.md) |
 
 ## Contributing
 
 1. Branch from `main`. Every push builds a preview of the three apps on Vercel; merging to `main` deploys production ([Deployment](docs/deployment.md)).
-2. Before pushing, run `npx tsc --noEmit` in each app you changed, and the admin suites when you touch the admin ([Testing](docs/testing.md)). The suites refuse to run against anything but a local database.
+2. Before pushing, run `npx tsc --noEmit` in each app you changed, and the admin suites when you touch the admin ([Testing](docs/testing.md)). The suites refuse to run against anything but a local database. GitHub's CI repeats the type checks and checks the schemas and the documentation's links on every pull request.
 3. Schema changes go into all three `schema.prisma` copies. **Never run `prisma migrate deploy` on production**: it has no migration history. Apply changes as described in [Deployment → Database changes](docs/deployment.md#database-changes-in-production).
 
 The UI is in Portuguese; code comments and documentation are in English.
 
 ---
 
-Stops and routes include data from [OpenStreetMap](https://www.openstreetmap.org/copyright), © OpenStreetMap contributors, under the ODbL ([import](docs/database.md#importing-stops-and-routes-from-openstreetmap)).
+Stops, routes and road paths include data from [OpenStreetMap](https://www.openstreetmap.org/copyright), © OpenStreetMap contributors, under the ODbL. Maps by OpenFreeMap and OpenMapTiles; routing by OSRM on the FOSSGIS servers. Vehicles, drivers and owners are demonstration data. Every source is listed in [Data sources](docs/data-sources.md).
 
 Transport Mozambique © 2026 · [Documentation →](docs/README.md)

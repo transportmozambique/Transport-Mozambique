@@ -25,6 +25,7 @@ Each topic has its own page. The pages assume a technical reader: they cite file
 |---|---|
 | [Data flow](data-flow.md) | Sequence diagrams for every flow: journey planning and arrival time, live map, arrival SMS, USSD session, driver trip, GPS position, admin changes. |
 | [Database](database.md) | Entity diagram, every table, storage conventions, how to connect (psql, Prisma Studio, Neon console), tested example queries, migrations, and the data scripts (OpenStreetMap import, paths on the roads, demo drivers). |
+| [Data sources](data-sources.md) | Where every piece of data came from (OpenStreetMap, Nominatim, OSRM, the first data scripts), what is made up, the map tiles and services used, their terms, and the credits to show. |
 | [GPS tracking](gps-tracking.md) | How positions are produced (real GPS or timetable), setting up a tracker or Traccar Client, the ingestion protocol. |
 
 ### 3. Using each app
@@ -33,8 +34,8 @@ Each topic has its own page. The pages assume a technical reader: they cite file
 |---|---|
 | [Passenger web app](passenger-web.md) | Live map with your position, stops near you, a stop's destinations, journeys with changes of bus, following a journey with all its buses, account and arrival alerts, with the API call behind each screen. |
 | [USSD service](ussd.md) | How the handler treats each keypress, the full menu tree with real screens, pagination rules, what each option reads, writes and sends by SMS, and how to test it. |
-| [Driver portal](driver-portal.md) | PIN sign-in, starting and ending a trip (shared with USSD), sharing the phone's GPS, passengers waiting along the route. |
-| [Admin dashboard](admin-dashboard.md) | Every back-office page: network data, redrawing a route's path, vehicles with live position, GPS trackers, driver PINs, reports. |
+| [Driver portal](driver-portal.md) | A driver's day step by step, PIN sign-in, starting and ending a trip (shared with USSD), sharing the phone's GPS, passengers waiting along the route. |
+| [Admin dashboard](admin-dashboard.md) | Common tasks step by step (add a route, a stop, a vehicle, a driver; give a PIN; set up GPS; change the fare), then every back-office page in full. |
 
 ### 4. Step-by-step guides, with screenshots
 
@@ -51,16 +52,21 @@ Each topic has its own page. The pages assume a technical reader: they cite file
 | [Configuration](configuration.md) | Every environment variable of every app, Vercel and Neon settings, the fare rule, timetable constants. |
 | [API reference](api-reference.md) | Every HTTP endpoint of the passenger app and the admin app: method, authentication, parameters, real responses. |
 | [Deployment](deployment.md) | How a change reaches production, database changes in production, checking a deploy. |
-| [Testing](testing.md) | Admin Jest and Playwright suites, type checks, testing USSD, GPS and the APIs by hand. |
+| [Testing](testing.md) | CI on GitHub, admin Jest and Playwright suites, type checks, testing USSD, GPS and the APIs by hand. |
 | [Security](security.md) | Sessions and tokens of each app, secrets, public endpoints, what is stored hashed, rotation, known gaps. |
 | [Troubleshooting](troubleshooting.md) | Symptoms, causes and fixes for the problems you are most likely to meet. |
-| [Known limitations](known-limitations.md) | What is incomplete, simulated or legacy, so you do not mistake it for a bug, or build on it. |
+| [Known limitations](known-limitations.md) | What was fixed on 2026-10-18, and what is still incomplete, simulated or legacy, with how to work around each item. |
 
 ## Find it fast
 
 | Question | Where |
 |---|---|
 | What does `Via`, `Paragem`, `MISSION` or "chapa" mean? | [Glossary](glossary.md) |
+| Where does the data come from? Is it real? | [Data sources](data-sources.md) |
+| How do I add a route, a vehicle or a driver, or give a driver a PIN? | [Admin dashboard → Common tasks](admin-dashboard.md#common-tasks-step-by-step) |
+| How does a driver use the portal? | [Driver portal → A driver's day](driver-portal.md#a-drivers-day-step-by-step) |
+| How do I change the fares? | [Admin dashboard → Fare rule](admin-dashboard.md#fare-rule-tarifa) |
+| Something does not work as expected: is it known? | [Known limitations](known-limitations.md) |
 | What is left to do, and what changed recently? | [Project status](project-status.md) |
 | How was Africa's Talking configured? | [Africa's Talking → How it was set up](africas-talking.md#how-it-was-set-up-step-by-step) |
 | How do I try the USSD menu? | [Africa's Talking → Use the menu in the simulator](africas-talking.md#use-the-menu-in-the-simulator) |
@@ -78,7 +84,8 @@ Each topic has its own page. The pages assume a technical reader: they cite file
 - **You want to see it working:** open the [live apps](../README.md#live-apps), try the [USSD menu in the simulator](africas-talking.md#use-the-menu-in-the-simulator), then follow [Getting started](getting-started.md) to run it locally.
 - **You are new to the project:** [Architecture](architecture.md) → [Glossary](glossary.md) → [Project status](project-status.md) → [Data flow](data-flow.md).
 - **You will change the code:** [Architecture](architecture.md) → [Data flow](data-flow.md) → [Database](database.md) → [API reference](api-reference.md) → [Testing](testing.md).
-- **You will query or analyse the data:** [Viewing the data in Neon](neon-guide.md) (step by step) → [Database](database.md) (connection, conventions, example SQL) → [GPS tracking](gps-tracking.md) (how positions are derived).
+- **You will query or analyse the data:** [Data sources](data-sources.md) (what is real) → [Viewing the data in Neon](neon-guide.md) (step by step) → [Database](database.md) (connection, conventions, example SQL) → [GPS tracking](gps-tracking.md) (how positions are derived).
+- **You will run the network day to day:** [Admin dashboard → Common tasks](admin-dashboard.md#common-tasks-step-by-step) → [Driver portal → A driver's day](driver-portal.md#a-drivers-day-step-by-step) → [Known limitations](known-limitations.md).
 - **You will operate the platform:** [Project status → Waiting for action](project-status.md#waiting-for-action) → [Configuration](configuration.md) → [Vercel, step by step](vercel-guide.md) → [Deployment](deployment.md) → [Africa's Talking](africas-talking.md) → [Security](security.md) → [Troubleshooting](troubleshooting.md).
 
 ## Language

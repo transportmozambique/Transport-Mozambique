@@ -119,10 +119,6 @@ export default function JourneyFollow() {
     const load = async () => {
       const q = new URLSearchParams({ b });
       const p = meRef.current;
-      if (p) {
-        q.set("lat", p[0].toFixed(5));
-        q.set("lng", p[1].toFixed(5));
-      }
       if (!busOnly) {
         q.set("a", String(phase.a));
         q.set("bordo", phase.bordo ? "1" : "0");
@@ -130,7 +126,12 @@ export default function JourneyFollow() {
         if (endId) q.set("para", endId);
       }
       try {
-        const res = await fetch(`/api/viagem?${q}`);
+        // POST, so the passenger's position stays out of the request logs
+        const res = await fetch(`/api/viagem?${q}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(p ? { lat: Number(p[0].toFixed(5)), lng: Number(p[1].toFixed(5)) } : {}),
+        });
         const data = await res.json();
         if (cancelled) return;
         if (!res.ok) {

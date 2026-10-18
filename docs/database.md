@@ -451,7 +451,7 @@ A USSD-only account becomes a full account when the same phone number registers 
 ## Changing data
 
 - **Use the admin dashboard** for network and fleet data: routes, stops, vehicles, drivers, owners. It keeps the related rows consistent (for example, the `codigo*` columns and the `ViaParagem` links).
-- **The fare rule has no UI.** Change it with SQL. The apps pick up the change within 60 s:
+- **The fare rule** is changed on the admin's Tarifa page ([Admin dashboard → Fare rule](admin-dashboard.md#fare-rule-tarifa)), or with SQL. The apps pick up the change within 60 s:
 
   ```sql
   UPDATE "Tarifa" SET "precoPorKm" = 12, "updatedAt" = now() WHERE ativa;
@@ -604,7 +604,7 @@ A second `snap-paths.mjs` dry run then lists one route: V086 (Rua dos Bons Amigo
 
 ## Drivers for the imported vehicles
 
-The 340 vehicles added by the OpenStreetMap import have no driver. `transport-client/scripts/add-drivers.mjs` gives each vehicle without a driver a demo driver, like the 111 drivers of the first data:
+The 340 vehicles added by the OpenStreetMap import had no driver. `transport-client/scripts/add-drivers.mjs` gives each vehicle without a driver a demo driver, like the 111 drivers of the first data:
 
 ```bash
 cd transport-client
@@ -623,7 +623,7 @@ DATABASE_URL=… node scripts/add-drivers.mjs --apply --production     # a remot
 - **Backup and undo.** `--apply` first saves every `Motorista` row to `osm-data/backup-drivers-<time>.json`, then lists the created drivers' ids in `osm-data/created-drivers-<time>.json`. To undo, delete those drivers.
 - **Idempotent.** A second run creates nothing, because every vehicle then has a driver.
 
-On a copy of production (2026-10-18), it created 340 drivers: all 451 vehicles then had one, and the dashboard's "sem motorista" banner was gone.
+On a copy of production (2026-10-18), it created 340 drivers: all 451 vehicles then had one, and the dashboard's "sem motorista" banner was gone. The same drivers were added to production that day ([Project status → The data](project-status.md#the-data)).
 
 ## Schema changes and migrations
 
@@ -659,11 +659,11 @@ Production on 2026-10-18, after the OpenStreetMap import:
 | Provincia / Cidade / Municipio | 11 / 0 / 2 |
 | Via / Paragem / ViaParagem | 261 / 1,902 / 17,287 |
 | Transporte / GeoLocation | 451 / 111 |
-| Motorista | 111 (the 340 vehicles of the imported routes have no driver until `scripts/add-drivers.mjs` runs, [above](#drivers-for-the-imported-vehicles)) |
+| Motorista | 451: the 111 of the first data and 340 demo drivers for the imported vehicles, added the same day ([above](#drivers-for-the-imported-vehicles)) |
 | Proprietario / TransporteProprietario | 11 / 0 (no vehicle has an owner linked yet) |
 | Tarifa | 1 |
 | Administrador | 3 |
 
 ---
 
-[← Data flow](data-flow.md) · [Documentation index](README.md) · Next: [GPS tracking →](gps-tracking.md)
+[← Data flow](data-flow.md) · [Documentation index](README.md) · Next: [Data sources →](data-sources.md)
