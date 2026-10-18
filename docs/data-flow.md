@@ -72,9 +72,13 @@ sequenceDiagram
   participant B as Browser (/)
   participant C as transport-client
   participant DB as PostgreSQL
-  B->>C: GET /api/buses
-  C->>DB: every Transporte with its Via path
-  C-->>B: buses with position, route line, stops
+  B->>C: GET /api/buses?fields=map
+  C->>DB: position fields, plate and route name (route paths cached 5 min per instance)
+  C-->>B: buses with position and status
+  opt a bus is tapped
+    B->>C: GET /api/bus/{id}
+    C-->>B: its route line (routeCoords) and stops
+  end
   loop every 5 s
     B->>C: GET /api/buses?fields=position
     C->>DB: position fields only (route paths cached 5 min per instance)

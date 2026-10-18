@@ -149,9 +149,9 @@ A walk is `{"tipo": "pe", "de", "para", "metros", "minutos"}`; from a position, 
 
 #### `GET /api/buses`
 
-Three uses, chosen by the query:
+Five uses, chosen by the query:
 
-**1. All buses, for the live map** (no query):
+**1. All buses, with each one's route path and stops** (no query). About 6 MB (1 MB compressed) for 451 vehicles, so no page loads it any more; the live map uses `?fields=map`:
 
 ```json
 {
@@ -167,6 +167,14 @@ Three uses, chosen by the query:
 ```
 
 `fonte` is `gps` (a fix younger than 3 minutes) or `horario` (timetable) ([GPS tracking](gps-tracking.md#how-a-position-is-chosen)). `fare` here is the fare for the whole route.
+
+**1b. The live map's first load** (`?fields=map`): what a marker and its popup show, about 20 KB compressed. The route line of a tapped bus comes from [`GET /api/bus/{id}`](#get-apibusid) (`routeCoords`).
+
+```json
+{"buses": [{"id": "cmozbuqta00189ounhmm7x4d6", "matricula": "ACK-185M", "via": "Rota 85", "latitude": -26.0503637, "longitude": 32.3397297, "fonte": "horario", "status": "Em Circulação"}, "… (451 items)"], "total": 451}
+```
+
+**1c. The buses whose route serves a stop** (`?servesStop=STOP_ID`): `{"buses": [{"id", "matricula", "via"}], "total"}`, by plate. The account page's arrival alerts use it to follow a bus to the saved stop.
 
 **2. Positions only, polled every 5 s** (`?fields=position`). Also triggers the arrival-SMS check (at most every 30 s per instance). Route paths are cached 5 minutes per instance.
 
