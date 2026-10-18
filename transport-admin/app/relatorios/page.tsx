@@ -31,7 +31,7 @@ interface StatsData {
   utentesSubscritos?: number;
 }
 
-// Most records a report loads (the table shows the first 100)
+// Máximo de linhas que um relatório carrega (a tabela mostra as primeiras 100)
 const REPORT_LIMIT = 5000;
 
 export default function Relatorios() {
@@ -143,14 +143,14 @@ export default function Relatorios() {
       try {
         const statsRes = await fetch('/api/relatorios/stats');
         if (!statsRes.ok) {
-          throw new Error(`HTTP error! status: ${statsRes.status}`);
+          throw new Error(`Erro HTTP ${statsRes.status}`);
         }
         const statsData = await statsRes.json();
         setStats(statsData);
         setShowReportModal(true);
         setSelectedReport(report);
       } catch (error) {
-        console.error("Error fetching stats:", error);
+        console.error("Erro ao carregar estatísticas:", error);
         showNotification("Erro ao carregar estatísticas", "error");
       } finally {
         setIsLoadingData(false);
@@ -158,13 +158,13 @@ export default function Relatorios() {
       return;
     }
 
-    // This dashboard's own API (the session cookie authorises it); every list returns { data }
+    // A API deste painel (o cookie de sessão autoriza-a); todas as listas devolvem { data }
     const url = `/api/${report.entity}?limit=${REPORT_LIMIT}`;
 
     try {
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`Erro HTTP ${response.status}`);
       }
       const jsonData = await response.json();
       const data: any[] = Array.isArray(jsonData.data) ? jsonData.data : [];
@@ -173,7 +173,7 @@ export default function Relatorios() {
       setShowReportModal(true);
       setSelectedReport(report);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Erro ao carregar dados:", error);
       showNotification("Erro ao carregar dados do relatório: " + (error as Error).message, "error");
     } finally {
       setIsLoadingData(false);
@@ -331,7 +331,7 @@ export default function Relatorios() {
 
   return (
     <div className="bg-slate-50 min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -380,10 +380,10 @@ export default function Relatorios() {
               <p className="hidden lg:block text-slate-600 mt-1">Gere relatórios e análises do sistema</p>
             </div>
           </div>
-          {/* "Histórico" and "Agendar" are not built yet (their pages only say so), so they have no button */}
+          {/* "Histórico" e "Agendar" ainda não existem (as suas páginas só o dizem), por isso não têm botão */}
         </div>
 
-        {/* Stats Cards */}
+        {/* Cartões das estatísticas */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-2xl border border-slate-300 p-6">
             <div className="flex items-center justify-between">
@@ -469,7 +469,7 @@ export default function Relatorios() {
           </div>
         </div>
 
-        {/* Reports Grid */}
+        {/* Grelha dos relatórios */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredRelatorios.length === 0 ? (
             <div className="col-span-full flex flex-col items-center justify-center py-12 text-slate-500">
@@ -561,11 +561,11 @@ export default function Relatorios() {
         </div>
       </div>
 
-      {/* Report Modal */}
+      {/* Janela do relatório */}
       {showReportModal && selectedReport && (
         <div className="fixed inset-0 bg-slate-900/70 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-            {/* Modal Header */}
+            {/* Cabeçalho da janela */}
             <div className="flex items-center justify-between p-6 border-b border-slate-300 bg-slate-100">
               <div>
                 <h2 className="text-2xl font-bold text-slate-900">{selectedReport.titulo}</h2>
@@ -592,7 +592,7 @@ export default function Relatorios() {
               </div>
             </div>
 
-            {/* Modal Content */}
+            {/* Conteúdo da janela */}
             <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
               {isLoadingData ? (
                 <div className="flex items-center justify-center py-12">

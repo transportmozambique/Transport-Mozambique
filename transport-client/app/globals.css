@@ -25,14 +25,14 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Pulsing marker styles for pickup and destination */
+/* Marcadores a pulsar para a partida e o destino */
 .paragem-marker-container {
   position: absolute !important;
   width: 32px;
   height: 32px;
-  z-index: 1000 !important; /* Ensure markers are above route line */
+  z-index: 1000 !important; /* marcadores por cima da linha da via */
   pointer-events: auto !important;
-  will-change: transform; /* Optimize for animations */
+  will-change: transform; /* optimizado para animações */
 }
 
 .pickup-marker,
@@ -71,7 +71,7 @@ body {
   z-index: 1001;
 }
 
-/* Ensure MapLibre markers have proper z-index and stay fixed */
+/* Marcadores do MapLibre com o z-index certo e fixos no sítio */
 .maplibregl-marker {
   z-index: 1000 !important;
   position: absolute !important;
@@ -113,8 +113,8 @@ body {
   }
 }
 
-/* Scroll bars in the app's colours: thin, with a rounded thumb on a clear track. Firefox and
-   current Chrome/Edge use the standard properties; Safari only knows the ::-webkit ones. */
+/* Barras de deslocamento nas cores da aplicação: finas, com o cursor arredondado sobre uma calha
+   clara. O Firefox e o Chrome/Edge actuais usam as propriedades normais; o Safari só conhece as ::-webkit. */
 * {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
@@ -140,7 +140,7 @@ body {
   background-color: #94a3b8;
 }
 
-/* On dark panels */
+/* Em painéis escuros */
 .scroll-dark {
   scrollbar-color: #475569 transparent;
 }

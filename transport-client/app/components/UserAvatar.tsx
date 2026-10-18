@@ -18,7 +18,7 @@ export default function UserAvatar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Load user from localStorage
+    // Ler o passageiro do localStorage
     const utenteData = localStorage.getItem("utente");
     if (utenteData) {
       setUtente(JSON.parse(utenteData));
@@ -26,7 +26,7 @@ export default function UserAvatar() {
   }, []);
 
   useEffect(() => {
-    // Close dropdown when clicking outside
+    // Fechar o menu ao clicar fora
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
@@ -76,7 +76,7 @@ export default function UserAvatar() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Avatar Button */}
+      {/* Botão do avatar */}
       <button
         onClick={() => setShowDropdown(!showDropdown)}
         className="flex items-center space-x-3 p-2 rounded-xl hover:bg-slate-100 transition-colors"
@@ -107,10 +107,10 @@ export default function UserAvatar() {
         </svg>
       </button>
 
-      {/* Dropdown Menu */}
+      {/* Menu */}
       {showDropdown && (
         <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50">
-          {/* Menu Items - styled like admin sidebar */}
+          {/* Itens do menu, no estilo da barra lateral do painel */}
           <div className="p-2">
             <button
               onClick={handlePerfil}

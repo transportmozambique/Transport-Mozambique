@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-// The fare rule is edited on its own page; the values are checked and the change is visible at once
+// A regra de tarifa edita-se na sua própria página; os valores são verificados e a alteração vê-se logo
 test('Tarifa: ver, pré-visualizar, recusar valor fora do limite, guardar', async ({ page }) => {
   const original = await (await page.request.get('/api/tarifa')).json();
   expect(original).toHaveProperty('precoPorKm');
@@ -22,13 +22,13 @@ test('Tarifa: ver, pré-visualizar, recusar valor fora do limite, guardar', asyn
     const porKm = page.getByRole('spinbutton', { name: /Preço por km/ });
     await expect(porKm).toHaveValue(String(original.precoPorKm));
 
-    // The preview follows the values typed, before saving
+    // A pré-visualização acompanha os valores escritos, antes de guardar
     const newPerKm = original.precoPorKm + 2;
     await porKm.fill(String(newPerKm));
     const fare5 = Math.max(original.tarifaMinima, Math.ceil(5 * newPerKm));
     await expect(page.getByText(`${fare5} MT`, { exact: true })).toBeVisible();
 
-    // Out of range: refused with the allowed range, nothing saved
+    // Fora dos limites: recusado com os limites permitidos, nada guardado
     await minima.fill('5000');
     await page.getByRole('button', { name: 'Guardar tarifa' }).click();
     await expect(page.getByText('Tarifa mínima: indique um número inteiro entre 0 e 1000')).toBeVisible();

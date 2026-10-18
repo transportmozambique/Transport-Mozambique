@@ -107,7 +107,7 @@ export default function EditarAdministrador() {
         email: formData.email,
       };
 
-      // Only include password if it was changed
+      // A palavra-passe só vai quando foi mudada
       if (formData.senha) {
         updateData.senha = formData.senha;
       }
@@ -123,7 +123,7 @@ export default function EditarAdministrador() {
       if (response.ok) {
         const updatedAdmin = await response.json();
         
-        // If editing own profile, update localStorage and refresh context
+        // Ao editar o próprio perfil, actualizar o localStorage e o contexto
         if (admin && admin.id === params.id) {
           const currentAdminData = localStorage.getItem("admin");
           if (currentAdminData) {
@@ -134,7 +134,7 @@ export default function EditarAdministrador() {
               localStorage.setItem("admin", JSON.stringify(adminData));
               refreshAdmin();
             } catch (error) {
-              console.error("Error updating admin data:", error);
+              console.error("Erro ao actualizar os dados do administrador:", error);
             }
           }
         }
@@ -159,7 +159,7 @@ export default function EditarAdministrador() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -209,7 +209,7 @@ export default function EditarAdministrador() {
           </div>
         </div>
 
-        {/* Form */}
+        {/* Formulário */}
         <form onSubmit={handleSubmit} className="max-w-3xl">
           <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
             <h3 className="text-lg font-bold text-slate-900 pb-3 border-b border-slate-200">

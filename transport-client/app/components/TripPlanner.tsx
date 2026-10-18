@@ -26,9 +26,9 @@ import {
 } from "./mapKit";
 
 /**
- * The passenger's map: live buses, the passenger's position and the stops near it. Tapping a
- * stop lists where its buses go; choosing a destination (or typing one) shows journeys, with
- * changes of bus when no single bus goes there, drawn on the map.
+ * O mapa do passageiro: autocarros ao vivo, a posição do passageiro e as paragens perto dele.
+ * Tocar numa paragem lista para onde vão os seus autocarros; escolher um destino (ou escrevê-lo)
+ * mostra viagens, com transbordos quando nenhum autocarro vai directo, desenhadas no mapa.
  */
 
 interface NetVia {
@@ -66,7 +66,7 @@ type JourneysState = Extract<View, { kind: "journeys" }>;
 type LocationState = "asking" | "ok" | "denied" | "unavailable";
 
 const MAPUTO: Point = [-25.9655, 32.5892];
-/** Farther than this from Maputo, the position is not used to centre the map */
+/** Mais longe do que isto de Maputo, a posição não é usada para centrar o mapa */
 const SERVICE_AREA_M = 80_000;
 const NEAR_RADIUS_M = 1500;
 const NEAR_MAX = 8;
@@ -76,9 +76,9 @@ const BUS_REFRESH_MS = 5000;
 const isDesktop = () => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches;
 
 /**
- * The part of the map the panels cover. Set as the map's own padding (MapLibre also keeps the
- * padding of flyTo/easeTo, and fitBounds adds its own on top), so centring and fitting use the
- * visible part of the map.
+ * A parte do mapa que os painéis tapam. Posta como padding do próprio mapa (o MapLibre também
+ * guarda o padding de flyTo/easeTo, e fitBounds junta o seu por cima), para centrar e enquadrar
+ * usarem a parte visível do mapa.
  */
 function mapPadding(sheetOpen: boolean) {
   return isDesktop()
@@ -89,7 +89,7 @@ function mapPadding(sheetOpen: boolean) {
 
 const NO_WALKS: Walk[] = [];
 
-/** Runs of stops with the same name (both sides of a street, one avenue) shown once. */
+/** Sequências de paragens com o mesmo nome (os dois lados de uma rua, uma avenida) mostradas uma só vez. */
 function distinctNames<T extends { nome: string }>(list: T[]): T[] {
   return list.filter((s, i) => i === 0 || s.nome.trim().toLowerCase() !== list[i - 1].nome.trim().toLowerCase());
 }
@@ -100,7 +100,7 @@ export default function TripPlanner() {
   const map = useRef<maplibregl.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const busMarkers = useRef(new Map<string, maplibregl.Marker>());
-  // Route lines of the buses tapped so far ([lng, lat] pairs), fetched on the first tap
+  // Linhas das vias dos autocarros tocados até agora (pares [lng, lat]), pedidas no primeiro toque
   const busRoutes = useRef(new Map<string, [number, number][]>());
   const lastTappedBus = useRef<string | null>(null);
   const meMarker = useRef<maplibregl.Marker | null>(null);
@@ -110,7 +110,7 @@ export default function TripPlanner() {
 
   const [vias, setVias] = useState<NetVia[]>([]);
   const [stops, setStops] = useState<NetStop[]>([]);
-  // Stops no route with a vehicle passes: shown on the map, not offered as a start or destination
+  // Paragens por onde não passa nenhuma via com veículo: mostradas no mapa, não oferecidas como início ou destino
   const [idleStops, setIdleStops] = useState<NetStop[]>([]);
   const [buses, setBuses] = useState<Bus[]>([]);
   const [netError, setNetError] = useState(false);
@@ -118,16 +118,16 @@ export default function TripPlanner() {
   const [locState, setLocState] = useState<LocationState>("asking");
   const [mapCentre, setMapCentre] = useState<Point>(MAPUTO);
   const [view, setView] = useState<View>({ kind: "nearby" });
-  // A: where the journey starts when it is not the passenger's position (a place they picked)
+  // A: onde começa a viagem quando não é a posição do passageiro (um local escolhido)
   const [start, setStart] = useState<(PlacePick & { point: Point }) | null>(null);
-  // Every destination from the start, with the stop where the first bus is taken (B)
+  // Todos os destinos a partir do início, com a paragem onde se apanha o primeiro autocarro (B)
   const [destinos, setDestinos] = useState<{ key: string; list: Destino[] | null }>({ key: "", list: null });
   const [snap, setSnap] = useState<SheetSnap>("half");
   const expanded = snap !== "peek";
-  // Shows the panel when something is picked, without lowering it from the whole screen
+  // Mostra o painel quando algo é escolhido, sem o baixar a partir do ecrã inteiro
   const raise = useCallback(() => setSnap((s) => (s === "peek" ? "half" : s)), []);
   const [shownWalks, setShownWalks] = useState<Walk[]>([]);
-  // Signed in when the passenger app stored a session (read after hydration, false on the server)
+  // Com sessão quando a aplicação do passageiro guardou uma (lida depois da hidratação, false no servidor)
   const signedIn = useSyncExternalStore(
     (onChange) => {
       window.addEventListener("storage", onChange);
@@ -146,7 +146,7 @@ export default function TripPlanner() {
   const stopById = useMemo(() => new Map([...stops, ...idleStops].map((s) => [s.id, s])), [stops, idleStops]);
   const places = useMemo(() => groupPlaces(stops), [stops]);
 
-  // ── Data ────────────────────────────────────────────────────────────────────
+  // ── Dados ────────────────────────────────────────────────────────────────────
   useEffect(() => {
     fetch("/api/stops")
       .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
@@ -177,7 +177,7 @@ export default function TripPlanner() {
     );
   }, []);
 
-  // Asked when the page opens: the map is about the stops around the passenger
+  // Pedida quando a página abre: o mapa é sobre as paragens à volta do passageiro
   useEffect(() => {
     watchPosition();
     return () => {
@@ -240,7 +240,7 @@ export default function TripPlanner() {
         layout: { "line-join": "round", "line-cap": "round" },
         paint: { "line-color": "#334155", "line-width": 4, "line-dasharray": [0.6, 1.6] },
       });
-      // Dark outline: some route colours are very light
+      // Contorno escuro: algumas cores de via são muito claras
       m.addLayer({
         id: "journey-bus-casing",
         type: "line",
@@ -264,7 +264,7 @@ export default function TripPlanner() {
         filter: ["==", ["geometry-type"], "Point"],
         paint: { "circle-radius": 7, "circle-color": ["get", "color"], "circle-stroke-color": "#0f172a", "circle-stroke-width": 3 },
       });
-      // Every stop at every zoom: white where buses pass, grey where none does
+      // Todas as paragens em todos os zooms: brancas onde passam autocarros, cinzentas onde nenhum passa
       m.addLayer({
         id: "idle-dot",
         type: "circle",
@@ -323,7 +323,7 @@ export default function TripPlanner() {
 
   const source = (id: string) => map.current?.getSource(id) as GeoJSONSource | undefined;
 
-  // Keep the map's padding equal to what the panel covers
+  // Manter o padding do mapa igual ao que o painel tapa
   useEffect(() => {
     if (!mapReady || !map.current) return;
     const m = map.current;
@@ -333,7 +333,7 @@ export default function TripPlanner() {
     return () => window.removeEventListener("resize", apply);
   }, [mapReady, expanded]);
 
-  // Every stop, as small dots
+  // Todas as paragens, como pontos pequenos
   useEffect(() => {
     if (!mapReady) return;
     const points = (list: NetStop[]): GeoJSON.FeatureCollection => ({
@@ -344,7 +344,7 @@ export default function TripPlanner() {
     source("idle-stops")?.setData(points(idleStops));
   }, [mapReady, stops, idleStops]);
 
-  // Live buses
+  // Autocarros ao vivo
   useEffect(() => {
     if (!mapReady || !map.current) return;
     const m = map.current;
@@ -374,10 +374,10 @@ export default function TripPlanner() {
           const data = await fetch(`/api/bus/${bus.id}`).then((res) => (res.ok ? res.json() : null));
           const coords: [number, number][] = data?.routeCoords ?? [];
           busRoutes.current.set(bus.id, coords);
-          // Another bus may have been tapped while this one loaded
+          // Outro autocarro pode ter sido tocado enquanto este carregava
           if (lastTappedBus.current === bus.id) show(coords);
         } catch {
-          // No line this time; the next tap asks again
+          // Sem linha desta vez; o próximo toque pede outra vez
         }
       });
       busMarkers.current.set(bus.id, new maplibregl.Marker({ element: el }).setLngLat([bus.longitude, bus.latitude]).setPopup(popup).addTo(m));
@@ -394,13 +394,13 @@ export default function TripPlanner() {
           if (marker) glideMarker(marker, [bus.longitude, bus.latitude]);
         }
       } catch {
-        // Next refresh will try again
+        // A actualização seguinte tenta outra vez
       }
     }, BUS_REFRESH_MS);
     return () => clearInterval(interval);
   }, [buses.length]);
 
-  // The passenger's position
+  // A posição do passageiro
   useEffect(() => {
     if (!mapReady || !map.current || !me) return;
     if (!meMarker.current) {
@@ -420,17 +420,17 @@ export default function TripPlanner() {
     }
   }, [mapReady, me, meInArea]);
 
-  // Initials in the pin follow sign-in and sign-out
+  // As iniciais no marcador acompanham a entrada e a saída
   useEffect(() => {
     if (meFace.current) paintFace(meFace.current);
   }, [signedIn]);
 
-  // Stops near the passenger (or near the centre of the map when the position is unknown)
+  // Paragens perto do passageiro (ou perto do centro do mapa quando a posição não é conhecida)
   const anchor: Point = start ? start.point : me && meInArea ? me : mapCentre;
   const fromMe = !start && Boolean(me && meInArea);
 
-  // Destinations from the start: the picked place, or the passenger's position (asked again
-  // when they have moved about 100 m)
+  // Destinos a partir do início: o local escolhido, ou a posição do passageiro (pedidos outra vez
+  // quando ele se moveu cerca de 100 m)
   const destinosKey = start ? `from=${start.ids.join(",")}` : fromMe && me ? `lat=${me[0].toFixed(3)}&lng=${me[1].toFixed(3)}` : "";
   useEffect(() => {
     if (!destinosKey) return;
@@ -488,7 +488,7 @@ export default function TripPlanner() {
     },
     [stopById, raise],
   );
-  // The map's click handlers are attached once, when it loads; they call the latest openStop
+  // Os cliques do mapa são registados uma vez, quando carrega; chamam o openStop mais recente
   useEffect(() => {
     selectStop.current = openStop;
   }, [openStop]);
@@ -508,7 +508,7 @@ export default function TripPlanner() {
     raise();
   };
 
-  // No journey on the map: all the buses again
+  // Sem viagem no mapa: todos os autocarros outra vez
   const hideJourney = useCallback(() => {
     if (!mapReady) return;
     for (const marker of busMarkers.current.values()) marker.getElement().style.display = "";
@@ -519,7 +519,7 @@ export default function TripPlanner() {
     (journey: Journey | null) => {
       if (!mapReady || !map.current) return;
       if (!journey) return hideJourney();
-      // While a journey is shown, only its buses stay on the map
+      // Enquanto uma viagem é mostrada, só os seus autocarros ficam no mapa
       const used = new Set(journey.etapas.flatMap((e) => (e.tipo === "autocarro" ? [e.transporte.id] : [])));
       for (const [id, marker] of busMarkers.current) marker.getElement().style.display = used.has(id) ? "" : "none";
       const features: GeoJSON.Feature[] = [];
@@ -550,7 +550,7 @@ export default function TripPlanner() {
     if (view.kind !== "journeys") hideJourney();
   }, [view.kind, hideJourney]);
 
-  // The walks of the journey shown, along the streets once their paths arrive
+  // As caminhadas da viagem mostrada, pelas ruas logo que os caminhos chegam
   const walkLines = useWalkPaths(view.kind === "journeys" ? shownWalks : NO_WALKS);
   useEffect(() => {
     if (!mapReady) return;
@@ -596,18 +596,18 @@ export default function TripPlanner() {
         @media (min-width: 768px) { .maplibregl-ctrl-top-right { top: 0; } }
       `}</style>
 
-      {/* MapLibre makes its container position: relative, so it gets its own wrapper; z-0 keeps
-          the markers (z-index 1000 in globals.css) under the panels */}
+      {/* O MapLibre põe o seu contentor em position: relative, por isso tem um invólucro próprio; z-0
+          mantém os marcadores (z-index 1000 em globals.css) por baixo dos painéis */}
       <div className="absolute inset-0 z-0">
         <div className="h-full w-full" ref={mapRef} />
       </div>
 
-      {/* Title and account: a bar at the top on phones, the top of the panel on larger screens */}
+      {/* Título e conta: uma barra no topo nos telemóveis, o topo do painel em ecrãs maiores */}
       <div className="md:hidden absolute top-3 left-3 right-3 z-40 flex items-center justify-between gap-3 bg-white/95 backdrop-blur rounded-2xl px-4 py-2.5 shadow-lg">
         {titleBar}
       </div>
 
-      {/* My location */}
+      {/* A minha localização */}
       <button
         onClick={() => {
           if (me && map.current) map.current.flyTo({ center: [me[1], me[0]], zoom: 15 });
@@ -625,7 +625,7 @@ export default function TripPlanner() {
         </svg>
       </button>
 
-      {/* Panel: bottom sheet on phones (dragged up to the whole screen), side panel on larger screens */}
+      {/* Painel: folha em baixo nos telemóveis (arrastada até ao ecrã inteiro), painel lateral em ecrãs maiores */}
       <Sheet snap={snap} onSnap={setSnap} peek={64} header={titleBar} label="Planear viagem">
         {netError ? (
           <p className="text-sm text-red-700 py-4">Não foi possível carregar as paragens. Recarregue a página.</p>
@@ -677,7 +677,7 @@ export default function TripPlanner() {
 
 type PlacePick = { ids: string[]; label: string };
 
-/** The start and end dots joined by a line, as in ride-hailing apps. */
+/** Os pontos de início e de fim ligados por uma linha, como nas aplicações de transporte. */
 function RouteDots() {
   return (
     <div className="flex flex-col items-center py-5 pl-1" aria-hidden>
@@ -689,8 +689,8 @@ function RouteDots() {
 }
 
 /**
- * Where the journey starts ("Partida": the passenger's position, or a stop or place they pick)
- * and where it goes ("Para onde quer ir?"), with the search results of the field being typed in.
+ * Onde começa a viagem ("Partida": a posição do passageiro, ou uma paragem ou local escolhido) e
+ * para onde vai ("Para onde quer ir?"), com os resultados da pesquisa do campo em que se escreve.
  */
 function RouteFields({
   places,
@@ -709,7 +709,7 @@ function RouteFields({
   originIsMe: boolean;
   canUseMe: boolean;
   directRouteIdx?: Set<number>;
-  /** Where distances in the results are measured from (the passenger, or the stop shown) */
+  /** De onde se medem as distâncias nos resultados (o passageiro, ou a paragem mostrada) */
   near: Point | null;
   onOrigin: (p: PlacePick | "me") => void;
   onPick: (p: PlacePick) => void;
@@ -830,7 +830,7 @@ function RouteFields({
   );
 }
 
-/** The chosen start and destination, shown above the journeys. */
+/** O início e o destino escolhidos, mostrados por cima das viagens. */
 function RouteSummary({ from, to }: { from: string; to: string }) {
   return (
     <div className="mb-3 flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-2">
@@ -876,7 +876,7 @@ function NearbyView({
   onRetry: () => void;
   origin: string;
   originIsMe: boolean;
-  /** A start is known (the passenger's position or a picked place), so destinations can be listed */
+  /** Conhece-se um início (a posição do passageiro ou um local escolhido), por isso os destinos podem ser listados */
   hasStart: boolean;
   anchor: Point;
   destinos: Destino[] | null;
@@ -887,7 +887,7 @@ function NearbyView({
   const fromPlace = hasStart && !originIsMe;
   const [tab, setTab] = useState<"destinos" | "paragens">("destinos");
   const showing = hasStart ? tab : "paragens";
-  // Nothing within NEAR_RADIUS_M: the list holds the nearest stops, however far
+  // Nada a menos de NEAR_RADIUS_M: a lista tem as paragens mais próximas, estejam onde estiverem
   const far = !loading && nearby.length > 0 && nearby[0].m > NEAR_RADIUS_M;
   return (
     <div>
@@ -981,7 +981,7 @@ function NearbyView({
   );
 }
 
-/** Two or three choices as a segmented control. */
+/** Duas ou três escolhas como um controlo segmentado. */
 function Tabs<T extends string>({ value, options, onChange }: { value: T; options: [T, string][]; onChange: (v: T) => void }) {
   return (
     <div className="mb-3 inline-flex rounded-full bg-slate-100 p-1" role="tablist">
@@ -1000,7 +1000,7 @@ function Tabs<T extends string>({ value, options, onChange }: { value: T; option
   );
 }
 
-// ─── One stop: where its buses go ─────────────────────────────────────────────
+// ─── Uma paragem: para onde vão os seus autocarros ────────────────────────────
 
 function StopView({
   stop,
@@ -1026,7 +1026,7 @@ function StopView({
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [tab, setTab] = useState<"todos" | "rotas">("todos");
 
-  // No route with a vehicle passes this stop: nothing to ask the server
+  // Nenhuma via com veículo passa nesta paragem: nada a perguntar ao servidor
   const idle = stop !== null && stop.v.length === 0;
 
   useEffect(() => {
@@ -1113,7 +1113,7 @@ function StopView({
                           </div>
                           {sentido.proximo && <Plate matricula={sentido.proximo.matricula} />}
                         </div>
-                        {/* The stops ahead, as a line in the route's colour: tap one to go there */}
+                        {/* As paragens à frente, como uma linha na cor da via: tocar numa para ir até lá */}
                         <ol className="mt-2 ml-2 border-l-2" style={{ borderColor: rota.via.cor }}>
                           {shown.map((p) => (
                             <li key={p.id} className="relative">
@@ -1154,8 +1154,9 @@ function StopView({
 }
 
 /**
- * Every place reachable from the start, earliest arrival first, including those that take more
- * than one bus. With `showBoarding`, each says where the first bus is taken (B in A → B → C).
+ * Todos os locais a que se chega a partir do início, a chegada mais cedo primeiro, incluindo os
+ * que precisam de mais de um autocarro. Com `showBoarding`, cada um diz onde se apanha o primeiro
+ * autocarro (B em A → B → C).
  */
 function AllDestinations({
   destinos,
@@ -1246,7 +1247,7 @@ function JourneysView({
 
   useEffect(() => {
     let cancelled = false;
-    // POST, so the passenger's position stays out of the request logs
+    // POST, para a posição do passageiro ficar fora dos registos de pedidos
     const body = "me" in view.from
       ? { to: view.to, lat: view.from.me[0], lng: view.from.me[1] }
       : { to: view.to, from: view.from.stopIds };
@@ -1261,7 +1262,7 @@ function JourneysView({
     return () => {
       cancelled = true;
     };
-    // The view is replaced (new key) for every new search
+    // A vista é substituída (chave nova) a cada pesquisa nova
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1283,7 +1284,7 @@ function JourneysView({
           Não há ligação de autocarro entre estes dois locais. Experimente uma paragem próxima do destino.
         </p>
       )}
-      {/* From a stop the first bus is taken there; a walk first only when no bus from it gets there */}
+      {/* A partir de uma paragem o primeiro autocarro apanha-se lá; uma caminhada primeiro só quando nenhum autocarro de lá chega */}
       {options?.length && !("me" in view.from) && options[0].etapas[0].tipo === "pe" ? (
         <p className="text-sm text-slate-700 bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3">
           Nenhum autocarro de {view.fromLabel} chega lá. A viagem começa a pé, até uma paragem perto.
@@ -1338,7 +1339,7 @@ function JourneysView({
   );
 }
 
-/** The page that follows a journey: every bus, the walks and the passenger on one map. */
+/** A página que acompanha uma viagem: todos os autocarros, as caminhadas e o passageiro num só mapa. */
 function followUrl(journey: Journey, fromLabel: string, toLabel: string) {
   const buses = journey.etapas.filter((e) => e.tipo === "autocarro");
   const last = journey.etapas[journey.etapas.length - 1];
@@ -1414,7 +1415,7 @@ function WalkStep({ leg }: { leg: WalkLeg }) {
   );
 }
 
-/** A bus's plate, drawn like a number plate so it is easy to match with the bus in the street. */
+/** A matrícula de um autocarro, desenhada como uma chapa para ser fácil de comparar com o autocarro na rua. */
 
 function Stop({ s }: { s: StopRef }) {
   return <strong className="font-semibold">{s.nome}</strong>;

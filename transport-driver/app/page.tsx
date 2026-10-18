@@ -38,11 +38,11 @@ export default function LoginPage() {
         return;
       }
 
-      // Store driver data in localStorage
+      // Guardar os dados do motorista no localStorage
       localStorage.setItem('motorista', JSON.stringify(data));
       router.push('/dashboard');
     } catch (err) {
-      console.error('Login error:', err);
+      console.error('Erro ao entrar:', err);
       setError('Erro de conexão. Verifique se o servidor está a funcionar.');
       setIsLoading(false);
     }

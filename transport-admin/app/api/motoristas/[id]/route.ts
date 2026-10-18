@@ -57,7 +57,7 @@ export async function GET(
   } catch (error: any) {
     console.error('❌ ERRO DETALHADO ao buscar motorista:');
     console.error('Mensagem:', error.message);
-    console.error('Stack:', error.stack);
+    console.error('Pilha:', error.stack);
     console.error('Erro completo:', error);
     
     return NextResponse.json(
@@ -90,7 +90,7 @@ export async function PUT(
       );
     }
 
-    // Check if motorista exists
+    // O motorista existe?
     const existingMotorista = await prisma.motorista.findUnique({
       where: { id },
     });
@@ -102,7 +102,7 @@ export async function PUT(
       );
     }
 
-    // Check if BI is already used by another motorista
+    // O BI já é usado por outro motorista?
     if (body.bi !== existingMotorista.bi) {
       const biExists = await prisma.motorista.findUnique({
         where: { bi: body.bi },
@@ -116,7 +116,7 @@ export async function PUT(
       }
     }
 
-    // Check if carta de condução is already used by another motorista
+    // A carta de condução já é usada por outro motorista?
     if (body.cartaConducao !== existingMotorista.cartaConducao) {
       const cartaExists = await prisma.motorista.findUnique({
         where: { cartaConducao: body.cartaConducao },
@@ -130,7 +130,7 @@ export async function PUT(
       }
     }
 
-    // Check if email is already used by another motorista
+    // O email já é usado por outro motorista?
     if (body.email !== existingMotorista.email) {
       const emailExists = await prisma.motorista.findUnique({
         where: { email: body.email },
@@ -144,7 +144,7 @@ export async function PUT(
       }
     }
 
-    // Check if transporte is already assigned to another motorista
+    // O transporte já está atribuído a outro motorista?
     if (body.transporteId && body.transporteId !== existingMotorista.transporteId) {
       const transporteExists = await prisma.motorista.findFirst({
         where: { 
@@ -204,7 +204,7 @@ export async function PUT(
   } catch (error: any) {
     console.error('Erro ao atualizar motorista:', error);
     
-    // Handle Prisma unique constraint errors
+    // Erros de valor único do Prisma
     if (error.code === 'P2002') {
       const field = error.meta?.target?.[0] || 'campo';
       return NextResponse.json(
@@ -229,7 +229,7 @@ export async function DELETE(
     const { searchParams } = new URL(request.url);
     const force = searchParams.get('force') === 'true';
     
-    // Check if motorista exists and has transporte assigned
+    // O motorista existe e tem transporte atribuído?
     const motorista = await prisma.motorista.findUnique({
       where: { id },
       include: {
@@ -259,7 +259,7 @@ export async function DELETE(
       );
     }
 
-    // If force=true, remove transporte association first
+    // Com force=true, tirar primeiro a ligação ao transporte
     if (force && motorista.transporteId) {
       await prisma.motorista.update({
         where: { id },

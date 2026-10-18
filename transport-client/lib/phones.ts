@@ -1,26 +1,26 @@
 import { prisma } from './prisma';
 
 /**
- * Passengers' phone numbers. USSD stores "+258…"; the web form used to store the number as typed,
- * spaces included ("+258 84 000 0000", as its placeholder shows). A number is matched on its
- * digits, with or without the 258 country code.
+ * Números de telefone dos passageiros. O USSD guarda "+258…"; o formulário web guardava o número
+ * como escrito, com espaços ("+258 84 000 0000", como o exemplo do campo mostra). Um número é
+ * comparado pelos seus dígitos, com ou sem o indicativo 258.
  */
 
-/** The number without spaces or the country code: "84 000 0000" and "+258840000000" give "840000000" */
+/** O número sem espaços nem indicativo: "84 000 0000" e "+258840000000" dão "840000000" */
 export function localPhone(raw: string) {
   return String(raw).replace(/\s+/g, '').replace(/^\+?258/, '');
 }
 
-/** The number as stored from now on: no spaces, and +258 in front of a Mozambican mobile number */
+/** O número como passa a ser guardado: sem espaços, e +258 à frente de um número móvel moçambicano */
 export function storedPhone(raw: string) {
   const local = localPhone(raw);
   return /^8\d{8}$/.test(local) ? `+258${local}` : String(raw).replace(/\s+/g, '');
 }
 
 /**
- * The id of the passenger with this number, however it was written, or null. Before numbers were
- * matched this way, one number could get two passengers (a USSD one and a website one): the one
- * with a password comes first.
+ * O id do passageiro com este número, seja como for que foi escrito, ou null. Antes de os números
+ * serem comparados assim, um número podia ter dois passageiros (um do USSD e um do site): o que
+ * tem palavra-passe vem primeiro.
  */
 export async function findUtenteIdByPhone(raw: string): Promise<string | null> {
   const local = localPhone(raw);

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { utenteIdFromRequest, unauthorized } from '@/lib/userSession';
 
-// A passenger reads and changes only their own profile (session token from the login)
+// Um passageiro só lê e muda o seu próprio perfil (token de sessão da entrada)
 
 export async function GET(
   request: Request,

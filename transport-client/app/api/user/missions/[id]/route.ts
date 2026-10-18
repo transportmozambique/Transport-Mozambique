@@ -18,12 +18,12 @@ export async function DELETE(
       );
     }
 
-    // Check if mission exists
+    // O alerta existe?
     const mission = await prisma.mISSION.findUnique({
       where: { id },
     });
 
-    // Only the passenger's own alerts can be removed
+    // Só os alertas do próprio passageiro podem ser apagados
     if (!mission || mission.utenteId !== utenteId) {
       return NextResponse.json(
         { error: "Missão não encontrada" },
@@ -31,7 +31,7 @@ export async function DELETE(
       );
     }
 
-    // Delete the mission
+    // Apagar o alerta
     await prisma.mISSION.delete({
       where: { id },
     });

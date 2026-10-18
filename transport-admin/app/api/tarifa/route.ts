@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 /**
- * The active fare rule (Tarifa): what every fare, trip time and timetable position is computed
- * from, on the web, in USSD and here. The passenger app reads it again within 60 s of a change.
+ * A regra de tarifa activa (Tarifa): a base de todas as tarifas, tempos de viagem e posições pelo
+ * horário, na web, no USSD e aqui. A aplicação dos passageiros volta a lê-la até 60 s depois de uma
+ * alteração. Porquê na base de dados: um preço muda-se nesta página, sem publicar código novo.
  *
- * GET  /api/tarifa → the active rule
+ * GET  /api/tarifa → a regra activa
  * PUT  /api/tarifa {tarifaMinima, precoPorKm, velocidadeViagemKmh, velocidadeChegadaKmh, fatorEstrada}
  */
 

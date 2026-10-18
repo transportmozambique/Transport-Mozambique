@@ -3,27 +3,28 @@ import { getFareRule, haversineMeters, parseLatLng } from './fares';
 import { GPS_FRESH_MS, vehiclePosition } from './vehiclePosition';
 
 /**
- * Bus positions are no longer written by a loop: lib/vehiclePosition.ts gives each bus's
- * position on read (fresh real GPS, otherwise the timetable). A loop could not run on
- * serverless anyway, and writing currGeoLocation would overwrite the vehicles' real GPS.
+ * As posições dos autocarros já não são escritas por um ciclo: lib/vehiclePosition.ts calcula a
+ * posição de cada autocarro no momento da leitura (GPS real recente, senão o horário). Porquê:
+ * num servidor serverless (Vercel) não há processo sempre ligado para correr um ciclo, e escrever
+ * currGeoLocation apagaria a posição GPS real dos veículos.
  *
- * What remains here is the arrival SMS: a passenger who asked for a bus (a MISSION) gets one
- * message when a bus on a route through their stop is less than 1 km away.
+ * O que fica aqui é o SMS de chegada: um passageiro que pediu um autocarro (um MISSION) recebe
+ * uma mensagem quando um autocarro de uma rota que passa na sua paragem está a menos de 1 km.
  */
 
-// Minimum time between two arrival SMS for the same mission
+// Tempo mínimo entre dois SMS de chegada para o mesmo alerta (não repetir a cada verificação)
 const NOTIFY_COOLDOWN_MS = 30 * 60 * 1000;
-// Minimum time between two checks in the same server instance (they are triggered by visits)
+// Tempo mínimo entre duas verificações na mesma instância do servidor (as visitas também as disparam)
 const CHECK_INTERVAL_MS = 30 * 1000;
 
 let lastCheck = 0;
 let lastResult: { checkedAt: string; missions: number; notified: number } | null = null;
 
-/** Sends arrival SMS for pending missions. Returns how many were sent. */
+/** Envia os SMS de chegada dos alertas pendentes. Devolve quantos foram enviados. */
 export async function checkAndNotifyUsers(now: Date = new Date()): Promise<number> {
   let notified = 0;
   try {
-    // Missions from the last 24 hours that were not notified recently
+    // Alertas das últimas 24 horas que não foram avisados há pouco
     const missions = await prisma.mISSION.findMany({
       where: {
         createdAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) },
@@ -60,7 +61,7 @@ export async function checkAndNotifyUsers(now: Date = new Date()): Promise<numbe
         const tempoEstimado = Math.max(1, Math.ceil((distance / 1000 / rule.velocidadeViagemKmh) * 60));
         console.log(`🔔 Autocarro ${transporte.matricula} a ${tempoEstimado} min da ${mission.paragem.nome} (${position.source})`);
 
-        // Mark first, so a slow or failing SMS is not retried on every check
+        // Marcar primeiro, para que um SMS lento ou falhado não seja repetido a cada verificação
         await prisma.mISSION.update({ where: { id: mission.id }, data: { notificadoEm: new Date() } });
         try {
           const { notifyBusArrival } = await import('./notifications');
@@ -79,14 +80,14 @@ export async function checkAndNotifyUsers(now: Date = new Date()): Promise<numbe
   return notified;
 }
 
-/** Runs the arrival check at most once per CHECK_INTERVAL_MS in this server instance. */
+/** Corre a verificação de chegadas no máximo uma vez a cada CHECK_INTERVAL_MS nesta instância. */
 export async function maybeCheckArrivals(): Promise<void> {
   if (Date.now() - lastCheck < CHECK_INTERVAL_MS) return;
   lastCheck = Date.now();
   await checkAndNotifyUsers();
 }
 
-/** How positions are produced, and the last arrival check of this instance. */
+/** Como as posições são produzidas, e a última verificação de chegadas desta instância. */
 export async function getSimulationStatus() {
   const [busCount, withFreshGps] = await Promise.all([
     prisma.transporte.count({ where: { viaId: { not: null } } }),

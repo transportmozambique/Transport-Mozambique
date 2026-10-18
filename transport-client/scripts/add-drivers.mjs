@@ -1,21 +1,23 @@
 #!/usr/bin/env node
 /**
- * Gives every vehicle without a driver a demo driver, like the 111 drivers of the first data.
+ * Dá um motorista de demonstração a cada veículo sem motorista, como os 111 motoristas dos
+ * primeiros dados. Porquê: o painel e o portal do motorista partem do princípio de que cada
+ * veículo tem um motorista, e 340 veículos importados não tinham.
  *
- *   node scripts/add-drivers.mjs                        # dry run: what would be created
- *   node scripts/add-drivers.mjs --apply                # write to DATABASE_URL (local databases only)
- *   node scripts/add-drivers.mjs --apply --production   # also allows a remote database
+ *   node scripts/add-drivers.mjs                        # ensaio: o que seria criado
+ *   node scripts/add-drivers.mjs --apply                # escreve em DATABASE_URL (só bases de dados locais)
+ *   node scripts/add-drivers.mjs --apply --production   # permite também uma base de dados remota
  *
- * Each driver gets a name from common Mozambican first names and surnames, and the same kind of
- * record as the existing demo drivers: BI 1102…, licence CC-<year>-…, an @transport.co.mz email,
- * a phone, an address, an emergency contact and dates, status "ativo", assigned to the vehicle.
- * No photo (the apps show the initials) and no PIN: an administrator generates the PIN when the
- * driver is to sign in. The numbers continue after the highest existing ones, so nothing clashes,
- * and the same data gives the same drivers (a fixed seed).
+ * Cada motorista recebe um nome de nomes próprios e apelidos moçambicanos comuns, e o mesmo tipo
+ * de registo dos motoristas de demonstração existentes: BI 1102…, carta CC-<ano>-…, um email
+ * @transport.co.mz, um telefone, uma morada, um contacto de emergência e datas, estado "ativo",
+ * atribuído ao veículo. Sem fotografia (as aplicações mostram as iniciais) e sem PIN: um
+ * administrador gera o PIN quando o motorista for entrar. Os números continuam a seguir aos mais
+ * altos existentes, para nada colidir, e os mesmos dados dão os mesmos motoristas (semente fixa).
  *
- * --apply first saves every Motorista row to osm-data/backup-drivers-<time>.json, and afterwards
- * lists the created drivers' ids in osm-data/created-drivers-<time>.json (to undo: delete those).
- * Running it again creates nothing: every vehicle then has a driver.
+ * --apply guarda primeiro todas as linhas de Motorista em osm-data/backup-drivers-<hora>.json, e
+ * no fim lista os ids dos motoristas criados em osm-data/created-drivers-<hora>.json (para
+ * desfazer: apagar esses). Correr outra vez não cria nada: todos os veículos já têm motorista.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -37,7 +39,7 @@ const MARITAL = ['Solteiro', 'Casado', 'Casado', 'Divorciado', 'Viúvo'];
 const PLACES = ['Maputo', 'Matola', 'Maputo', 'Matola', 'Boane', 'Marracuene'];
 const LETTERS = 'ABCDEFGHIJKLMNPQRSTUVWXYZ';
 
-/** A fixed-seed random generator (mulberry32), so a run on a copy of the data gives the same drivers */
+/** Gerador aleatório de semente fixa (mulberry32), para uma corrida numa cópia dos dados dar os mesmos motoristas */
 function seeded(seed) {
   let a = seed >>> 0;
   return () => {
@@ -53,12 +55,12 @@ const strip = (s) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCa
 const day = (y, m, d) => new Date(Date.UTC(y, m, d));
 const phone = (n) => `+258 ${n.slice(0, 2)} ${n.slice(2, 5)} ${n.slice(5)}`;
 
-/** The demo drivers for `vehicles`, numbered from `first` */
+/** Os motoristas de demonstração para `vehicles`, numerados a partir de `first` */
 function makeDrivers(vehicles, first, taken, phones) {
   const rand = seeded(2026);
   const pick = (list) => list[Math.floor(rand() * list.length)];
   const int = (lo, hi) => lo + Math.floor(rand() * (hi - lo + 1));
-  // Sign-in finds a driver by phone, so no two drivers share one
+  // A entrada encontra o motorista pelo telefone, por isso dois motoristas nunca partilham um
   const newPhone = () => {
     let p;
     do p = phone(`${pick(['84', '85', '86', '87'])}${String(int(1000000, 9999999))}`);
@@ -110,7 +112,7 @@ function makeDrivers(vehicles, first, taken, phones) {
   const url = process.env.DATABASE_URL ?? '';
   const local = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(url);
   if (flag('--apply') && !local && !flag('--production')) {
-    console.error('DATABASE_URL is not a local database: add --production to write to it.');
+    console.error('DATABASE_URL não é uma base de dados local: juntar --production para escrever nela.');
     process.exit(1);
   }
   const { PrismaClient } = (await import('@prisma/client')).default;
@@ -120,19 +122,19 @@ function makeDrivers(vehicles, first, taken, phones) {
       prisma.transporte.findMany({ where: { motorista: { is: null } }, select: { id: true, matricula: true, lotacao: true }, orderBy: { matricula: 'asc' } }),
       prisma.motorista.findMany({ select: { nome: true, email: true, bi: true, cartaConducao: true, telefone: true } }),
     ]);
-    // Numbers after the highest in use (emails motoristaN, BI and licence numbers)
+    // Números a seguir aos mais altos em uso (emails motoristaN, números de BI e de carta)
     const used = drivers.flatMap((d) => [d.email.match(/motorista(\d+)@/)?.[1], d.bi.match(/^1102(\d{8})/)?.[1], d.cartaConducao.match(/-(\d{6})$/)?.[1]]);
     const first = Math.max(drivers.length, ...used.filter(Boolean).map(Number)) + 1;
     const phones = new Set(drivers.map((d) => d.telefone.replace(/\D/g, '')));
     const created = makeDrivers(vehicles, first, new Set(drivers.map((d) => d.nome)), phones);
 
-    console.log(`Drivers: ${drivers.length}; vehicles without a driver: ${vehicles.length}`);
+    console.log(`Motoristas: ${drivers.length}; veículos sem motorista: ${vehicles.length}`);
     for (const d of created.slice(0, flag('--verbose') ? created.length : 8)) {
       console.log(`  + ${d.matricula.padEnd(9)} ${d.nome.padEnd(24)} ${d.telefone}  ${d.email}`);
     }
-    if (!flag('--verbose') && created.length > 8) console.log(`  … (--verbose lists all ${created.length})`);
+    if (!flag('--verbose') && created.length > 8) console.log(`  … (--verbose lista os ${created.length})`);
     if (!flag('--apply')) {
-      console.log('\nDry run: nothing written. Add --apply to write.');
+      console.log('\nEnsaio: nada foi escrito. Juntar --apply para escrever.');
       return;
     }
     if (!created.length) return;
@@ -140,22 +142,22 @@ function makeDrivers(vehicles, first, taken, phones) {
     fs.mkdirSync(DATA, { recursive: true });
     const backupFile = path.join(DATA, `backup-drivers-${stamp}.json`);
     fs.writeFileSync(backupFile, JSON.stringify({ at: stamp, motoristas: await prisma.motorista.findMany() }));
-    console.log(`\nBackup: ${drivers.length} drivers → ${backupFile}`);
+    console.log(`\nCópia de segurança: ${drivers.length} motoristas → ${backupFile}`);
     const ids = [];
     try {
       for (const { matricula, ...data } of created) {
-        // One at a time: a vehicle given a driver meanwhile (transporteId is unique) is skipped
+        // Um de cada vez: um veículo que entretanto recebeu motorista (transporteId é único) é saltado
         try {
           ids.push((await prisma.motorista.create({ data, select: { id: true } })).id);
         } catch (e) {
-          if (e.code === 'P2002') console.warn(`  skipped ${matricula}: ${e.meta?.target ?? 'already taken'}`);
+          if (e.code === 'P2002') console.warn(`  saltado ${matricula}: ${e.meta?.target ?? 'já usado'}`);
           else throw e;
         }
       }
     } finally {
       const logFile = path.join(DATA, `created-drivers-${stamp}.json`);
       fs.writeFileSync(logFile, JSON.stringify({ at: stamp, motoristas: ids }, null, 1));
-      console.log(`Written: ${ids.length} drivers, listed in ${logFile}`);
+      console.log(`Escrito: ${ids.length} motoristas, listados em ${logFile}`);
     }
   } finally {
     await prisma.$disconnect();

@@ -1,7 +1,7 @@
 /**
- * How to show "the bus arrives in N minutes". Short waits are shown in minutes; long ones (at
- * night the first bus is at 05:00) as the Maputo clock time, with "amanhã" when it is tomorrow.
- * No server imports: used by pages and by the API.
+ * Como mostrar "o autocarro chega em N minutos". Esperas curtas aparecem em minutos; as longas (à
+ * noite o primeiro autocarro é às 05:00) como a hora de Maputo, com "amanhã" quando é no dia
+ * seguinte. Sem importações de servidor: usado pelas páginas e pela API.
  */
 
 const TIME_ZONE = 'Africa/Maputo';
@@ -10,19 +10,19 @@ function maputoDay(d: Date): string {
   return d.toLocaleDateString('pt-PT', { timeZone: TIME_ZONE });
 }
 
-/** "HH:MM" in Maputo. */
+/** "HH:MM" em Maputo. */
 export function maputoClock(d: Date): string {
   return d.toLocaleTimeString('pt-PT', { timeZone: TIME_ZONE, hour: '2-digit', minute: '2-digit' });
 }
 
 export interface EtaText {
-  /** Big number or clock time, e.g. "7" or "05:12" */
+  /** Número grande ou hora, ex: "7" ou "05:12" */
   value: string;
-  /** Word under it, e.g. "minutos", "hoje" or "amanhã" */
+  /** Palavra por baixo, ex: "minutos", "hoje" ou "amanhã" */
   unit: string;
-  /** One line, e.g. "7 min" or "amanhã às 05:12" */
+  /** Uma linha, ex: "7 min" ou "amanhã às 05:12" */
   text: string;
-  /** Long wait: shown as a clock time */
+  /** Espera longa: mostrada como hora */
   isClock: boolean;
 }
 

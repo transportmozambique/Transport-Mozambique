@@ -1,12 +1,14 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 
 /**
- * Signed session tokens "<id>.<expiresAt>.<signature>" (HMAC-SHA256), sent by the browser as
- * "Authorization: Bearer <token>". Used for the driver portal and for passengers.
- * Without its secret in production a session kind is refused (fail closed).
+ * Tokens de sessão assinados "<id>.<expiraEm>.<assinatura>" (HMAC-SHA256), enviados pelo navegador
+ * como "Authorization: Bearer <token>". Usados no portal do motorista e pelos passageiros.
+ * Porquê assim e não sessões na base de dados: verificar a assinatura não precisa de consulta, e
+ * as funções serverless não guardam memória entre pedidos. Sem o segredo em produção, esse tipo
+ * de sessão é recusado (falha fechada).
  */
 export interface SessionKind {
-  /** Environment variable holding the HMAC secret */
+  /** Variável de ambiente com o segredo HMAC */
   secretEnv: string;
   maxAgeSeconds: number;
 }
@@ -28,7 +30,7 @@ export function createToken(kind: SessionKind, id: string): string | null {
   return `${payload}.${sign(payload, key)}`;
 }
 
-/** The id in a valid, unexpired "Authorization: Bearer" token, else null. */
+/** O id de um token "Authorization: Bearer" válido e não expirado; senão null. */
 export function idFromRequest(kind: SessionKind, request: Request): string | null {
   const key = secret(kind);
   const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { operationSummary } from '@/lib/vehiclePosition';
 
-// GET: the vehicle's service day by its timetable (km, trips, next pass at each stop)
+// GET: o dia de serviço do veículo pelo horário (km, viagens, próxima passagem em cada paragem)
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const t = await prisma.transporte.findUnique({

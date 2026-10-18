@@ -1,18 +1,18 @@
 import { expect, type Page } from '@playwright/test';
 
-/** Short unique suffix so every run creates its own rows. */
+/** Sufixo curto e único, para cada corrida criar as suas próprias linhas. */
 export const uid = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`.toUpperCase();
 
-/** The local test database (global-setup refuses any other host). */
+/** A base de dados local de teste (o global-setup recusa qualquer outro servidor). */
 export const E2E_DATABASE_URL = process.env.E2E_DATABASE_URL || 'postgresql://postgres@127.0.0.1:55432/transport_test';
 
-/** Digits only, for phone numbers and similar fields. */
+/** Só algarismos, para números de telefone e campos parecidos. */
 export const digits = (n: number) => Array.from({ length: n }, () => Math.floor(Math.random() * 10)).join('');
 
 /**
- * The form labels are not linked to their inputs, so fields are found as the first input, select
- * or textarea after a label whose text starts with `label`. `nth` picks repeated labels
- * (e.g. "Número *" for the ID card and for the driving licence).
+ * As etiquetas dos formulários não estão ligadas aos seus campos, por isso um campo é encontrado
+ * como o primeiro input, select ou textarea depois de uma etiqueta cujo texto começa por `label`.
+ * `nth` escolhe entre etiquetas repetidas (ex: "Número *" para o BI e para a carta de condução).
  */
 export function field(page: Page, label: string, nth = 0) {
   return page
@@ -21,7 +21,7 @@ export function field(page: Page, label: string, nth = 0) {
     .locator('xpath=following::*[self::input or self::select or self::textarea][1]');
 }
 
-/** Picks the first real option (index 1, after the "Selecione…" placeholder) of a select. */
+/** Escolhe a primeira opção real (índice 1, depois do "Selecione…") de um select. */
 export async function selectFirstOption(page: Page, label: string) {
   const select = field(page, label);
   await expect(select.locator('option').nth(1)).toBeAttached();
@@ -41,7 +41,7 @@ function findId(body: unknown): string | undefined {
   return undefined;
 }
 
-/** Clicks the submit button and returns the id of the row the API created. */
+/** Clica no botão de submeter e devolve o id da linha que a API criou. */
 export async function submitCreate(page: Page, api: string, button: string) {
   const [response] = await Promise.all([
     page.waitForResponse((r) => new URL(r.url()).pathname === api && r.request().method() === 'POST'),
@@ -54,7 +54,7 @@ export async function submitCreate(page: Page, api: string, button: string) {
   return id!;
 }
 
-/** Clicks the save button of an edit form and waits for the update request to succeed. */
+/** Clica no botão de guardar de um formulário de edição e espera que o pedido de actualização corra bem. */
 export async function submitEdit(page: Page, api: string, button: string) {
   const [response] = await Promise.all([
     page.waitForResponse((r) => new URL(r.url()).pathname === api && ['PUT', 'PATCH'].includes(r.request().method())),
@@ -63,24 +63,24 @@ export async function submitEdit(page: Page, api: string, button: string) {
   expect(response.status(), `${response.request().method()} ${api} → ${await response.text()}`).toBeLessThan(300);
 }
 
-/** Opens the detail page and checks it shows `text`. */
+/** Abre a página de detalhe e verifica que mostra `text`. */
 export async function expectDetail(page: Page, url: string, text: string) {
   await page.goto(url);
   await expect(page.getByText(text, { exact: true }).first()).toBeVisible();
 }
 
-/** Searches the list page and checks the row is there. */
+/** Pesquisa na página da lista e verifica que a linha lá está. */
 export async function expectInList(page: Page, url: string, text: string) {
   await page.goto(url);
   await page.getByPlaceholder(/^Pesquisar por/).fill(text);
   await expect(page.getByText(text, { exact: true }).first()).toBeVisible();
 }
 
-/** Deletes from the detail page ("Eliminar", then the dialog's confirm) and checks the API returns 404. */
+/** Apaga a partir da página de detalhe ("Eliminar", e depois a confirmação do diálogo) e verifica que a API devolve 404. */
 export async function deleteFromDetail(page: Page, url: string, api: string) {
   await page.goto(url);
   await page.getByRole('button', { name: 'Eliminar', exact: true }).first().click();
-  // The confirmation dialogs are full-screen overlays (`fixed inset-0`) without a dialog role.
+  // Os diálogos de confirmação são camadas de ecrã inteiro (`fixed inset-0`) sem o papel dialog.
   const confirm = page.locator('.fixed.inset-0').getByRole('button', { name: /^(Remover e )?Eliminar$/ });
   const [response] = await Promise.all([
     page.waitForResponse((r) => new URL(r.url()).pathname === api && r.request().method() === 'DELETE'),

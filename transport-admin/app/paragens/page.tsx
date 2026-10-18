@@ -71,14 +71,14 @@ export default function Paragens() {
 
   async function fetchParagens() {
     try {
-      // Use listLoading for subsequent fetches, loading for initial load
+      // listLoading para os pedidos seguintes, loading para a primeira carga
       if (paragens.length > 0) {
         setListLoading(true);
       } else {
         setLoading(true);
       }
       
-      // Add cache busting to ensure fresh data
+      // Parâmetro anti-cache, para dados actuais
       const timestamp = new Date().getTime();
       const response = await fetch(
         `/api/paragens?page=${currentPage}&limit=${itemsPerPage}&search=${encodeURIComponent(debouncedSearchTerm)}&_=${timestamp}`,
@@ -102,7 +102,7 @@ export default function Paragens() {
     }
   }
 
-  // Reset to page 1 when search term or items per page changes
+  // Voltar à página 1 quando a pesquisa ou o número de itens por página mudam
   useEffect(() => {
     if (currentPage !== 1) {
       setCurrentPage(1);
@@ -118,38 +118,38 @@ export default function Paragens() {
   };
 
   const confirmDelete = (id: string, nome: string) => {
-    console.log('confirmDelete called with:', { id, nome });
+    console.log('confirmDelete chamado com:', { id, nome });
     setParagemToDelete({ id, nome });
     setShowDeleteModal(true);
     setDeleteError(null);
   };
 
   const handleDelete = async (id: string) => {
-    console.log('handleDelete called with id:', id);
+    console.log('handleDelete chamado com o id:', id);
     setDeleting(true);
     setDeleteError(null);
     try {
-      console.log('Sending DELETE request to:', `/api/paragens/${id}`);
+      console.log('A enviar DELETE para:', `/api/paragens/${id}`);
       const response = await fetch(`/api/paragens/${id}`, {
         method: 'DELETE',
       });
 
-      console.log('DELETE response status:', response.status);
-      console.log('DELETE response ok:', response.ok);
+      console.log('Estado da resposta ao DELETE:', response.status);
+      console.log('Resposta ao DELETE ok:', response.ok);
 
       if (response.ok) {
-        console.log('Delete successful, refreshing list...');
+        console.log('Apagado, a actualizar a lista...');
         showNotification('Paragem eliminada com sucesso!', 'success');
         setShowDeleteModal(false);
         setParagemToDelete(null);
         setDeleteError(null);
         await fetchParagens();
         await fetchCounts();
-        console.log('List refreshed');
+        console.log('Lista actualizada');
       } else {
         const error = await response.json();
-        console.log('DELETE error response:', error);
-        // Check if error is about vias associations
+        console.log('Resposta de erro ao DELETE:', error);
+        // O erro é sobre ligações a vias?
         const hasVias = error.details?.includes('vias') || error.error?.includes('vias');
         setDeleteError({
           message: error.error || 'Erro ao eliminar paragem',
@@ -158,7 +158,7 @@ export default function Paragens() {
         });
       }
     } catch (error) {
-      console.error('Exception during delete:', error);
+      console.error('Excepção ao apagar:', error);
       setDeleteError({
         message: 'Erro ao eliminar paragem',
         details: 'Ocorreu um erro inesperado. Tente novamente.',
@@ -172,9 +172,9 @@ export default function Paragens() {
   const handleRemoveAssignments = async (id: string) => {
     setDeleting(true);
     try {
-      // Step 1: Remove all ParagemVia associations
-      // The API should handle cascade deletion of ParagemVia records
-      // when the paragem is deleted, so we just delete the paragem
+      // Passo 1: tirar todas as ligações ViaParagem
+      // A API apaga em cascata as linhas ViaParagem
+      // quando a paragem é apagada, por isso basta apagar a paragem
       const deleteResponse = await fetch(`/api/paragens/${id}?force=true`, {
         method: 'DELETE',
       });
@@ -208,7 +208,7 @@ export default function Paragens() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -244,7 +244,7 @@ export default function Paragens() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Diálogo de confirmação do apagar */}
       {showDeleteModal && paragemToDelete && (
         <div 
           className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm min-h-screen" 
@@ -362,9 +362,9 @@ export default function Paragens() {
       )}
 
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
-        {/* Header - 2 Columns Layout */}
+        {/* Cabeçalho em 2 colunas */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          {/* Left - Title and Description */}
+          {/* Esquerda: título e descrição */}
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/dashboard')}
@@ -380,7 +380,7 @@ export default function Paragens() {
             </div>
           </div>
 
-          {/* Right - Action Button */}
+          {/* À direita: botão de acção */}
           <button 
             onClick={handleCreate}
             className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 whitespace-nowrap"
@@ -392,12 +392,12 @@ export default function Paragens() {
           </button>
         </div>
 
-        {/* Stats Cards - Smaller and More Compact */}
+        {/* Cartões de estatísticas, pequenos e compactos */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <button 
             onClick={(e) => {
               e.preventDefault();
-              console.log('Card clicked: Total Paragens, current path:', window.location.pathname);
+              console.log('Cartão Total Paragens, página actual:', window.location.pathname);
               window.location.href = '/paragens';
             }}
             type="button"
@@ -420,7 +420,7 @@ export default function Paragens() {
           <button 
             onClick={(e) => {
               e.preventDefault();
-              console.log('Card clicked: Terminais, current path:', window.location.pathname);
+              console.log('Cartão Terminais, página actual:', window.location.pathname);
               window.location.href = '/paragens';
             }}
             type="button"
@@ -442,7 +442,7 @@ export default function Paragens() {
           <button 
             onClick={(e) => {
               e.preventDefault();
-              console.log('Card clicked: Paragens Regulares, current path:', window.location.pathname);
+              console.log('Cartão Paragens Regulares, página actual:', window.location.pathname);
               window.location.href = '/paragens';
             }}
             type="button"
@@ -464,7 +464,7 @@ export default function Paragens() {
           <button 
             onClick={(e) => {
               e.preventDefault();
-              console.log('Card clicked: Média Vias/Paragem, navigating to /vias');
+              console.log('Cartão Média Vias/Paragem, a abrir /vias');
               window.location.href = '/vias';
             }}
             type="button"
@@ -680,7 +680,7 @@ export default function Paragens() {
                 </svg>
               </button>
               
-              {/* Page numbers */}
+              {/* Números das páginas */}
               <div className="flex items-center space-x-1">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum;

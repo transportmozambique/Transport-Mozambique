@@ -35,7 +35,7 @@ export async function GET(
 
     return NextResponse.json(paragem);
   } catch (error) {
-    console.error('Error fetching paragem:', error);
+    console.error('Erro ao carregar paragem:', error);
     return NextResponse.json(
       { error: 'Erro ao carregar paragem' },
       { status: 500 }
@@ -52,7 +52,7 @@ export async function PATCH(
     const body = await request.json();
     const { nome, codigo, geoLocation, viaIds } = body;
 
-    // If viaIds provided, replace the via associations, keeping the codes and terminal flags
+    // Com viaIds, substituir as ligações às vias, mantendo os códigos e as marcas de terminal
     let vias;
     if (Array.isArray(viaIds)) {
       const [current, rows] = await Promise.all([
@@ -77,7 +77,7 @@ export async function PATCH(
       };
     }
 
-    // Update paragem
+    // Guardar a paragem
     const paragem = await prisma.paragem.update({
       where: { id },
       data: { nome, codigo, geoLocation, ...(vias && { vias }) },
@@ -98,7 +98,7 @@ export async function PATCH(
 
     return NextResponse.json(paragem);
   } catch (error) {
-    console.error('Error updating paragem:', error);
+    console.error('Erro ao actualizar paragem:', error);
     return NextResponse.json(
       { error: 'Erro ao atualizar paragem' },
       { status: 500 }
@@ -112,9 +112,9 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    console.log('[DELETE /api/paragens/[id]] Received delete request for id:', id);
+    console.log('[DELETE /api/paragens/[id]] Pedido para apagar o id:', id);
 
-    // Check if paragem exists
+    // A paragem existe?
     const paragem = await prisma.paragem.findUnique({
       where: { id },
       include: {
@@ -128,28 +128,28 @@ export async function DELETE(
     });
 
     if (!paragem) {
-      console.log('[DELETE /api/paragens/[id]] Paragem not found:', id);
+      console.log('[DELETE /api/paragens/[id]] Paragem não encontrada:', id);
       return NextResponse.json(
         { error: 'Paragem não encontrada' },
         { status: 404 }
       );
     }
 
-    console.log('[DELETE /api/paragens/[id]] Paragem found:', paragem.nome);
-    console.log('[DELETE /api/paragens/[id]] Vias count:', paragem._count.vias);
-    console.log('[DELETE /api/paragens/[id]] Missoes count:', paragem._count.missoes);
+    console.log('[DELETE /api/paragens/[id]] Paragem encontrada:', paragem.nome);
+    console.log('[DELETE /api/paragens/[id]] Número de vias:', paragem._count.vias);
+    console.log('[DELETE /api/paragens/[id]] Número de alertas:', paragem._count.missoes);
 
-    // ViaParagem links cascade. Passengers' arrival alerts (MISSION) at this stop could never
-    // fire again and would block the delete (foreign key), so they go with it.
+    // As ligações ViaParagem apagam-se em cascata. Os alertas de chegada (MISSION) nesta paragem
+    // nunca mais disparariam e bloqueariam o apagar (chave estrangeira), por isso vão com ela.
     await prisma.$transaction([
       prisma.mISSION.deleteMany({ where: { paragemId: id } }),
       prisma.paragem.delete({ where: { id } }),
     ]);
 
-    console.log('[DELETE /api/paragens/[id]] Paragem deleted successfully');
+    console.log('[DELETE /api/paragens/[id]] Paragem apagada');
     return NextResponse.json({ success: true, alertasRemovidos: paragem._count.missoes });
   } catch (error: any) {
-    console.error('[DELETE /api/paragens/[id]] Error deleting paragem:', error);
+    console.error('[DELETE /api/paragens/[id]] Erro ao apagar paragem:', error);
     return NextResponse.json(
       { 
         error: 'Erro ao eliminar paragem',

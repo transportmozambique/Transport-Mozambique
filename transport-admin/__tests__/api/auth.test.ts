@@ -8,7 +8,7 @@ describe('Authentication API', () => {
   let testAdminId: string;
 
   beforeAll(async () => {
-    // Create test admin
+    // Criar o administrador de teste
     const hashedPassword = await bcrypt.hash('TestPassword123', 10);
     const admin = await prisma.administrador.create({
       data: {
@@ -21,7 +21,7 @@ describe('Authentication API', () => {
   });
 
   afterAll(async () => {
-    // Cleanup
+    // Limpar
     await prisma.administrador.delete({ where: { id: testAdminId } });
     await prisma.$disconnect();
   });

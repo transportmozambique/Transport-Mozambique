@@ -1,40 +1,43 @@
 #!/usr/bin/env node
 /**
- * Imports the Maputo area's bus stops and bus routes from OpenStreetMap.
+ * Importa as paragens e as rotas de autocarro da área de Maputo do OpenStreetMap. Porquê o OSM:
+ * é a fonte aberta mais completa das rotas de chapas e da EMTPM, e a sua licença (ODbL) permite
+ * reutilizar os dados com atribuição.
  *
- *   node scripts/import-osm.mjs --fetch                # download from Overpass into ./osm-data
- *   node scripts/import-osm.mjs                        # dry run: what would change, nothing written
- *   node scripts/import-osm.mjs --apply                # write to DATABASE_URL (local databases only)
- *   node scripts/import-osm.mjs --apply --production   # also allows a remote database
+ *   node scripts/import-osm.mjs --fetch                # descarrega do Overpass para ./osm-data
+ *   node scripts/import-osm.mjs                        # ensaio: o que mudaria, nada é escrito
+ *   node scripts/import-osm.mjs --apply                # escreve em DATABASE_URL (só bases de dados locais)
+ *   node scripts/import-osm.mjs --apply --production   # permite também uma base de dados remota
  *
- * --apply first saves every Paragem, Via, ViaParagem and Transporte row to
- * osm-data/backup-<time>.json, and afterwards lists what it created in
- * osm-data/created-<time>.json (to undo the import: delete those rows).
+ * --apply guarda primeiro todas as linhas de Paragem, Via, ViaParagem e Transporte em
+ * osm-data/backup-<hora>.json, e no fim lista o que criou em osm-data/created-<hora>.json (para
+ * desfazer a importação: apagar essas linhas).
  *
- * What it does:
- * - Stops: every highway=bus_stop, bus platform and bus station. A stop_position becomes the
- *   bus_stop or platform within 35 m (same name first), or a stop of its own. Same-name stops
- *   within 30 m are one. A stop already in the database (same name within 30 m, or any within
- *   15 m) is reused, so nothing is duplicated; new ones get the code OSM-<node id>.
- * - Routes: the two directions of a route (X12i and X12v) are one Via, as the network treats
- *   every route as running both ways. Its path goes through the first direction's stops in
- *   order, by car on the public OSRM routers (scripts/roads.mjs, answers kept in
- *   osm-data/road-cache.json): relations often list their ways out of order or miss some, and
- *   joining them made straight jumps across the map. A relation without stops gets its ways
- *   joined in order. Its stops are the relations' stops near that path, and any stop within
- *   20 m of it.
- * - A route that is already in the database (its path within 60 m of one existing route's path
- *   for 85% of its length, and the other way round for 70%) is not added again. Its stops
- *   are attached to the existing route instead.
- * - Existing routes also get the imported stops within 20 m of their path.
- * - Only stops some route serves are imported.
- * - With --buses N, each new route gets N vehicles, as the existing routes have: Toyota Hiace
- *   for chapas, Mercedes-Benz Sprinter for EMTPM and Corujas, with the next free plates from
- *   the ADA-001M series. They move on the timetable model until a GPS device reports. The
- *   journey planner only uses routes that have a vehicle.
+ * O que faz:
+ * - Paragens: todos os highway=bus_stop, plataformas e estações de autocarro. Um stop_position
+ *   passa a ser o bus_stop ou a plataforma a menos de 35 m (o mesmo nome primeiro), ou uma
+ *   paragem própria. Paragens com o mesmo nome a menos de 30 m são uma só. Uma paragem que já
+ *   está na base de dados (o mesmo nome a menos de 30 m, ou qualquer uma a menos de 15 m) é
+ *   reutilizada, para nada ficar duplicado; as novas recebem o código OSM-<id do nó>.
+ * - Rotas: os dois sentidos de uma rota (X12i e X12v) são uma só Via, porque a rede trata todas
+ *   as rotas como indo nos dois sentidos. O percurso passa pelas paragens do primeiro sentido, por
+ *   ordem, de carro, nos routers OSRM públicos (scripts/roads.mjs, respostas guardadas em
+ *   osm-data/road-cache.json): as relações listam muitas vezes as suas vias fora de ordem ou
+ *   faltam-lhes algumas, e juntá-las fazia saltos em linha recta pelo mapa. Uma relação sem
+ *   paragens fica com as suas vias juntas por ordem. As suas paragens são as das relações perto
+ *   desse percurso, e qualquer paragem a menos de 20 m dele.
+ * - Uma rota que já está na base de dados (o seu percurso a menos de 60 m do percurso de uma rota
+ *   existente em 85% do comprimento, e o contrário em 70%) não é juntada outra vez. As suas
+ *   paragens ficam ligadas à rota existente.
+ * - As rotas existentes recebem também as paragens importadas a menos de 20 m do seu percurso.
+ * - Só são importadas as paragens servidas por alguma rota.
+ * - Com --buses N, cada rota nova recebe N veículos, como as rotas existentes: Toyota Hiace para
+ *   chapas, Mercedes-Benz Sprinter para a EMTPM e os Corujas, com as próximas matrículas livres
+ *   da série ADA-001M. Andam pelo horário até um dispositivo GPS enviar posições. O planeador de
+ *   viagens só usa rotas que têm um veículo.
  *
- * Idempotent: running it again changes nothing. The data is © OpenStreetMap contributors,
- * under the Open Database License (ODbL): https://www.openstreetmap.org/copyright
+ * Idempotente: correr outra vez não muda nada. Os dados são © contribuidores do OpenStreetMap,
+ * sob a Open Database License (ODbL): https://www.openstreetmap.org/copyright
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -72,7 +75,7 @@ function meters(a, b) {
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
 }
-/** Local metres around Maputo, for point-to-segment distances */
+/** Metros locais à volta de Maputo, para distâncias de ponto a segmento */
 const xy = ([lat, lng]) => [rad(lng) * R * Math.cos(rad(-25.9)), rad(lat) * R];
 function toSegment(p, a, b) {
   const [px, py] = xy(p);
@@ -84,7 +87,7 @@ function toSegment(p, a, b) {
   const t = len ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len)) : 0;
   return Math.hypot(px - ax - t * dx, py - ay - t * dy);
 }
-/** A grid of the path's segments, so "distance to the path" is quick */
+/** Uma grelha dos segmentos do percurso, para a "distância ao percurso" ser rápida */
 function pathIndex(points) {
   const cell = 0.002; // ~200 m
   const grid = new Map();
@@ -108,7 +111,7 @@ function pathIndex(points) {
     return best;
   };
 }
-/** Douglas–Peucker in metres */
+/** Douglas–Peucker em metros */
 function simplify(points, tol = 4) {
   if (points.length < 3) return points;
   const keep = new Uint8Array(points.length);
@@ -158,7 +161,7 @@ const similar = (a, b) => {
   return Boolean(x && y && (x === y || x.includes(y) || y.includes(x)));
 };
 
-// ─── Fetch ───────────────────────────────────────────────────────────────────
+// ─── Descarregar ──────────────────────────────────────────────────────────────
 
 async function overpass(q) {
   const endpoints = ['https://overpass-api.de/api/interpreter', 'https://maps.mail.ru/osm/tools/overpass/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
@@ -176,10 +179,10 @@ async function overpass(q) {
         console.error(`${url}: ${e.message}`);
       }
     }
-    console.error(`Overpass busy; again in ${wait}s`);
+    console.error(`Overpass ocupado; outra vez daqui a ${wait}s`);
     await new Promise((r) => setTimeout(r, wait * 1000));
   }
-  throw new Error('Overpass did not answer');
+  throw new Error('O Overpass não respondeu');
 }
 
 async function fetchData() {
@@ -199,7 +202,7 @@ out body;
 >;
 out skel geom qt;`);
   fs.writeFileSync(path.join(DATA, 'routes.json'), JSON.stringify(routes));
-  console.log(`Saved ${stops.elements.length} stop nodes and ${routes.elements.filter((e) => e.type === 'relation').length} routes in ${DATA}`);
+  console.log(`Guardados ${stops.elements.length} nós de paragens e ${routes.elements.filter((e) => e.type === 'relation').length} rotas em ${DATA}`);
 }
 
 // ─── Plan ────────────────────────────────────────────────────────────────────
@@ -210,7 +213,7 @@ function loadOsm() {
   return { stops, routes };
 }
 
-/** OSM stop nodes → stops (stop_positions folded into the stop beside them) */
+/** Nós de paragem do OSM → paragens (os stop_positions juntos à paragem ao lado) */
 function osmStops(nodes) {
   const isStop = (t) => t.highway === 'bus_stop' || t.public_transport === 'platform' || t.amenity === 'bus_station';
   const stops = [];
@@ -250,8 +253,8 @@ function osmStops(nodes) {
   return { stops, byNode };
 }
 
-/** The relation's ways joined in order into one line */
-/** A relation's stops in travel order: its stop positions (on the road), else its platforms */
+/** As vias da relação juntas por ordem numa só linha */
+/** As paragens de uma relação pela ordem de viagem: os seus stop positions (na estrada), senão as plataformas */
 function relationStops(rel, nodeAt) {
   const pick = (role) => rel.members.filter((m) => m.type === 'node' && m.role.startsWith(role)).map((m) => nodeAt.get(m.ref)).filter(Boolean);
   const positions = pick('stop');
@@ -269,7 +272,7 @@ function relationPath(rel, ways) {
       const tail = line[line.length - 1];
       if (meters(tail, pts[pts.length - 1]) < meters(tail, pts[0])) pts = pts.reverse();
     } else {
-      // Orient the first way towards the second
+      // Orientar a primeira via na direcção da segunda
       const next = rel.members.find((x) => x.type === 'way' && x.ref !== m.ref && ways.get(x.ref)?.geometry?.length);
       const g = next && ways.get(next.ref).geometry;
       if (g) {
@@ -296,7 +299,7 @@ async function plan(prisma) {
   const nodeAt = new Map([...osm.stops, ...osm.routes].filter((e) => e.type === 'node' && e.lat != null).map((n) => [n.id, [n.lat, n.lon]]));
   const rels = osm.routes.filter((e) => e.type === 'relation');
 
-  // Existing data
+  // Os dados que já existem
   const [paragens, vias, municipios] = await Promise.all([
     prisma.paragem.findMany({ select: { id: true, nome: true, codigo: true, geoLocation: true } }),
     prisma.via.findMany({ select: { id: true, codigo: true, nome: true, geoLocationPath: true, municipioId: true, paragens: { select: { paragemId: true } } } }),
@@ -314,7 +317,7 @@ async function plan(prisma) {
       return { ...v, points: pts, near: pts.length > 1 ? pathIndex(pts) : () => Infinity, linked: new Set(v.paragens.map((x) => x.paragemId)) };
     });
 
-  // Each OSM stop: the existing stop it is, if any
+  // Cada paragem do OSM: a paragem existente que ela é, se houver
   for (const s of stops) {
     let best = null;
     for (const p of existingStops) {
@@ -326,7 +329,7 @@ async function plan(prisma) {
     s.existing = best?.p ?? null;
   }
 
-  // Routes: both directions of one ref are one route
+  // Rotas: os dois sentidos de uma ref são uma só rota
   const groups = new Map();
   for (const r of rels) {
     const t = r.tags ?? {};
@@ -340,20 +343,20 @@ async function plan(prisma) {
   const usedCodes = new Set(vias.map((v) => v.codigo));
   const newRoutes = [];
   const duplicates = [];
-  const attach = new Map(); // existing via id → Set of OSM stops
+  const attach = new Map(); // id da via existente → Set de paragens do OSM
   const stopsOnRoutes = new Set();
   let n = 0;
   for (const g of groups.values()) {
     g.rels.sort((a, b) => (/(i)$/.test(b.tags?.ref ?? '') ? 1 : 0) - (/(i)$/.test(a.tags?.ref ?? '') ? 1 : 0));
     const main = g.rels[0];
-    // Through the relation's stops by road; its ways joined in order when it has none
+    // Pelas paragens da relação, de carro; as suas vias juntas por ordem quando não tem paragens
     const stopPoints = relationStops(main, nodeAt);
     const routed = stopPoints.length >= 2 ? await routeThrough(stopPoints) : null;
-    if (routed === null && stopPoints.length >= 2) throw new Error(`The routers did not answer for ${main.tags?.ref ?? main.id}: run again.`);
+    if (routed === null && stopPoints.length >= 2) throw new Error(`Os routers não responderam para ${main.tags?.ref ?? main.id}: correr outra vez.`);
     const points = routed?.points ?? relationPath(main, ways);
     if (points.length < 2) continue;
     const near = pathIndex(points);
-    // The relations' stops near the path, then every stop within 20 m of it
+    // As paragens das relações perto do percurso, e depois todas as paragens a menos de 20 m dele
     const routeStops = new Set();
     for (const r of g.rels) {
       for (const m of r.members) {
@@ -364,8 +367,8 @@ async function plan(prisma) {
     }
     for (const s of stops) if (!routeStops.has(s) && near(s.point) <= STOP_ON_PATH_M) routeStops.add(s);
 
-    // Already in the database? Compared by the new path, and by the ways joined in order, as
-    // earlier imports drew it
+    // Já está na base de dados? Comparado pelo percurso novo, e pelas vias juntas por ordem, como
+    // as importações anteriores o desenharam
     const sameAs = (pts, ptsNear) => {
       const probe = samples(pts);
       for (const v of existingRoutes) {
@@ -385,7 +388,7 @@ async function plan(prisma) {
       const joined = relationPath(main, ways);
       if (joined.length >= 2) dup = sameAs(joined, pathIndex(joined));
     }
-    // Or a route this import added, whose path was redrawn since (snap-paths, the admin)
+    // Ou uma rota que esta importação juntou, cujo percurso foi redesenhado desde então (snap-paths, o painel)
     const network = (g.network.split(';')[0] || 'OSM').slice(0, 3).toUpperCase();
     dup ??= existingRoutes.find((v) => [g.ref, `${g.ref}-${network}`].includes(v.codigo) && similar(v.nome, name)) ?? null;
     if (dup) {
@@ -405,12 +408,12 @@ async function plan(prisma) {
     if (usedCodes.has(codigo)) codigo = `OSM-${main.id}`;
     usedCodes.add(codigo);
 
-    // The municipality where the route starts: Matola lies west of the Infulene valley
+    // O município onde a rota começa: a Matola fica a oeste do vale do Infulene
     const first = points[0];
     const inMatola = first[1] < MATOLA_EAST_LNG && first[0] > -26.05;
     const municipio = municipios.find((m) => /matola/i.test(m.nome) === inMatola) ?? municipios[0];
 
-    // Stops in order along the path
+    // Paragens por ordem ao longo do percurso
     const along = [];
     let acc = 0;
     for (let i = 0; i < points.length; i++) {
@@ -444,7 +447,7 @@ async function plan(prisma) {
     });
   }
 
-  // Existing routes pick up the imported stops beside them
+  // As rotas existentes recebem as paragens importadas ao lado delas
   for (const v of existingRoutes) {
     if (v.points.length < 2) continue;
     for (const s of stops) {
@@ -472,7 +475,7 @@ async function plan(prisma) {
 
 // ─── Write ───────────────────────────────────────────────────────────────────
 
-/** The next free plates, in Maputo's format, from the ADA-001M series on */
+/** As próximas matrículas livres, no formato de Maputo, a partir da série ADA-001M */
 function plates(taken) {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let second = letters.indexOf('D');
@@ -585,7 +588,7 @@ async function apply(prisma, p, log) {
   const url = process.env.DATABASE_URL ?? '';
   const local = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(url);
   if (flag('--apply') && !local && !flag('--production')) {
-    console.error('DATABASE_URL is not a local database: add --production to write to it.');
+    console.error('DATABASE_URL não é uma base de dados local: juntar --production para escrever nela.');
     process.exit(1);
   }
   openCache(DATA);
@@ -594,31 +597,31 @@ async function apply(prisma, p, log) {
   try {
     const p = await plan(prisma);
     const attachCount = [...p.attach.values()].reduce((n, s) => n + s.size, 0);
-    console.log(`OSM stops: ${p.stops.length} (after folding stop positions and same-name pairs)`);
-    console.log(`  on a route: ${p.imported.length} → ${p.newStops.length} new, ${p.reused.length} already in the database`);
-    console.log(`  on no route (not imported): ${p.unserved.length}`);
-    console.log(`OSM routes: ${p.newRoutes.length} new, ${p.duplicates.length} already in the database`);
-    console.log(`  new routes' stops: ${p.newRoutes.reduce((n, r) => n + r.stops.length, 0)}; km: ${Math.round(p.newRoutes.reduce((n, r) => n + r.km, 0))}`);
-    console.log(`  stops added to existing routes: ${attachCount} on ${p.attach.size} routes`);
+    console.log(`Paragens do OSM: ${p.stops.length} (depois de juntar as posições de paragem e os pares com o mesmo nome)`);
+    console.log(`  numa rota: ${p.imported.length} → ${p.newStops.length} novas, ${p.reused.length} já na base de dados`);
+    console.log(`  sem rota (não importadas): ${p.unserved.length}`);
+    console.log(`Rotas do OSM: ${p.newRoutes.length} novas, ${p.duplicates.length} já na base de dados`);
+    console.log(`  paragens das rotas novas: ${p.newRoutes.reduce((n, r) => n + r.stops.length, 0)}; km: ${Math.round(p.newRoutes.reduce((n, r) => n + r.km, 0))}`);
+    console.log(`  paragens juntadas a rotas existentes: ${attachCount} em ${p.attach.size} rotas`);
     if (flag('--verbose')) {
-      for (const r of p.newRoutes) console.log(`  + ${r.codigo.padEnd(10)} ${r.nome} (${r.stops.length} stops, ${r.km.toFixed(1)} km, ${r.municipio.nome}) osm ${r.osmIds.join(',')}`);
+      for (const r of p.newRoutes) console.log(`  + ${r.codigo.padEnd(10)} ${r.nome} (${r.stops.length} paragens, ${r.km.toFixed(1)} km, ${r.municipio.nome}) osm ${r.osmIds.join(',')}`);
       for (const d of p.duplicates) console.log(`  = ${d.ref.padEnd(10)} ${d.name} → ${d.as}`);
     }
     if (flag('--json')) fs.writeFileSync(option('--json'), JSON.stringify({ newRoutes: p.newRoutes.map((r) => ({ ...r, stops: r.stops.map((s) => s.nome), points: undefined })), duplicates: p.duplicates }, null, 1));
     if (!flag('--apply')) {
-      console.log('\nDry run: nothing written. Add --apply to write.');
+      console.log('\nEnsaio: nada foi escrito. Juntar --apply para escrever.');
       return;
     }
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
     const saved = await backup(prisma, path.join(DATA, `backup-${stamp}.json`));
-    console.log(`\nBackup: ${saved.paragens} stops, ${saved.vias} routes, ${saved.viaParagens} links, ${saved.transportes} vehicles → ${path.join(DATA, `backup-${stamp}.json`)}`);
+    console.log(`\nCópia de segurança: ${saved.paragens} paragens, ${saved.vias} rotas, ${saved.viaParagens} ligações, ${saved.transportes} veículos → ${path.join(DATA, `backup-${stamp}.json`)}`);
     const log = { at: stamp, paragens: [], vias: [], transportes: [], ligacoesAVias: [] };
     try {
       const done = await apply(prisma, p, log);
-      console.log(`Written: ${done.stops} stops, ${done.routes} routes, ${done.links} route-stop links, ${done.buses} vehicles.`);
+      console.log(`Escrito: ${done.stops} paragens, ${done.routes} rotas, ${done.links} ligações rota-paragem, ${done.buses} veículos.`);
     } finally {
       fs.writeFileSync(path.join(DATA, `created-${stamp}.json`), JSON.stringify(log, null, 1));
-      console.log(`Created rows listed in ${path.join(DATA, `created-${stamp}.json`)}`);
+      console.log(`Linhas criadas listadas em ${path.join(DATA, `created-${stamp}.json`)}`);
     }
   } finally {
     await prisma.$disconnect();

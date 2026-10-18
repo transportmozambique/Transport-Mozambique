@@ -32,7 +32,7 @@ interface Mission {
 
 type TabType = "profile" | "missions" | "security";
 
-// The session token saved with the passenger at login, for the /api/user endpoints
+// O token de sessão guardado com o passageiro na entrada, para os endpoints /api/user
 function storedToken(): string {
   try {
     return JSON.parse(localStorage.getItem("utente") || "{}").token ?? "";
@@ -45,7 +45,7 @@ function authHeader(): Record<string, string> {
   return { Authorization: `Bearer ${storedToken()}` };
 }
 
-// Saves fresh passenger data without losing the session token
+// Guarda os dados novos do passageiro sem perder o token de sessão
 function saveUtente(data: object) {
   localStorage.setItem("utente", JSON.stringify({ ...data, token: storedToken() }));
 }
@@ -72,14 +72,14 @@ function UserInfoContent() {
     message: '',
   });
   
-  // Profile edit states
+  // Estado da edição do perfil
   const [editingProfile, setEditingProfile] = useState(false);
   const [newNome, setNewNome] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
   
-  // Password change states
+  // Estado da mudança de palavra-passe
   const [changingPassword, setChangingPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -96,7 +96,7 @@ function UserInfoContent() {
 
     const parsedUtente = JSON.parse(utenteData);
     
-    // Check for tab query parameter and set active tab
+    // Ler o separador pedido na query e abri-lo
     const tabParam = searchParams.get('tab');
     if (tabParam === 'missoes') {
       setActiveTab('missions');
@@ -106,13 +106,13 @@ function UserInfoContent() {
       setActiveTab('security');
     }
     
-    // Fetch fresh data from API
+    // Pedir os dados actuais à API
     Promise.all([
       fetch(`/api/user/${parsedUtente.id}`, { headers: authHeader() }),
       fetch(`/api/user/missions`, { headers: authHeader() }),
     ])
       .then(async ([userRes, missionsRes]) => {
-        // Session from before sessions were signed, or expired: sign in again
+        // Sessão de antes de as sessões serem assinadas, ou expirada: entrar outra vez
         if (userRes.status === 401) {
           localStorage.removeItem("utente");
           router.push("/auth");
@@ -120,7 +120,7 @@ function UserInfoContent() {
         }
         const [userData, missionsData] = await Promise.all([userRes.json(), missionsRes.json()]);
         if (userData.error) {
-          console.error('Error fetching user:', userData.error);
+          console.error('Erro ao carregar utilizador:', userData.error);
           setUtente(parsedUtente);
         } else {
           setUtente(userData);
@@ -135,7 +135,7 @@ function UserInfoContent() {
         setLoading(false);
       })
       .catch(error => {
-        console.error('Error fetching data:', error);
+        console.error('Erro ao carregar dados:', error);
         setUtente(parsedUtente);
         setNewNome(parsedUtente.nome);
         setLoading(false);
@@ -171,7 +171,7 @@ function UserInfoContent() {
       
       setTimeout(() => setProfileSuccess(""), 3000);
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("Erro ao actualizar o perfil:", error);
       setProfileError("Erro ao conectar ao servidor");
     } finally {
       setSavingProfile(false);
@@ -226,7 +226,7 @@ function UserInfoContent() {
       
       setTimeout(() => setPasswordSuccess(""), 3000);
     } catch (error) {
-      console.error("Error changing password:", error);
+      console.error("Erro ao alterar a palavra-passe:", error);
       setPasswordError("Erro ao conectar ao servidor");
     } finally {
       setChangingPassword(false);
@@ -260,7 +260,7 @@ function UserInfoContent() {
             return;
           }
 
-          // Remove mission from state
+          // Tirar o alerta do estado
           setMissions(missions.filter(m => m.id !== missionId));
           setModal({
             show: true,
@@ -269,7 +269,7 @@ function UserInfoContent() {
             message: 'Missão removida com sucesso!',
           });
         } catch (error) {
-          console.error('Error deleting mission:', error);
+          console.error('Erro ao apagar alerta:', error);
           setModal({
             show: true,
             type: 'alert',
@@ -317,7 +317,7 @@ function UserInfoContent() {
               <span className="text-lg font-medium">Voltar</span>
             </button>
             
-            {/* User Avatar in top right */}
+            {/* Avatar do passageiro no canto superior direito */}
             <UserAvatar />
           </div>
         </div>
@@ -325,10 +325,10 @@ function UserInfoContent() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left Sidebar - Hidden on mobile, shown on large screens */}
+          {/* Barra lateral esquerda: escondida nos telemóveis, visível em ecrãs grandes */}
           <div className="hidden lg:block lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden sticky top-8">
-              {/* User Avatar */}
+              {/* Avatar do utilizador */}
               <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-8">
                 <div className="flex flex-col items-center">
                   <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-3">
@@ -401,10 +401,10 @@ function UserInfoContent() {
             </div>
           </div>
 
-          {/* Main Content - Full width on mobile, 3 columns on large screens */}
+          {/* Conteúdo principal: largura inteira nos telemóveis, 3 colunas em ecrãs grandes */}
           <div className="lg:col-span-3">
             <div className="bg-white rounded-2xl shadow-lg p-8">
-              {/* Profile Tab */}
+              {/* Separador do perfil */}
               {activeTab === "profile" && (
                 <div>
                   <div className="flex items-center justify-between mb-6">
@@ -458,7 +458,7 @@ function UserInfoContent() {
                       )}
                     </div>
 
-                    {/* Email (read-only) */}
+                    {/* Email (só leitura) */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Email
@@ -467,7 +467,7 @@ function UserInfoContent() {
                       <p className="text-xs text-slate-500 mt-1">O email não pode ser alterado</p>
                     </div>
 
-                    {/* Telefone (read-only) */}
+                    {/* Telefone (só leitura) */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Telefone
@@ -476,7 +476,7 @@ function UserInfoContent() {
                       <p className="text-xs text-slate-500 mt-1">O telefone não pode ser alterado</p>
                     </div>
 
-                    {/* MISSION ID (read-only) */}
+                    {/* ID MISSION (só leitura) */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
                         MISSION ID
@@ -484,7 +484,7 @@ function UserInfoContent() {
                       <p className="text-lg text-slate-900 font-mono">{utente.mISSION}</p>
                     </div>
 
-                    {/* Subscription Status */}
+                    {/* Estado da subscrição */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Estado da Subscrição
@@ -511,7 +511,7 @@ function UserInfoContent() {
                       )}
                     </div>
 
-                    {/* Member Since */}
+                    {/* Membro desde */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Membro desde
@@ -525,7 +525,7 @@ function UserInfoContent() {
                       </p>
                     </div>
 
-                    {/* Action Buttons */}
+                    {/* Botões de acção */}
                     {editingProfile && (
                       <div className="flex space-x-3 pt-4">
                         <button
@@ -552,7 +552,7 @@ function UserInfoContent() {
                 </div>
               )}
 
-              {/* Missions Tab */}
+              {/* Separador das missões */}
               {activeTab === "missions" && (
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900 mb-6">Minhas Missões</h1>
@@ -598,12 +598,12 @@ function UserInfoContent() {
                             <div className="ml-4 flex flex-col space-y-2">
                               <button
                                 onClick={async () => {
-                                  // Find a transporte that serves this paragem
+                                  // Encontrar um transporte que sirva esta paragem
                                   try {
                                     const response = await fetch(`/api/buses?servesStop=${encodeURIComponent(mission.paragemId)}`);
 
                                     if (!response.ok) {
-                                      throw new Error('Failed to fetch buses');
+                                      throw new Error('Falha ao carregar autocarros');
                                     }
 
                                     const data = await response.json();
@@ -620,7 +620,7 @@ function UserInfoContent() {
                                       });
                                     }
                                   } catch (error) {
-                                    console.error('Error finding transporte:', error);
+                                    console.error('Erro ao procurar transporte:', error);
                                     setModal({
                                       show: true,
                                       type: 'alert',
@@ -651,7 +651,7 @@ function UserInfoContent() {
                 </div>
               )}
 
-              {/* Security Tab */}
+              {/* Separador da segurança */}
               {activeTab === "security" && (
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900 mb-6">Segurança</h1>
@@ -749,7 +749,7 @@ function UserInfoContent() {
             }}
           />
           
-          {/* Modal Content */}
+          {/* Conteúdo da janela */}
           <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 animate-in fade-in zoom-in duration-200">
             <h3 className="text-xl font-bold text-slate-900 mb-3">
               {modal.title}

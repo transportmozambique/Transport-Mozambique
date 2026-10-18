@@ -50,7 +50,7 @@ export default function ParagemDetalhes() {
 
   async function fetchParagem(id: string) {
     try {
-      // Fetch specific paragem by ID instead of all paragens
+      // Pedir só esta paragem pelo id, não todas
       const response = await fetch(`/api/paragens/${id}`);
       
       if (!response.ok) {
@@ -77,23 +77,23 @@ export default function ParagemDetalhes() {
 
     if (isNaN(lat) || isNaN(lng)) return;
 
-    // Dynamically import Leaflet
+    // Importar o Leaflet só no navegador
     const L = (await import('leaflet')).default;
     await import('leaflet/dist/leaflet.css');
 
-    // Initialize map
+    // Criar o mapa
     const map = L.map(mapRef.current).setView([lat, lng], 15);
 
-    // Add OpenStreetMap tiles
+    // Mosaicos do OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
       maxZoom: 19,
     }).addTo(map);
 
-    // Create custom marker icon
+    // Criar o ícone do marcador
     const isTerminal = paragem.vias.some(v => v.terminalBoolean);
-    const markerColor = isTerminal ? '#1f2937' : '#6b7280'; // Black for terminal, gray for regular
-    const markerSize = '14px'; // Same size for both
+    const markerColor = isTerminal ? '#1f2937' : '#6b7280'; // preto para terminal, cinzento para as outras
+    const markerSize = '14px'; // o mesmo tamanho para as duas
 
     const customIcon = L.divIcon({
       className: 'custom-stop-marker',
@@ -124,7 +124,7 @@ export default function ParagemDetalhes() {
       iconAnchor: [parseInt(markerSize) / 2, parseInt(markerSize) / 2],
     });
 
-    // Add marker for the paragem
+    // Juntar o marcador da paragem
     const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
     marker.bindPopup(`<b>${paragem.nome}</b><br>${paragem.codigo}<br>${isTerminal ? 'Terminal' : 'Paragem'}`).openPopup();
 
@@ -208,7 +208,7 @@ export default function ParagemDetalhes() {
         }
       `}</style>
       
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -283,7 +283,7 @@ export default function ParagemDetalhes() {
           </div>
         </div>
 
-        {/* Confirm Delete Dialog */}
+        {/* Diálogo de confirmação do apagar */}
         <ConfirmDialog
           isOpen={showDeleteDialog}
           title="Eliminar Paragem"
@@ -295,7 +295,7 @@ export default function ParagemDetalhes() {
           onCancel={() => setShowDeleteDialog(false)}
         />
 
-        {/* Info Cards */}
+        {/* Cartões de informação */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center space-x-3 mb-4">
@@ -341,12 +341,12 @@ export default function ParagemDetalhes() {
           </div>
         </div>
 
-        {/* Location Info */}
+        {/* Localização */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6">
           <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Localização</h3>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Coordinates Info */}
+            {/* Coordenadas */}
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-slate-900 mb-1">Coordenadas GPS</label>

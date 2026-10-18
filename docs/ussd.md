@@ -1,132 +1,261 @@
-# USSD service
+# Serviço USSD
 
-USSD brings the platform to any phone, without data or an app. The passenger dials a short code, and the operator's gateway (Africa's Talking) relays each keypress to `POST /api/ussd` on the passenger app. The app answers with the next screen. The service is in Portuguese, without accents (GSM-7), and each screen fits in 182 characters.
+<!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
+[Documentação](README.md) › 3. Perceber como funciona › **Serviço USSD** (página 10 de 23)
+
+Anterior: [Localização e GPS](localizacao-gps.md) · [Índice](README.md) · Seguinte: [Segurança](seguranca.md)
+
+<details>
+<summary>Todas as páginas</summary>
+
+- 1. Conhecer o projecto: [Visão geral](visao-geral.md) · [Glossário](glossario.md) · [Fontes de dados](fontes-de-dados.md) · [Estado do projecto](estado-do-projecto.md)
+- 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
+- 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · [Localização e GPS](localizacao-gps.md) · **Serviço USSD** · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
+- 4. Usar as aplicações: [Aplicação dos passageiros](app-passageiros.md) · [Portal do motorista](portal-motorista.md) · [Painel de administração](painel-admin.md)
+- 5. Pôr online: [Publicação](publicacao.md) · [Guia da Vercel](guia-vercel.md) · [Guia da Neon](guia-neon.md) · [Africa's Talking](africas-talking.md)
+- 6. Manter: [Testes](testes.md) · [Resolução de problemas](resolucao-de-problemas.md) · [Limitações](limitacoes.md)
+
+</details>
+<!-- /navegação -->
+
+O USSD leva a plataforma a qualquer telemóvel, sem dados nem aplicação. O passageiro marca um código curto, e o gateway do operador (Africa's Talking) passa cada tecla para `POST /api/ussd` da aplicação dos passageiros, que responde com o ecrã seguinte. O serviço está em português sem acentos (GSM-7), e cada ecrã cabe em 182 caracteres. Esta página explica o caminho de um pedido, **como se lê cada tecla**, como a pesquisa aceita nomes mal escritos, e mostra todos os ecrãs.
 
 | | |
 |---|---|
-| Code (sandbox) | `*384*848080#`, dialled from the [Africa's Talking simulator](africas-talking.md#use-the-menu-in-the-simulator) |
-| Callback | `https://transport-mz.vercel.app/api/ussd` |
-| Code | `transport-client/app/api/ussd/route.ts` ([Inside the handler](#inside-the-handler)) |
-| Setup and simulator | [Africa's Talking, step by step](africas-talking.md#how-it-was-set-up-step-by-step) |
-| Live (real phones) | not yet: needs a production USSD channel from Africa's Talking ([Going live](africas-talking.md#going-live)) |
+| Código (sandbox) | `*384*848080#`, marcado no [simulador da Africa's Talking](africas-talking.md#usar-o-menu-no-simulador) |
+| URL de resposta (callback) | `https://transport-mz.vercel.app/api/ussd?key=…` |
+| Código | [`app/api/ussd/route.ts`](../transport-client/app/api/ussd/route.ts) (menus) e [`lib/ussdSteps.ts`](../transport-client/lib/ussdSteps.ts) (leitura das teclas) |
+| Pesquisa de nomes | [`lib/places.ts`](../transport-client/lib/places.ts) (`searchPlaces`, `matchScore`) |
+| Configuração e simulador | [Africa's Talking, passo a passo](africas-talking.md#como-foi-configurado-passo-a-passo) |
+| Ao vivo (telemóveis reais) | ainda não: precisa de um canal USSD de produção da Africa's Talking ([Passar a produção](africas-talking.md#passar-a-produção)) |
 
-**On this page:** [How a session works](#how-a-session-works) · [Inside the handler](#inside-the-handler) · [Menu tree](#menu-tree) · [1 Encontrar transporte](#1-encontrar-transporte) · [2 Procurar rotas](#2-procurar-rotas) · [3 Paragens de uma rota](#3-paragens-de-uma-rota) · [4 Calcular tarifa](#4-calcular-tarifa) · [5 Rastrear autocarro](#5-rastrear-autocarro) · [6 Área do motorista](#6-area-do-motorista) · [7 Ajuda](#7-ajuda) · [Errors](#errors) · [Testing](#testing)
+**Nesta página:** [O caminho de um pedido](#o-caminho-de-um-pedido) · [Leitura das teclas](#leitura-das-teclas) · [Pesquisa tolerante](#pesquisa-tolerante) · [Dentro do handler](#dentro-do-handler) · [Porque é assim](#porque-é-que-o-menu-é-assim) · [Árvore dos menus](#árvore-dos-menus) · [1 Encontrar transporte](#1-encontrar-transporte) · [2 Procurar rotas](#2-procurar-rotas) · [3 Paragens de uma rota](#3-paragens-de-uma-rota) · [4 Calcular tarifa](#4-calcular-tarifa) · [5 Rastrear autocarro](#5-rastrear-autocarro) · [6 Área do motorista](#6-área-do-motorista) · [7 Ajuda](#7-ajuda) · [Erros](#erros) · [Testar](#testar)
 
-![The main menu in the Africa's Talking simulator](images/at-sim-main-menu.png)
+![O menu principal no simulador da Africa's Talking](images/at-sim-main-menu.png)
 
 ---
 
-## How a session works
+## O caminho de um pedido
 
-**Request.** On every keypress Africa's Talking sends a form-encoded `POST`:
+O USSD não é a internet: a sessão vive na rede do operador. A Africa's Talking liga essa sessão à aplicação por HTTP, um pedido por tecla.
 
-| Field | Example | Meaning |
+```mermaid
+sequenceDiagram
+  autonumber
+  participant P as Telemóvel
+  participant O as Rede do operador
+  participant AT as Africa's Talking
+  participant V as Vercel (transport-mz)
+  participant H as /api/ussd
+  participant DB as Neon
+  P->>O: marca *384*848080#
+  O->>AT: sessão USSD aberta
+  AT->>V: POST /api/ussd?key=… (sessionId, serviceCode, phoneNumber, text="")
+  V->>H: arranca a função (ou reutiliza uma quente)
+  H->>H: confirma a chave; lê o formulário
+  H-->>AT: "CON Transportes Mocambique …"
+  AT-->>P: mostra o ecrã e espera
+  P->>AT: escreve 1 (via operador)
+  AT->>H: POST text="1"
+  H-->>AT: "CON Onde esta? …"
+  P->>AT: escreve museu
+  AT->>H: POST text="1*museu"
+  H->>DB: rede (guardada 5 min por instância)
+  H-->>AT: "CON De: Museu …"
+  Note over P,H: … uma volta por tecla, até um ecrã END
+  H-->>AT: "END Detalhes enviados por SMS."
+  AT-->>P: último ecrã; a sessão fecha
+  H--)AT: SMS (depois de responder, com waitUntil)
+```
+
+**O pedido.** Em cada tecla, a Africa's Talking envia um `POST` com o corpo em formulário:
+
+| Campo | Exemplo | Significado |
 |---|---|---|
-| `sessionId` | `ATUid_8f2…` | Same for the whole session |
-| `serviceCode` | `*384*848080#` | The code that was dialled |
-| `phoneNumber` | `+258840000001` | The caller |
-| `text` | `2*3*1` | **Every answer so far**, joined with `*`. Empty on the first request. |
+| `sessionId` | `ATUid_8f2…` | O mesmo durante a sessão |
+| `serviceCode` | `*384*848080#` | O código marcado |
+| `phoneNumber` | `+258840000001` | Quem marcou |
+| `text` | `1*museu*zimpeto` | **Todas as respostas até agora**, juntas com `*`. Vazio no primeiro pedido. |
 
-When `USSD_CALLBACK_KEY` is set, the request URL must also carry `?key=<that value>`, or the answer is `403 Forbidden` ([Security → USSD callback](security.md#ussd-callback)).
+Com `USSD_CALLBACK_KEY` definida, o URL tem de levar `?key=<esse valor>`, senão a resposta é `403 Forbidden` ([Segurança → Resposta USSD](seguranca.md#resposta-ussd-callback)). Porquê: a Africa's Talking não assina os pedidos, e os menus confiam em `phoneNumber` (enviam SMS para ele, e a opção 6 faz entrar um motorista por ele).
 
-**Response.** Plain text (`text/plain`) beginning with:
+**A resposta.** Texto simples (`text/plain`) a começar por:
 
-- `CON ` — show this screen and wait for an answer;
-- `END ` — show this screen and close the session.
+- `CON ` — mostrar este ecrã e esperar resposta;
+- `END ` — mostrar este ecrã e fechar a sessão.
 
-**No server-side state.** The server splits `text` on `*` and replays the path from the main menu on every request. It keeps nothing between requests, so any server instance can answer any keypress, and a lost request costs nothing.
+**Sem estado no servidor.** O servidor não guarda nada entre pedidos: em cada pedido parte `text` em `*` e repete o caminho desde o menu principal. Porquê: qualquer instância serverless responde a qualquer tecla, um pedido perdido não estraga nada, e não há uma tabela de sessões para escrever a cada tecla (nem para limpar). O mesmo `text` dá sempre o mesmo ecrã, o que também torna o menu fácil de testar ([Testar](#testar)).
 
-**Lists** are paginated, 6 items per page. Inside a list:
+## Leitura das teclas
 
-| Key | Action |
-|---|---|
-| `1`–`6` | choose that item |
-| `7` | next page ("Proximo") |
-| `8` | previous page ("Anterior") |
-| `0` | back ("Voltar") |
+Como `text` traz tudo o que foi escrito, o servidor tem de saber o que cada pedaço quer dizer. "7" pode ser "página seguinte" numa lista ou parte de um nome; "2" pode ser o segundo item de uma lista ou "outra opção". A regra de [`lib/ussdSteps.ts`](../transport-client/lib/ussdSteps.ts) é: **cada tecla é lida como o ecrã a que respondeu a pede.** O servidor percorre as teclas uma a uma, vê que ecrã estava à frente de cada uma, e só então decide o que ela é.
 
-Typed answers (a place name in option 1, a plate number, a driver's PIN) are not navigation keys; on a typed step only `0` goes back. Long names are cut with `..` so the screen stays within **182 characters** (the text after `CON `/`END `). Accents are removed, and ordinals and typographic signs become plain letters (`1º`/`1⁰` → `1o`, `2ª` → `2a`, `–` → `-`) by `toGsm`, because one character outside GSM-7 would make the message Unicode.
+Há quatro tipos de ecrã:
 
-**SMS.** Options 1 to 6 can send the result by SMS too. The SMS is sent after the response, with `waitUntil`, so the screen never waits for it. Without `AFRICASTALKING_API_KEY` the SMS is only logged.
+| Ecrã | Exemplo | Como se lê a tecla seguinte |
+|---|---|---|
+| **pergunta** (`ask`) | "Onde esta? Escreva o nome…" | Qualquer texto é a resposta (um nome, uma matrícula, um PIN). `0` volta atrás. |
+| **lista** (`list`) | "Qual paragem? 1. Portao 2. …" | `1`–`6` (ou `1`–`4` nas listas de locais e rotas) escolhe o item dessa página; `7` página seguinte; `8` página anterior; `0` volta atrás; outro número de 1 ou 2 algarismos mostra a mesma lista outra vez. **Numa lista de resultados de pesquisa, qualquer outro texto é uma nova pesquisa.** |
+| **teclas** (`keys`) | "1. Receber por SMS 2. Outra opcao" | Só as teclas oferecidas, e `0`. Outra tecla dá "Opcao invalida". |
+| **fim** (`end`) | "TARIFA … Preco: 208 MT" | Nenhuma: a sessão acabou. |
 
-**Logs.** Each request and response is logged (`📱 USSD Request`, `📤 USSD Response`) in the Vercel function logs. The PIN in option 6 is masked as `***`.
+### Um exemplo, tecla a tecla
 
-## Inside the handler
+O passageiro está no Portão e quer ir a Makalela. Escreve `portao`, vê a lista, escolhe o primeiro; escreve `makalela`, vê dois resultados, escolhe o primeiro; vê a viagem, pede outra opção, e depois o SMS. No fim, `text` é `1*portao*1*makalela*1*2*1`. O servidor lê assim:
 
-How one keypress is handled, in `transport-client/app/api/ussd/route.ts`. The example is the request the simulator sent when Baixa was chosen on the second page of option 2's origins, as the Vercel log shows it:
+| Tecla | Ecrã à frente quando foi escrita | Lida como | Respostas guardadas | Ecrã seguinte |
+|---|---|---|---|---|
+| `1` | menu principal | opção 1 (Encontrar transporte) | | pergunta "Onde esta?" |
+| `portao` | pergunta "Onde esta?" | o nome escrito | `portao` | lista "Qual paragem?" (Portao, Portao da Vila, …) |
+| `1` | lista de locais, página 1 | item 1 = Portao | `portao`, `1` (→ Portao) | pergunta "Para onde vai?" |
+| `makalela` | pergunta "Para onde vai?" | o nome escrito | …, `makalela` | lista "Para onde vai?" (Makalela, Mikaela) |
+| `1` | lista de locais | item 1 = Makalela | …, `1` (→ Makalela) | teclas: a melhor viagem |
+| `2` | teclas `1`, `2` | "Outra opcao" | …, `2` | teclas: a segunda viagem |
+| `1` | teclas `1`, `2` | "Receber por SMS" | …, `1` | fim: "Detalhes enviados por SMS." (e o SMS sai) |
 
-![Vercel log of one USSD request: sessionId, serviceCode, phoneNumber, text "2*7*6", then the response](images/vercel-log-request.png)
+Se o passageiro tivesse escrito outro nome em vez de escolher um item (por exemplo `1*portao*xipamanine`), a lista de "Qual paragem?" leria `xipamanine` como **nova pesquisa** e substituiria `portao`. Se tivesse escrito `9` numa lista de 4 itens, a mesma lista voltaria a aparecer. Se tivesse escrito `0`, voltaria um passo.
+
+### As regras, em diagrama
+
+```mermaid
+flowchart TD
+  K["próxima tecla de text"] --> Z{"é 0?"}
+  Z -- sim --> Z1{"há respostas?"}
+  Z1 -- sim --> Z2["tira a última resposta<br/>(volta um passo)"]
+  Z1 -- não --> Z3["volta ao menu principal"]
+  Z -- não --> S{"que ecrã estava à frente?"}
+  S -- pergunta --> A1["a tecla é a resposta<br/>(numa pergunta 'escreva outra vez',<br/>substitui a anterior)"]
+  S -- teclas --> T1{"é uma das teclas oferecidas?"}
+  T1 -- sim --> T2["guarda-a"]
+  T1 -- não --> X["Opcao invalida (END)"]
+  S -- lista --> L1{"7 ou 8?"}
+  L1 -- sim --> L2["muda de página<br/>(o mesmo ecrã)"]
+  L1 -- não --> L3{"número de um item<br/>desta página?"}
+  L3 -- sim --> L4["guarda o item escolhido"]
+  L3 -- não --> L5{"outro número<br/>de 1 ou 2 algarismos?"}
+  L5 -- sim --> L6["ignora: a mesma lista"]
+  L5 -- não --> L7{"lista de resultados<br/>de uma pesquisa?"}
+  L7 -- sim --> L8["nova pesquisa:<br/>substitui o nome escrito"]
+  L7 -- não --> X
+  Z2 --> N["calcula o ecrã seguinte<br/>com as respostas guardadas"]
+  A1 --> N
+  T2 --> N
+  L4 --> N
+  L8 --> N
+  N --> K
+```
+
+No código: `replay(menu, keys)` em [`lib/ussdSteps.ts`](../transport-client/lib/ussdSteps.ts). Cada opção do menu é uma função `Menu` que recebe as respostas guardadas e devolve o ecrã a mostrar ([`app/api/ussd/route.ts`](../transport-client/app/api/ussd/route.ts): `journeyMenu`, `routesMenu`, `routeStopsMenu`, `fareMenu`, `trackBusMenu`). Os efeitos (enviar um SMS, criar um alerta) só correm no ecrã que fica à frente, nunca enquanto as teclas anteriores são repetidas: por isso um SMS não sai duas vezes.
+
+## Pesquisa tolerante
+
+As pessoas escrevem os nomes no teclado do telemóvel, de memória, sem sugestões enquanto escrevem. Uma pesquisa que falha obriga a escrever outra vez numa sessão com tempo limitado. Por isso a pesquisa de locais ([`lib/places.ts`](../transport-client/lib/places.ts), a mesma da web) compara cada palavra escrita com as palavras do nome, e aceita:
+
+| Escrito | Encontra | Porque coincide |
+|---|---|---|
+| `museu` | Museu | a mesma palavra |
+| `zimp` | Zimpeto | o início de uma palavra |
+| `av ind` | Av. das Industrias | abreviaturas (`av` = avenida, `r` = rua, `pc` = praça, `b` = bairro, `hosp`, `merc`, `esc`…) e o início de cada palavra |
+| `paragem do museu` | Museu | palavras de ligação (`de`, `do`, `da`, `perto`, `paragem`, `terminal`…) não contam |
+| `chipamanine` | Xipamanine | soa igual: `x`, `ch` e `sh` iguais; `z` e `ss` como `s`; `c`/`qu` como `k`; `h` mudo; letras dobradas uma só vez |
+| `manine` | Xipamanine, Bombas-Xicanhanine… | 3 ou mais letras dentro de uma palavra |
+| `makalala` | Makalela | um erro (letra trocada, a mais, a menos, ou duas trocadas de lugar) a partir de 4 letras; dois erros a partir de 8 |
+| `magoa nine` | Magoanine | espaços no sítio errado |
+| `1o de maio`, `primeiro de maio` | 1º de Maio | ordinais como `1o`, `2a` ou por extenso (até `terceiro`) |
+
+Os resultados vêm ordenados pela coincidência mais fraca de todas as palavras: primeiro as palavras iguais e os inícios, depois as que soam igual, depois os erros. Um nome igual ao escrito vem em primeiro.
+
+Também há o que **não** coincide, de propósito:
+
+- os erros têm de manter o primeiro som da palavra (`xyzq` não encontra "Chissano");
+- um erro contra o início de uma palavra ainda não acabada só a partir de 5 letras;
+- os números têm de coincidir exactamente ou como início: um erro num número levaria a outra rua (`Rua 15` e `Rua 16`).
+
+Quando nada coincide, o ecrã diz `Nenhuma paragem com "…". Escreva outra vez so uma parte do nome (ex: Museu)`, e o que se escrever a seguir é uma pesquisa nova. Quando a lista mostra os sítios errados, também basta escrever outro nome.
+
+As rotas (opções 2 e 3) aceitam o número que está no autocarro, com ou sem espaços e palavras à volta: `X12`, `x 12`, `rota 53-0`, `chapa 53`. As matrículas (opção 5) comparam-se só pelas letras e algarismos: `ack 145m`, `ACK-145M` e `ack145` são a mesma.
+
+## Dentro do handler
+
+Como se trata uma tecla em [`app/api/ussd/route.ts`](../transport-client/app/api/ussd/route.ts):
 
 ```mermaid
 flowchart TD
   A["POST /api/ussd?key=…<br/>sessionId, serviceCode, phoneNumber, text"] --> B{"callbackAllowed()<br/>key = USSD_CALLBACK_KEY?"}
-  B -- no --> X["403 Forbidden<br/>log: USSD pedido recusado"]
-  B -- yes --> C["read the form fields<br/>log 📱 USSD Request (PIN as ***)"]
-  C --> D["handleUSSD()<br/>parseInputs(text) → inputs, pages, currPg"]
-  D --> E{"inputs[0]"}
-  E -- "none" --> M["MAIN_MENU"]
-  E -- "1 to 5" --> F["the option's menu function<br/>reads the database"]
-  E -- "6" --> G["handleDriverMenuStateless()"]
-  E -- "7" --> H["HELP"]
-  F --> S["CON screen (paginateList)<br/>or END screen + sms()"]
-  G --> S
+  B -- não --> X["403 Forbidden<br/>registo: USSD pedido recusado"]
+  B -- sim --> C["ler o formulário<br/>registo USSD Request (PIN como ***)"]
+  C --> D["handleUSSD(): primeira tecla"]
+  D -- "nenhuma" --> M["MAIN_MENU"]
+  D -- "0" --> M
+  D -- "1 a 5" --> F["replay(menu, resto das teclas)<br/>lib/ussdSteps.ts"]
+  D -- "6" --> G["handleDriverMenuStateless()"]
+  D -- "7" --> H["HELP"]
+  F --> E["efeito do ecrã final<br/>(alerta, SMS)"]
+  E --> S["render(): CON lista paginada,<br/>CON pergunta, END fim"]
+  G --> T
   M --> T
   H --> T
-  S --> T["toGsm(): plain GSM-7 text<br/>log 📤 USSD Response"]
+  S --> T["toGsm(): texto GSM-7<br/>registo USSD Response"]
   T --> R["200 text/plain"]
-  S -. "after the answer (waitUntil)" .-> SMS["sendSMS() → Africa's Talking SMS<br/>log ✅ SMS enviado / ❌ Erro"]
+  E -. "depois da resposta (waitUntil)" .-> SMS["sendSMS() → SMS da Africa's Talking<br/>lib/notifications.ts"]
 ```
 
-1. **Check the caller** (`callbackAllowed`). With `USSD_CALLBACK_KEY` set, the `key` in the URL must equal it. The comparison takes the same time whatever the input (`timingSafeEqual`). A wrong or missing key answers `403` and logs "USSD pedido recusado: chave do callback em falta ou errada". Nothing else runs.
-2. **Read the request.** The four form fields are read and logged as `📱 USSD Request`. In option 6 the second answer is the driver's PIN, so it is logged as `***`.
-3. **Replay the session** (`parseInputs`). `text` holds every answer since the code was dialled; the server keeps nothing between requests. `7`, `8` and `0` are navigation, not answers. For `text="2*7*6"`:
+1. **Confirmar quem chama** (`callbackAllowed`). Com `USSD_CALLBACK_KEY` definida, a `key` do URL tem de ser igual. A comparação demora o mesmo tempo seja qual for o valor (`timingSafeEqual`), para não se poder adivinhar a chave pelo tempo de resposta. Uma chave errada ou em falta responde `403` e regista "USSD pedido recusado: chave do callback em falta ou errada". Nada mais corre.
+2. **Ler o pedido.** Os quatro campos do formulário são lidos e registados como `USSD Request`. Na opção 6 a segunda resposta é o PIN do motorista, que fica registado como `***`.
+3. **Escolher a opção.** A primeira tecla escolhe: nada (menu principal), `0` (menu principal outra vez), `1` a `5` (um menu repetido tecla a tecla, [Leitura das teclas](#leitura-das-teclas)), `6` (o menu do motorista, que lê as suas teclas sozinho) ou `7` (ajuda).
+4. **Repetir as teclas** (`replay`). Cada menu lê da base de dados o que precisa (a rede, guardada 5 minutos por instância; a tarifa, guardada 60 s; os veículos) e devolve o ecrã para as respostas até agora. As viagens de um par de locais calculam-se uma só vez por pedido.
+5. **Correr o efeito.** Só o ecrã final tem efeito: o ecrã de viagem da opção 1 regista o alerta de chegada; os ecrãs finais enviam o resultado por SMS.
+6. **Fazer o ecrã** (`render`). Uma lista passa por `paginateList`: os itens da página, cada um cortado para o ecrã inteiro caber em 182 caracteres, e `7. Proximo`, `8. Anterior`, `0. Voltar` quando se aplicam.
+7. **Passar a GSM-7** (`toGsm`). Tiram-se os acentos, e os ordinais e sinais tipográficos passam a letras simples (`1º`/`1⁰` → `1o`, `2ª` → `2a`, `–` → `-`). Porquê: muitos telemóveis e redes só mostram GSM-7 no USSD, e um carácter fora dele põe a mensagem em Unicode, que estraga o ecrã ou o corta a meio. A resposta fica registada como `USSD Response` e sai como `200 text/plain`.
+8. **Erros.** Uma excepção responde `END Erro ao processar pedido. Tente novamente.` com estado 200, para o telemóvel mostrar uma mensagem em vez do erro do gateway. A excepção fica registada como `Erro USSD`.
+9. **O SMS, depois da resposta.** `sendSMS` ([`lib/notifications.ts`](../transport-client/lib/notifications.ts)) põe o número como `+258…` e envia-o pelo SDK `africastalking`. Regista `SMS enviado para …` ou `Erro ao enviar SMS para …`, e nunca repete. Porquê depois: o gateway USSD dá poucos segundos para cada resposta, e o SMS pode demorar.
 
-   | Key | Meaning | `inputs` | `pages` | `currPg` |
-   |---|---|---|---|---|
-   | `2` | option 2 | `["2"]` | `[0]` | 0 |
-   | `7` | next page of origins | `["2"]` | `[0]` | 1 |
-   | `6` | sixth item of that page | `["2", "6"]` | `[0, 1]` | 0 |
+Um pedido demora tipicamente 0,1 a 0,3 s na função, bem dentro do tempo que o gateway permite. A API de SMS do sandbox às vezes responde tarde: o registo mostra então `Erro ao enviar SMS` embora a mensagem tenha chegado ao simulador ([Africa's Talking → SMS](africas-talking.md#sms)).
 
-   So the origin is item 6 of page 2: the 12th origin, Baixa. Typed answers (a place name in option 1, a plate in option 5, the PIN in option 6) are taken as they are.
-4. **Run the option** (`handleUSSD`). The first answer picks the menu function: `findTransportMenu` (1), `routesMenu` (2), `routeStopsMenu` (3), `fareMenu` (4), `trackBusMenu` (5), `handleDriverMenuStateless` (6), or the fixed help screen (7). Each function reads what it needs from the database on every request: for option 2, `getAvailableOrigins()` then `getRoutesFrom("Baixa")`.
-5. **Build the screen.**
-   - A list goes through `paginateList`: 6 items a page, each item cut so the whole screen fits 182 characters, then `7. Proximo`, `8. Anterior`, `0. Voltar` as they apply.
-   - A final screen starts with `END`. When the option sends its result by SMS, `sms()` queues it with `waitUntil` and the screen goes back without waiting for it.
-6. **Make it GSM-7** (`toGsm`). Accents are removed, and ordinals and typographic signs become plain letters (`1º` → `1o`, `2ª` → `2a`). The answer is logged as `📤 USSD Response` and sent as `200 text/plain`.
-7. **Errors.** An exception answers `END Erro ao processar pedido. Tente novamente.` with status 200, so the phone shows a message instead of the gateway's error. The exception is logged as `❌ USSD Error`.
-8. **The SMS, after the answer.** `sendSMS` (`lib/notifications.ts`) turns the number into `+258…` and sends it through the `africastalking` SDK. It logs `✅ SMS enviado para …` or `❌ Erro ao enviar SMS para …`, and never retries.
+![Registo da Vercel de um pedido USSD: sessionId, serviceCode, phoneNumber, text, e depois a resposta](images/vercel-log-request.png)
 
-The request above took 269 ms in the function, so the gateway gets its answer well within the time it allows. The sandbox SMS API sometimes answers late: the log then shows `❌ Erro ao enviar SMS` although the message reached the simulator ([Africa's Talking → SMS](africas-talking.md#sms)).
+## Porque é que o menu é assim
 
-## Menu tree
+| Escolha | Porquê |
+|---|---|
+| Escrever o nome do local em vez de escolher de uma lista | Há quase 2 000 paragens; listas de 6 itens levariam dezenas de páginas. Escrever "museu" chega lá numa tecla. |
+| Pesquisa tolerante | Sem sugestões enquanto se escreve, os erros são frequentes, e cada erro custaria uma sessão inteira. |
+| Escrever outra vez numa lista faz uma nova pesquisa | Quem vê os locais errados não tem de voltar atrás (`0`) e esperar outro ecrã. |
+| 6 itens por página (4 nas listas de locais e rotas) | Os nomes de locais e rotas precisam de mais espaço; com 4 itens cabem cerca de 29 caracteres por nome. |
+| `7` próximo, `8` anterior, `0` voltar | Teclas fixas em todas as listas, ditas na ajuda; o `7` e o `8` ficam lado a lado no teclado. |
+| Um local escolhido sozinho quando só há um resultado | Uma tecla a menos. |
+| Resultados também por SMS | O ecrã USSD desaparece no fim da sessão; o SMS fica no telemóvel. |
+| Sem acentos | Ver o passo 7 de [Dentro do handler](#dentro-do-handler). |
+
+## Árvore dos menus
 
 ```mermaid
 flowchart TD
-  M["Main menu"] --> O1["1 Encontrar transporte"]
+  M["Menu principal"] --> O1["1 Encontrar transporte"]
   M --> O2["2 Procurar rotas"]
   M --> O3["3 Paragens de uma rota"]
   M --> O4["4 Calcular tarifa"]
   M --> O5["5 Rastrear autocarro"]
   M --> O6["6 Area do motorista"]
   M --> O7["7 Ajuda (END)"]
-  O1 --> O1a["Onde esta? (type a name)"] --> O1b["choose the stop"] --> O1c["Para onde vai? (type a name)"] --> O1d["choose the stop"] --> O1e["journey, with changes if needed<br/>writes Utente + MISSION"]
+  O1 --> O1a["Onde esta? (escrever)"] --> O1b["escolher o local<br/>(saltado se só há um)"] --> O1c["Para onde vai? (escrever)"] --> O1d["escolher o local"] --> O1e["a melhor viagem, com transbordos se preciso<br/>escreve Utente + MISSION"]
   O1e --> O1f["1 Receber por SMS (END + SMS)"]
   O1e --> O1g["2 Outra opcao"]
-  O2 --> O2a["origin place"] --> O2b["routes from there"] --> O2c["route summary (END + SMS)"]
-  O3 --> O3a["route start"] --> O3b["route end"] --> O3c["stops in travel order"] --> O3d["stop detail (END + SMS)"]
-  O4 --> O4a["origin"] --> O4b["destination"] --> O4c["TARIFA (END + SMS)"]
-  O5 --> O5a["type a plate or part of it"] --> O5b["one match: bus (END + SMS)<br/>several: choose from list"]
-  O6 --> O6a["PIN:"] --> O6b["driver menu"]
-  O6b --> D1["1 Iniciar / Encerrar viagem → confirm<br/>writes Motorista.emViagem"]
+  O2 --> O2a["número da rota ou local (escrever)"] --> O2b["escolher o local e a rota<br/>(saltados se só há uma)"] --> O2c["resumo da rota (END + SMS)"]
+  O3 --> O3a["número da rota ou local (escrever)"] --> O3b["escolher a rota"] --> O3c["paragens pela ordem de viagem"] --> O3d["detalhe da paragem (END + SMS)"]
+  O4 --> O4a["origem (escrever, escolher)"] --> O4b["destino (escrever, escolher)"] --> O4c["TARIFA da melhor viagem (END + SMS)"]
+  O5 --> O5a["matrícula ou parte dela (escrever)"] --> O5b["um resultado: o autocarro (END + SMS)<br/>vários: escolher da lista"]
+  O6 --> O6a["PIN:"] --> O6b["menu do motorista"]
+  O6b --> D1["1 Iniciar / Encerrar viagem → confirmar<br/>escreve Motorista.emViagem"]
   O6b --> D2["2 Ver Minha Info (END + SMS)"]
   O6b --> D3["3 Ver Rota (END + SMS)"]
   O6b --> D4["4 Ver Autocarro (END + SMS)"]
   O6b --> D0["0 Sair (END)"]
 ```
 
-The screens below were recorded with `curl` against a local copy of the production data, at 10:30 Maputo time (option 1: at 16:50) ([Testing](#testing)). The simulator screenshots come from production.
+Os ecrãs abaixo foram gravados com [`scripts/ussd-ecras.ts`](../transport-client/scripts/ussd-ecras.ts) numa cópia local dos dados de produção, com o relógio fixo numa segunda-feira às 08:30 (hora de Maputo), em 2026-10-18 ([Testar](#testar)). As horas e as tarifas mudam com a hora e com a regra de tarifa.
 
-### Main menu (`text=""`)
+### Menu principal (`text=""`)
 
 ```text
 CON Transportes Mocambique
@@ -139,159 +268,194 @@ CON Transportes Mocambique
 7. Ajuda
 ```
 
-The places offered by options 2–4 are the start terminals (`Via.terminalPartida`) of routes that have at least one bus, in alphabetical order. Names such as "120" and "60" are real OpenStreetMap stop names.
+`0` em qualquer primeiro ecrã de uma opção volta aqui.
 
 ## 1 Encontrar transporte
 
-How to get from one place to another: the next bus, or the buses to change between when no single bus goes there. Both places are typed, so any stop can be the origin or the destination (USSD does not know where the phone is). It uses the same journey planner as the web app ([Passenger web app → Journeys](passenger-web.md#journeys)).
+Como ir de um sítio a outro: o próximo autocarro, ou os autocarros entre os quais mudar quando nenhum vai directo. Os dois sítios escrevem-se, por isso qualquer paragem pode ser a origem ou o destino (o USSD não sabe onde está o telemóvel). Usa o mesmo planeador da aplicação web ([Fluxos de dados → Planear uma viagem](fluxos-de-dados.md#planear-uma-viagem)).
 
 ```text
-text="1"                                text="1*portao"
-CON Onde esta?                          CON Qual paragem?
-Escreva o nome da paragem ou do         1. Portao
-local (ex: Museu)                       2. Segundo Portao da Radio Marconi
-0. Voltar                               0. Voltar
-
-text="1*portao*1"                       text="1*portao*1*makalela"
-CON De: Portao                          CON Para onde vai?
-Para onde vai? Escreva o nome do        1. Makalela
-destino                                 0. Voltar
+text="1"                                  text="1*museu"
+CON Onde esta?                            CON De: Museu
+Escreva o nome da paragem ou do           Para onde vai? Escreva o nome do destino
+local (ex: Museu)                         0. Voltar
 0. Voltar
 ```
 
-- **Typing a name.** Any part of the name, without accents or capitals; every typed word must start a word of the name (`av ind` finds "Av. das Industrias"). Stops with the same name within 400 m are one place, ignoring a route number in brackets at the end ("Museu (X39)" is "Museu"). Nothing found: `CON Nenhuma paragem com "xyz".` and `0` to type again.
-- **Places with the same name** (49 names are used by several places, often along one avenue) are told apart by the nearest place with another name, and the distance to it when that is also shared. These lists show 4 places per page, so the labels have room:
+Com um só local, como "Museu", não há lista: passa logo ao destino. Com vários, aparece a lista (4 por página):
 
 ```text
-text="1*av ind"                           text="1*av ind*7"
-CON Qual paragem?                         CON Qual paragem?
-1. Av. das Industrias                     1. Av. Industrias - Darling
-2. Av. Indu.. - Rua Principal..           2. Avenida das Industrias - 120
-3. Av. Industrias - Casa Branca           3. Av. Indu.. - Machava-.. 960 m
-4. Av. Indu.. - Machava-.. 170 m          4. Av. Indu.. - Machava-.. 970 m
-7. Proximo                                7. Proximo
-0. Voltar                                 8. Anterior
+text="1*portao"                           text="1*av ind"                          text="1*av ind*7"
+CON Qual paragem?                         CON Qual paragem?                        CON Qual paragem?
+1. Portao                                 1. Av. das Industrias                    1. Av. Indu.. - Machava-.. 170 m
+2. Portao da Vila                         2. Av. Indu.. - Machava-.. 970 m         2. Av. Indu.. - Machava.. 1360 m
+3. Primeiro Portao                        3. Av. Indu.. - Machava-.. 540 m         3. Avenida das Industrias - 120
+4. Segundo Portao                         4. Av. Indu.. - Machava.. 2110 m         4. Av. Industrias - Darling
+7. Proximo                                7. Proximo                               7. Proximo
+0. Voltar                                 0. Voltar                                8. Anterior
+                                                                                   0. Voltar
+```
+
+- **Locais com o mesmo nome** (49 nomes são usados por vários locais, muitas vezes ao longo de uma avenida) distinguem-se pelo local mais próximo com outro nome, e pela distância até ele quando também se repete. A web mostra os nomes inteiros ("Av. Industrias - Machava-Sede 960 m"); no USSD uma etiqueta tem no máximo 29 caracteres: encurta-se primeiro o nome, deixando pelo menos 10 caracteres, e depois a referência ([`lib/journeys.ts`](../transport-client/lib/journeys.ts), `placeLabel`).
+- **A pesquisa tolerante** ([acima](#pesquisa-tolerante)) em acção:
+
+```text
+text="1*makalala"                         text="1*chipamanine"                     text="1*xyzq"
+CON De: Makalela                          CON Qual paragem?                        CON Nenhuma paragem com "xyzq".
+Para onde vai? Escreva o nome do destino  1. Xipamanine                            Escreva outra vez so uma parte do
+0. Voltar                                 2. Xipesanine                            nome (ex: Museu)
+                                          3. Bombas-Xicanhanine                    0. Voltar
+                                          0. Voltar
+
+text="1*xyzq*museu"                       text="1*portao*9"  (9 não está na lista)
+CON De: Museu                             CON Qual paragem?
+Para onde vai? Escreva o nome do destino  1. Portao
+0. Voltar                                 2. Portao da Vila
+                                          3. Primeiro Portao
+                                          4. Segundo Portao
+                                          7. Proximo
                                           0. Voltar
 ```
 
-  The web shows the full names ("Av. Industrias - Machava-Sede 960 m"). On USSD a label has at most 29 characters: the name is shortened first, keeping at least 10 characters, then the landmark. A place with no other place on the network is told apart by its first route.
-- **The answer** is the best journey, earliest arrival first; the time is from now, waits included. A direct bus:
+- **A resposta** é a melhor viagem, a chegada mais cedo primeiro; a hora conta a partir de agora, com as esperas. Um autocarro directo, e a opção seguinte com `2`:
 
 ```text
-text="1*portao*1*makalela*1"            text="1*portao*1*makalela*1*2"
-CON Directo, chega 16:55                CON Directo, chega 16:59
-Apanhe em Portao as 16:51               Apanhe em Portao as 16:55
-Saia em Makalela                        Saia em Makalela
-6 min, 16 MT                            10 min, 16 MT
-1. Receber por SMS                      1. Receber por SMS
-2. Outra opcao                          2. Outra opcao
-0. Voltar                               0. Voltar
+text="1*museu*zimpeto"                    text="1*museu*zimpeto*2"
+CON Directo, chega 09:14                  CON Directo, chega 09:15
+Apanhe em Museu (210) as 08:32            Apanhe em Museu (X10) as 08:33
+Saia em Zimpeto (302)                     Saia em Zimpeto (703)
+44 min, 208 MT                            45 min, 206 MT
+1. Receber por SMS                        1. Receber por SMS
+2. Outra opcao                            2. Outra opcao
+0. Voltar                                 0. Voltar
 ```
 
-  And a journey with changes, where to take each bus, when, and where to get off for the next one (names are shortened to fit the screen; "amanha" marks the next day):
+  "Museu (210)" é a baia do terminal do Museu onde pára a rota 210. Uma viagem com transbordos diz onde apanhar cada autocarro, a que horas, e onde sair para o seguinte (os nomes encurtam-se para caber; "amanha" marca o dia seguinte):
 
 ```text
-text="1*portao*1*johane*1"
-CON 2 transbordos, chega amanha 06:33
-1) Portao 18:21 > Rua 15
-2) Rua 15 19:19 > Avenida 4 ..
-3) Avenida 4 .. amanha 06:23 > Johane Mal..
-13 h 44 min, 204 MT
-1. Receber por SMS
-0. Voltar
+text="1*museu*johane"                     text="1*portao*1*johane"
+CON 1 transbordo, chega 09:04             CON 2 transbordos, chega 09:16
+1) Museu (X10) 08:33 > UP                 1) Portao 08:31 > Hospital
+2) UP 08:38 > Avenida Eduardo Mondlane    2) Hospital 08:51 > Rua 15
+34 min, 125 MT                            3) Rua 15 09:01 > Johane Malate
+1. Receber por SMS                        46 min, 197 MT
+2. Outra opcao                            1. Receber por SMS
+0. Voltar                                 2. Outra opcao
+                                          0. Voltar
 ```
 
-- `2` shows the next option (from the second option on, `2` again shows the one after, and it wraps around); "2. Outra opcao" only appears when there is more than one.
-- `1` sends the option on screen by SMS, with every step: walks ("Caminhe 150 m ate …"), each bus's route and plate, where and when to take it and get off, and each fare. Then `END Detalhes enviados por SMS.`
-- **Writes:** each journey screen registers an arrival alert (`MISSION`) at the stop where the first bus is taken, so the passenger gets an SMS when a bus is under 1 km away. If the phone number has no account, it first creates a passwordless `Utente`. A website account with the same number counts, whatever spaces or prefix it was saved with. An alert for the same stop from the last 24 h is reused.
-- **No connection:** `END Nao ha autocarro de … para ….` (a few routes form groups with no stop in common with the rest of the network).
+- `2` mostra a opção seguinte (a partir da segunda, `2` outra vez mostra a seguinte, e dá a volta); "2. Outra opcao" só aparece quando há mais de uma.
+- `1` envia por SMS a opção mostrada, com todos os passos: caminhadas ("Caminhe 150 m ate …"), a rota e a matrícula de cada autocarro, onde e quando apanhar e sair, e cada tarifa. Depois, `END Detalhes enviados por SMS.`
+- `0` volta ao destino (para escrever outro).
+- **Escreve:** cada ecrã de viagem regista um alerta de chegada (`MISSION`) na paragem onde se apanha o primeiro autocarro, para o passageiro receber um SMS quando um autocarro estiver a menos de 1 km. Se o número não tiver conta, cria primeiro um `Utente` sem palavra-passe. Uma conta da web com o mesmo número conta, seja com que espaços ou indicativo foi guardada ([`lib/phones.ts`](../transport-client/lib/phones.ts)). Um alerta da mesma paragem das últimas 24 h é reutilizado.
+- **Sem ligação:** `END Nao ha autocarro de … para ….` (algumas rotas formam grupos sem paragens em comum com o resto da rede).
 
 ## 2 Procurar rotas
 
-Which routes leave from a place, with their length and full-route fare.
-
-![Option 2 in the simulator: origin, routes, summary](images/at-sim-routes-flow.png)
+O resumo de uma rota: pelo número que está no autocarro, ou entre as rotas que passam num local.
 
 ```text
-text="2*7*6"  (7: next page of origins, 6: Baixa)   text="2*7*6*1"
-CON Rotas de Baixa:                                 END Baixa - 1o de Maio
-1. 209 1o de Maio                                   De: Baixa
-2. 223 2a Rotunda ( V..                             Para: 1o de Maio
-3. 401 Albazine (Via ..                             Paragens: 100
-4. 402 Albazine                                     Distancia: 19.9 km
-5. 53-0 Albazine(via ..                             Tarifa (percurso todo): 199 MT
-6. 66-0 Albazine(via ..                             Autocarros: 2
-7. Proximo
-0. Voltar
+text="2"                                  text="2*X12"  (também "2*x 12")
+CON Rotas de um local                     END X12 Museu - Praca dos Combatentes
+Escreva o nome do local ou o numero       De: Museu
+da rota (ex: Baixa ou X12)                Para: Praca dos Combatentes
+0. Voltar                                 Paragens: 24
+                                          Distancia: 7.1 km
+                                          Tarifa (percurso todo): 72 MT
+                                          Autocarros: 2
+
+text="2*museu"                            text="2*museu*1"
+CON Rotas em Museu:                       END 3-0 Museu - Praca dos Trabalhadores
+1. 3-0 Museu - Praca dos Trabalha..       (Via Av. 24 de Julho)
+2. 18-0 Museu - Magoanine (Via Av..       De: Museu
+3. 21-0 Museu - Albazine(via Dom ..       Para: Praca dos Trabalhadores
+4. 23-0 Museu - Matendene (Via Ja..       Paragens: 15
+7. Proximo                                Distancia: 3.4 km
+0. Voltar                                 Tarifa (percurso todo): 35 MT
+                                          Autocarros: 2
+
+text="2*rota 53-0"                        text="2*xyzq"
+END 53-0 Baixa - Albazine(via Hulene)     CON Nenhuma rota ou paragem com "xyzq".
+De: Baixa                                 Escreva outra vez so uma parte do
+Para: Albazine                            nome (ex: Museu)
+Paragens: 52                              0. Voltar
+Distancia: 20.1 km
+Tarifa (percurso todo): 202 MT
+Autocarros: 2
 ```
 
-Each route starts with its code, the number on the bus. Several routes go from Baixa to Albazine, and the code tells them apart when the rest of the name is cut to fit the screen. Distance is measured along the route's road path. The same text is sent by SMS.
+Quando o nome escrito coincide com vários locais (`2*baixa`: o Terminal de Chapas da Baixa e várias ruas da Baixa), aparece primeiro `CON Qual local?` com a lista, 4 por página. Cada rota começa pelo código, o número no autocarro: várias rotas vão do Museu a Albazine, e o código distingue-as quando o resto do nome é cortado. "De" e "Para" são os terminais da rota (`Via.terminalPartida`, `terminalChegada`). As paragens contam-se depois de juntar as seguidas com o mesmo nome (os dois lados de uma rua). A distância mede-se ao longo do percurso. O mesmo texto vai por SMS.
 
 ## 3 Paragens de uma rota
 
-The stops of a route in travel order, then the details of one stop.
+As paragens de uma rota pela ordem de viagem, e depois os detalhes de uma paragem.
 
 ```text
-text="3*3*1"                         text="3*3*1*7"                text="3*3*1*2"
-CON Paragens (11):                   CON Paragens (11):            END ESTRADA NACIONAL NUMERO 1
-1. Av. Metical                       1. Tedeco                     Paragem 2 de 11
-2. ESTRADA NACIONAL N..              2. Eucalipto                  Rota: Av. Metical -> Boane (105)
-3. Primeiras Casas                   3. Instituto                  Rotas que passam aqui: Rota 81
-4. Mazambanine                       4. Joaquim Chissano
-5. Entrada do Areiro                 5. Boane (105)
-6. Fabrica De Cimento                8. Anterior
-7. Proximo                           0. Voltar
-0. Voltar
+text="3"                                  text="3*X12"                text="3*X12*7"
+CON Paragens de uma rota                  CON X12: 24 paragens        CON X12: 24 paragens
+Escreva o numero da rota ou um local      1. Museu (X12)              1. Cadeia Civil
+onde passa (ex: X12 ou Museu)             2. Cristal                  2. Clinica
+0. Voltar                                 3. Oftamologia              3. Esquina
+                                          4. Primeira Esquina         4. Instituto do Cor..
+                                          5. Maternidade              5. Coop
+                                          6. Mangueira                6. OMM
+                                          7. Proximo                  7. Proximo
+                                          0. Voltar                   8. Anterior
+                                                                      0. Voltar
+
+text="3*X12*2"
+END Cristal
+Paragem 2 de 24
+Rota: X12 Museu - Praca dos Combatentes
+Rotas que passam aqui: 18-0, 21-0, 215, 221, 222, 23-0, 302, 305, 307, 34-1, 37-0, 403, 404, 406, 408, 67-0, C6, X10..
 ```
 
-Consecutive stops with the same street name are merged. Choosing a stop ends the session and sends its details by SMS.
+Como na opção 2, escrever um local (`3*museu`) mostra primeiro as rotas que lá passam. Paragens seguidas com o mesmo nome aparecem uma vez. Escolher uma paragem acaba a sessão e envia os detalhes por SMS.
 
 ## 4 Calcular tarifa
 
-![Option 4 in the simulator: origin, destination, fare](images/at-sim-fare-flow.png)
+A tarifa entre dois locais escritos: a da melhor viagem, contando todos os autocarros (o mesmo planeador da opção 1). Porquê a da viagem: o passageiro paga cada autocarro que apanha, e uma distância em linha recta daria outro valor.
 
 ```text
-text="4*3*1"
-END TARIFA
-De: Av. Metical
-Para: Boane (105)
-Distancia: 50.9 km
-Tarifa: 510 MT
-Tempo: 102 min
-Rotas disponiveis: 1
+text="4"                                  text="4*museu*zimpeto"            text="4*portao*1*johane"
+CON Calcular tarifa                       END TARIFA                        END TARIFA
+De onde parte? Escreva o nome da          De: Museu                         De: Portao
+paragem ou do local                       Para: Zimpeto                     Para: Johane Malate
+0. Voltar                                 Preco: 208 MT                     Preco: 197 MT
+                                          Directo, rota 302                 2 transbordos: rotas 504 > V053 > 203
+                                          Viagem: 42 min, 20.7 km           Viagem: 43 min, 19.5 km
 ```
 
-Distance is measured along the matching route's road path. When several routes match, the shortest is used. Without a matching route, the straight line × `fatorEstrada` (1.3) is used instead. Fare and time use the active fare rule ([Configuration](configuration.md#fare-rule-tarifa)). Sent by SMS too.
+A escolha dos locais é como na opção 1 (lista quando há vários, pesquisa tolerante). "Viagem" é o tempo a bordo e a pé, sem as esperas; a opção 1 dá a hora de chegada com as esperas. A tarifa e o tempo usam a regra de tarifa activa ([Configuração](configuracao.md#regra-de-tarifa-tarifa)). Também por SMS.
 
 ## 5 Rastrear autocarro
 
-Find a bus by its plate, or part of it.
-
-![Option 5 in the simulator: type a plate, see where the bus is](images/at-sim-track-flow.png)
+Um autocarro pela matrícula, ou parte dela, e onde está agora.
 
 ```text
-text="5"                                  text="5*ACI"
-CON Digite a matricula do autocarro       CON Escolha o autocarro:
-(ex: ACK ou 184M):                        1. ACI-001M
-                                          2. ACI-002M
-                                          3. ACI-004M
-                                          4. ACI-005M
-                                          5. ACI-006M
-                                          6. ACI-007M
-                                          Mais resultados: use mais digitos.
+text="5"                                  text="5*ack 145"
+CON Rastrear autocarro                    END AUTOCARRO ACK-145M
+Escreva a matricula ou parte dela         Mercedes-Benz Sprinter
+(ex: ACK ou 184M)                         Rota: V086 Rua Dos Bons Amigos - Antena
+0. Voltar                                 Perto de: Canhueiro
 
-text="5*ACI-004M"  (or "5*ACI*3")         text="5*XYZ"
-END AUTOCARRO ACI-004M                    END Nenhum autocarro encontrado com a matricula "XYZ".
-Toyota Hiace
-Rota: Rua do Cajueiro (Fedel Castro) - Estrada Circular
-Perto de: Esquina
+text="5*ACI"                              text="5*ACI*3"
+CON Qual autocarro?                       END AUTOCARRO ACI-004M
+1. ACI-001M                               Toyota Hiace
+2. ACI-002M                               Rota: V063 Rua do Cajueiro (Fedel Castro) - Estrada Circular
+3. ACI-004M                               Perto de: Tanques
+4. ACI-005M
+5. ACI-006M                               text="5*XYZ"
+6. ACI-007M                               CON Nenhum autocarro com "XYZ".
+7. Proximo                                Escreva outra vez parte da matricula (ex: ACK)
+0. Voltar                                 0. Voltar
 ```
 
-"Perto de" is the route stop nearest to the bus's current position (GPS or timetable). Sent by SMS too.
+"Perto de" é a paragem da rota mais próxima da posição actual do autocarro (GPS ou horário, [Localização e GPS](localizacao-gps.md)). Menos de 3 letras ou algarismos pede mais (`Escreva pelo menos 3 letras ou numeros da matricula`). Na lista, escrever outra matrícula faz nova pesquisa. Também por SMS.
 
-## 6 Area do motorista
+## 6 Área do motorista
 
-The driver's phone number must match a `Motorista.telefone`. Spaces and the `+258` prefix are ignored. The PIN is the one the administrator generated ([Admin → Driver PIN](admin-dashboard.md#drivers-motoristas)). This is the same trip state the [driver portal](driver-portal.md) shows.
+O número de telefone do motorista tem de coincidir com um `Motorista.telefone` (espaços e o `+258` ignorados). O PIN é o que o administrador gerou ([Painel → Dar um PIN a um motorista](painel-admin.md#tarefa-pin)). É o mesmo estado de viagem que o [portal do motorista](portal-motorista.md) mostra. Este menu ([`handleDriverMenuStateless`](../transport-client/app/api/ussd/route.ts)) lê as teclas por nível: a segunda é sempre o PIN, que se verifica em cada pedido porque não há sessão.
 
 ```text
 text="6"                     text="6*<PIN>"
@@ -319,61 +483,74 @@ Rota: Rua do Cajueiro (Fedel Castro) -> Estrada Circular
                                                    Bom trabalho!
 ```
 
-During a trip the first option becomes "1. Encerrar Viagem", and confirming it answers "END VIAGEM ENCERRADA … STATUS: OFFLINE".
+Durante uma viagem a primeira opção passa a "1. Encerrar Viagem", e confirmar responde "END VIAGEM ENCERRADA … STATUS: OFFLINE".
 
-| Input | Screen | Writes / sends |
+| Teclas | Ecrã | Escreve / envia |
 |---|---|---|
-| `6*<PIN>*1*1` | VIAGEM INICIADA / ENCERRADA | `Motorista.emViagem`, `viagemIniciadaEm`; SMS "Viagem iniciada com sucesso! …" or "Viagem encerrada com sucesso. …" |
-| `6*<PIN>*1*2` (a key other than 1) | "Operacao cancelada." | nothing |
-| `6*<PIN>*2` | name, ID number, licence, trip state, vehicle, route | SMS with the same |
-| `6*<PIN>*3` | route and number of stops | SMS with every stop in travel order |
-| `6*<PIN>*4` | plate, model, colour, seats, nearest stop | SMS with the same |
-| `6*<PIN>*0` | "Sessao encerrada. Obrigado por usar o sistema!" | nothing |
-| wrong PIN | "PIN incorreto. Por favor, disque novamente para tentar de novo." | nothing |
-| driver without a PIN | "Ainda nao tem PIN. Peca ao administrador para gerar o seu PIN." | nothing |
-| number not a driver | "Desculpe, o seu numero nao esta registado como motorista no sistema." | SMS asking to contact the administrator |
+| `6*<PIN>*1*1` | VIAGEM INICIADA / ENCERRADA | `Motorista.emViagem`, `viagemIniciadaEm`; SMS "Viagem iniciada com sucesso! …" ou "Viagem encerrada com sucesso. …" |
+| `6*<PIN>*1*2` (outra tecla que não 1) | "Operacao cancelada." | nada |
+| `6*<PIN>*2` | nome, BI, carta, estado da viagem, veículo, rota | SMS com o mesmo |
+| `6*<PIN>*3` | rota e número de paragens | SMS com todas as paragens pela ordem de viagem |
+| `6*<PIN>*4` | matrícula, modelo, cor, lugares, paragem mais próxima | SMS com o mesmo |
+| `6*<PIN>*0` | "Sessao encerrada. Obrigado por usar o sistema!" | nada |
+| PIN errado | "PIN incorreto. Por favor, disque novamente para tentar de novo." | nada |
+| motorista sem PIN | "Ainda nao tem PIN. Peca ao administrador para gerar o seu PIN." | nada |
+| número que não é de motorista | "Desculpe, o seu numero nao esta registado como motorista no sistema." | SMS a pedir para contactar o administrador |
 
-After the PIN is typed, every later request of the session carries it inside `text` (`6*<PIN>*…`). The app masks it in its own logs.
+Depois de escrito o PIN, todos os pedidos seguintes da sessão o levam dentro de `text` (`6*<PIN>*…`). A aplicação esconde-o nos seus registos.
 
 ## 7 Ajuda
 
 ```text
 END Ajuda
-1 Autocarro e tempo de chegada
+1 Viagem entre 2 locais
 2 Rotas de um local
 3 Paragens de uma rota
-4 Preco da viagem
-5 Autocarro pela matricula
+4 Preco de uma viagem
+5 Autocarro (matricula)
 6 Motoristas
-Listas: 7 proximo, 8 anterior, 0 voltar
+Escreva so parte do nome
+7 proximo 8 anterior 0 voltar
 ```
 
-![Help, and option 6 from a number that is not a driver, in the simulator](images/at-sim-help-driver.png)
+## Erros
 
-## Errors
-
-| Situation | Answer |
+| Situação | Resposta |
 |---|---|
-| A choice that is not on the screen (`text="9"`, `text="1*99"`) | `END Opcao invalida. Tente novamente.` |
-| No routes with buses | `END Nenhuma localizacao disponivel de momento.` |
-| Unexpected server error | `END Erro ao processar pedido. Tente novamente.` (HTTP 200, so the phone shows it) |
+| Uma opção que não está no ecrã (`text="9"`, `text="1*museu*zimpeto*5"`) | `END Opcao invalida. Tente novamente.` |
+| Nada encontrado numa pesquisa | `CON Nenhuma paragem com "…".` e pede para escrever outra vez (não fecha a sessão) |
+| Nenhuma viagem entre os dois locais | `END Nao ha autocarro de … para ….` |
+| Erro inesperado no servidor | `END Erro ao processar pedido. Tente novamente.` (HTTP 200, para o telemóvel o mostrar) |
 
-## Testing
+## Testar
 
-**With `curl`**, locally or against production. Production options 2–5 and 7 only read, but they send SMS when an API key is set. Option 1's result screen writes an alert.
+**Com o script dos ecrãs**, sem servidor nem Africa's Talking ([`scripts/ussd-ecras.ts`](../transport-client/scripts/ussd-ecras.ts)). Cada argumento é um `text`:
 
 ```bash
-curl -s -X POST http://localhost:3000/api/ussd \
-  --data-urlencode "sessionId=test-1" \
-  --data-urlencode "serviceCode=*384*848080#" \
-  --data-urlencode "phoneNumber=+258840000001" \
-  --data-urlencode "text=2*3*1"
+cd transport-client
+npx tsx scripts/ussd-ecras.ts "" "1*museu" "1*museu*zimpeto"
+USSD_HORA="2026-10-19T08:30:00+02:00" npx tsx scripts/ussd-ecras.ts "4*museu*zimpeto"   # relógio fixo
 ```
 
-**In the Africa's Talking simulator.** Dial `*384*848080#` from a test number. The screens are real production answers, and SMS arrive in the simulated phone's inbox ([Africa's Talking → simulator](africas-talking.md#use-the-menu-in-the-simulator)):
+Usa a base de dados de `DATABASE_URL`. A opção 1 escreve (um `MISSION`, e um `Utente` para um telefone novo) e, com `AFRICASTALKING_API_KEY` definida, os ecrãs finais enviam SMS: usar contra uma cópia local.
 
-![SMS received in the simulator](images/at-sim-sms.png)
+**Com `curl`**, localmente ou contra a produção (com a chave do callback). Na produção as opções 2 a 5 e 7 só lêem, mas enviam SMS; o ecrã de viagem da opção 1 escreve um alerta.
+
+```bash
+curl -s -X POST "http://localhost:3000/api/ussd" \
+  --data-urlencode "sessionId=teste-1" \
+  --data-urlencode "serviceCode=*384*848080#" \
+  --data-urlencode "phoneNumber=+258840000001" \
+  --data-urlencode "text=2*X12"
+```
+
+**No simulador da Africa's Talking.** Marcar `*384*848080#` a partir de um número de teste. Os ecrãs são respostas reais da produção, e os SMS chegam à caixa do telemóvel simulado ([Africa's Talking → Usar o menu no simulador](africas-talking.md#usar-o-menu-no-simulador)):
+
+![SMS recebido no simulador](images/at-sim-sms.png)
+
+<!-- navegação-fim: gerada por .github/scripts/docs-nav.py -->
 
 ---
 
-[← Passenger web app](passenger-web.md) · [Documentation index](README.md) · Next: [Driver portal →](driver-portal.md)
+Anterior: [Localização e GPS](localizacao-gps.md) · [Índice](README.md) · Seguinte: [Segurança](seguranca.md)
+<!-- /navegação-fim -->

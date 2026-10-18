@@ -58,12 +58,12 @@ export async function GET(
       );
     }
 
-    // Where it is now: real GPS when fresh, otherwise its timetable position on the route
+    // Onde está agora: GPS real quando recente, senão a posição pelo horário na via
     const posicao = await positionSummary(transporte, transporte.via);
     const latitude = posicao?.latitude ?? -25.9655;
     const longitude = posicao?.longitude ?? 32.5892;
 
-    // Parse via's geoLocationPath to routeCoords
+    // Ler o geoLocationPath da via para routeCoords
     let routeCoords: [number, number][] | undefined;
     if (transporte.via?.geoLocationPath && transporte.via.geoLocationPath.trim()) {
       try {
@@ -75,7 +75,7 @@ export async function GET(
           })
           .filter(coord => !isNaN(coord[0]) && !isNaN(coord[1]));
         
-        // If no valid coords, set to undefined
+        // Sem coordenadas válidas, fica undefined
         if (routeCoords.length === 0) {
           routeCoords = undefined;
         }
@@ -84,7 +84,7 @@ export async function GET(
       }
     }
 
-    // Parse transporte's routePath if it exists and via route doesn't
+    // Ler o routePath do transporte quando existe e a via não tem percurso
     if (!routeCoords && transporte.routePath && transporte.routePath.trim()) {
       try {
         routeCoords = transporte.routePath
@@ -95,7 +95,7 @@ export async function GET(
           })
           .filter(coord => !isNaN(coord[0]) && !isNaN(coord[1]));
         
-        // If no valid coords, set to undefined
+        // Sem coordenadas válidas, fica undefined
         if (routeCoords.length === 0) {
           routeCoords = undefined;
         }
@@ -104,7 +104,7 @@ export async function GET(
       }
     }
 
-    // The device code's hash stays on the server
+    // O hash do código do dispositivo fica no servidor
     const { gpsDispositivoHash, ...publico } = transporte;
     return NextResponse.json({
       ...publico,
@@ -133,7 +133,7 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    // Check if transporte exists
+    // O transporte existe?
     const existingTransporte = await prisma.transporte.findUnique({
       where: { id },
     });
@@ -145,7 +145,7 @@ export async function PUT(
       );
     }
 
-    // Check if matricula is already used by another transporte
+    // A matrícula já é usada por outro transporte?
     if (body.matricula && body.matricula !== existingTransporte.matricula) {
       const matriculaExists = await prisma.transporte.findUnique({
         where: { matricula: body.matricula },
@@ -159,13 +159,13 @@ export async function PUT(
       }
     }
 
-    // Build currGeoLocation from latitude/longitude if provided
+    // Montar currGeoLocation a partir de latitude/longitude, quando dadas
     let currGeoLocation = existingTransporte.currGeoLocation;
     if (body.latitude !== undefined && body.longitude !== undefined) {
       currGeoLocation = `${body.latitude},${body.longitude}`;
     }
 
-    // Get via's codigo if viaId is being updated
+    // O código da via, quando viaId muda
     let codigoVia = existingTransporte.codigoVia;
     if (body.viaId && body.viaId !== existingTransporte.viaId) {
       const via = await prisma.via.findUnique({
@@ -207,7 +207,7 @@ export async function PUT(
       },
     });
 
-    // Parse currGeoLocation to latitude/longitude
+    // Ler currGeoLocation para latitude/longitude
     let latitude = -25.9655;
     let longitude = 32.5892;
     if (transporte.currGeoLocation) {
@@ -218,7 +218,7 @@ export async function PUT(
       }
     }
 
-    // Parse via's geoLocationPath to routeCoords
+    // Ler o geoLocationPath da via para routeCoords
     let routeCoords: [number, number][] | undefined;
     if (transporte.via?.geoLocationPath) {
       try {
@@ -230,7 +230,7 @@ export async function PUT(
           })
           .filter(coord => !isNaN(coord[0]) && !isNaN(coord[1]));
       } catch (e) {
-        // If parsing fails, routeCoords remains undefined
+        // Se a leitura falhar, routeCoords fica undefined
       }
     }
 
@@ -257,8 +257,8 @@ export async function PUT(
   }
 }
 
-// PATCH: move the vehicle to another route, or take it off its route ({ viaId: null }).
-// Used by the route pages' "Atribuir Transportes" and remove buttons.
+// PATCH: muda o veículo para outra via, ou tira-o da sua via ({ viaId: null }).
+// Usado pelo "Atribuir Transportes" e pelos botões de remover das páginas das vias.
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -295,7 +295,7 @@ export async function DELETE(
   try {
     const { id } = await params;
     
-    // Check if transporte exists and has motorista or proprietarios
+    // O transporte existe e tem motorista ou proprietários?
     const transporte = await prisma.transporte.findUnique({
       where: { id },
       include: {
@@ -331,8 +331,8 @@ export async function DELETE(
       );
     }
 
-    // GeoLocation rows come from the initial import and block the delete (foreign key
-    // without cascade); positions now live on Transporte itself, so they go with it
+    // As linhas GeoLocation vêm da importação inicial e bloqueiam o apagar (chave estrangeira
+    // sem cascata); as posições vivem agora no próprio Transporte, por isso vão com ele
     await prisma.$transaction([
       prisma.geoLocation.deleteMany({ where: { transporteId: id } }),
       prisma.transporte.delete({ where: { id } }),

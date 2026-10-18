@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     const search = searchParams.get('search') || '';
     const countOnly = searchParams.get('countOnly') === 'true';
 
-    // If only count is requested, return just the count
+    // Quando só se pede a contagem, devolver só a contagem
     if (countOnly) {
       const total = await prisma.municipio.count({
         where: search ? {
@@ -59,10 +59,10 @@ export async function GET(request: Request) {
       prisma.municipio.count({ where: whereClause }),
     ]);
 
-    // Get paragens count for each município (through vias)
+    // Número de paragens de cada município (através das vias)
     const transformedMunicipios = await Promise.all(
       municipios.map(async (m) => {
-        // Unique paragens on the vias of this município (a stop on several vias counts once)
+        // Paragens distintas nas vias deste município (uma paragem em várias vias conta uma vez)
         const paragensCount = await prisma.paragem.count({
           where: {
             vias: { some: { via: { municipioId: m.id } } },
@@ -94,7 +94,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       { 
         error: 'Erro ao buscar municípios',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: error instanceof Error ? error.message : 'Erro desconhecido',
       },
       { status: 500 }
     );
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Validate required fields
+    // Confirmar os campos obrigatórios
     if (!body.nome || !body.codigo || !body.provinciaId) {
       return NextResponse.json(
         { error: 'Nome, código e província são obrigatórios' },
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if codigo already exists
+    // O código já existe?
     const existing = await prisma.municipio.findUnique({
       where: { codigo: body.codigo },
     });
@@ -141,7 +141,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { 
         error: 'Erro ao criar município',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
       },
       { status: 500 }
     );

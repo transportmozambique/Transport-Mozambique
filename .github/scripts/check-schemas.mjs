@@ -1,6 +1,7 @@
-// The three copies of the Prisma schema must describe the same database. prisma/schema.prisma is
-// the source of truth; transport-client's copy and transport-admin's (whose generator block adds
-// the omitApi preview feature) must match it, comments and spacing aside. Exits 1 when they differ.
+// As três cópias do esquema Prisma têm de descrever a mesma base de dados. prisma/schema.prisma é a
+// referência; a cópia do transport-client e a do transport-admin (cujo bloco generator junta a
+// funcionalidade omitApi) têm de ser iguais a ela, sem contar comentários e espaços. Sai com 1
+// quando diferem. Porquê três cópias: cada aplicação é publicada sozinha na Vercel e gera o seu cliente.
 //
 //   node .github/scripts/check-schemas.mjs
 import fs from 'node:fs';
@@ -21,11 +22,11 @@ for (const copy of ['transport-client/prisma/schema.prisma', 'transport-admin/pr
   const lines = normalise(copy);
   const at = expected.findIndex((line, i) => line !== lines[i]);
   if (at === -1 && lines.length === expected.length) {
-    console.log(`${copy}: same as ${source}`);
+    console.log(`${copy}: igual a ${source}`);
     continue;
   }
   failed = true;
   const i = at === -1 ? Math.min(lines.length, expected.length) : at;
-  console.log(`${copy} differs from ${source}:\n  ${source}: ${expected[i] ?? '(end)'}\n  ${copy}: ${lines[i] ?? '(end)'}`);
+  console.log(`${copy} difere de ${source}:\n  ${source}: ${expected[i] ?? '(fim)'}\n  ${copy}: ${lines[i] ?? '(fim)'}`);
 }
 process.exit(failed ? 1 : 0);

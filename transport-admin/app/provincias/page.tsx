@@ -34,7 +34,7 @@ export default function Provincias() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Fetch províncias from API
+  // Pedir as províncias à API
   useEffect(() => {
     const fetchProvincias = async () => {
       setListLoading(true);
@@ -61,13 +61,13 @@ export default function Provincias() {
     p.codigo?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
   );
 
-  // Pagination logic
+  // Paginação
   const totalPages = Math.ceil(filteredProvincias.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedProvincias = filteredProvincias.slice(startIndex, endIndex);
 
-  // Reset to page 1 when search changes
+  // Voltar à página 1 quando a pesquisa muda
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchTerm, itemsPerPage]);
@@ -116,7 +116,7 @@ export default function Provincias() {
   async function handleRemoveAssignments(id: string) {
     setDeleting(true);
     try {
-      // Fetch all data at once
+      // Pedir todos os dados de uma vez
       const [municipiosRes, viasRes, transportesRes] = await Promise.all([
         fetch('/api/municipios?limit=1000'),
         fetch('/api/vias?limit=1000'),
@@ -135,33 +135,33 @@ export default function Provincias() {
       const allVias = Array.isArray(viasData) ? viasData : (viasData.data || []);
       const allTransportes = Array.isArray(transportesData) ? transportesData : (transportesData.data || []);
 
-      // Filter by provincia
+      // Os da província
       const municipiosToUpdate = allMunicipios.filter((m: any) => m.provinciaId === id);
       const municipioIds = municipiosToUpdate.map((m: any) => m.id);
       
-      // Filter vias by municipios
+      // As vias dos municípios
       const viasToUpdate = allVias.filter((v: any) => municipioIds.includes(v.municipioId));
       const viaIds = viasToUpdate.map((v: any) => v.id);
       
-      // Filter transportes by vias
+      // Os transportes das vias
       const transportesToUpdate = allTransportes.filter((t: any) => viaIds.includes(t.viaId));
 
-      // Remove associations (don't delete entities)
+      // Tirar as ligações (sem apagar as entidades)
       
-      // 1. Remove transporte associations (motorista, proprietarios, via)
+      // 1. Tirar as ligações dos transportes (motorista, proprietários, via)
       for (const transporte of transportesToUpdate) {
         try {
-          // Remove motorista (set to null)
+          // Tirar o motorista (a null)
           await fetch(`/api/transportes/${transporte.id}/atribuir-motorista`, {
             method: 'DELETE',
           }).catch(() => {});
           
-          // Remove proprietarios associations
+          // Tirar as ligações aos proprietários
           await fetch(`/api/transportes/${transporte.id}/proprietario`, {
             method: 'DELETE',
           }).catch(() => {});
           
-          // Remove via association (set viaId to null)
+          // Tirar a ligação à via (viaId a null)
           await fetch(`/api/transportes/${transporte.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -172,7 +172,7 @@ export default function Provincias() {
         }
       }
 
-      // 2. Remove via associations (set municipioId to null)
+      // 2. Tirar as ligações das vias (municipioId a null)
       for (const via of viasToUpdate) {
         try {
           await fetch(`/api/vias/${via.id}`, {
@@ -185,7 +185,7 @@ export default function Provincias() {
         }
       }
 
-      // 3. Remove municipio associations (set provinciaId to null)
+      // 3. Tirar as ligações dos municípios (provinciaId a null)
       for (const municipio of municipiosToUpdate) {
         try {
           await fetch(`/api/municipios/${municipio.id}`, {
@@ -198,7 +198,7 @@ export default function Provincias() {
         }
       }
 
-      // 4. Delete provincia
+      // 4. Apagar a província
       const deleteResponse = await fetch(`/api/provincias/${id}`, {
         method: 'DELETE',
       });
@@ -239,7 +239,7 @@ export default function Provincias() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -275,7 +275,7 @@ export default function Provincias() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Diálogo de confirmação do apagar */}
       {showDeleteModal && provinciaToDelete && (
         <div 
           className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm min-h-screen" 
@@ -393,9 +393,9 @@ export default function Provincias() {
       )}
       
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
-        {/* Header - 2 Columns Layout */}
+        {/* Cabeçalho em 2 colunas */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          {/* Left - Title and Description */}
+          {/* Esquerda: título e descrição */}
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/dashboard')}
@@ -411,7 +411,7 @@ export default function Provincias() {
             </div>
           </div>
 
-          {/* Right - Action Button */}
+          {/* À direita: botão de acção */}
           <button 
             onClick={handleCreate}
             className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 whitespace-nowrap"
@@ -423,7 +423,7 @@ export default function Provincias() {
           </button>
         </div>
 
-        {/* Stats Cards - Smaller and More Compact */}
+        {/* Cartões de estatísticas, pequenos e compactos */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <button 
             onClick={() => router.push('/provincias')}

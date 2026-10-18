@@ -70,7 +70,7 @@ export async function POST(
       message: 'Proprietário atribuído com sucesso'
     });
   } catch (error) {
-    console.error('Error assigning proprietario:', error);
+    console.error('Erro ao atribuir proprietário:', error);
     return NextResponse.json(
       { error: 'Erro ao atribuir proprietário' },
       { status: 500 }
@@ -93,7 +93,7 @@ export async function DELETE(
       );
     }
 
-    // Find and delete the assignment
+    // Encontrar e apagar a atribuição
     const assignment = await prisma.transporteProprietario.findFirst({
       where: {
         transporteId: id,
@@ -117,7 +117,7 @@ export async function DELETE(
       message: 'Proprietário removido com sucesso'
     });
   } catch (error) {
-    console.error('Error removing proprietario:', error);
+    console.error('Erro ao tirar proprietário:', error);
     return NextResponse.json(
       { error: 'Erro ao remover proprietário' },
       { status: 500 }

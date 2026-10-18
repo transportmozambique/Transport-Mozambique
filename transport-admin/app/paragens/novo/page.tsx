@@ -18,7 +18,7 @@ export default function NovaParagem() {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<maplibregl.Map | null>(null);
   const markerRef = useRef<maplibregl.Marker | null>(null);
-  const viasRef = useRef<Via[]>([]); // Store vias in a ref to avoid closure issues
+  const viasRef = useRef<Via[]>([]); // vias guardadas numa ref, para os tratadores lerem sempre as actuais
   
   const [formData, setFormData] = useState({
     nome: "",
@@ -52,13 +52,13 @@ export default function NovaParagem() {
     };
   }, []);
 
-  // Add routes to map when vias are loaded
+  // Juntar as vias ao mapa quando chegam
   useEffect(() => {
     if (!mapInstanceRef.current || allVias.length === 0) return;
     
     const map = mapInstanceRef.current;
     
-    // Wait for map to be loaded
+    // Esperar que o mapa carregue
     if (!map.isStyleLoaded()) {
       map.once('load', () => addRoutesToMap(map));
     } else {
@@ -111,7 +111,7 @@ export default function NovaParagem() {
           }
         });
       } catch (error) {
-        // Silent error
+        // Erro ignorado
       }
     });
   }
@@ -126,7 +126,7 @@ export default function NovaParagem() {
       const response = await fetch('/api/vias?limit=1000');
       const result = await response.json();
       
-      // Handle both array and paginated response formats
+      // Aceitar respostas em array e paginadas
       const data = Array.isArray(result) ? result : (result.data || []);
       
       setAllVias(data);
@@ -142,9 +142,9 @@ export default function NovaParagem() {
     }
   }
 
-  // Calculate distance between two points using Haversine formula
+  // Distância entre dois pontos pela fórmula de Haversine
   function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371e3; // Earth's radius in meters
+    const R = 6371e3; // raio da Terra em metros
     const φ1 = lat1 * Math.PI / 180;
     const φ2 = lat2 * Math.PI / 180;
     const Δφ = (lat2 - lat1) * Math.PI / 180;
@@ -155,10 +155,10 @@ export default function NovaParagem() {
               Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    return R * c; // Distance in meters
+    return R * c; // distância em metros
   }
 
-  // Check if a point is near a route path
+  // Diz se um ponto está perto do percurso de uma via
   function isPointNearRoute(lat: number, lng: number, geoLocationPath: string, threshold: number = 7): boolean {
     if (!geoLocationPath) {
       return false;
@@ -193,7 +193,7 @@ export default function NovaParagem() {
     }
   }
 
-  // Filter vias based on clicked location
+  // Filtrar as vias pelo local clicado
   function filterViasByLocation(lat: number, lng: number) {
     const vias = viasRef.current;
     
@@ -231,7 +231,7 @@ export default function NovaParagem() {
 
         results.push({ via, minDistance });
       } catch (error) {
-        // Silent error
+        // Erro ignorado
       }
     });
 
@@ -258,11 +258,11 @@ export default function NovaParagem() {
   function initializeMap() {
     if (!mapRef.current) return;
 
-    // Initialize MapLibre map
+    // Criar o mapa MapLibre
     const map = new maplibregl.Map({
       container: mapRef.current,
       style: 'https://tiles.openfreemap.org/styles/positron',
-      center: [32.83, -26.85], // Ponta do Ouro area where we know there are vias
+      center: [32.83, -26.85], // área da Ponta do Ouro, onde se sabe que há vias
       zoom: 12,
       pitch: 60,
       bearing: 0,
@@ -270,11 +270,11 @@ export default function NovaParagem() {
 
     mapInstanceRef.current = map;
 
-    // Add navigation controls
+    // Controlos de navegação
     map.addControl(new maplibregl.NavigationControl(), "top-right");
 
     map.on("load", () => {
-      // Add 3D buildings
+      // Edifícios em 3D
       const layers = map.getStyle().layers;
       let firstSymbolId;
       for (const layer of layers) {
@@ -291,7 +291,7 @@ export default function NovaParagem() {
         });
       }
 
-      // Add 3D buildings layer
+      // Camada dos edifícios em 3D
       if (!map.getLayer('3d-buildings')) {
         map.addLayer(
           {
@@ -322,27 +322,27 @@ export default function NovaParagem() {
       }
     });
 
-    // Add click handler to place marker
+    // Clicar põe o marcador
     map.on('click', (e) => {
       const { lat, lng } = e.lngLat;
       
-      // Update form data
+      // Actualizar os dados do formulário
       setFormData(prev => ({
         ...prev,
         latitude: lat.toFixed(6),
         longitude: lng.toFixed(6),
-        viaIds: [], // Reset selected vias when location changes
+        viaIds: [], // limpar as vias escolhidas quando o local muda
       }));
 
-      // Filter vias by location
+      // Filtrar as vias pelo local
       filterViasByLocation(lat, lng);
 
-      // Remove existing marker if any
+      // Tirar o marcador existente, se houver
       if (markerRef.current) {
         markerRef.current.remove();
       }
 
-      // Create custom marker element
+      // Criar o elemento do marcador
       const el = document.createElement("div");
       el.style.cssText = `
         width: 14px;
@@ -354,7 +354,7 @@ export default function NovaParagem() {
         cursor: pointer;
       `;
 
-      // Add new marker
+      // Juntar o marcador novo
       const marker = new maplibregl.Marker({ element: el })
         .setLngLat([lng, lat])
         .setPopup(
@@ -438,7 +438,7 @@ export default function NovaParagem() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -498,9 +498,9 @@ export default function NovaParagem() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Form Fields - Left Side */}
+            {/* Campos do formulário, à esquerda */}
             <div className="space-y-6">
-              {/* Basic Information */}
+              {/* Informação básica */}
               <div className="bg-white rounded-2xl border border-slate-200 p-6">
                 <h3 className="text-lg font-bold text-slate-900 mb-4">Informações Básicas</h3>
                 
@@ -605,10 +605,10 @@ export default function NovaParagem() {
                       type="button"
                       onClick={() => {
                         if (formData.viaIds.length === filteredVias.length) {
-                          // Deselect all
+                          // Desmarcar todas
                           setFormData(prev => ({ ...prev, viaIds: [] }));
                         } else {
-                          // Select all
+                          // Marcar todas
                           setFormData(prev => ({ ...prev, viaIds: filteredVias.map(v => v.id) }));
                         }
                       }}
@@ -681,7 +681,7 @@ export default function NovaParagem() {
               </div>
             </div>
 
-            {/* Map - Right Side */}
+            {/* Mapa, à direita */}
             <div className="lg:sticky lg:top-6 h-fit">
               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-200">
@@ -697,7 +697,7 @@ export default function NovaParagem() {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Botões de acção */}
           <div className="flex items-center justify-end space-x-4 pt-6 border-t border-slate-200">
             <button
               type="button"

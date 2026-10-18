@@ -9,7 +9,7 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Form fields
+  // Campos do formulário
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -97,14 +97,14 @@ export default function AuthPage() {
             </p>
           </div>
 
-          {/* Error Message */}
+          {/* Mensagem de erro */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
               <p className="text-red-600 text-sm">{error}</p>
             </div>
           )}
 
-          {/* Form */}
+          {/* Formulário */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <>
@@ -210,7 +210,7 @@ export default function AuthPage() {
             </button>
           </form>
 
-          {/* Toggle Login/Register */}
+          {/* Trocar entre entrar e registar */}
           <div className="mt-6 text-center">
             <button
               onClick={() => {
@@ -234,7 +234,7 @@ export default function AuthPage() {
           </div>
         </div>
 
-        {/* Back to Home */}
+        {/* Voltar ao início */}
         <div className="mt-6 text-center">
           <button
             onClick={() => router.push("/")}

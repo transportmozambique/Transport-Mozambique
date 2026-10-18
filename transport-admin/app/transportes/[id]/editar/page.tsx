@@ -114,7 +114,7 @@ export default function EditarTransporte() {
     mapInstanceRef.current = map;
     map.addControl(new maplibregl.NavigationControl(), "top-right");
 
-    // Add 3D buildings
+    // Edifícios em 3D
     map.on('load', () => {
       const layers = map.getStyle().layers;
       const labelLayerId = layers.find(
@@ -156,7 +156,7 @@ export default function EditarTransporte() {
       );
     });
 
-    // Click to set location
+    // Clicar para escolher o local
     map.on('click', (e) => {
       setFormData(prev => ({
         ...prev,
@@ -173,7 +173,7 @@ export default function EditarTransporte() {
     };
   }, []);
 
-  // Update marker when coordinates change
+  // Actualizar o marcador quando as coordenadas mudam
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
@@ -369,7 +369,7 @@ export default function EditarTransporte() {
         observacoes: data.observacoes || ""
       });
     } catch (error) {
-      console.error('Error fetching transporte:', error);
+      console.error('Erro ao carregar transporte:', error);
     } finally {
       setLoading(false);
     }
@@ -428,7 +428,7 @@ export default function EditarTransporte() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Form Cards - Full Width */}
+          {/* Cartões do formulário, largura inteira */}
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Informações Básicas */}
@@ -691,7 +691,7 @@ export default function EditarTransporte() {
               </div>
             </div>
 
-            {/* Observações - Full Width */}
+            {/* Observações, largura inteira */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Observações</h3>
                 
@@ -707,7 +707,7 @@ export default function EditarTransporte() {
               </div>
             </div>
 
-            {/* Pessoas Associadas - Full Width */}
+            {/* Pessoas associadas, largura inteira */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                 <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Pessoas Associadas</h3>
@@ -897,7 +897,7 @@ export default function EditarTransporte() {
               </div>
             </div>
 
-            {/* Action Buttons - Full Width */}
+            {/* Botões de acção, largura inteira */}
             <div className="flex justify-end gap-3">
               <button
                 type="button"
@@ -1040,7 +1040,7 @@ export default function EditarTransporte() {
         )}
       </div>
 
-      {/* Toast Notification */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed bottom-6 right-6 z-50 animate-fade-in">
           <div className={`px-6 py-4 rounded-xl shadow-lg border-2 ${
@@ -1070,7 +1070,7 @@ export default function EditarTransporte() {
         </div>
       )}
 
-      {/* Confirmation Modal */}
+      {/* Janela de confirmação */}
       {confirmModal && (
         <div 
           className="fixed inset-0 z-50 backdrop-blur-sm min-h-screen" 

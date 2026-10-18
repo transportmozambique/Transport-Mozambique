@@ -33,7 +33,7 @@ export default function Vias() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  // Counters over every matching route (the API's totals), not just the page shown
+  // Contadores de todas as vias que coincidem (os totais da API), não só da página mostrada
   const [totals, setTotals] = useState({ transportes: 0, paragens: 0 });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [viaToDelete, setViaToDelete] = useState<Via | null>(null);
@@ -48,7 +48,7 @@ export default function Vias() {
 
   async function fetchVias() {
     try {
-      // Use listLoading for subsequent fetches, initialLoading for first load
+      // listLoading para os pedidos seguintes, initialLoading para a primeira carga
       if (vias.length > 0) {
         setListLoading(true);
       } else {
@@ -58,14 +58,14 @@ export default function Vias() {
       const response = await fetch(`/api/vias?page=${currentPage}&limit=${itemsPerPage}&search=${encodeURIComponent(debouncedSearchTerm)}`);
       const result = await response.json();
       
-      // Handle paginated response
+      // Resposta paginada
       if (result.data && Array.isArray(result.data)) {
         setVias(result.data);
         setTotalCount(result.pagination.total);
         setTotalPages(result.pagination.totalPages);
         if (result.totals) setTotals(result.totals);
       } else if (Array.isArray(result)) {
-        // Fallback for old non-paginated response
+        // Recurso para a resposta antiga sem paginação
         setVias(result);
         setTotalCount(result.length);
       } else {
@@ -148,27 +148,27 @@ export default function Vias() {
   async function handleRemoveAssignments(id: string) {
     setDeleting(true);
     try {
-      // Step 1: Get all transportes from this via
+      // Passo 1: ler todos os transportes desta via
       const transportesResponse = await fetch(`/api/transportes?limit=1000`);
       if (transportesResponse.ok) {
         const result = await transportesResponse.json();
         const transportes = Array.isArray(result) ? result : (result.data || []);
         const transportesToUpdate = transportes.filter((t: any) => t.viaId === id);
         
-        // Remove via association from transportes (set viaId to null, DON'T delete transportes)
+        // Tirar a ligação à via dos transportes (viaId a null, SEM apagar os transportes)
         for (const transporte of transportesToUpdate) {
           try {
-            // Remove motorista association (set to null)
+            // Tirar a ligação ao motorista (a null)
             await fetch(`/api/transportes/${transporte.id}/atribuir-motorista`, {
               method: 'DELETE',
             }).catch(() => {});
             
-            // Remove proprietarios associations
+            // Tirar as ligações aos proprietários
             await fetch(`/api/transportes/${transporte.id}/proprietario`, {
               method: 'DELETE',
             }).catch(() => {});
             
-            // Remove via association (set viaId to null, DON'T delete the transporte)
+            // Tirar a ligação à via (viaId a null, SEM apagar o transporte)
             await fetch(`/api/transportes/${transporte.id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
@@ -180,10 +180,10 @@ export default function Vias() {
         }
       }
 
-      // Step 2: Remove all paragens associations (via ParagemVia table)
-      // This should be handled by the API when deleting the via
+      // Passo 2: tirar todas as ligações a paragens (tabela ViaParagem)
+      // Isto é tratado pela API ao apagar a via
       
-      // Step 3: Now delete the via
+      // Passo 3: apagar a via
       const deleteResponse = await fetch(`/api/vias/${id}`, {
         method: 'DELETE',
       });
@@ -206,7 +206,7 @@ export default function Vias() {
     }
   }
 
-  // Reset to page 1 when search term or items per page changes
+  // Voltar à página 1 quando a pesquisa ou o número de itens por página mudam
   useEffect(() => {
     if (currentPage !== 1) {
       setCurrentPage(1);
@@ -219,7 +219,7 @@ export default function Vias() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -250,7 +250,7 @@ export default function Vias() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Diálogo de confirmação do apagar */}
       {showDeleteModal && viaToDelete && (
         <div 
           className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm min-h-screen" 
@@ -368,9 +368,9 @@ export default function Vias() {
       )}
 
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
-        {/* Header - 2 Columns Layout */}
+        {/* Cabeçalho em 2 colunas */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          {/* Left - Title and Description */}
+          {/* Esquerda: título e descrição */}
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/dashboard')}
@@ -386,7 +386,7 @@ export default function Vias() {
             </div>
           </div>
 
-          {/* Right - Action Button */}
+          {/* À direita: botão de acção */}
           <button 
             onClick={() => router.push('/vias/novo')}
             className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 whitespace-nowrap"
@@ -398,7 +398,7 @@ export default function Vias() {
           </button>
         </div>
 
-        {/* Stats Cards - Smaller and More Compact */}
+        {/* Cartões de estatísticas, pequenos e compactos */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <button 
             onClick={() => router.push('/vias')}
@@ -662,7 +662,7 @@ export default function Vias() {
                 </svg>
               </button>
               
-              {/* Page numbers */}
+              {/* Números das páginas */}
               <div className="flex items-center space-x-1">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum;

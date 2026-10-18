@@ -5,8 +5,8 @@ import {
   submitCreate, submitEdit, expectDetail, expectInList, deleteFromDetail,
 } from './helpers';
 
-// Each test walks one entity through the admin UI: create → find in the list → detail → edit →
-// delete. Rows are named "E2E …" with a unique suffix and are deleted by the test itself.
+// Cada teste leva uma entidade pela interface do painel: criar → encontrar na lista → detalhe →
+// editar → apagar. As linhas chamam-se "E2E …" com um sufixo único e são apagadas pelo próprio teste.
 
 test('Província: criar, listar, ver, editar, eliminar', async ({ page }) => {
   const id = uid();
@@ -53,15 +53,15 @@ test('Paragem: criar, listar, ver, editar, eliminar', async ({ page }) => {
   await page.goto('/paragens/novo');
   await page.getByPlaceholder('Ex: Praça dos Heróis').fill(`E2E Paragem ${id}`);
   await page.getByPlaceholder('Ex: PAR-001').fill(`PAR-E2E-${id}`);
-  // Latitude and longitude are read-only: they are set by clicking the map, and the stop must
-  // belong to a route within 100 m of the click. The map opens centred on [32.83, -26.85] at
-  // zoom 12, so click on the route point nearest that centre.
+  // A latitude e a longitude são só de leitura: são postas clicando no mapa, e a paragem tem de
+  // pertencer a uma via a menos de 100 m do clique. O mapa abre centrado em [32.83, -26.85] com
+  // zoom 12, por isso clica-se no ponto da via mais perto desse centro.
   const canvas = page.locator('.maplibregl-canvas').first();
   await expect(canvas).toBeVisible();
   const box = (await canvas.boundingBox())!;
   const vias = (await (await page.request.get('/api/vias?limit=1000')).json()).data as { geoLocationPath: string }[];
   const center = { lng: 32.83, lat: -26.85 }, zoom = 12;
-  const world = 512 * 2 ** zoom; // MapLibre uses 512 px tiles
+  const world = 512 * 2 ** zoom; // o MapLibre usa mosaicos de 512 px
   const project = (lng: number, lat: number) => ({
     x: ((lng + 180) / 360) * world,
     y: ((180 - (180 / Math.PI) * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360))) * world) / 360,
@@ -80,17 +80,17 @@ test('Paragem: criar, listar, ver, editar, eliminar', async ({ page }) => {
     }
   }
   expect(target, 'no route point inside the initial map view').toBeTruthy();
-  await page.waitForTimeout(2000); // map style and click handler
-  // The map is tilted (pitch 60), so the flat projection is only a first guess: click, read
-  // where the click landed, and refine per axis with the secant method.
+  await page.waitForTimeout(2000); // estilo do mapa e tratamento do clique
+  // O mapa está inclinado (pitch 60), por isso a projecção plana é só um primeiro palpite: clicar,
+  // ler onde o clique caiu e afinar por eixo com o método da secante.
   const lat = page.getByPlaceholder('-25.9655'), lng = page.getByPlaceholder('32.5892');
-  // Each click leaves the new stop's marker where it landed, right where the next, refined click
-  // goes: let clicks through the markers to the map
+  // Cada clique deixa o marcador da paragem nova onde caiu, exactamente onde vai o clique seguinte,
+  // já afinado: deixar os cliques passar pelos marcadores até ao mapa
   await page.addStyleTag({ content: '.maplibregl-marker { pointer-events: none; }' });
   const clickAt = async (pos: { x: number; y: number }) => {
     await canvas.click({ position: pos });
     await expect(lat).not.toHaveValue('');
-    await page.waitForTimeout(300); // let React show the new coordinates
+    await page.waitForTimeout(300); // deixar o React mostrar as coordenadas novas
     return project(Number(await lng.inputValue()), Number(await lat.inputValue()));
   };
   const want = target!.px;
@@ -99,7 +99,7 @@ test('Paragem: criar, listar, ver, editar, eliminar', async ({ page }) => {
   let pos = { x: prev.x + (want.x - prevLanded.x), y: prev.y + (want.y - prevLanded.y) };
   for (let i = 0; i < 6; i++) {
     const landed = await clickAt(pos);
-    if (Math.hypot(want.x - landed.x, want.y - landed.y) < 2) break; // < ~35 m at zoom 12
+    if (Math.hypot(want.x - landed.x, want.y - landed.y) < 2) break; // < ~35 m no zoom 12
     const step = (axis: 'x' | 'y') => {
       const moved = landed[axis] - prevLanded[axis];
       const scale = Math.abs(moved) > 0.01 ? (pos[axis] - prev[axis]) / moved : 1;
@@ -134,7 +134,7 @@ test('Paragem com alerta de passageiro: eliminar remove também o alerta', async
     data: { nome: `E2E Utente ${id}`, email: `e2e.${id.toLowerCase()}@local.test`, telefone: `+25886${digits(7)}`, senha: 'e2e-utente-pass', mISSION: `E2E-${id}` },
   })).json();
 
-  // Arrival alerts are created by the passenger app; insert one directly
+  // Os alertas de chegada são criados pela aplicação dos passageiros; aqui insere-se um directamente
   const prisma = new PrismaClient({ datasources: { db: { url: E2E_DATABASE_URL } } });
   try {
     await prisma.mISSION.create({
@@ -155,12 +155,12 @@ test('Paragem com alerta de passageiro: eliminar remove também o alerta', async
   }
 });
 
-/** The public car routers the route drawer asks (FOSSGIS first, then the OSRM demo server) */
+/** Os routers públicos de carro a que o desenho da via pergunta (FOSSGIS primeiro, depois o servidor de demonstração do OSRM) */
 const ROUTERS = /^https:\/\/(routing\.openstreetmap\.de|router\.project-osrm\.org)\//;
 
 test('Via: criar (desenhada no mapa), listar, ver, editar, eliminar', async ({ page }) => {
-  // The form asks the public OSRM routers for a road-following path; answer them locally so the
-  // test does not depend on those services.
+  // O formulário pede aos routers OSRM públicos um percurso que segue as estradas; responde-se-lhes
+  // localmente, para o teste não depender desses serviços.
   await page.route(ROUTERS, (route) =>
     route.fulfill({
       json: {
@@ -180,21 +180,21 @@ test('Via: criar (desenhada no mapa), listar, ver, editar, eliminar', async ({ p
   const canvas = page.locator('.maplibregl-canvas').first();
   await expect(canvas).toBeVisible();
   const box = (await canvas.boundingBox())!;
-  await page.waitForTimeout(2000); // map style and click handler
-  await page.addStyleTag({ content: '.maplibregl-marker { pointer-events: none; }' }); // clicks reach the map, not a stop
+  await page.waitForTimeout(2000); // estilo do mapa e tratamento do clique
+  await page.addStyleTag({ content: '.maplibregl-marker { pointer-events: none; }' }); // os cliques chegam ao mapa, não a uma paragem
   await canvas.click({ position: { x: box.width * 0.4, y: box.height * 0.5 } });
   await canvas.click({ position: { x: box.width * 0.6, y: box.height * 0.5 } });
   const counts = page.getByTestId('route-counts');
   await expect(counts).toContainText('Pontos na rota: 2');
 
-  // A wrong click can be undone (button or Ctrl+Z) and redone, one step at a time
+  // Um clique errado pode ser desfeito (botão ou Ctrl+Z) e refeito, um passo de cada vez
   await canvas.click({ position: { x: box.width * 0.5, y: box.height * 0.3 } });
   await expect(counts).toContainText('Pontos na rota: 3');
   await page.getByRole('button', { name: /Desfazer/ }).click();
   await expect(counts).toContainText('Pontos na rota: 2');
   await page.getByRole('button', { name: /Refazer/ }).click();
   await expect(counts).toContainText('Pontos na rota: 3');
-  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur()); // Ctrl+Z in a field undoes typing
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur()); // Ctrl+Z num campo desfaz o texto escrito
   await page.keyboard.press('Control+z');
   await expect(counts).toContainText('Pontos na rota: 2');
   await expect(page.getByTestId('route-point')).toHaveCount(2);
@@ -210,8 +210,8 @@ test('Via: criar (desenhada no mapa), listar, ver, editar, eliminar', async ({ p
   await submitEdit(page, `/api/vias/${vid}`, 'Guardar');
   await expectDetail(page, `/vias/${vid}`, `E2E Via ${id} editada`);
 
-  // Redrawing the path: a straight fallback cannot be saved, a road path replaces the old one.
-  // Handlers registered later run first, so this one now answers the router.
+  // Redesenhar o percurso: uma linha recta de recurso não pode ser guardada, um percurso pelas
+  // estradas substitui o antigo. Os tratadores registados depois correm primeiro, por isso este responde agora ao router.
   let routerUp = false;
   await page.route(ROUTERS, (route) =>
     routerUp
@@ -229,7 +229,7 @@ test('Via: criar (desenhada no mapa), listar, ver, editar, eliminar', async ({ p
   const map = page.locator('.maplibregl-canvas').first();
   await expect(map).toBeVisible();
   const mapBox = (await map.boundingBox())!;
-  await page.waitForTimeout(2000); // map style and click handler
+  await page.waitForTimeout(2000); // estilo do mapa e tratamento do clique
   await page.addStyleTag({ content: '.maplibregl-marker { pointer-events: none; }' });
   await map.click({ position: { x: mapBox.width * 0.3, y: mapBox.height * 0.5 } });
   await map.click({ position: { x: mapBox.width * 0.7, y: mapBox.height * 0.5 } });
@@ -246,7 +246,7 @@ test('Via: criar (desenhada no mapa), listar, ver, editar, eliminar', async ({ p
   await expect(page).toHaveURL(new RegExp(`/vias/${vid}$`));
   const redrawn = await (await page.request.get(`/api/vias/${vid}`)).json();
   expect(redrawn.geoLocationPath).toBe('32.570000,-25.950000;32.575000,-25.955000;32.600000,-25.970000');
-  // A path the server cannot read is refused
+  // Um percurso que o servidor não consegue ler é recusado
   const bad = await page.request.patch(`/api/vias/${vid}`, { data: { geoLocationPath: 'not a path' } });
   expect(bad.status()).toBe(400);
   expect((await page.request.patch('/api/vias/no-such-route', { data: { nome: 'x' } })).status()).toBe(404);
@@ -273,7 +273,7 @@ test('Via: "Atribuir Transporte" muda a via do transporte', async ({ page }) => 
     const depois = await (await page.request.get(`/api/transportes/${transporte.id}`)).json();
     expect(depois.viaId).toBe(via.id);
   } finally {
-    // Put the vehicle back on its route
+    // Pôr o veículo de volta na sua via
     await page.request.patch(`/api/transportes/${transporte.id}`, { data: { viaId: viaOriginal } });
   }
 });
@@ -319,7 +319,7 @@ test('Proprietário com transporte: "Remover Associações e Eliminar" elimina-o
   await page.getByPlaceholder('Pesquisar por nome, BI ou nacionalidade...').fill(nome);
   const row = page.getByRole('row').filter({ hasText: nome });
   await row.getByTitle('Eliminar').click();
-  // The dialog's button (the row icons are also called "Eliminar", but through their title)
+  // O botão do diálogo (os ícones das linhas também se chamam "Eliminar", mas pelo título)
   await page.locator('button:not([title])', { hasText: /^\s*Eliminar\s*$/ }).click();
   await expect(page.getByText('Não é Possível Eliminar')).toBeVisible();
 
@@ -351,7 +351,7 @@ test('Motorista: criar, listar, ver, editar, eliminar', async ({ page }) => {
   await page.getByPlaceholder('Ex: Isabel Nhaca (Familiar)').fill('Contacto E2E');
   await page.getByPlaceholder('845622062').fill(`84${digits(7)}`);
   await page.getByPlaceholder('Ex: 5').fill('5');
-  // No password field: drivers get a PIN from their page (pin.spec.ts)
+  // Sem campo de palavra-passe: os motoristas recebem um PIN na sua página (pin.spec.ts)
   await expect(page.getByText('Gerar PIN', { exact: false })).toBeVisible();
   const did = await submitCreate(page, '/api/motoristas', 'Criar Motorista');
 

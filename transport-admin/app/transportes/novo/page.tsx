@@ -68,7 +68,7 @@ export default function NovoTransporte() {
     mapInstanceRef.current = map;
     map.addControl(new maplibregl.NavigationControl(), "top-right");
 
-    // Add 3D buildings
+    // Edifícios em 3D
     map.on('load', () => {
       const layers = map.getStyle().layers;
       const labelLayerId = layers.find(
@@ -110,7 +110,7 @@ export default function NovoTransporte() {
       );
     });
 
-    // Click to set location
+    // Clicar para escolher o local
     map.on('click', (e) => {
       setFormData(prev => ({
         ...prev,
@@ -127,7 +127,7 @@ export default function NovoTransporte() {
     };
   }, []);
 
-  // Update marker when coordinates change
+  // Actualizar o marcador quando as coordenadas mudam
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
@@ -169,7 +169,7 @@ export default function NovoTransporte() {
       const data = await response.json();
       setVias(data.data || []);
     } catch (error) {
-      console.error('Error fetching vias:', error);
+      console.error('Erro ao carregar vias:', error);
     } finally {
       setLoading(false);
     }
@@ -210,7 +210,7 @@ export default function NovoTransporte() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -262,7 +262,7 @@ export default function NovoTransporte() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Form Cards - Full Width */}
+          {/* Cartões do formulário, largura inteira */}
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Informações Básicas */}
@@ -525,7 +525,7 @@ export default function NovoTransporte() {
               </div>
             </div>
 
-            {/* Observações - Full Width */}
+            {/* Observações, largura inteira */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Observações</h3>
               
@@ -541,7 +541,7 @@ export default function NovoTransporte() {
               </div>
             </div>
 
-            {/* Coordenadas - Full Width */}
+            {/* Coordenadas, largura inteira */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Coordenadas</h3>
               
@@ -576,7 +576,7 @@ export default function NovoTransporte() {
               </div>
             </div>
 
-            {/* Action Buttons - Full Width */}
+            {/* Botões de acção, largura inteira */}
             <div className="flex justify-end gap-3">
               <button
                 type="button"

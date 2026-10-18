@@ -1,250 +1,94 @@
-# Transport Mozambique
+# Transportes Moçambique
 
-A public-transport information platform for the Maputo–Matola area. Passengers see the stops near them and plan journeys, with changes of bus when needed, on the web or by USSD on any phone, and can ask for an SMS when their bus is close. Drivers start and end trips from their phone. Administrators manage routes, stops, vehicles, drivers and GPS trackers from a back office.
+Uma plataforma de informação sobre os transportes públicos da área Maputo–Matola. Os passageiros vêem as paragens perto deles e planeiam viagens, com mudança de autocarro quando é preciso, na web ou por USSD em qualquer telemóvel, e podem pedir um SMS quando o autocarro está perto. Os motoristas iniciam e terminam as viagens a partir do telemóvel. Os administradores gerem rotas, paragens, veículos, motoristas e rastreadores GPS num painel.
 
-The network in production has 261 routes, about 1,900 stops and 451 vehicles in two municipalities (October 2026). 170 of the routes and 823 of the stops come from [OpenStreetMap](docs/database.md#importing-stops-and-routes-from-openstreetmap).
+A rede em produção tem 261 rotas, cerca de 1 900 paragens e 451 veículos em dois municípios (Outubro de 2026). 170 das rotas e 823 das paragens vêm do [OpenStreetMap](docs/fontes-de-dados.md).
 
-Like a ride-hailing app, but for public transport. The start is your position or a place you pick. The app lists every place you can reach from there, earliest arrival first, and says which stop to walk to for the first bus. Pick a destination C and the journey reads A → B → C: walk from where you are (A) to the stop (B), then the bus, or buses, to C.
+Funciona como uma aplicação de boleias, mas para os transportes públicos. A partida é a posição do passageiro ou um local escolhido. A aplicação lista todos os locais a que se chega dali, a chegada mais cedo primeiro, e diz a que paragem ir a pé para o primeiro autocarro. Escolhido um destino C, a viagem lê-se A → B → C: caminhar de onde se está (A) até à paragem (B), e depois o autocarro, ou os autocarros, até C.
 
-<img src="docs/images/passenger-home.png" alt="Passenger web app: the start (your position), and every destination with the stop where the first bus is taken" width="720">
+<img src="docs/images/passenger-home.png" alt="Aplicação dos passageiros: a partida (a posição do passageiro), e cada destino com a paragem onde se apanha o primeiro autocarro" width="720">
 
-How to use it, step by step with screenshots: [Passenger web app → How to use it](docs/passenger-web.md#how-to-use-it-step-by-step).
+**Nesta página:** [Aplicações ao vivo](#aplicações-ao-vivo) · [Como funciona, numa imagem](#como-funciona-numa-imagem) · [O que acontece quando se usa](#o-que-acontece-quando-se-usa) · [Correr localmente](#correr-localmente) · [Documentação](#documentação) · [Contribuir](#contribuir)
 
-**On this page:** [Live apps](#live-apps) · [USSD menu](#ussd-menu) · [Getting lists out of the database](#getting-lists-out-of-the-database) · [How it fits together](#how-it-fits-together) · [How the data flows](#how-the-data-flows) · [Run it locally](#run-it-locally) · [Documentation](#documentation) · [Contributing](#contributing)
+**A primeira vez aqui?** [Visão geral](docs/visao-geral.md) · [Primeiros passos](docs/primeiros-passos.md) · [Glossário](docs/glossario.md) · [Estado do projecto](docs/estado-do-projecto.md) · [Toda a documentação](docs/README.md)
 
-**New here?** [Getting started](docs/getting-started.md) · [Architecture](docs/architecture.md) · [Glossary](docs/glossary.md) · [Project status](docs/project-status.md) · [All documentation →](docs/README.md)
+## Aplicações ao vivo
 
-## Live apps
+| Aplicação | Endereço | Quem a usa | Como se usa |
+|---|---|---|---|
+| Aplicação dos passageiros | https://transport-mz.vercel.app | qualquer pessoa; a conta só é precisa para os alertas de chegada | [passo a passo](docs/app-passageiros.md#passo-a-passo) |
+| Serviço USSD | `*384*848080#` no [simulador da Africa's Talking](https://developers.africastalking.com/simulator) (sandbox) | passageiros sem smartphone; motoristas (opção 6) | [no simulador](docs/africas-talking.md#usar-o-menu-no-simulador), [todos os menus](docs/ussd.md) |
+| Portal do motorista | https://transport-mz-driver.vercel.app | motoristas, com o número de telefone e o PIN que um administrador gerou | [o dia de um motorista](docs/portal-motorista.md#o-dia-de-um-motorista-passo-a-passo) |
+| Painel de administração | https://transport-mz-admin.vercel.app | administradores | [tarefas comuns](docs/painel-admin.md#tarefas-comuns-passo-a-passo) |
 
-| App | URL | Who uses it |
-|---|---|---|
-| Passenger web app | https://transport-mz.vercel.app | anyone; an account is only needed for arrival alerts |
-| USSD service | `*384*848080#` in the [Africa's Talking simulator](https://developers.africastalking.com/simulator) (sandbox) | passengers without a smartphone; drivers (option 6) |
-| Driver portal | https://transport-mz-driver.vercel.app | drivers, with their phone number and the PIN an administrator generated |
-| Admin dashboard | https://transport-mz-admin.vercel.app | administrators |
+O USSD e os SMS correm no **sandbox** da Africa's Talking: chegam ao simulador, não a telemóveis reais ([Passar a produção](docs/africas-talking.md#passar-a-produção)). As posições dos autocarros vêm do GPS quando um veículo envia uma, e de um modelo de horário nos outros casos ([Localização e GPS](docs/localizacao-gps.md)).
 
-USSD and SMS run on the Africa's Talking **sandbox**: they reach the simulator, not real phones ([Going live](docs/africas-talking.md#going-live)). Bus positions come from GPS where a vehicle reports one and from a timetable model otherwise ([GPS tracking](docs/gps-tracking.md)).
+### O menu USSD
 
-## USSD menu
+<img src="docs/images/at-sim-main-menu.png" alt="O menu principal USSD no simulador da Africa's Talking" width="240" align="right">
 
-Dial `*384*848080#` in the [Africa's Talking simulator](https://developers.africastalking.com/simulator). Every final screen is also sent by SMS.
-
-<img src="docs/images/at-sim-main-menu.png" alt="The USSD main menu in the Africa's Talking simulator" width="240" align="right">
-
-| Option | What it does |
+| Opção | O que faz |
 |---|---|
-| 1 Encontrar transporte | Type where you are and where you are going → journeys, direct or with changes of bus: where and when to board, where to get off, arrival time and fare; the chosen one by SMS. It also registers an arrival alert: an SMS comes when a bus is under 1 km away |
-| 2 Procurar rotas | The routes leaving from a place, with length, stops and full-route fare |
-| 3 Paragens de uma rota | A route's stops in travel order, then one stop's details |
-| 4 Calcular tarifa | Fare, distance and trip time between two places |
-| 5 Rastrear autocarro | Where a bus is, by its plate (or part of it) |
-| 6 Area do motorista | Drivers, with their PIN: start or end a trip, see their vehicle and route |
-| 7 Ajuda | Help |
+| 1 Encontrar transporte | Escreve-se onde se está e para onde se vai (basta parte do nome, mesmo mal escrito). Responde a melhor viagem, directa ou com transbordos: onde e quando apanhar, onde sair, hora de chegada e tarifa. Por SMS se pedido, e com um alerta de chegada. |
+| 2 Procurar rotas | As rotas de um local, ou uma rota pelo número: paragens, distância e tarifa do percurso todo |
+| 3 Paragens de uma rota | As paragens de uma rota pela ordem de viagem, e os detalhes de uma |
+| 4 Calcular tarifa | Tarifa e tempo de viagem entre dois locais |
+| 5 Rastrear autocarro | Onde está um autocarro, pela matrícula (ou parte dela) |
+| 6 Area do motorista | Motoristas, com o PIN: iniciar ou terminar uma viagem, ver o veículo e a rota |
+| 7 Ajuda | As teclas: `7` próximo, `8` anterior, `0` voltar |
 
-Every screen, the paging keys (`7` next, `0` back) and what each option reads and writes: [USSD service](docs/ussd.md). Setting up the channel and testing in the simulator: [Africa's Talking](docs/africas-talking.md).
+Cada ecrã, e como o servidor lê cada tecla: [Serviço USSD](docs/ussd.md).
 
 <br clear="right">
 
-## Getting lists out of the database
+## Como funciona, numa imagem
 
-The production database is on Neon. [Database → Connecting](docs/database.md#connecting) shows four ways in, step by step:
-
-- **Neon SQL Editor** in the browser, for SQL ([step by step, with screenshots](docs/neon-guide.md));
-- **`psql`**;
-- **Prisma Studio**, to browse tables without SQL;
-- **ready-made lists with Prisma Client**, for example `npx tsx scripts/queries.ts routes matola` in `transport-client` ([Prisma Client in a script](docs/database.md#prisma-client-in-a-script)).
-
-[Example queries](docs/database.md#example-queries) has tested SQL for the usual questions, such as a route's stops, vehicles with their driver, or the alerts of the last 24 hours.
-
-## How it fits together
-
-Three Next.js apps share one PostgreSQL database (Neon) through Prisma, and each is its own Vercel project:
-
-| Folder | Vercel project | What it serves |
-|---|---|---|
-| [`transport-client`](transport-client) | `transport-mz` | passenger web app, the USSD callback, the driver API, GPS intake, all SMS |
-| [`transport-driver`](transport-driver) | `transport-mz-driver` | driver portal; calls the passenger app's driver API |
-| [`transport-admin`](transport-admin) | `transport-mz-admin` | back office and its own API |
-
-There is no message bus and no background worker: vehicle positions are computed when they are read, and the arrival-SMS check runs while the web app is in use. Details and diagrams: [Architecture](docs/architecture.md) and [Data flow](docs/data-flow.md).
-
-```
-.
-├── transport-client/    passenger app + USSD + driver API + GPS intake
-├── transport-driver/    driver portal
-├── transport-admin/     admin dashboard (with the Jest and Playwright suites)
-├── prisma/              schema.prisma: source of truth for the database
-├── docs/                documentation
-├── start-all.bat        starts the three apps on Windows (ports 3000, 3001, 3002)
-└── app/, lib/, *.js     legacy root app and one-off scripts: not deployed
-```
-
-## How the data flows
-
-Everything goes through two server apps, and both read and write the same database. No data is copied between them, so a change saved in the admin is what the passenger app, USSD and the driver portal read on their next request.
+Três aplicações Next.js partilham uma base de dados PostgreSQL (Neon) através do Prisma, e cada uma é um projecto da Vercel. Não há processos em segundo plano: as posições dos autocarros calculam-se quando se lêem, e a verificação dos SMS de chegada corre a cada 5 minutos a partir do GitHub Actions ([Visão geral → Decisões de desenho](docs/visao-geral.md#decisões-de-desenho)).
 
 ```mermaid
 flowchart LR
-  P[Passenger browser]
-  U[Phone, any model]
-  D[Driver portal]
-  G[GPS device or Traccar app]
-  A[Admin browser]
-  U -- "dials *384*848080#" --> AT[Africa's Talking]
-  AT -- "POST /api/ussd?key=…" --> C
-  P -- "/api/stops, /api/journeys, /api/buses, /api/user/*" --> C
+  P["Navegador do passageiro"]
+  U["Telemóvel, qualquer modelo"]
+  D["Portal do motorista"]
+  G["Dispositivo GPS<br/>ou Traccar Client"]
+  A["Navegador do administrador"]
+  U -- "marca *384*848080#" --> AT["Africa's Talking"]
+  AT -- "POST /api/ussd?key=…<br/>(uma vez por tecla)" --> C
+  P -- "/api/stops, /api/journeys,<br/>/api/buses, /api/user/*" --> C
   D -- "/api/driver/*" --> C
   G -- "/api/gps" --> C
-  C[transport-client] -- SMS --> AT
-  A -- "/api/{entity} + admin_session cookie" --> AD[transport-admin]
-  C -- Prisma --> DB[(Neon PostgreSQL)]
-  AD -- Prisma --> DB
+  C["transport-client<br/>(transport-mz)"] -- "SMS" --> AT
+  A -- "/api/{entidade}<br/>+ cookie admin_session" --> AD["transport-admin<br/>(transport-mz-admin)"]
+  C -- "Prisma" --> DB[("Neon PostgreSQL")]
+  AD -- "Prisma" --> DB
 ```
 
-Some values are **never stored**; they are worked out on every request from the stored records:
-
-| Value | Worked out from |
-|---|---|
-| Where a bus is now | its last GPS fix if it is under 3 minutes old, otherwise the timetable model: it shuttles along its route's path from 05:00 to 21:00 at the fare rule's speed |
-| When a bus reaches a stop, trip time | that position, the route's path and the fare rule's speeds |
-| Fare | distance along the path × `Tarifa.precoPorKm`, at least `Tarifa.tarifaMinima` |
-| Order of a route's stops | each stop projected onto the route's path (`ViaParagem` has no order column) |
-| Journeys with changes of bus | the network of routes and stops, cached 5 minutes per server instance ([Data flow → Journey planning](docs/data-flow.md#journey-planning)) |
-
-### What happens to an admin create, read, update or delete
-
-Every record in the back office goes through the same steps. Creating a route, for example:
-
-1. **Page.** The form (`/vias/new`) sends `POST /api/vias` with a JSON body. The browser adds the `admin_session` cookie by itself.
-2. **Session check.** `transport-admin/proxy.ts` runs before every `/api/*` route. It checks the cookie's HMAC signature and expiry (12 hours) and answers 401 `Sessão expirada. Inicie sessão novamente.` if it fails. Only sign-in and sign-out pass without it.
-3. **Validation.** The route handler (`app/api/vias/route.ts`) checks:
-   - the required fields: 400 with what is missing;
-   - that unique values are free (route code, plate, BI, email…): 400 `Já existe …`;
-   - that linked records exist: 404 `Município não encontrado`.
-
-   Passwords and PINs are hashed with bcrypt, and GPS device codes with SHA-256, before they are stored.
-4. **Write.** Prisma turns the call into SQL on Neon. When one action touches several tables, they are written together; for example, a new route also creates its `ViaParagem` stop links.
-5. **Answer.** `201` with the new record; `200` for reads, updates and deletes. Errors are JSON `{"error", "details"}` in Portuguese. The page shows the message as a notification and goes back to the list.
-6. **Everyone else sees it.** The passenger app, USSD and the driver portal read the database directly, so they see the change on their next request. A few reads are cached:
-   - the journey planner's network and `GET /api/stops`: up to 5 minutes;
-   - the dashboard figures: 5 minutes.
-
-Each entity has the same endpoints:
-
-- `GET /api/{entity}`: a page of the list, with `search`;
-- `POST /api/{entity}`: create;
-- `GET`, `PUT` or `PATCH`, and `DELETE` on `/api/{entity}/{id}`.
-
-Each also has the same four pages: list, detail, new and edit. What differs is below. Click a record to open it.
-
-<details>
-<summary><b>Via</b> (route): code, name, colour, terminals, road path, municipality</summary>
-
-| | |
-|---|---|
-| **POST** `/api/vias` | Needs `nome`, `codigo` (unique), `municipioId` and `geoLocationPath`: the road path drawn on the form's map, with at least two points. It is stored as `"lng,lat;lng,lat;…"`. `paragensIds` creates the stop links. |
-| **GET** | List: 10 per page; `search` also matches the municipality. Each route comes with its number of stops and vehicles, plus totals over the search. One route: with its municipality, stops and vehicles. |
-| **PATCH** `/api/vias/{id}` | Name, terminals, colour, municipality, and the path (`geoLocationPath`, at least two valid points). `paragensIds` makes the route's stops exactly that list, keeping the links that stay. |
-| **DELETE** | Removes its stop links (cascade). Its vehicles stay, without a route (`viaId = NULL`): they leave the map until they get a new one. |
-| **Shown** | Passenger map: the route line when a bus is tapped, the coloured route labels at a stop and in journeys, the path of each bus leg. The map of a journey being followed. USSD options 1–4. Driver portal map. Admin `/vias`, with the path on a map. |
-</details>
-
-<details>
-<summary><b>Paragem</b> (stop) and <b>ViaParagem</b> (which routes serve it)</summary>
-
-| | |
-|---|---|
-| **POST** `/api/paragens` | Needs `nome`, `codigo` (unique), `geoLocation` (`"lat,lng"`) and at least one route in `viaIds`. Creates the stop and one `ViaParagem` per route; `isTerminal` marks it as a terminal on them. |
-| **GET** | List: 10 per page, with `search`. One: with its routes. |
-| **PATCH** `/api/paragens/{id}` | Name, code, position. `viaIds` replaces its route links; on a route it stays on, its terminal flag is kept. |
-| **DELETE** | In one transaction, also removes its route links and the arrival alerts at it. The answer says how many alerts were removed (`alertasRemovidos`). |
-| **Shown** | Passenger map at every zoom: green dots near you, white dots where buses pass, grey dots where none does. The nearby list, the name search, a stop's page with its destinations, every journey step. USSD place lists and SMS. Driver portal: passengers waiting per stop. Admin `/paragens`. A stop with no bus on any of its routes stays grey on the map and is left out of the search and the nearby list. |
-</details>
-
-<details>
-<summary><b>Transporte</b> (vehicle): plate, make, model, route, GPS</summary>
-
-| | |
-|---|---|
-| **POST** `/api/transportes` | Needs `matricula` (unique), `modelo`, `marca` and `viaId`. Gets a numeric `codigo` and a starting position. |
-| **GET** | List with `search` on plate, model, make and route. Also:<br>• `/api/transportes/estado`: the list's "Agora" column;<br>• `/{id}/posicao`: the computed position;<br>• `/{id}/operacao`: the day by the timetable. |
-| **PUT** `/api/transportes/{id}` | Every field; a new plate is checked for duplicates. **PATCH** changes only the route (`{"viaId"}`, or `null` to take it off). |
-| **DELETE** | Refused while a driver or an owner is assigned (400: remove them first). Also removes the vehicle's imported `GeoLocation` rows. |
-| **GPS** | `POST /{id}/gps` creates a device code, shown once and stored as a SHA-256 hash. The device sends positions to the passenger app's `/api/gps`, which writes `currGeoLocation`, `gpsAtualizadoEm`, speed and heading. `DELETE /{id}/gps` revokes the code and clears them. |
-| **Shown** | Passenger map: a marker per bus, gliding every 5 s; the plate on journey legs. The buses of a journey being followed. USSD option 5 (by plate) and journey screens. Driver portal. Admin `/transportes`, with what each bus is doing now. |
-</details>
-
-<details>
-<summary><b>Motorista</b> (driver)</summary>
-
-| | |
-|---|---|
-| **POST** `/api/motoristas` | Needs name, BI, licence, phone, email, birth date, address, emergency contact, and the BI and licence dates. BI, licence and email must be unique. A vehicle can have only one driver. |
-| **GET** | List with `search` (name, BI, licence, phone) and `filter` (`ativos`, `inativos`, `comTransporte`). The PIN hash is never returned. |
-| **PUT** `/api/motoristas/{id}` | Every field, with the same checks. |
-| **DELETE** | Refused while assigned to a vehicle. The detail page sends `?force=true`, which unassigns the driver first. |
-| **PIN** | `POST /{id}/pin` creates a 6-digit PIN, shown once and stored as a bcrypt hash; the old one stops working. The driver signs in with phone number and PIN on the driver portal or USSD option 6. "Iniciar viagem" and "Terminar viagem" there write `emViagem` (trip in progress). |
-| **Shown** | Driver portal: their vehicle, route and municipality. Admin `/motoristas`, the vehicle page, the trip state. |
-</details>
-
-<details>
-<summary><b>Proprietario</b> (owner) and <b>TransporteProprietario</b></summary>
-
-| | |
-|---|---|
-| **POST** `/api/proprietarios` | Needs name, BI or NUIT (unique), nationality, start date, address and a contact. Vehicles are linked from the vehicle page (`POST /api/transportes/{id}/atribuir-proprietario`). |
-| **PUT** `/api/proprietarios/{id}` | Every field. |
-| **DELETE** | Refused while the owner has vehicles. The pages send `?force=true`, which removes the owner–vehicle links but not the vehicles. |
-| **Shown** | Admin only: `/proprietarios` and the vehicle page. |
-</details>
-
-<details>
-<summary><b>Utente</b> (passenger) and <b>MISSION</b> (arrival alert)</summary>
-
-| | |
-|---|---|
-| **Created** | On the web, by registering (`POST /api/auth/register`): bcrypt password, 90-day session token. By USSD, without a password, when option 1 shows a journey; registering later with that phone completes the same account. By the admin (`POST /api/utentes`). |
-| **Read and updated** | The passenger's own page (`/user-info`): name and password, through `/api/user/*` with their Bearer token, which only reaches their own record. The admin: `/utentes`, `PUT /api/utentes/{id}`. The password hash is never returned. |
-| **Alerts** | Saved as a `MISSION` at a stop, from "Avisar-me por SMS…" while following a journey (`POST /api/user/missions/save`) or the USSD journey screen. Saving the same stop again restarts it. The arrival check sends one SMS when a bus is under 1 km away and records `notificadoEm`; alerts older than 24 hours are ignored. "Remover" deletes the alert. |
-| **DELETE** (admin) | Refused while the passenger has alerts. The detail page sends `?force=true`, which deletes the alerts first. |
-| **Shown** | Passenger account page (profile, "Missões"). SMS. Driver portal: passengers waiting along the route. Admin passenger and stop pages. |
-</details>
-
-<details>
-<summary><b>Provincia</b>, <b>Municipio</b>, <b>Administrador</b>, <b>Tarifa</b>, <b>GeoLocation</b></summary>
-
-| Record | Create, update, delete | Shown |
+| Pasta | Projecto da Vercel | O que serve |
 |---|---|---|
-| `Provincia` | `POST` needs `nome` and a unique `codigo`. `PATCH`. `DELETE` is refused while it has municipalities; the detail page's `?force=true` detaches them first. | admin |
-| `Municipio` | `POST` needs `nome`, a unique `codigo` and `provinciaId`. `PATCH`. `DELETE` is refused while it has routes: move or delete them first. | admin; route search; driver portal |
-| `Administrador` | `POST` needs name, email (unique) and password (bcrypt). `PATCH`. `DELETE`. Changing one's own password checks the current one. | admin sign-in, `/administradores` |
-| `Tarifa` | One active row, changed on the admin's "Tarifa" page (`PUT /api/tarifa`, values checked against limits) ([Configuration → Fare rule](docs/configuration.md#fare-rule-tarifa)). Cached 60 s. | every fare, speed and arrival time |
-| `GeoLocation` | Written once by the initial import. Positions now live on `Transporte`. | nothing current |
-</details>
+| [`transport-client`](transport-client) | `transport-mz` | a web dos passageiros, o callback USSD, a API do motorista, a entrada GPS, todos os SMS |
+| [`transport-driver`](transport-driver) | `transport-mz-driver` | o portal do motorista; chama a API do motorista da aplicação dos passageiros |
+| [`transport-admin`](transport-admin) | `transport-mz-admin` | o painel e a sua própria API |
 
-### What happens when people use it
+Cada pasta e ficheiro importante: [Mapa do código](docs/mapa-do-codigo.md).
 
-| Who, doing what | What is read | What is written |
+## O que acontece quando se usa
+
+Tudo passa pelas duas aplicações com servidor, e as duas lêem e escrevem a mesma base de dados. Nada se copia entre elas: uma alteração gravada no painel é o que a web, o USSD e o portal lêem no pedido seguinte.
+
+| Quem, a fazer o quê | O que acontece | Explicado em |
 |---|---|---|
-| Passenger opens the map | `GET /api/stops`: every served stop, with its routes. `GET /api/buses`: every bus, positioned now. Then the positions every 5 s. | nothing; the 5-second poll also starts the arrival check |
-| Has a position, or picks a start (Partida) | `GET /api/destinos?lat=…&lng=…` (or `from=`): every place reachable, earliest arrival first, each with the stop where the first bus is taken | nothing |
-| Taps a stop | `GET /api/stops/{id}`: each route through it, each direction's next bus and stops, and every place reachable from it (with changes of bus), earliest arrival first | nothing |
-| Chooses a destination | `POST /api/journeys {to, lat, lng}` (or `from`): up to 3 journeys, each bus leg timed for the moment you reach its stop. The position goes in the body, so it stays out of the request logs. | nothing |
-| Follows the journey | `POST /api/viagem?b=BUS~DE~PARA,…&a=…&bordo=…` with `{lat, lng}` in the body, every 10 s: every bus of the journey, the walks, and the step the passenger is on | a `MISSION` when they save the alert |
-| Dials the USSD code | Africa's Talking posts each step to `/api/ussd` (with `?key=`). Every step resends all the answers so far in `text`, so the server keeps no session. | Option 1: a `MISSION`, and an `Utente` for a new phone. Option 6: `Motorista.emViagem`. SMS go out through Africa's Talking. |
-| Driver signs in and starts a trip | `POST /api/driver/login` (phone and PIN; 30-day token); `GET /api/driver/me` every 5 min (vehicle and route as the admin has them now); `GET /api/driver/seguidores` (waiting passengers) | `Motorista.emViagem`, `viagemIniciadaEm` |
-| A GPS device reports | `POST /api/gps` with the device code. Fixes less accurate than 200 m, or older than the stored one, are ignored. | `Transporte.currGeoLocation`, `gpsAtualizadoEm`, speed, heading |
-| Arrival check (every 5 min from a GitHub Actions schedule, and at most every 30 s per instance while the web app is used) | alerts of the last 24 h, and the bus positions | `MISSION.notificadoEm`; an SMS through Africa's Talking |
+| Um passageiro abre o mapa e escolhe um destino | A página pede as paragens, os autocarros (posição de agora) e as viagens até ao destino; nada se escreve. | [Fluxos de dados → Planear uma viagem](docs/fluxos-de-dados.md#planear-uma-viagem) |
+| Acompanha a viagem e pede o alerta | A página pede a viagem outra vez a cada 10 s; o alerta grava um `MISSION`, e sai um SMS quando um autocarro está a menos de 1 km. | [Acompanhar uma viagem](docs/fluxos-de-dados.md#acompanhar-uma-viagem), [Alerta de chegada e SMS](docs/fluxos-de-dados.md#alerta-de-chegada-e-sms) |
+| Alguém usa o menu USSD | Cada tecla vai do telemóvel à Africa's Talking, que a envia a `/api/ussd`. O pedido traz tudo o que foi escrito na sessão (por exemplo `text="1*museu*zimpeto"`), e o servidor refaz o caminho desde o menu principal para saber que ecrã mostrar; não guarda nada entre teclas. Só escreve no ecrã de viagem da opção 1 (um alerta `MISSION`, e um `Utente` para um número novo) e na opção 6 (o estado da viagem do motorista). Os ecrãs finais também saem por SMS. | [Serviço USSD → O caminho de um pedido](docs/ussd.md#o-caminho-de-um-pedido), [Leitura das teclas](docs/ussd.md#leitura-das-teclas) |
+| Um motorista entra e inicia a viagem | Entra com telefone e PIN, e o portal grava `Motorista.emViagem`, o mesmo estado que a opção 6 do USSD muda. | [Entrada e viagem do motorista](docs/fluxos-de-dados.md#entrada-e-viagem-do-motorista) |
+| Um dispositivo GPS envia a posição | `/api/gps` confirma o código do dispositivo e guarda a posição no veículo; durante 3 minutos, os passageiros vêem-na em vez do horário. | [Localização e GPS](docs/localizacao-gps.md) |
+| Um administrador cria, muda ou apaga um registo | O painel confirma a sessão, valida os dados e grava; as outras aplicações vêem a alteração no pedido seguinte (algumas leituras em cache até 5 minutos). | [Alterações no painel](docs/fluxos-de-dados.md#alterações-no-painel) |
 
-More detail:
+O que se guarda e o que se calcula em cada pedido, e um diagrama de sequência por fluxo: [Fluxos de dados](docs/fluxos-de-dados.md).
 
-- sequence diagrams for each of these: [Data flow](docs/data-flow.md);
-- every endpoint, with real request and response samples: [API reference](docs/api-reference.md);
-- the tables and their fields: [Database](docs/database.md).
+## Correr localmente
 
-## Run it locally
-
-You need Node.js 20 or newer and PostgreSQL 16 or newer. [Getting started](docs/getting-started.md) goes from an empty database to all three apps running, with demo data, sign-ins, a USSD session and a GPS position sent with `curl`. In short, after creating each app's `.env` ([Configuration](docs/configuration.md)):
+É preciso o Node.js 20 ou mais recente e o PostgreSQL 16 ou mais recente. [Primeiros passos](docs/primeiros-passos.md) vai de uma base de dados vazia às três aplicações a correr, com dados de demonstração, entradas, uma sessão USSD e uma posição GPS enviada com `curl`. Em resumo, depois de criar o `.env` de cada aplicação ([Configuração](docs/configuracao.md)):
 
 ```bash
 cd transport-client && npm install && npm run dev            # http://localhost:3000
@@ -252,30 +96,30 @@ cd transport-driver && npm install && npm run dev            # http://localhost:
 cd transport-admin  && npm install && npm run dev -- -p 3002 # http://localhost:3002
 ```
 
-On Windows, `start-all.bat` opens the three in their own windows.
+No Windows, `start-all.bat` abre as três, cada uma na sua janela.
 
-## Documentation
+## Documentação
 
-Every page, in reading order. The [documentation index](docs/README.md) says what each covers, answers common questions with a link, and suggests reading paths. Each page ends with links to the previous and next one.
+Um guia em seis partes, pela ordem em que se percebe e se monta a plataforma. O [índice](docs/README.md) diz o que tem cada página, responde às perguntas mais comuns com uma ligação, e sugere percursos de leitura.
 
-| | Pages |
+| Parte | Páginas |
 |---|---|
-| **1. Start here** | [Getting started](docs/getting-started.md) · [Architecture](docs/architecture.md) · [Glossary](docs/glossary.md) · [Project status](docs/project-status.md) |
-| **2. How it works** | [Data flow](docs/data-flow.md) · [Database](docs/database.md) · [Data sources](docs/data-sources.md) · [GPS tracking](docs/gps-tracking.md) |
-| **3. Using each app** | [Passenger web app](docs/passenger-web.md) · [USSD service](docs/ussd.md) ([inside the handler](docs/ussd.md#inside-the-handler)) · [Driver portal](docs/driver-portal.md) ([a driver's day](docs/driver-portal.md#a-drivers-day-step-by-step)) · [Admin dashboard](docs/admin-dashboard.md) ([common tasks](docs/admin-dashboard.md#common-tasks-step-by-step)) |
-| **4. Step-by-step guides, with screenshots** | [Africa's Talking](docs/africas-talking.md) ([setup](docs/africas-talking.md#how-it-was-set-up-step-by-step), [simulator](docs/africas-talking.md#use-the-menu-in-the-simulator)) · [Viewing the data in Neon](docs/neon-guide.md) · [Vercel](docs/vercel-guide.md) |
-| **5. Reference and operations** | [Configuration](docs/configuration.md) · [API reference](docs/api-reference.md) · [Deployment](docs/deployment.md) · [Testing](docs/testing.md) · [Security](docs/security.md) · [Troubleshooting](docs/troubleshooting.md) · [Known limitations](docs/known-limitations.md) |
+| **1. Conhecer o projecto** | [Visão geral](docs/visao-geral.md) · [Glossário](docs/glossario.md) · [Fontes de dados](docs/fontes-de-dados.md) · [Estado do projecto](docs/estado-do-projecto.md) |
+| **2. Montar localmente** | [Primeiros passos](docs/primeiros-passos.md) · [Base de dados](docs/base-de-dados.md) · [Configuração](docs/configuracao.md) |
+| **3. Perceber como funciona** | [Fluxos de dados](docs/fluxos-de-dados.md) · [Localização e GPS](docs/localizacao-gps.md) · [Serviço USSD](docs/ussd.md) · [Segurança](docs/seguranca.md) · [Referência da API](docs/referencia-api.md) · [Mapa do código](docs/mapa-do-codigo.md) |
+| **4. Usar as aplicações** | [Aplicação dos passageiros](docs/app-passageiros.md) · [Portal do motorista](docs/portal-motorista.md) · [Painel de administração](docs/painel-admin.md) |
+| **5. Pôr online** | [Publicação](docs/publicacao.md) · [Guia da Vercel](docs/guia-vercel.md) · [Guia da Neon](docs/guia-neon.md) · [Africa's Talking](docs/africas-talking.md) |
+| **6. Manter** | [Testes](docs/testes.md) · [Resolução de problemas](docs/resolucao-de-problemas.md) · [Limitações](docs/limitacoes.md) |
 
-## Contributing
+## Contribuir
 
-1. Branch from `main`. Every push builds a preview of the three apps on Vercel; merging to `main` deploys production ([Deployment](docs/deployment.md)).
-2. Before pushing, run `npx tsc --noEmit` in each app you changed, and the admin suites when you touch the admin ([Testing](docs/testing.md)). The suites refuse to run against anything but a local database. GitHub's CI repeats the type checks and checks the schemas and the documentation's links on every pull request.
-3. Schema changes go into all three `schema.prisma` copies. **Never run `prisma migrate deploy` on production**: it has no migration history. Apply changes as described in [Deployment → Database changes](docs/deployment.md#database-changes-in-production).
-
-The UI is in Portuguese; code comments and documentation are in English.
+1. Criar um ramo a partir da `main`. Cada push compila uma pré-visualização das três aplicações na Vercel; o merge na `main` publica a produção ([Publicação](docs/publicacao.md)).
+2. Antes do push, correr `npx tsc --noEmit` em cada aplicação alterada, e os testes do painel quando se mexe no painel ([Testes](docs/testes.md)). Os testes recusam correr contra uma base de dados que não seja local. O CI do GitHub repete a verificação dos tipos e confirma os esquemas, as ligações e a navegação da documentação em cada pull request.
+3. As alterações ao esquema vão para as três cópias de `schema.prisma`. **Nunca se corre `prisma migrate deploy` na produção**: não tem histórico de migrações. As alterações aplicam-se como em [Publicação → Alterações à base de dados em produção](docs/publicacao.md#alterações-à-base-de-dados-em-produção).
+4. O código, os comentários, os commits e a documentação escrevem-se em português, com o porquê das escolhas ao lado do código.
 
 ---
 
-Stops, routes and road paths include data from [OpenStreetMap](https://www.openstreetmap.org/copyright), © OpenStreetMap contributors, under the ODbL. Maps by OpenFreeMap and OpenMapTiles; routing by OSRM on the FOSSGIS servers. Vehicles, drivers and owners are demonstration data. Every source is listed in [Data sources](docs/data-sources.md).
+As paragens, as rotas e os percursos incluem dados do [OpenStreetMap](https://www.openstreetmap.org/copyright), © contribuidores do OpenStreetMap, sob a ODbL. Mapas da OpenFreeMap e OpenMapTiles; percursos pelo OSRM nos servidores da FOSSGIS. Os veículos, os motoristas e os proprietários são dados de demonstração. Todas as fontes estão em [Fontes de dados](docs/fontes-de-dados.md).
 
-Transport Mozambique © 2026 · [Documentation →](docs/README.md)
+Transportes Moçambique © 2026 · [Documentação](docs/README.md)

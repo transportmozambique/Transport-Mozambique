@@ -4,7 +4,7 @@ import { routeGeometry, travelSpeedMps, vehiclePosition } from '@/lib/vehiclePos
 
 export type EstadoAgora = 'circulacao' | 'terminal' | 'fora-de-servico' | 'sem-posicao';
 
-// GET: what every vehicle is doing now (real GPS when fresh, otherwise the timetable), for the list
+// GET: o que cada veículo está a fazer agora (GPS real quando recente, senão o horário), para a lista
 export async function GET() {
   const [speed, transportes] = await Promise.all([
     travelSpeedMps(),

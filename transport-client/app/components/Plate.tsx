@@ -1,4 +1,4 @@
-/** A bus's plate drawn like a number plate, so it is easy to match with the bus in the street. */
+/** A matrícula de um autocarro desenhada como uma chapa, para ser fácil de comparar com o autocarro na rua. */
 export default function Plate({ matricula }: { matricula: string }) {
   return (
     <span className="shrink-0 inline-flex flex-col items-center rounded-xl border-2 border-slate-900 bg-white px-2.5 py-0.5 leading-tight">

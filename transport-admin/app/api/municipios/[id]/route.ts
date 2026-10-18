@@ -36,7 +36,7 @@ export async function GET(
       );
     }
 
-    // Get paragens through ViaParagem
+    // As paragens, através de ViaParagem
     const paragens = await prisma.paragem.findMany({
       where: {
         vias: {
@@ -75,7 +75,7 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    // Handle contacto1 conversion safely
+    // Converter contacto1 com cuidado
     let contacto1Value = null;
     if (body.contacto1 !== undefined && body.contacto1 !== null && body.contacto1 !== '') {
       if (typeof body.contacto1 === 'number') {
@@ -91,7 +91,7 @@ export async function PATCH(
       codigo: body.codigo,
     };
 
-    // Add optional fields
+    // Juntar os campos opcionais
     if (body.provinciaId !== undefined) {
       updateData.provincia = body.provinciaId ? {
         connect: { id: body.provinciaId }
@@ -142,7 +142,7 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    // Check if município has associated vias
+    // O município tem vias?
     const municipio = await prisma.municipio.findUnique({
       where: { id },
       include: {
@@ -161,7 +161,7 @@ export async function DELETE(
       );
     }
 
-    // Count paragens through vias
+    // Contar as paragens através das vias
     const paragensCount = await prisma.viaParagem.count({
       where: {
         via: {
@@ -170,8 +170,8 @@ export async function DELETE(
       },
     });
 
-    // Every via must belong to a município (Via.municipioId is required), so `force`
-    // cannot detach them: the vias have to be moved or deleted first
+    // Cada via tem de pertencer a um município (Via.municipioId é obrigatório), por isso `force`
+    // não as pode desligar: as vias têm de ser movidas ou apagadas primeiro
     if (municipio._count.vias > 0 || paragensCount > 0) {
       return NextResponse.json(
         {
@@ -188,7 +188,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting município:', error);
+    console.error('Erro ao apagar o município:', error);
     return NextResponse.json(
       { error: 'Erro ao eliminar município' },
       { status: 500 }

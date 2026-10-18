@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 
 /**
- * Old tracking links (the account page's alerts, saved or shared links): buses are followed on
- * /viagem now. With both stops it is a one-bus journey; with the passenger's stop only, the
- * bus on its own with its next pass there.
+ * Ligações antigas de acompanhamento (os alertas da página da conta, ligações guardadas ou
+ * partilhadas): os autocarros seguem-se agora em /viagem. Com as duas paragens é uma viagem de um
+ * só autocarro; só com a paragem do passageiro, o autocarro sozinho com a sua próxima passagem lá.
  */
 export default async function TrackRedirect({
   params,

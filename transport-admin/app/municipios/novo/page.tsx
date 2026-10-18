@@ -21,11 +21,11 @@ export default function NovoMunicipio() {
     nome: "",
     codigo: "",
     provinciaId: "",
-    geoLocation: "-25.9655,32.5892", // Default: Maputo
+    geoLocation: "-25.9655,32.5892", // Por omissão: Maputo
     endereco: "",
     contacto1: "",
   });
-  const [radius, setRadius] = useState(20); // Default 20km radius for município
+  const [radius, setRadius] = useState(20); // raio de 20 km por omissão para um município
   const [provincias, setProvincias] = useState<Provincia[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingProvincias, setLoadingProvincias] = useState(true);
@@ -36,7 +36,7 @@ export default function NovoMunicipio() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Initialize map
+  // Criar o mapa
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
@@ -74,18 +74,18 @@ export default function NovoMunicipio() {
       bearing: 0,
     });
 
-    // Add navigation controls (zoom, rotation, pitch)
+    // Controlos de navegação (zoom, rotação, inclinação)
     map.addControl(new maplibregl.NavigationControl({
       visualizePitch: true,
       showZoom: true,
       showCompass: true
     }), 'top-right');
 
-    // Click on map to set location
+    // Clicar no mapa para escolher o local
     map.on('click', (e) => {
       const { lat, lng } = e.lngLat;
       
-      // Update center point
+      // Actualizar o ponto central
       const centerSource = map.getSource('center-point') as maplibregl.GeoJSONSource;
       if (centerSource) {
         centerSource.setData({
@@ -106,7 +106,7 @@ export default function NovoMunicipio() {
     });
 
     map.on('load', () => {
-      // Add 3D buildings layer
+      // Camada dos edifícios em 3D
       map.addLayer({
         'id': '3d-buildings',
         'source': 'openmaptiles',
@@ -138,7 +138,7 @@ export default function NovoMunicipio() {
         }
       });
 
-      // Add center point source
+      // Fonte do ponto central
       map.addSource('center-point', {
         type: 'geojson',
         data: {
@@ -151,7 +151,7 @@ export default function NovoMunicipio() {
         } as any
       });
 
-      // Add center point circle layer
+      // Camada do círculo do ponto central
       map.addLayer({
         id: 'center-point',
         type: 'circle',
@@ -164,7 +164,7 @@ export default function NovoMunicipio() {
         }
       });
 
-      // Add circle source and layer
+      // Juntar a fonte e a camada do círculo
       map.addSource(circleLayerId, {
         type: 'geojson',
         data: createCircle(lat, lng, radius)
@@ -199,14 +199,14 @@ export default function NovoMunicipio() {
     };
   }, []);
 
-  // Update circle when radius changes
+  // Actualizar o círculo quando o raio muda
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const [lat, lng] = formData.geoLocation.split(',').map(Number);
     updateCircle(mapInstanceRef.current, lat, lng, radius);
   }, [radius]);
 
-  // Create circle GeoJSON
+  // Criar o GeoJSON do círculo
   const createCircle = (lat: number, lng: number, radiusKm: number) => {
     const points = 64;
     const coords = [];
@@ -231,7 +231,7 @@ export default function NovoMunicipio() {
     } as any;
   };
 
-  // Update circle on map
+  // Actualizar o círculo no mapa
   const updateCircle = (map: maplibregl.Map, lat: number, lng: number, radiusKm: number) => {
     const source = map.getSource(circleLayerId) as maplibregl.GeoJSONSource;
     if (source) {
@@ -239,7 +239,7 @@ export default function NovoMunicipio() {
     }
   };
 
-  // Fetch províncias
+  // Pedir as províncias
   useEffect(() => {
     const fetchProvincias = async () => {
       try {
@@ -301,7 +301,7 @@ export default function NovoMunicipio() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -349,9 +349,9 @@ export default function NovoMunicipio() {
           </div>
         </div>
 
-        {/* Form */}
+        {/* Formulário */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Info */}
+          {/* Informação básica */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
             <h3 className="text-lg font-bold text-slate-900">Informações Básicas</h3>
             
@@ -464,11 +464,11 @@ export default function NovoMunicipio() {
             </div>
           </div>
 
-          {/* Map Location */}
+          {/* Localização no mapa */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
             <h3 className="text-lg font-bold text-slate-900">Localização e Área de Cobertura</h3>
             
-            {/* GeoLocation Input */}
+            {/* Campo da localização */}
             <div>
               <label className="block text-sm font-medium text-slate-900 mb-2">
                 Coordenadas do Centro (Latitude,Longitude)
@@ -501,7 +501,7 @@ export default function NovoMunicipio() {
               <p className="text-xs text-slate-500 mt-1">Clique no mapa para selecionar ou digite manualmente</p>
             </div>
 
-            {/* Radius Slider */}
+            {/* Controlo do raio */}
             <div>
               <label className="block text-sm font-medium text-slate-900 mb-2">
                 Raio de Cobertura: {radius} km

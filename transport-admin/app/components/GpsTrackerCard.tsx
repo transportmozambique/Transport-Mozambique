@@ -11,8 +11,8 @@ interface GpsStatus {
 }
 
 /**
- * GPS device of a vehicle: creates or revokes the device code that a phone (Traccar Client)
- * or a GPS tracker uses to send the vehicle's real position. The code is shown only once.
+ * Dispositivo GPS de um veículo: cria ou revoga o código que um telemóvel (Traccar Client) ou um
+ * rastreador GPS usa para enviar a posição real do veículo. O código é mostrado uma só vez.
  */
 export default function GpsTrackerCard({ transporteId }: { transporteId: string }) {
   const [status, setStatus] = useState<GpsStatus | null>(null);

@@ -42,7 +42,7 @@ export default function Proprietarios() {
 
   async function fetchProprietarios() {
     try {
-      // Use listLoading for subsequent fetches, loading for initial load
+      // listLoading para os pedidos seguintes, loading para a primeira carga
       if (proprietarios.length > 0) {
         setListLoading(true);
       } else {
@@ -51,7 +51,7 @@ export default function Proprietarios() {
       
       const response = await fetch('/api/proprietarios?limit=1000');
       const result = await response.json();
-      // Handle both array and paginated response formats
+      // Aceitar respostas em array e paginadas
       const data = Array.isArray(result) ? result : (result.data || []);
       setProprietarios(data);
     } catch (error) {
@@ -90,8 +90,8 @@ export default function Proprietarios() {
         fetchProprietarios();
       } else {
         const error = await response.json();
-        // Check if error is about transportes associations
-        // "tem 1 transporte associados" or "tem 3 transportes associados"
+        // O erro é sobre ligações a transportes?
+        // "tem 1 transporte associados" ou "tem 3 transportes associados"
         const hasTransportes = response.status === 400 && /transporte/.test(`${error.error ?? ''} ${error.details ?? ''}`);
         setDeleteError({
           message: error.error || 'Erro ao eliminar proprietário',
@@ -113,7 +113,7 @@ export default function Proprietarios() {
   async function handleRemoveAssignments(id: string) {
     setDeleting(true);
     try {
-      // force=true removes the TransporteProprietario links (not the vehicles), then the owner
+      // force=true tira as ligações TransporteProprietario (não os veículos), e depois o proprietário
       const deleteResponse = await fetch(`/api/proprietarios/${id}?force=true`, {
         method: 'DELETE',
       });
@@ -152,7 +152,7 @@ export default function Proprietarios() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -183,7 +183,7 @@ export default function Proprietarios() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Diálogo de confirmação do apagar */}
       {showDeleteModal && proprietarioToDelete && (
         <div 
           className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm min-h-screen" 
@@ -301,9 +301,9 @@ export default function Proprietarios() {
       )}
 
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
-        {/* Header - 2 Columns Layout */}
+        {/* Cabeçalho em 2 colunas */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          {/* Left - Title and Description */}
+          {/* Esquerda: título e descrição */}
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/dashboard')}
@@ -319,7 +319,7 @@ export default function Proprietarios() {
             </div>
           </div>
 
-          {/* Right - Action Button */}
+          {/* À direita: botão de acção */}
           <button 
             onClick={() => router.push('/proprietarios/novo')}
             className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 whitespace-nowrap"
@@ -331,7 +331,7 @@ export default function Proprietarios() {
           </button>
         </div>
 
-        {/* Stats Cards - Smaller and More Compact */}
+        {/* Cartões de estatísticas, pequenos e compactos */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <button 
             onClick={() => router.push('/proprietarios')}

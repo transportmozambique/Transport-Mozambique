@@ -12,7 +12,7 @@ export interface Transport {
   longitude: number;
   status: "Em Circulação" | "Parado";
   
-  // New fields for complete journey information
+  // Campos para a informação completa da viagem
   journeyTime?: number; // Tempo da viagem (pickup → destination) em minutos
   journeyDistance?: number; // Distância da viagem (pickup → destination) em metros
   totalTime?: number; // Tempo total (autocarro + viagem) em minutos

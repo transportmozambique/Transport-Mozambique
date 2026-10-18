@@ -1,20 +1,20 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// Cache the stats for 5 minutes to reduce database load
+// Guardar as estatísticas 5 minutos para aliviar a base de dados (o painel abre muitas vezes, os números mudam devagar)
 let cachedStats: any = null;
 let cacheTime: number = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos em milissegundos
 
 export async function GET() {
-  // Return cached data if still valid
+  // Devolver o que está guardado enquanto é válido
   const now = Date.now();
   if (cachedStats && (now - cacheTime) < CACHE_DURATION) {
     return NextResponse.json(cachedStats);
   }
   
   try {
-    // Get counts for all entities - these are simple and fast
+    // Contagens de todas as entidades: simples e rápidas
     const [
       transportesCount,
       proprietariosCount,
@@ -37,7 +37,7 @@ export async function GET() {
       prisma.municipio.count()
     ]);
 
-    // Get municipios data with transport counts
+    // Municípios com o número de transportes
     const municipioStats = await prisma.$queryRaw<Array<{ nome: string; count: bigint }>>`
       SELECT m.nome, COUNT(DISTINCT t.id)::int as count
       FROM "Municipio" m
@@ -48,7 +48,7 @@ export async function GET() {
       ORDER BY count DESC
     `;
 
-    // Calculate percentages for municipios
+    // Percentagens por município
     const totalTransports = municipioStats.reduce((sum, m) => sum + Number(m.count), 0);
     const municipioData = municipioStats.map(m => ({
       name: m.nome,
@@ -56,7 +56,7 @@ export async function GET() {
       percentage: totalTransports > 0 ? Math.round((Number(m.count) / totalTransports) * 100) : 0
     }));
 
-    // Get vias distribution by municipio
+    // Distribuição das vias por município
     const viasPorMunicipio = await prisma.$queryRaw<Array<{ nome: string; vias: bigint }>>`
       SELECT m.nome, COUNT(v.id)::int as vias
       FROM "Municipio" m
@@ -71,7 +71,7 @@ export async function GET() {
       count: Number(m.vias)
     }));
 
-    // Get paragens distribution by municipio
+    // Distribuição das paragens por município
     const paragensPorMunicipio = await prisma.$queryRaw<Array<{ nome: string; paragens: bigint }>>`
       SELECT m.nome, COUNT(DISTINCT p.id)::int as paragens
       FROM "Municipio" m
@@ -88,7 +88,7 @@ export async function GET() {
       count: Number(m.paragens)
     }));
 
-    // Get ALL vias with transport counts and coordinates (including vias with 0 transportes)
+    // TODAS as vias com o número de transportes e as coordenadas (também as vias sem transportes)
     const viasComTransportes = await prisma.$queryRaw<Array<{ 
       id: string;
       nome: string; 
@@ -133,16 +133,16 @@ export async function GET() {
       paragensMunicipioData
     };
 
-    // Cache the response
+    // Guardar a resposta
     cachedStats = responseData;
     cacheTime = Date.now();
 
     return NextResponse.json(responseData);
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
+    console.error('Erro ao carregar as estatísticas do painel:', error);
     
-    // Provide more detailed error message
-    let errorMessage = 'Failed to fetch dashboard statistics';
+    // Dar uma mensagem de erro mais detalhada
+    let errorMessage = 'Falha ao carregar as estatísticas do painel';
     if (error instanceof Error) {
       errorMessage = error.message;
     }

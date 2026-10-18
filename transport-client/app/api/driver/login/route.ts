@@ -3,7 +3,7 @@ import { findDriverByPhone, verifyDriverPin } from '@/lib/driverTrips';
 import { createDriverToken } from '@/lib/driverSession';
 import { driverProfile } from '@/lib/driverProfile';
 
-// Called from the driver portal, which runs on another domain
+// Chamado pelo portal do motorista, que corre noutro domínio (por isso os cabeçalhos CORS)
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -40,13 +40,13 @@ export async function POST(request: Request) {
 
     const token = createDriverToken(driver.id);
     if (!token) {
-      console.error('DRIVER_SESSION_SECRET is not set');
+      console.error('DRIVER_SESSION_SECRET não está definido');
       return json({ error: 'Sessão indisponível. Contacte o administrador.' }, 500);
     }
 
     return json({ token, ...(await driverProfile(driver)) });
   } catch (error) {
-    console.error('Error in driver login:', error);
+    console.error('Erro na entrada do motorista:', error);
     return json({ error: 'Erro ao processar login' }, 500);
   }
 }

@@ -13,25 +13,26 @@ import {
 } from './fares';
 
 /**
- * Where a vehicle is now, and when it reaches a stop.
+ * Onde está um veículo agora, e quando chega a uma paragem.
  *
- * - A real GPS fix (POST /api/gps) wins while it is fresh (GPS_FRESH_MS).
- * - Otherwise the position comes from the timetable: during service hours each bus shuttles
- *   along its route's path (out, a stop at the far terminal, back, a stop at the first
- *   terminal) at the fare rule's travel speed, and outside them it is parked at a terminal.
- *   It depends only on the time and the bus id, so every endpoint, the USSD menus and every
- *   serverless instance agree, and nothing has to run in the background.
+ * - Uma posição GPS real (POST /api/gps) ganha enquanto é recente (GPS_FRESH_MS).
+ * - Senão, a posição vem do horário: no horário de serviço cada autocarro vai e volta ao longo do
+ *   percurso da sua via (ida, paragem no terminal do fim, volta, paragem no primeiro terminal) à
+ *   velocidade de viagem da tarifa, e fora dele fica parado num terminal.
+ *   Depende só da hora e do id do autocarro. Porquê: todos os endpoints, os menus USSD e todas as
+ *   instâncias serverless chegam ao mesmo resultado sem guardar nada, e nada tem de correr em
+ *   segundo plano.
  *
- * Directions are relative to the route's path: 1 = towards its last point, -1 = back.
+ * Os sentidos são relativos ao percurso da via: 1 = para o último ponto, -1 = de volta.
  */
 
-/** A GPS fix older than this is ignored and the timetable position is used. */
+/** Uma posição GPS mais antiga do que isto é ignorada e usa-se a posição pelo horário. */
 export const GPS_FRESH_MS = 3 * 60 * 1000;
 
-const MAPUTO_UTC_OFFSET_MIN = 120; // Africa/Maputo is UTC+2 all year (no daylight saving)
+const MAPUTO_UTC_OFFSET_MIN = 120; // Africa/Maputo é UTC+2 todo o ano (sem hora de Verão)
 export const SERVICE_START_MIN = 5 * 60; // 05:00
 export const SERVICE_END_MIN = 21 * 60; // 21:00
-export const TERMINAL_STOP_S = 5 * 60; // time at each terminal before the next trip
+export const TERMINAL_STOP_S = 5 * 60; // tempo em cada terminal antes da viagem seguinte
 const DEFAULT_SPEED_KMH = 30;
 
 export type PositionSource = 'gps' | 'horario';
@@ -40,16 +41,16 @@ export type Direction = 1 | -1;
 export interface VehiclePosition {
   point: LatLng;
   source: PositionSource;
-  /** Bearing in degrees (0 = north), when known. */
+  /** Rumo em graus (0 = norte), quando conhecido. */
   heading: number | null;
   moving: boolean;
-  /** Metres along the route's path (null when the route has no path). */
+  /** Metros ao longo do percurso da via (null quando a via não tem percurso). */
   progress: number | null;
-  /** Direction it is moving in, or will leave in when stopped; null when unknown. */
+  /** Sentido em que se move, ou em que vai sair quando parado; null quando desconhecido. */
   direction: Direction | null;
-  /** Seconds before a stopped bus leaves (terminal stop, or overnight until 05:00). */
+  /** Segundos até um autocarro parado partir (paragem no terminal, ou de noite até às 05:00). */
   waitS: number;
-  /** Time of the GPS fix, or the moment the timetable position was computed. */
+  /** Hora da posição GPS, ou o momento em que a posição pelo horário foi calculada. */
   at: Date;
 }
 
@@ -61,7 +62,7 @@ export interface PositionedVehicle {
   gpsVelocidade?: number | null;
 }
 
-/** A route path with the distance from its start to each point. */
+/** Um percurso de via com a distância desde o início até cada ponto. */
 export interface RouteGeometry {
   path: LatLng[];
   cumulative: number[];
@@ -81,7 +82,7 @@ export function routeGeometry(path: LatLng[] | string | null | undefined): Route
   return geometry;
 }
 
-/** Stable number in [0, 1) from a string (FNV-1a). */
+/** Número estável em [0, 1) a partir de um texto (FNV-1a): espalha os autocarros da mesma via ao longo do dia. */
 function unitHash(text: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
@@ -100,7 +101,7 @@ function bearing([lat1, lng1]: LatLng, [lat2, lng2]: LatLng): number {
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
-/** Point at `distance` metres along the path, with the bearing of that segment. */
+/** Ponto a `distance` metros ao longo do percurso, com o rumo desse segmento. */
 export function pointAlong(g: RouteGeometry, distance: number): { point: LatLng; heading: number } {
   let i = 1;
   while (i < g.path.length - 1 && g.cumulative[i] < distance) i++;
@@ -111,7 +112,7 @@ export function pointAlong(g: RouteGeometry, distance: number): { point: LatLng;
   return { point: [lat1 + (lat2 - lat1) * t, lng1 + (lng2 - lng1) * t], heading: bearing(g.path[i - 1], g.path[i]) };
 }
 
-/** Index of the path point nearest to `point` (the paths have a point every ~50 m). */
+/** Índice do ponto do percurso mais próximo de `point` (os percursos têm um ponto a cada ~50 m). */
 function nearestIndex(g: RouteGeometry, point: LatLng): number {
   const k = Math.cos((point[0] * Math.PI) / 180);
   let best = 0;
@@ -128,7 +129,7 @@ function nearestIndex(g: RouteGeometry, point: LatLng): number {
   return best;
 }
 
-/** Metres along the path to the point of the path nearest `point`. */
+/** Metros ao longo do percurso até ao ponto do percurso mais próximo de `point`. */
 export function progressOf(g: RouteGeometry, point: LatLng): number {
   if (g.path.length < 2) return 0;
   const { segment, t } = projectOnPath(g.path, point);
@@ -136,8 +137,8 @@ export function progressOf(g: RouteGeometry, point: LatLng): number {
 }
 
 /**
- * Road distance between two points of a route, along its path (the path follows the roads and
- * passes by every stop). Null when the route has no path.
+ * Distância por estrada entre dois pontos de uma via, ao longo do seu percurso (o percurso segue
+ * as estradas e passa por todas as paragens). Null quando a via não tem percurso.
  */
 export function distanceAlongPath(path: LatLng[] | string | null | undefined, a: LatLng, b: LatLng): number | null {
   const g = routeGeometry(path);
@@ -145,7 +146,7 @@ export function distanceAlongPath(path: LatLng[] | string | null | undefined, a:
   return Math.abs(progressOf(g, b) - progressOf(g, a));
 }
 
-/** Minutes since local midnight in Maputo. */
+/** Minutos desde a meia-noite local em Maputo. */
 export function maputoMinutes(now: Date): number {
   const minutes = now.getTime() / 60000 + MAPUTO_UTC_OFFSET_MIN;
   return ((minutes % 1440) + 1440) % 1440;
@@ -154,7 +155,7 @@ export function maputoMinutes(now: Date): number {
 const speedMps = (rule?: Pick<FareRule, 'velocidadeViagemKmh'>) =>
   ((rule?.velocidadeViagemKmh || DEFAULT_SPEED_KMH) * 1000) / 3600;
 
-/** Timetable position of a bus on its route path. */
+/** Posição de um autocarro no percurso da sua via, pelo horário. */
 export function scheduledPosition(
   busId: string,
   path: LatLng[] | RouteGeometry,
@@ -171,14 +172,14 @@ export function scheduledPosition(
 
   const minutes = maputoMinutes(now);
   if (minutes < SERVICE_START_MIN || minutes >= SERVICE_END_MIN) {
-    // Out of service: parked overnight, half of the buses at each terminal
+    // Fora de serviço: parado durante a noite, metade dos autocarros em cada terminal
     const untilStartS = ((((SERVICE_START_MIN - minutes) % 1440) + 1440) % 1440) * 60;
     return phase < 0.5
       ? { ...base, point: g.path[0], heading: null, moving: false, progress: 0, direction: 1, waitS: untilStartS }
       : { ...base, point: g.path[g.path.length - 1], heading: null, moving: false, progress: g.length, direction: -1, waitS: untilStartS };
   }
 
-  // One cycle: outbound, stop at the far terminal, inbound, stop at the first terminal.
+  // Um ciclo: ida, paragem no terminal do fim, volta, paragem no primeiro terminal.
   const v = speedMps(rule);
   const legS = g.length / v;
   const cycleS = 2 * legS + 2 * TERMINAL_STOP_S;
@@ -200,7 +201,7 @@ export function scheduledPosition(
   return { ...base, point: g.path[0], heading: null, moving: false, progress: 0, direction: 1, waitS: cycleS - t };
 }
 
-/** True when the vehicle sent a GPS fix recently enough to trust it. */
+/** Verdadeiro quando o veículo enviou uma posição GPS recente o suficiente para confiar nela. */
 export function hasFreshGps(vehicle: PositionedVehicle, now: Date = new Date()): boolean {
   return Boolean(
     vehicle.gpsAtualizadoEm &&
@@ -210,9 +211,9 @@ export function hasFreshGps(vehicle: PositionedVehicle, now: Date = new Date()):
 }
 
 /**
- * Current position of a vehicle on its route's path (as [lat, lng] points, a RouteGeometry or
- * the stored "lng,lat;lng,lat" string). Falls back to the last stored position when the route
- * has no path.
+ * Posição actual de um veículo no percurso da sua via (como pontos [lat, lng], uma RouteGeometry
+ * ou o texto guardado "lng,lat;lng,lat"). Usa a última posição guardada quando a via não tem
+ * percurso.
  */
 export function vehiclePosition(
   vehicle: PositionedVehicle,
@@ -230,7 +231,7 @@ export function vehiclePosition(
     if (g.path.length > 1) {
       const i = nearestIndex(g, point);
       progress = progressOf(g, point);
-      // Direction from the GPS bearing compared with the path's own bearing there
+      // Sentido a partir do rumo do GPS comparado com o rumo do próprio percurso nesse ponto
       if (moving && vehicle.gpsDirecao != null) {
         const a = i < g.path.length - 1 ? i : i - 1;
         const diff = Math.abs(((bearing(g.path[a], g.path[a + 1]) - vehicle.gpsDirecao + 540) % 360) - 180);
@@ -256,7 +257,7 @@ export function vehiclePosition(
     : null;
 }
 
-/** "lat,lng" of the vehicle's current position, in the format of Transporte.currGeoLocation. */
+/** "lat,lng" da posição actual do veículo, no formato de Transporte.currGeoLocation. */
 export function vehicleGeo(
   vehicle: PositionedVehicle,
   path: LatLng[] | string | null | undefined,
@@ -267,7 +268,7 @@ export function vehicleGeo(
   return p ? `${p.point[0].toFixed(6)},${p.point[1].toFixed(6)}` : null;
 }
 
-/** Speed now in km/h: the GPS speed while the GPS is fresh, else the timetable's (0 when parked). */
+/** Velocidade actual em km/h: a do GPS enquanto é recente, senão a do horário (0 quando parado). */
 export function currentSpeedKmh(
   vehicle: PositionedVehicle,
   position: VehiclePosition | null,
@@ -279,10 +280,10 @@ export function currentSpeedKmh(
 }
 
 /**
- * Metres a bus at `position` still drives, and how many terminal turnarounds it makes, before
- * it passes `target` metres along the path moving in direction `travel`. Buses go to the end
- * of the path and come back, so a bus that already passed the point, or that is going the
- * other way, first turns around at a terminal.
+ * Metros que um autocarro em `position` ainda percorre, e quantas voltas faz nos terminais, antes
+ * de passar a `target` metros ao longo do percurso no sentido `travel`. Os autocarros vão até ao
+ * fim do percurso e voltam, por isso um autocarro que já passou o ponto, ou que vai no outro
+ * sentido, primeiro dá a volta num terminal.
  */
 export function distanceUntilPass(
   position: Pick<VehiclePosition, 'progress' | 'direction'>,
@@ -301,13 +302,13 @@ export function distanceUntilPass(
 }
 
 /**
- * Arrival, trip time and fare for a passenger going from `origemId` to `destinoId` on this
- * bus. `stops` are in path order (orderStopsAlongRoute). Trips can go either way along the
- * route: a destination before the origin is a trip on the return leg.
+ * Chegada, tempo de viagem e tarifa para um passageiro que vai de `origemId` a `destinoId` neste
+ * autocarro. `stops` está pela ordem do percurso (orderStopsAlongRoute). As viagens podem ir num
+ * sentido ou no outro da via: um destino antes da origem é uma viagem na volta.
  *
- * Times come from the bus's position on the path at the travel speed, so they match where the
- * timetable puts the bus later. Trip distance, time and fare are measured along the path.
- * Without a route path it falls back to estimateTrip (forward trips only).
+ * As horas vêm da posição do autocarro no percurso à velocidade de viagem, por isso coincidem com
+ * onde o horário põe o autocarro mais tarde. A distância, o tempo e a tarifa medem-se ao longo do
+ * percurso. Sem percurso, usa estimateTrip (só viagens no sentido da via).
  */
 export function estimateBusTrip(args: {
   vehicle: PositionedVehicle;
@@ -341,21 +342,21 @@ export function estimateBusTrip(args: {
   };
   const fromNow = passFrom(position, 0);
   let pass = fromNow;
-  // Timetable buses run 05:00-21:00 and are parked overnight: a pass that would come after
-  // 21:00, or a question asked at night, gets the bus's first pass of the next service day
-  // (the same pass the admin's operation view shows)
+  // Os autocarros pelo horário andam das 05:00 às 21:00 e ficam parados de noite: uma passagem que
+  // seria depois das 21:00, ou uma pergunta feita de noite, recebe a primeira passagem do autocarro
+  // no dia de serviço seguinte (a mesma que a vista de operação do painel mostra)
   if (position.source === 'horario') {
     const minutes = maputoMinutes(now);
     const inService = minutes >= SERVICE_START_MIN && minutes < SERVICE_END_MIN;
     if (!inService || fromNow.seconds > (SERVICE_END_MIN - minutes) * 60) {
-      // One second past 05:00, so the timetable already has the bus on its way
+      // Um segundo depois das 05:00, para que o horário já tenha o autocarro a caminho
       const untilStartS = ((((SERVICE_START_MIN - minutes) % 1440) + 1440) % 1440) * 60 + 1;
       const first = scheduledPosition(vehicle.id, g, new Date(now.getTime() + untilStartS * 1000), rule);
       if (first) pass = passFrom(first, untilStartS);
     }
   }
 
-  // Distance, fare and time of the trip all along the road path, as the bus drives it
+  // Distância, tarifa e tempo da viagem todos ao longo do percurso por estrada, como o autocarro o faz
   const distanciaViagem = Math.abs(atDestination - atOrigin);
   return {
     distanciaAteOrigem: pass.meters,
@@ -370,9 +371,9 @@ export function estimateBusTrip(args: {
 }
 
 /**
- * Minutes until this bus, at `position`, passes `target` metres along its path moving in
- * direction `travel`: the arrival at a stop for a passenger already on board, or the next
- * passes of a bus at the stops ahead of it.
+ * Minutos até este autocarro, em `position`, passar a `target` metros ao longo do percurso no
+ * sentido `travel`: a chegada a uma paragem para um passageiro já a bordo, ou as próximas passagens
+ * de um autocarro nas paragens à frente.
  */
 export function minutesUntilPass(
   position: VehiclePosition,
@@ -386,7 +387,7 @@ export function minutesUntilPass(
   return Math.max(0, Math.round(seconds / 60));
 }
 
-/** Fields to select on Transporte to compute its position. */
+/** Campos a seleccionar em Transporte para calcular a sua posição. */
 export const POSITION_FIELDS = {
   id: true,
   currGeoLocation: true,
@@ -395,12 +396,12 @@ export const POSITION_FIELDS = {
   gpsVelocidade: true,
 } as const;
 
-// Route paths change rarely and are large (hundreds of points per route), so each serverless
-// instance keeps them parsed for a few minutes instead of reading ~1 MB on every map refresh.
+// Os percursos das vias mudam raramente e são grandes (centenas de pontos por via), por isso cada
+// instância serverless guarda-os lidos durante uns minutos em vez de ler ~1 MB a cada actualização do mapa.
 const PATH_CACHE_MS = 5 * 60 * 1000;
 let pathCache: { at: number; paths: Map<string, RouteGeometry> } | null = null;
 
-/** Geometry of every route's path, by Via id. */
+/** Geometria do percurso de cada via, por id de Via. */
 export async function routePaths(): Promise<Map<string, RouteGeometry>> {
   if (pathCache && Date.now() - pathCache.at < PATH_CACHE_MS) return pathCache.paths;
   const vias = await prisma.via.findMany({ select: { id: true, geoLocationPath: true } });

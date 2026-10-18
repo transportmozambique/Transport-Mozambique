@@ -26,7 +26,7 @@ export async function POST(
       );
     }
 
-    // Get user with password
+    // Ler o passageiro com a palavra-passe
     const utente = await prisma.utente.findUnique({
       where: { id },
       select: {
@@ -42,7 +42,7 @@ export async function POST(
       );
     }
 
-    // Verify current password
+    // Confirmar a palavra-passe actual
     const isPasswordValid = await bcrypt.compare(currentPassword, utente.senha);
 
     if (!isPasswordValid) {
@@ -52,10 +52,10 @@ export async function POST(
       );
     }
 
-    // Hash new password
+    // Hash da nova palavra-passe (bcrypt: nunca se guarda a palavra-passe em claro)
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update password
+    // Guardar a palavra-passe
     await prisma.utente.update({
       where: { id },
       data: { senha: hashedPassword },

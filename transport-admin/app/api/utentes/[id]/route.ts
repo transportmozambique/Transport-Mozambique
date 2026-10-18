@@ -43,7 +43,7 @@ export async function GET(
       );
     }
 
-    // Remove password from response
+    // Tirar a palavra-passe da resposta
     const { senha, ...sanitizedUtente } = utente;
 
     return NextResponse.json(sanitizedUtente);
@@ -65,7 +65,7 @@ export async function PUT(
     const body = await request.json();
     const { nome, email, telefone, mISSION, subscrito, dataSubscricao, geoLocation, senha } = body;
 
-    // Validate required fields
+    // Confirmar os campos obrigatórios
     if (!nome || !email || !telefone || !mISSION) {
       return NextResponse.json(
         { error: 'Campos obrigatórios em falta' },
@@ -73,7 +73,7 @@ export async function PUT(
       );
     }
 
-    // Check if utente exists
+    // O utente existe?
     const existingUtente = await prisma.utente.findUnique({
       where: { id: params.id },
     });
@@ -85,7 +85,7 @@ export async function PUT(
       );
     }
 
-    // Check if email is already used by another utente
+    // O email já é usado por outro utente?
     if (email !== existingUtente.email) {
       const emailExists = await prisma.utente.findUnique({
         where: { email },
@@ -99,7 +99,7 @@ export async function PUT(
       }
     }
 
-    // Check if telefone is already used by another utente
+    // O telefone já é usado por outro utente?
     if (telefone !== existingUtente.telefone) {
       const telefoneExists = await prisma.utente.findUnique({
         where: { telefone },
@@ -113,7 +113,7 @@ export async function PUT(
       }
     }
 
-    // Check if MISSION is already used by another utente
+    // O MISSION já é usado por outro utente?
     if (mISSION !== existingUtente.mISSION) {
       const missionExists = await prisma.utente.findUnique({
         where: { mISSION },
@@ -127,7 +127,7 @@ export async function PUT(
       }
     }
 
-    // Prepare update data
+    // Preparar os dados a actualizar
     const updateData: any = {
       nome,
       email,
@@ -138,12 +138,12 @@ export async function PUT(
       geoLocation: geoLocation || null,
     };
 
-    // Only update password if provided - hash it
+    // A palavra-passe só muda quando foi dada (guardada como hash)
     if (senha) {
       updateData.senha = await bcrypt.hash(senha, 10);
     }
 
-    // Update utente
+    // Guardar o utente
     const updatedUtente = await prisma.utente.update({
       where: { id: params.id },
       data: updateData,
@@ -156,14 +156,14 @@ export async function PUT(
       },
     });
 
-    // Remove password from response
+    // Tirar a palavra-passe da resposta
     const { senha: _, ...sanitizedUtente } = updatedUtente;
 
     return NextResponse.json(sanitizedUtente);
   } catch (error: any) {
     console.error('Erro ao atualizar utente:', error);
     
-    // Handle Prisma unique constraint errors
+    // Erros de valor único do Prisma
     if (error.code === 'P2002') {
       const field = error.meta?.target?.[0] || 'campo';
       return NextResponse.json(
@@ -188,7 +188,7 @@ export async function DELETE(
     const { searchParams } = new URL(request.url);
     const force = searchParams.get('force') === 'true';
     
-    // Check if utente has missoes
+    // O utente tem alertas?
     const utente = await prisma.utente.findUnique({
       where: { id: params.id },
       include: {
@@ -218,7 +218,7 @@ export async function DELETE(
       );
     }
 
-    // If force=true, delete all missoes first
+    // Com force=true, apagar primeiro todos os alertas
     if (force && utente._count.missoes > 0) {
       await prisma.mISSION.deleteMany({
         where: { utenteId: params.id },

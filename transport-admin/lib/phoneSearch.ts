@@ -2,10 +2,11 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 /**
- * Phones are stored as typed, often with spaces ("+258 84 123 4567"), so a search for "841234"
- * would not find them with a plain `contains`. When the search is a phone number (digits, spaces,
- * "+", "-"), this returns the ids of the rows whose phone, digits only, contains those digits
- * (also without a leading 258). Otherwise it returns [] and the usual text search applies.
+ * Os telefones estão guardados como foram escritos, muitas vezes com espaços ("+258 84 123 4567"),
+ * por isso uma pesquisa por "841234" não os encontraria com um simples `contains`. Quando a pesquisa
+ * é um número de telefone (algarismos, espaços, "+", "-"), isto devolve os ids das linhas cujo
+ * telefone, só algarismos, contém esses algarismos (também sem o 258 à frente). Senão devolve [] e
+ * aplica-se a pesquisa de texto habitual.
  */
 export async function idsByPhoneDigits(table: 'Motorista' | 'Utente', search: string): Promise<string[]> {
   if (!/^[\d\s+\-()]+$/.test(search)) return [];

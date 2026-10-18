@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     const { email, senha } = await request.json();
 
-    // Validate input
+    // Confirmar os dados recebidos
     if (!email || !senha) {
       return NextResponse.json(
         { error: "Email e senha são obrigatórios" },
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find admin by email
+    // Encontrar o administrador pelo email
     const admin = await prisma.administrador.findUnique({
       where: { email },
       select: {
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify password
+    // Confirmar a palavra-passe
     const isPasswordValid = await bcrypt.compare(senha, admin.senha);
 
     if (!isPasswordValid) {
@@ -52,13 +52,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Return admin data (without password) and start the session
+    // Devolver os dados do administrador (sem a palavra-passe) e abrir a sessão
     const response = NextResponse.json({
       admin: {
         id: admin.id,
         nome: admin.nome,
         email: admin.email,
-        role: "admin", // Default role until migration is run
+        role: "admin", // papel por omissão (a tabela ainda não tem papéis)
       },
     });
     response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions);

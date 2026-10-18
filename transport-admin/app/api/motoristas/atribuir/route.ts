@@ -54,9 +54,9 @@ export async function GET() {
       }
     });
   } catch (error) {
-    console.error('Error fetching data:', error);
+    console.error('Erro ao carregar dados:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch data' },
+      { error: 'Falha ao carregar os dados' },
       { status: 500 }
     );
   }
@@ -132,9 +132,9 @@ export async function POST(request: Request) {
       message: 'Motorista atribuído com sucesso'
     });
   } catch (error) {
-    console.error('Error assigning driver:', error);
+    console.error('Erro ao atribuir motorista:', error);
     return NextResponse.json(
-      { error: 'Failed to assign driver' },
+      { error: 'Falha ao atribuir o motorista' },
       { status: 500 }
     );
   }
@@ -164,9 +164,9 @@ export async function DELETE(request: Request) {
       message: 'Atribuição removida com sucesso'
     });
   } catch (error) {
-    console.error('Error removing assignment:', error);
+    console.error('Erro ao tirar a atribuição:', error);
     return NextResponse.json(
-      { error: 'Failed to remove assignment' },
+      { error: 'Falha ao tirar a atribuição' },
       { status: 500 }
     );
   }

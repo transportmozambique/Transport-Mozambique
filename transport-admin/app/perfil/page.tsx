@@ -12,13 +12,13 @@ export default function PerfilPage() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("profile");
   
-  // Profile edit states
+  // Estado da edição do perfil
   const [editingNome, setEditingNome] = useState(false);
   const [nome, setNome] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Password change states
+  // Estado da mudança de palavra-passe
   const [changingPassword, setChangingPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -54,17 +54,17 @@ export default function PerfilPage() {
         return;
       }
 
-      // Update localStorage
+      // Actualizar o localStorage
       const updatedAdmin = { ...admin, nome: data.nome };
       localStorage.setItem("admin", JSON.stringify(updatedAdmin));
       
       setSuccess("Nome atualizado com sucesso!");
       setEditingNome(false);
       
-      // Reload page to update header
+      // Recarregar a página para actualizar o cabeçalho
       setTimeout(() => window.location.reload(), 1500);
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("Erro ao actualizar o perfil:", error);
       setError("Erro ao conectar ao servidor");
     } finally {
       setLoading(false);
@@ -119,7 +119,7 @@ export default function PerfilPage() {
 
       setTimeout(() => setPasswordSuccess(""), 3000);
     } catch (error) {
-      console.error("Error changing password:", error);
+      console.error("Erro ao alterar a palavra-passe:", error);
       setPasswordError("Erro ao conectar ao servidor");
     } finally {
       setChangingPassword(false);
@@ -157,10 +157,10 @@ export default function PerfilPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left Sidebar */}
+          {/* Coluna da esquerda */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden sticky top-8">
-              {/* User Avatar */}
+              {/* Avatar do utilizador */}
               <div className="bg-gradient-to-r from-slate-900 to-slate-900 px-6 py-8">
                 <div className="flex flex-col items-center">
                   <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-3">
@@ -224,10 +224,10 @@ export default function PerfilPage() {
             </div>
           </div>
 
-          {/* Main Content */}
+          {/* Conteúdo principal */}
           <div className="lg:col-span-3">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-              {/* Profile Tab */}
+              {/* Separador do perfil */}
               {activeTab === "profile" && (
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900 mb-6">Informações do Perfil</h1>
@@ -303,7 +303,7 @@ export default function PerfilPage() {
                       )}
                     </div>
 
-                    {/* Email (read-only) */}
+                    {/* Email (só leitura) */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Email
@@ -312,7 +312,7 @@ export default function PerfilPage() {
                       <p className="text-xs text-slate-500 mt-1">O email não pode ser alterado</p>
                     </div>
 
-                    {/* Role (read-only) */}
+                    {/* Papel (só leitura) */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Função
@@ -322,7 +322,7 @@ export default function PerfilPage() {
                       </span>
                     </div>
 
-                    {/* ID (read-only) */}
+                    {/* ID (só leitura) */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
                         ID do Administrador
@@ -333,7 +333,7 @@ export default function PerfilPage() {
                 </div>
               )}
 
-              {/* Security Tab */}
+              {/* Separador da segurança */}
               {activeTab === "security" && (
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900 mb-6">Segurança</h1>
@@ -414,13 +414,13 @@ export default function PerfilPage() {
                 </div>
               )}
 
-              {/* Settings Tab */}
+              {/* Separador das definições */}
               {activeTab === "settings" && (
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900 mb-6">Configurações</h1>
 
                   <div className="space-y-6">
-                    {/* System Settings */}
+                    {/* Definições do sistema */}
                     <div>
                       <h2 className="text-lg font-bold text-slate-900 mb-4 pb-2 border-b border-slate-200">
                         Sistema

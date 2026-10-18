@@ -1,7 +1,7 @@
-// Next.js loads .env for the app; a plain script has to do it itself, before lib/prisma reads
-// DATABASE_URL. Import this first.
+// O Next.js carrega o .env para a aplicação; um script simples tem de o fazer sozinho, antes de
+// lib/prisma ler DATABASE_URL. Importar isto primeiro.
 try {
   process.loadEnvFile();
 } catch {
-  // No .env here: DATABASE_URL must come from the environment
+  // Sem .env aqui: DATABASE_URL tem de vir do ambiente
 }

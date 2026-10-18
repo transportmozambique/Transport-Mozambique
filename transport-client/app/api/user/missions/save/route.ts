@@ -4,7 +4,7 @@ import { utenteIdFromRequest, unauthorized } from '@/lib/userSession';
 
 export async function POST(request: NextRequest) {
   try {
-    // The alert is saved for the passenger of the session token
+    // O alerta fica guardado para o passageiro do token de sessão
     const utenteId = utenteIdFromRequest(request);
     if (!utenteId) return unauthorized();
     const body = await request.json();
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get utente data to get mISSION code
+    // Ler o passageiro, para o código mISSION
     const utente = await prisma.utente.findUnique({
       where: { id: utenteId },
     });
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get paragem data
+    // Ler a paragem
     const paragem = await prisma.paragem.findUnique({
       where: { id: paragemId },
     });
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if mission already exists for this user and stop
+    // Já existe um alerta deste passageiro para esta paragem?
     const existingMission = await prisma.mISSION.findFirst({
       where: {
         utenteId: utenteId,
@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingMission) {
-      // Asking again starts the alert over: alerts older than 24 h or already answered by an
-      // arrival SMS are not checked any more
+      // Pedir outra vez recomeça o alerta: os alertas com mais de 24 h ou já respondidos por um SMS
+      // de chegada deixam de ser verificados
       const missao = await prisma.mISSION.update({
         where: { id: existingMission.id },
         data: { createdAt: new Date(), notificadoEm: null },
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create new mission
+    // Criar o alerta
     const missao = await prisma.mISSION.create({
       data: {
         mISSIONUtente: utente.mISSION,
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       missao: missao,
     });
   } catch (error: any) {
-    console.error('Error saving mission:', error);
+    console.error('Erro ao guardar alerta:', error);
     return NextResponse.json(
       { 
         error: 'Erro ao salvar transporte',

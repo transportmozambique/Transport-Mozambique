@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/adminSession";
 
-// Current admin for a valid session (proxy.ts already rejects requests without one)
+// O administrador de uma sessão válida (o proxy.ts já recusa os pedidos sem sessão)
 export async function GET(request: NextRequest) {
   const adminId = verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
   const admin = adminId

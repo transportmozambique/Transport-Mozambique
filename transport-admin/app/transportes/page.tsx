@@ -36,7 +36,7 @@ export default function Transportes() {
   const [loading, setLoading] = useState(true);
   const [listLoading, setListLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  // What each vehicle is doing now (GPS or timetable), from /api/transportes/estado
+  // O que cada veículo está a fazer agora (GPS ou horário), de /api/transportes/estado
   const [estados, setEstados] = useState<Record<string, { estado: string; gps: boolean }>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -75,7 +75,7 @@ export default function Transportes() {
 
   async function fetchTransportes() {
     try {
-      // Use listLoading for subsequent fetches, loading for initial load
+      // listLoading para os pedidos seguintes, loading para a primeira carga
       if (transportes.length > 0) {
         setListLoading(true);
       } else {
@@ -84,11 +84,11 @@ export default function Transportes() {
       
       const response = await fetch('/api/transportes?limit=1000');
       const result = await response.json();
-      // Handle both array and paginated response formats
+      // Aceitar respostas em array e paginadas
       const data = Array.isArray(result) ? result : (result.data || []);
       setTransportes(data);
     } catch (error) {
-      console.error('Error fetching transportes:', error);
+      console.error('Erro ao carregar transportes:', error);
       setTransportes([]);
     } finally {
       setLoading(false);
@@ -112,13 +112,13 @@ export default function Transportes() {
         fetchTransportes();
       } else {
         const error = await response.json();
-        console.log('Delete error:', error); // Debug log
-        // Check if error is about any assignment (motorista or proprietarios)
+        console.log('Erro ao apagar:', error); // Registo para depuração
+        // O erro é sobre alguma atribuição (motorista ou proprietários)?
         const hasAssignments = error.details?.includes('motorista') || 
                               error.details?.includes('proprietário') ||
                               error.error?.includes('motorista') || 
                               error.error?.includes('proprietário');
-        console.log('Has assignments:', hasAssignments); // Debug log
+        console.log('Tem atribuições:', hasAssignments); // Registo para depuração
         setDeleteError({
           message: error.error || 'Erro ao eliminar transporte',
           details: error.details,
@@ -139,31 +139,31 @@ export default function Transportes() {
   async function handleRemoveAssignments(id: string) {
     setDeleting(true);
     try {
-      // Step 1: Remove motorista assignment if exists
+      // Passo 1: tirar a atribuição do motorista, se existir
       const motoristaResponse = await fetch(`/api/transportes/${id}/atribuir-motorista`, {
         method: 'DELETE',
       });
       
-      // It's ok if motorista doesn't exist (404), continue anyway
+      // Não faz mal se o motorista não existir (404): continua
       if (!motoristaResponse.ok && motoristaResponse.status !== 404) {
         const error = await motoristaResponse.json();
         console.log('Erro ao remover motorista:', error);
-        // Continue anyway, try to remove proprietarios
+        // Continuar na mesma e tentar tirar os proprietários
       }
 
-      // Step 2: Remove all proprietarios associations (not the proprietarios themselves)
+      // Passo 2: tirar todas as ligações a proprietários (não os próprios proprietários)
       const proprietariosResponse = await fetch(`/api/transportes/${id}/proprietario`, {
         method: 'DELETE',
       });
       
-      // It's ok if no proprietarios exist (404), continue anyway
+      // Sem proprietários (404) não faz mal, continuar
       if (!proprietariosResponse.ok && proprietariosResponse.status !== 404) {
         const error = await proprietariosResponse.json();
         console.log('Erro ao remover proprietários:', error);
-        // Continue anyway, try to delete transporte
+        // Continuar na mesma e tentar apagar o transporte
       }
 
-      // Step 3: Now delete the transporte
+      // Passo 3: apagar o transporte
       const deleteResponse = await fetch(`/api/transportes/${id}`, {
         method: 'DELETE',
       });
@@ -202,7 +202,7 @@ export default function Transportes() {
       t.via?.nome?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
       t.modelo?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
     
-    // Status filter: what the vehicle is doing now
+    // Filtro de estado: o que o veículo está a fazer agora
     if (statusFilter === 'circulacao') {
       return matchesSearch && estadoDe(t.id) === 'circulacao';
     } else if (statusFilter === 'parados') {
@@ -214,13 +214,13 @@ export default function Transportes() {
     return matchesSearch;
   }) : [];
 
-  // Pagination logic
+  // Paginação
   const totalPages = Math.ceil(filteredTransportes.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentTransportes = filteredTransportes.slice(startIndex, endIndex);
 
-  // Reset to page 1 when search term or filter changes
+  // Voltar à página 1 quando a pesquisa ou o filtro mudam
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchTerm, statusFilter, itemsPerPage]);
@@ -231,7 +231,7 @@ export default function Transportes() {
 
   return (
     <div className="bg-white min-h-screen overflow-x-hidden">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -262,7 +262,7 @@ export default function Transportes() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Diálogo de confirmação do apagar */}
       {showDeleteModal && transporteToDelete && (
         <div 
           className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm min-h-screen" 
@@ -380,9 +380,9 @@ export default function Transportes() {
       )}
 
       <div className="w-full max-w-[1600px] mx-auto p-4 lg:p-6 space-y-6">
-        {/* Header - 2 Columns Layout */}
+        {/* Cabeçalho em 2 colunas */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          {/* Left - Title and Description */}
+          {/* Esquerda: título e descrição */}
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/dashboard')}
@@ -398,7 +398,7 @@ export default function Transportes() {
             </div>
           </div>
 
-          {/* Right - Action Button */}
+          {/* À direita: botão de acção */}
           <button 
             onClick={() => router.push('/transportes/novo')}
             className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 whitespace-nowrap"
@@ -410,7 +410,7 @@ export default function Transportes() {
           </button>
         </div>
 
-        {/* Filter Badge */}
+        {/* Etiqueta do filtro */}
         {statusFilter && (
           <div className="flex items-center space-x-2">
             <div className="inline-flex items-center space-x-2 bg-slate-100 border border-slate-300 rounded-xl px-4 py-2">
@@ -432,7 +432,7 @@ export default function Transportes() {
           </div>
         )}
 
-        {/* Stats Cards - Smaller and More Compact */}
+        {/* Cartões de estatísticas, pequenos e compactos */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <button 
             onClick={() => setStatusFilter(null)}
@@ -536,7 +536,7 @@ export default function Transportes() {
             </div>
           ) : (
           <>
-            {/* Desktop Table View */}
+            {/* Tabela no computador */}
             <table className="w-full hidden lg:table min-w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
@@ -673,7 +673,7 @@ export default function Transportes() {
               </tbody>
             </table>
 
-            {/* Mobile Card View */}
+            {/* Cartões no telemóvel */}
             <div className="lg:hidden divide-y divide-slate-200">
               {filteredTransportes.length === 0 ? (
                 <div className="px-6 py-12 text-center">
@@ -807,7 +807,7 @@ export default function Transportes() {
               </svg>
             </button>
             
-            {/* Page numbers */}
+            {/* Números das páginas */}
             <div className="flex items-center space-x-1">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum;

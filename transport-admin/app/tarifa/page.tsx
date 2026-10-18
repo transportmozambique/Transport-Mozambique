@@ -23,7 +23,7 @@ const FIELDS: { key: Field; label: string; unit: string; step: string; help: str
   { key: "fatorEstrada", label: "Factor de estrada", unit: "×", step: "0.1", help: "Distância por estrada ÷ linha recta, só para vias sem percurso." },
 ];
 
-/** The apps' values when no rule exists (DEFAULT_RULE in transport-client/lib/fares.ts) */
+/** Os valores das aplicações quando não há regra (DEFAULT_RULE em transport-client/lib/fares.ts) */
 const DEFAULTS: Record<Field, string> = {
   tarifaMinima: "10",
   precoPorKm: "10",
@@ -32,11 +32,11 @@ const DEFAULTS: Record<Field, string> = {
   fatorEstrada: "1.3",
 };
 
-/** Fare of a trip of `km` km under the values typed */
+/** Tarifa de uma viagem de `km` km com os valores escritos */
 function fareFor(km: number, values: Record<Field, string>) {
   const min = Number(values.tarifaMinima) || 0;
   const perKm = Number(values.precoPorKm) || 0;
-  return Math.max(min, Math.ceil(km * perKm)); // as fareFor() in transport-client/lib/fares.ts
+  return Math.max(min, Math.ceil(km * perKm)); // como fareFor() em transport-client/lib/fares.ts
 }
 
 export default function TarifaPage() {
@@ -57,7 +57,7 @@ export default function TarifaPage() {
         res.json().then((d) => {
           if (res.ok) return load(d);
           if (res.status === 404) {
-            // No rule yet: the apps use the defaults, and saving creates the rule
+            // Ainda sem regra: as aplicações usam os valores por omissão, e guardar cria a regra
             setValues(DEFAULTS);
             return setMessage({ ok: false, text: "Ainda não há tarifa guardada: as aplicações usam estes valores. Guarde para criar a regra." });
           }

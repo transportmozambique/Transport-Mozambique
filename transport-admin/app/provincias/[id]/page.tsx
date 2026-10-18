@@ -70,7 +70,7 @@ export default function ProvinciaDetails() {
       } else {
         const error = await response.json();
         
-        // Check if error is about associations
+        // O erro é sobre ligações?
         if (error.error && (error.error.includes('municípios') || error.error.includes('municipios') || error.error.includes('associa'))) {
           setDeleteError(error.details || error.error);
           setHasAssociations(true);
@@ -92,7 +92,7 @@ export default function ProvinciaDetails() {
     setDeleting(true);
     
     try {
-      // Force delete with associations removal
+      // Apagar à força, tirando primeiro as ligações
       const response = await fetch(`/api/provincias/${id}?force=true`, {
         method: 'DELETE',
       });
@@ -115,9 +115,9 @@ export default function ProvinciaDetails() {
     }
   };
 
-  // Helper function to check if a point is within a circle
+  // Diz se um ponto está dentro de um círculo
   const isPointInCircle = (pointLat: number, pointLng: number, centerLat: number, centerLng: number, radiusKm: number) => {
-    const R = 6371; // Earth's radius in km
+    const R = 6371; // raio da Terra em km
     const dLat = (pointLat - centerLat) * Math.PI / 180;
     const dLng = (pointLng - centerLng) * Math.PI / 180;
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -128,7 +128,7 @@ export default function ProvinciaDetails() {
     return distance <= radiusKm;
   };
 
-  // Helper function to check if a via passes through the circle
+  // Diz se uma via passa pelo círculo
   const viaPassesThroughCircle = (geoLocationPath: string, centerLat: number, centerLng: number, radiusKm: number) => {
     try {
       const coordinates = geoLocationPath
@@ -140,7 +140,7 @@ export default function ProvinciaDetails() {
         })
         .filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
 
-      // Check if any point of the route is within the circle
+      // Algum ponto da via está dentro do círculo?
       return coordinates.some(coord => 
         isPointInCircle(coord.lat, coord.lng, centerLat, centerLng, radiusKm)
       );
@@ -170,16 +170,16 @@ export default function ProvinciaDetails() {
     fetchProvincia();
   }, [id]);
 
-  // Initialize map when província data is loaded
+  // Criar o mapa quando os dados da província chegam
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current || !provincia) return;
 
-    // Use província geoLocation or default to Maputo
+    // A geoLocation da província, ou Maputo por omissão
     const geoLocation = provincia.geoLocation || "-25.9655,32.5892";
     const [lat, lng] = geoLocation.split(',').map(Number);
     if (isNaN(lat) || isNaN(lng)) return;
 
-    const radius = 50; // Default 50km radius
+    const radius = 50; // Raio de 50 km por omissão
 
     const map = new maplibregl.Map({
       container: mapRef.current,
@@ -220,7 +220,7 @@ export default function ProvinciaDetails() {
     }), 'top-right');
 
     map.on('load', () => {
-      // Add 3D buildings layer
+      // Camada dos edifícios em 3D
       map.addLayer({
         'id': '3d-buildings',
         'source': 'openmaptiles',
@@ -252,7 +252,7 @@ export default function ProvinciaDetails() {
         }
       });
 
-      // Add center point marker
+      // Marcador do ponto central
       map.addSource('center-point', {
         type: 'geojson',
         data: {
@@ -277,7 +277,7 @@ export default function ProvinciaDetails() {
         }
       });
 
-      // Add radius circle
+      // Círculo do raio
       const createCircle = (lat: number, lng: number, radiusKm: number) => {
         const points = 64;
         const coords = [];
@@ -327,13 +327,13 @@ export default function ProvinciaDetails() {
         }
       });
 
-      // Add vias (routes) to the map
+      // Juntar as vias ao mapa
       if (provincia.vias && provincia.vias.length > 0) {
         let viasRendered = 0;
         provincia.vias.forEach((via) => {
           if (via.geoLocationPath) {
             try {
-              // Parse geoLocationPath format: "lng,lat;lng,lat;lng,lat"
+              // Ler geoLocationPath no formato "lng,lat;lng,lat;lng,lat"
               const coordinates = via.geoLocationPath
                 .trim()
                 .split(';')
@@ -343,9 +343,9 @@ export default function ProvinciaDetails() {
                 })
                 .filter(coord => !isNaN(coord[0]) && !isNaN(coord[1]));
               
-              // Validate coordinates array
+              // Confirmar a lista de coordenadas
               if (Array.isArray(coordinates) && coordinates.length > 1) {
-                // Check if via passes through the circle (optional filter)
+                // A via passa pelo círculo? (filtro opcional)
                 const passesThrough = viaPassesThroughCircle(via.geoLocationPath, lat, lng, radius);
                 
                 map.addSource(`via-${via.id}`, {
@@ -374,7 +374,7 @@ export default function ProvinciaDetails() {
                   }
                 });
 
-                // Add click event to show via info
+                // Clicar mostra os dados da via
                 map.on('click', `via-${via.id}`, (e) => {
                   if (e.features && e.features[0]) {
                     const feature = e.features[0];
@@ -390,7 +390,7 @@ export default function ProvinciaDetails() {
                   }
                 });
 
-                // Change cursor on hover
+                // Mudar o cursor ao passar por cima
                 map.on('mouseenter', `via-${via.id}`, () => {
                   map.getCanvas().style.cursor = 'pointer';
                 });
@@ -402,7 +402,7 @@ export default function ProvinciaDetails() {
                 viasRendered++;
               }
             } catch (error) {
-              // Skip invalid geoLocationPath
+              // Saltar um geoLocationPath inválido
             }
           }
         });
@@ -459,10 +459,10 @@ export default function ProvinciaDetails() {
   const totalVias = provincia.municipios?.reduce((sum, m) => sum + (m._count?.vias || 0), 0) || 0;
   const totalParagens = provincia.municipios?.reduce((sum, m) => sum + (m._count?.paragens || 0), 0) || 0;
 
-  // Filter vias that pass through the circle (50km radius)
+  // As vias que passam pelo círculo (raio de 50 km)
   const geoLocation = provincia.geoLocation || "-25.9655,32.5892";
   const [centerLat, centerLng] = geoLocation.split(',').map(Number);
-  const radius = 50; // 50km radius for província
+  const radius = 50; // raio de 50 km para uma província
   
   const viasInCircle = provincia.vias?.filter(via => 
     via.geoLocationPath && viaPassesThroughCircle(via.geoLocationPath, centerLat, centerLng, radius)
@@ -472,7 +472,7 @@ export default function ProvinciaDetails() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -503,7 +503,7 @@ export default function ProvinciaDetails() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Diálogo de confirmação do apagar */}
       {showDeleteModal && provincia && (
         <div 
           className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm min-h-screen" 
@@ -653,7 +653,7 @@ export default function ProvinciaDetails() {
           </div>
         </div>
 
-        {/* Stats Grid */}
+        {/* Grelha das estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
             onClick={() => router.push('/municipios')}
@@ -711,7 +711,7 @@ export default function ProvinciaDetails() {
           </button>
         </div>
 
-        {/* Municípios List */}
+        {/* Lista de municípios */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
           <div className="p-6 border-b border-slate-200">
             <h3 className="text-lg font-bold text-slate-900">Municípios ({totalMunicipios})</h3>
@@ -790,7 +790,7 @@ export default function ProvinciaDetails() {
           </div>
         </div>
 
-        {/* Map Section */}
+        {/* Mapa */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
           <h3 className="text-lg font-bold text-slate-900 mb-4">Localização da Província</h3>
           <div ref={mapRef} className="w-full h-96 rounded-xl border border-slate-300" />

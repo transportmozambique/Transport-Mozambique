@@ -11,7 +11,7 @@ interface Via {
   nome: string;
   codigo: string;
   cor: string;
-  velocidadeViagemKmh: number; // travel speed of the active fare rule
+  velocidadeViagemKmh: number; // velocidade de viagem da regra de tarifa activa
   terminalPartida: string;
   terminalChegada: string;
   geoLocationPath: string;
@@ -73,7 +73,7 @@ export default function ViaDetalhes() {
   });
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
 
-  // Helper function to validate and fix color codes
+  // Validar e corrigir códigos de cor
   const getValidColor = (color: string | undefined): string => {
     const defaultColor = '#3B82F6';
     if (!color || typeof color !== 'string' || !color.startsWith('#')) {
@@ -119,23 +119,23 @@ export default function ViaDetalhes() {
     map.addControl(new maplibregl.NavigationControl(), "top-right");
 
     map.on('load', () => {
-      console.log('Map loaded, via:', via);
+      console.log('Mapa carregado, via:', via);
       console.log('geoLocationPath:', via.geoLocationPath);
       
-      // Parse route coordinates
+      // Ler as coordenadas da via
       if (via.geoLocationPath) {
         let coordinates: [number, number][] = [];
         
         // Try parsing as JSON first
         try {
           const parsed = JSON.parse(via.geoLocationPath);
-          console.log('Parsed as JSON:', parsed);
+          console.log('Lido como JSON:', parsed);
           if (Array.isArray(parsed)) {
             coordinates = parsed;
           }
         } catch (e) {
-          console.log('Not JSON, trying semicolon format');
-          // If not JSON, try semicolon-separated format
+          console.log('Não é JSON, a tentar o formato com ponto e vírgula');
+          // Se não for JSON, tentar o formato separado por ponto e vírgula
           coordinates = via.geoLocationPath
             .split(';')
             .map(coord => {
@@ -145,11 +145,11 @@ export default function ViaDetalhes() {
             .filter(coord => !isNaN(coord[0]) && !isNaN(coord[1]));
         }
 
-        console.log('Final coordinates:', coordinates);
-        console.log('Coordinates count:', coordinates.length);
+        console.log('Coordenadas finais:', coordinates);
+        console.log('Número de coordenadas:', coordinates.length);
 
         if (coordinates.length > 0) {
-          // Add route line
+          // Linha da via
           map.addSource('route', {
             type: 'geojson',
             data: {
@@ -163,7 +163,7 @@ export default function ViaDetalhes() {
           });
 
           const validColor = getValidColor(via.cor);
-          console.log('Route color:', validColor);
+          console.log('Cor da via:', validColor);
 
           map.addLayer({
             id: 'route',
@@ -180,7 +180,7 @@ export default function ViaDetalhes() {
             }
           });
 
-          // Add route outline beneath the route line (on top it washes the route out)
+          // Contorno por baixo da linha da via (por cima apagaria a cor da via)
           map.addLayer({
             id: 'route-outline',
             type: 'line',
@@ -196,9 +196,9 @@ export default function ViaDetalhes() {
             }
           }, 'route');
 
-          console.log('Route layers added successfully');
+          console.log('Camadas da via juntadas');
 
-          // Add stops
+          // Paragens
           if (via.paragens && via.paragens.length > 0) {
             via.paragens.forEach((viaParagem) => {
               const stop = viaParagem.paragem;
@@ -231,12 +231,12 @@ export default function ViaDetalhes() {
                   )
                   .addTo(map);
 
-                // Store marker reference
+                // Guardar a referência do marcador
                 markersRef.current.set(stop.id, marker);
 
-                // Add click handler to marker
+                // Clicar no marcador
                 el.addEventListener('click', () => {
-                  // Close all other popups
+                  // Fechar todos os outros balões
                   markersRef.current.forEach((m, id) => {
                     if (id !== stop.id) {
                       const p = m.getPopup();
@@ -251,7 +251,7 @@ export default function ViaDetalhes() {
             });
           }
 
-          // Fit map to route
+          // Enquadrar o mapa na via
           const bounds = new maplibregl.LngLatBounds();
           coordinates.forEach((coord) => bounds.extend(coord));
           map.fitBounds(bounds, { padding: 50 });
@@ -268,7 +268,7 @@ export default function ViaDetalhes() {
     };
   }, [via]);
 
-  // Update marker styles when selection changes
+  // Actualizar o estilo dos marcadores quando a escolha muda
   useEffect(() => {
     if (!via || !mapInstanceRef.current) return;
 
@@ -289,13 +289,13 @@ export default function ViaDetalhes() {
         el.style.height = markerSize;
         el.style.background = markerColor;
 
-        // Close all popups first
+        // Fechar primeiro todos os balões
         const popup = marker.getPopup();
         if (popup && popup.isOpen()) {
           marker.togglePopup();
         }
 
-        // Zoom to selected marker and open its popup
+        // Aproximar ao marcador escolhido e abrir o seu balão
         if (isSelected && mapInstanceRef.current) {
           const [lat, lng] = stop.geoLocation.split(',').map(Number);
           mapInstanceRef.current.flyTo({
@@ -303,7 +303,7 @@ export default function ViaDetalhes() {
             zoom: 15,
             duration: 1000,
           });
-          // Open popup after a short delay to ensure it's visible
+          // Abrir o balão um pouco depois, para ficar visível
           setTimeout(() => {
             if (!popup?.isOpen()) {
               marker.togglePopup();
@@ -321,7 +321,7 @@ export default function ViaDetalhes() {
   async function fetchVia(id: string) {
     try {
       setError(null);
-      // Add cache-busting parameter to force fresh data
+      // Parâmetro anti-cache, para dados actuais
       const response = await fetch(`/api/vias/${id}?t=${Date.now()}`, {
         cache: 'no-store',
         headers: {
@@ -331,20 +331,20 @@ export default function ViaDetalhes() {
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        throw new Error(errorData.error || `Erro HTTP ${response.status}`);
       }
       
       const data = await response.json();
       
-      // Debug: Log the data
-      console.log('Via data received:', data);
-      console.log('Transportes count:', data._count?.transportes);
-      console.log('Transportes array:', data.transportes);
-      console.log('Transportes length:', data.transportes?.length);
+      // Depuração: registar os dados
+      console.log('Dados da via recebidos:', data);
+      console.log('Número de transportes:', data._count?.transportes);
+      console.log('Lista de transportes:', data.transportes);
+      console.log('Comprimento da lista de transportes:', data.transportes?.length);
       
-      // Ensure data has required structure
+      // Garantir que os dados têm a estrutura esperada
       if (!data) {
-        throw new Error('No data received from API');
+        throw new Error('A API não devolveu dados');
       }
       
       setVia(data);
@@ -355,12 +355,12 @@ export default function ViaDetalhes() {
         cor: data.cor || '#3B82F6',
       });
       
-      // Initialize selected paragens
+      // Paragens escolhidas no início
       if (data.paragens) {
         setSelectedParagensIds(data.paragens.map((vp: any) => vp.paragem.id));
       }
 
-      // Calculate nearby paragens from the route
+      // Calcular as paragens próximas a partir da via
       if (data.geoLocationPath && allParagens.length > 0) {
         calculateNearbyParagens(data.geoLocationPath);
       }
@@ -375,15 +375,15 @@ export default function ViaDetalhes() {
 
   async function fetchAllParagens() {
     try {
-      // Every stop (there are more than 1000)
+      // Todas as paragens (são mais de 1000)
       const response = await fetch('/api/paragens?limit=10000');
       if (!response.ok) {
-        throw new Error('Failed to fetch paragens');
+        throw new Error('Falha ao carregar paragens');
       }
       const result = await response.json();
       setAllParagens(result.data || []);
       
-      // If via is already loaded, calculate nearby paragens
+      // Se a via já chegou, calcular as paragens próximas
       if (via && via.geoLocationPath) {
         calculateNearbyParagens(via.geoLocationPath);
       }
@@ -392,9 +392,9 @@ export default function ViaDetalhes() {
     }
   }
 
-  // Calculate distance between two points using Haversine formula
+  // Distância entre dois pontos pela fórmula de Haversine
   function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371e3; // Earth's radius in meters
+    const R = 6371e3; // raio da Terra em metros
     const φ1 = lat1 * Math.PI / 180;
     const φ2 = lat2 * Math.PI / 180;
     const Δφ = (lat2 - lat1) * Math.PI / 180;
@@ -405,10 +405,10 @@ export default function ViaDetalhes() {
               Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    return R * c; // Distance in meters
+    return R * c; // distância em metros
   }
 
-  // Check if a paragem is near the route
+  // Diz se uma paragem está perto da via
   function isParagemNearRoute(paragem: any, routePath: [number, number][], threshold: number = 50): number {
     if (!paragem.geoLocation || routePath.length === 0) return Infinity;
     
@@ -427,7 +427,7 @@ export default function ViaDetalhes() {
   function calculateNearbyParagens(geoLocationPath: string) {
     if (!geoLocationPath || allParagens.length === 0) return;
 
-    // Parse route coordinates - handle both JSON array and semicolon-separated formats
+    // Ler as coordenadas do percurso: array JSON ou separadas por ponto e vírgula
     let coordinates: [number, number][] = [];
     
     try {
@@ -437,7 +437,7 @@ export default function ViaDetalhes() {
         coordinates = parsed;
       }
     } catch {
-      // If not JSON, try semicolon-separated format
+      // Se não for JSON, tentar o formato separado por ponto e vírgula
       coordinates = geoLocationPath
         .split(';')
         .map(coord => {
@@ -449,7 +449,7 @@ export default function ViaDetalhes() {
 
     if (coordinates.length === 0) return;
 
-    // Find paragens within 50m of the route
+    // As paragens a menos de 50 m da via
     const results = allParagens.map(paragem => ({
       paragem,
       distance: isParagemNearRoute(paragem, coordinates, 50)
@@ -459,7 +459,7 @@ export default function ViaDetalhes() {
     setNearbyParagens(results.map(r => r.paragem));
   }
 
-  // Recalculate nearby paragens when allParagens loads
+  // Recalcular as paragens próximas quando allParagens chega
   useEffect(() => {
     if (via && via.geoLocationPath && allParagens.length > 0) {
       calculateNearbyParagens(via.geoLocationPath);
@@ -478,14 +478,14 @@ export default function ViaDetalhes() {
     if (!via) return;
 
     try {
-      // Fetch all transportes
+      // Pedir todos os transportes
       const response = await fetch('/api/transportes?limit=1000');
-      if (!response.ok) throw new Error('Failed to fetch transportes');
+      if (!response.ok) throw new Error('Falha ao carregar transportes');
       
       const result = await response.json();
       const allTransportes = result.data || [];
 
-      // Parse this via's route
+      // Ler o percurso desta via
       let viaCoordinates: [number, number][] = [];
       try {
         const parsed = JSON.parse(via.geoLocationPath);
@@ -502,14 +502,14 @@ export default function ViaDetalhes() {
           .filter(coord => !isNaN(coord[0]) && !isNaN(coord[1]));
       }
 
-      // Filter transportes: no via OR via within 50m of this via
+      // Os transportes sem via OU com uma via a menos de 50 m desta
       const available = allTransportes.filter((transporte: any) => {
-        // If no via assigned, it's available
+        // Sem via atribuída, está livre
         if (!transporte.via || !transporte.via.geoLocationPath) {
           return true;
         }
 
-        // Parse transporte's via route
+        // Ler o percurso da via do transporte
         let transporteViaCoordinates: [number, number][] = [];
         try {
           const parsed = JSON.parse(transporte.via.geoLocationPath);
@@ -526,15 +526,15 @@ export default function ViaDetalhes() {
             .filter((coord: [number, number]) => !isNaN(coord[0]) && !isNaN(coord[1]));
         }
 
-        // Check if routes are within 50m of each other
+        // As vias estão a menos de 50 m uma da outra?
         if (transporteViaCoordinates.length === 0) return false;
 
-        // Check if any point of transporte's via is within 50m of this via
+        // Algum ponto da via do transporte está a menos de 50 m desta via?
         for (const [tLng, tLat] of transporteViaCoordinates) {
           for (const [vLng, vLat] of viaCoordinates) {
             const distance = calculateDistance(tLat, tLng, vLat, vLng);
             if (distance <= 50) {
-              return true; // Routes are close enough
+              return true; // as vias estão suficientemente perto
             }
           }
         }
@@ -573,7 +573,7 @@ export default function ViaDetalhes() {
         );
         setShowTransporteModal(false);
         setSelectedTransportesIds([]);
-        fetchVia(params.id as string); // Refresh via data
+        fetchVia(params.id as string); // Carregar a via outra vez
       } else {
         showNotification('Erro ao atribuir alguns transportes', 'error');
       }
@@ -586,7 +586,7 @@ export default function ViaDetalhes() {
   }
 
   async function handleUnassignTransporte(e: React.MouseEvent, transporteId: string) {
-    e.stopPropagation(); // Prevent card click event
+    e.stopPropagation(); // Não deixar o clique chegar ao cartão
     
     try {
       const response = await fetch(`/api/transportes/${transporteId}`, {
@@ -597,7 +597,7 @@ export default function ViaDetalhes() {
 
       if (response.ok) {
         showNotification('Transporte desassociado com sucesso!', 'success');
-        fetchVia(params.id as string); // Refresh via data
+        fetchVia(params.id as string); // Carregar a via outra vez
       } else {
         showNotification('Erro ao desassociar transporte', 'error');
       }
@@ -643,7 +643,7 @@ export default function ViaDetalhes() {
       if (response.ok) {
         setShowDeleteModal(false);
         setNotification({ message: 'Via eliminada com sucesso!', type: 'success' });
-        // Redirect after showing notification
+        // Redireccionar depois de mostrar a notificação
         setTimeout(() => {
           router.push('/vias');
         }, 1500);
@@ -678,7 +678,7 @@ export default function ViaDetalhes() {
         coordinates = parsed.map(([lng, lat]) => ({ lng, lat }));
       }
     } catch {
-      // If not JSON, try semicolon-separated format
+      // Se não for JSON, tentar o formato separado por ponto e vírgula
       coordinates = via.geoLocationPath
         .split(';')
         .map(coord => {
@@ -695,8 +695,8 @@ export default function ViaDetalhes() {
       const from = coordinates[i];
       const to = coordinates[i + 1];
       
-      // Haversine formula
-      const R = 6371; // Earth radius in km
+      // Fórmula de Haversine
+      const R = 6371; // raio da Terra em km
       const dLat = (to.lat - from.lat) * Math.PI / 180;
       const dLon = (to.lng - from.lng) * Math.PI / 180;
       const a = 
@@ -714,7 +714,7 @@ export default function ViaDetalhes() {
     const distance = parseFloat(calculateRouteLength());
     if (distance === 0) return 0;
     
-    // One direction at the fare rule's travel speed, as in the timetable
+    // Um sentido à velocidade de viagem da regra de tarifa, como no horário
     const timeInMinutes = (distance / (via?.velocidadeViagemKmh || 30)) * 60;
     
     return Math.round(timeInMinutes);
@@ -767,7 +767,7 @@ export default function ViaDetalhes() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -803,7 +803,7 @@ export default function ViaDetalhes() {
         </div>
       )}
 
-      {/* Transporte Assignment Modal */}
+      {/* Janela de atribuição do transporte */}
       {showTransporteModal && (
         <div 
           className="fixed inset-0 z-50 backdrop-blur-sm min-h-screen" 
@@ -941,7 +941,7 @@ export default function ViaDetalhes() {
       )}
 
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
-        {/* Delete Confirmation Modal */}
+        {/* Diálogo de confirmação do apagar */}
         {showDeleteModal && (
           <div 
             className="fixed inset-0 z-50 backdrop-blur-sm min-h-screen" 
@@ -1024,7 +1024,7 @@ export default function ViaDetalhes() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('Editar button clicked, navigating to:', `/vias/${params.id}/editar`);
+                  console.log('Botão Editar, a abrir:', `/vias/${params.id}/editar`);
                   router.push(`/vias/${params.id}/editar`);
                 }}
                 className="px-4 py-2 bg-slate-900 text-white rounded-xl font-medium flex items-center space-x-2"
@@ -1059,8 +1059,8 @@ export default function ViaDetalhes() {
           </div>
         </div>
 
-        {/* Statistics Cards */}
-        {/* Statistics Cards */}
+        {/* Cartões das estatísticas */}
+        {/* Cartões das estatísticas */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center justify-between">
@@ -1121,7 +1121,7 @@ export default function ViaDetalhes() {
           </div>
         </div>
 
-        {/* Via Information */}
+        {/* Informação da via */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
           <h3 className="text-lg font-bold text-slate-900 mb-4">Informações da Via</h3>
           
@@ -1155,9 +1155,9 @@ export default function ViaDetalhes() {
             </div>
         </div>
 
-        {/* Map and Paragens Split View */}
+        {/* Mapa e paragens lado a lado */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Paragens List - Left Side */}
+          {/* Lista de paragens, à esquerda */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 h-[600px] flex flex-col">
               <div className="flex items-center justify-between mb-4">
@@ -1217,7 +1217,7 @@ export default function ViaDetalhes() {
             </div>
           </div>
 
-          {/* Map - Right Side */}
+          {/* Mapa, à direita */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-[600px]">
               <div className="p-4 border-b border-slate-200">

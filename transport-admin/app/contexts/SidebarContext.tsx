@@ -6,7 +6,7 @@ interface SidebarContextType {
   isExpanded: boolean;
   toggleSidebar: () => void;
   setIsExpanded: (value: boolean) => void;
-  /** On a phone the sidebar slides in over the page */
+  /** Num telemóvel a barra lateral desliza por cima da página */
   mobileOpen: boolean;
   setMobileOpen: (value: boolean) => void;
 }
@@ -18,7 +18,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Load sidebar state from localStorage on mount
+  // Ler o estado da barra lateral do localStorage ao montar
   useEffect(() => {
     const savedState = localStorage.getItem('sidebarExpanded');
     if (savedState !== null) {
@@ -27,7 +27,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Save sidebar state to localStorage whenever it changes
+  // Guardar o estado da barra lateral no localStorage sempre que muda
   useEffect(() => {
     if (mounted) {
       localStorage.setItem('sidebarExpanded', String(isExpanded));
@@ -48,7 +48,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
 export function useSidebar() {
   const context = useContext(SidebarContext);
   if (context === undefined) {
-    throw new Error('useSidebar must be used within a SidebarProvider');
+    throw new Error('useSidebar tem de ser usado dentro de um SidebarProvider');
   }
   return context;
 }

@@ -57,7 +57,7 @@ export default function EditarProprietario() {
       }
       const data: Proprietario = await response.json();
       
-      // Format date for input (YYYY-MM-DD)
+      // Data no formato do campo (AAAA-MM-DD)
       const date = new Date(data.birthDate);
       const formattedDate = date.toISOString().split('T')[0];
       
@@ -228,7 +228,7 @@ export default function EditarProprietario() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -489,7 +489,7 @@ export default function EditarProprietario() {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Botões de acção */}
           <div className="flex items-center justify-end space-x-4 pt-6 border-t border-slate-200">
             <button
               type="button"

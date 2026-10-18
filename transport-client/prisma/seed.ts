@@ -1224,7 +1224,7 @@ async function main() {
       { codigoTransporte: 1013, idProprietario: proprietario2.id, transporteId: transporte13.id, proprietarioId: proprietario2.id },
       { codigoTransporte: 1014, idProprietario: proprietario1.id, transporteId: transporte14.id, proprietarioId: proprietario1.id },
       { codigoTransporte: 1015, idProprietario: proprietario2.id, transporteId: transporte15.id, proprietarioId: proprietario2.id },
-      // Matola buses
+      // Autocarros da Matola
       { codigoTransporte: 1016, idProprietario: proprietario1.id, transporteId: transporte16.id, proprietarioId: proprietario1.id },
       { codigoTransporte: 1017, idProprietario: proprietario2.id, transporteId: transporte17.id, proprietarioId: proprietario2.id },
       { codigoTransporte: 1018, idProprietario: proprietario1.id, transporteId: transporte18.id, proprietarioId: proprietario1.id },
@@ -1497,7 +1497,7 @@ async function main() {
   console.log('');
 }
 
-// Export main for use in API route
+// main exportado para poder ser usado numa rota da API
 export { main };
 
 main()

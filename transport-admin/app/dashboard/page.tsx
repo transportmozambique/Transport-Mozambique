@@ -64,14 +64,14 @@ function DashboardContent() {
   const [error, setError] = useState<string | null>(null);
   const [selectedVia, setSelectedVia] = useState<string | null>(null);
   const { admin } = useAuth();
-  // What the vehicles are doing now (GPS or timetable), from the same source as the vehicle list
+  // O que os veículos estão a fazer agora (GPS ou horário), da mesma fonte da lista de veículos
   const [agora, setAgora] = useState<{ circulacao: number; parados: number; gps: number; semPosicao: number } | null>(null);
   
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const routesProcessed = useRef<Set<string>>(new Set());
 
-  // Helper function to validate and fix color codes
+  // Validar e corrigir códigos de cor
   const getValidColor = (color: string | undefined): string => {
     const defaultColor = '#3B82F6';
     if (!color || typeof color !== 'string' || !color.startsWith('#')) {
@@ -79,7 +79,7 @@ function DashboardContent() {
     }
     
     const hexPart = color.substring(1);
-    // Check if it contains only valid hex characters
+    // Só caracteres hexadecimais válidos?
     if (!/^[0-9A-Fa-f]+$/.test(hexPart)) {
       return defaultColor;
     }
@@ -87,10 +87,10 @@ function DashboardContent() {
     if (hexPart.length === 6) {
       return color;
     } else if (hexPart.length < 6) {
-      // Pad with zeros
+      // Completar com zeros
       return '#' + hexPart.padEnd(6, '0');
     } else {
-      // Truncate to 6 characters
+      // Cortar a 6 caracteres
       return '#' + hexPart.substring(0, 6);
     }
   };
@@ -102,9 +102,9 @@ function DashboardContent() {
       setRefreshing(true);
       setError(null);
       
-      // Add timeout to fetch request
+      // Tempo limite para o pedido
       const controller = new AbortController();
-      timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      timeoutId = setTimeout(() => controller.abort(), 10000); // limite de 10 segundos
       
       const response = await fetch('/api/dashboard/stats', {
         signal: controller.signal
@@ -113,7 +113,7 @@ function DashboardContent() {
       if (timeoutId) clearTimeout(timeoutId);
       
       if (!response.ok) {
-        // Handle specific HTTP error codes
+        // Códigos de erro HTTP específicos
         if (response.status === 500) {
           setError('Erro no servidor. Por favor, verifique se o servidor está a funcionar correctamente.');
         } else if (response.status === 503) {
@@ -128,14 +128,14 @@ function DashboardContent() {
       
       const data = await response.json();
       
-      // Check if response has error
+      // A resposta traz um erro?
       if (data.error) {
-        console.error('API Error:', data.error);
+        console.error('Erro da API:', data.error);
         setError('Erro ao carregar dados: ' + data.error);
         return;
       }
       
-      // Check if stats exist and are valid
+      // As estatísticas existem e são válidas?
       if (data.stats && typeof data.stats === 'object') {
         setStats(data.stats);
         setMunicipioData(data.municipioData || []);
@@ -144,13 +144,13 @@ function DashboardContent() {
         setParagensMunicipioData(data.paragensMunicipioData || []);
         setLastUpdated(new Date());
       } else {
-        console.error('Invalid API response:', data);
+        console.error('Resposta da API inválida:', data);
         setError('Resposta inválida da API. Por favor, tente novamente.');
       }
     } catch (error: any) {
       console.error('Erro ao carregar estatísticas:', error);
       
-      // Handle different types of errors
+      // Os vários tipos de erro
       if (error.name === 'AbortError') {
         setError('Tempo de espera excedido. Verifique a sua conexão à internet e tente novamente.');
       } else if (error instanceof TypeError && error.message.includes('fetch')) {
@@ -202,11 +202,11 @@ function DashboardContent() {
     };
   }, []);
 
-  // Handle via query parameter
+  // Parâmetro via na query
   useEffect(() => {
     const viaId = searchParams.get('via');
     if (viaId && viasData.length > 0) {
-      // Check if the via exists in the data
+      // A via existe nos dados?
       const viaExists = viasData.some(v => v.id === viaId);
       if (viaExists) {
         setSelectedVia(viaId);
@@ -214,7 +214,7 @@ function DashboardContent() {
     }
   }, [searchParams, viasData]);
 
-  // Initialize map
+  // Criar o mapa
   useEffect(() => {
     if (!mapContainer.current || map.current || viasData.length === 0) return;
 
@@ -222,16 +222,16 @@ function DashboardContent() {
       container: mapContainer.current,
       style: 'https://tiles.openfreemap.org/styles/positron',
       attributionControl: { compact: true },
-      center: [32.5892, -25.9655], // Maputo center
+      center: [32.5892, -25.9655], // Centro de Maputo
       zoom: 11,
-      pitch: 45, // Tilt map to see buildings in 3D
+      pitch: 45, // mapa inclinado para ver os edifícios em 3D
       bearing: 0
     });
 
     map.current.addControl(new maplibregl.NavigationControl(), "top-right");
 
     map.current.on('load', () => {
-      // Add 3D buildings
+      // Edifícios em 3D
       const layers = map.current!.getStyle().layers;
       let firstSymbolId: string | undefined;
       for (const layer of layers) {
@@ -241,7 +241,7 @@ function DashboardContent() {
         }
       }
 
-      // Add building source if it doesn't exist
+      // Juntar a fonte dos edifícios se ainda não existir
       if (!map.current!.getSource('openmaptiles')) {
         map.current!.addSource('openmaptiles', {
           'type': 'vector',
@@ -249,7 +249,7 @@ function DashboardContent() {
         });
       }
 
-      // Add 3D buildings layer
+      // Camada dos edifícios em 3D
       map.current!.addLayer(
         {
           'id': '3d-buildings',
@@ -277,7 +277,7 @@ function DashboardContent() {
         firstSymbolId
       );
 
-      // Draw every route from its stored path ("lng,lat;lng,lat;..."), which already follows the roads
+      // Desenhar cada via a partir do percurso guardado ("lng,lat;lng,lat;..."), que já segue as estradas
       viasData.forEach((via) => {
         if (!via.path || !map.current || routesProcessed.current.has(via.id)) return;
 
@@ -292,7 +292,7 @@ function DashboardContent() {
           addRouteToMap(via.id, coordinates, via.color);
           routesProcessed.current.add(via.id);
         } catch (error) {
-          console.error(`Error processing route ${via.name}:`, error);
+          console.error(`Erro ao tratar a via ${via.name}:`, error);
         }
       });
     });
@@ -310,9 +310,9 @@ function DashboardContent() {
 
     try {
       const validColor = getValidColor(color);
-      console.log(`Via ${viaId}: original color="${color}", valid color="${validColor}"`);
+      console.log(`Via ${viaId}: cor original="${color}", cor válida="${validColor}"`);
 
-      // Add source
+      // Fonte de dados do mapa
       if (!map.current.getSource(`route-${viaId}`)) {
         map.current.addSource(`route-${viaId}`, {
           type: 'geojson',
@@ -327,7 +327,7 @@ function DashboardContent() {
         });
       }
 
-      // Add layer
+      // Camada do mapa
       if (!map.current.getLayer(`route-${viaId}`)) {
         map.current.addLayer({
           id: `route-${viaId}`,
@@ -345,31 +345,31 @@ function DashboardContent() {
         });
       }
     } catch (error) {
-      console.error(`Error adding route ${viaId} to map:`, error);
+      console.error(`Erro ao juntar a via ${viaId} ao mapa:`, error);
     }
   };
 
-  // Handle via selection
+  // Escolha de uma via
   useEffect(() => {
     if (!map.current) return;
 
     if (selectedVia) {
-      // Hide all routes except selected
+      // Esconder todas as vias menos a escolhida
       viasData.forEach((via) => {
         if (map.current?.getLayer(`route-${via.id}`)) {
           if (via.id === selectedVia) {
-            // Show and highlight selected route
+            // Mostrar e realçar a via escolhida
             map.current.setLayoutProperty(`route-${via.id}`, 'visibility', 'visible');
             map.current.setPaintProperty(`route-${via.id}`, 'line-width', 6);
             map.current.setPaintProperty(`route-${via.id}`, 'line-opacity', 1);
           } else {
-            // Hide other routes
+            // Esconder as outras vias
             map.current.setLayoutProperty(`route-${via.id}`, 'visibility', 'none');
           }
         }
       });
 
-      // Zoom to selected route
+      // Aproximar à via escolhida
       const via = viasData.find(v => v.id === selectedVia);
       if (via && via.path) {
         const coordinates = via.path.split(';').map(coord => {
@@ -384,13 +384,13 @@ function DashboardContent() {
 
           map.current.fitBounds(bounds, { 
             padding: 50,
-            pitch: 45, // Maintain tilt when zooming
+            pitch: 45, // manter a inclinação ao aproximar
             bearing: 0
           });
         }
       }
     } else {
-      // Show all routes with normal styling
+      // Mostrar todas as vias com o estilo normal
       viasData.forEach((via) => {
         if (map.current?.getLayer(`route-${via.id}`)) {
           map.current.setLayoutProperty(`route-${via.id}`, 'visibility', 'visible');
@@ -405,7 +405,7 @@ function DashboardContent() {
     return <LoadingScreen layout="admin" />;
   }
 
-  // Show error state
+  // Estado de erro
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen bg-white">
@@ -440,7 +440,7 @@ function DashboardContent() {
   return (
     <div className="min-h-full bg-slate-50">
       <div className="mx-auto max-w-[1600px] space-y-6 px-4 py-6 sm:px-6 lg:py-8">
-        {/* Greeting and quick actions */}
+        {/* Saudação e acções rápidas */}
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-sm font-medium text-slate-500">
@@ -515,7 +515,7 @@ function DashboardContent() {
           <Kpi label="Paragens" value={stats.paragens} note="pontos de paragem" icon={ICONS.stop} onClick={() => router.push('/paragens')} />
         </div>
 
-        {/* The map, what the vehicles are doing now, and the routes */}
+        {/* O mapa, o que os veículos estão a fazer agora, e as vias */}
         <div className="grid gap-4 xl:grid-cols-3">
           <Card
             className="xl:col-span-2"
@@ -570,7 +570,7 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* How the network is spread */}
+        {/* Como a rede está distribuída */}
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Card title="Vias por município">
             <BarList items={viasMunicipioData.map((m) => ({ label: m.name, value: m.count }))} total={stats.vias} />
@@ -590,7 +590,7 @@ function DashboardContent() {
           </Card>
         </div>
 
-        {/* The rest of the register */}
+        {/* O resto do registo */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <LinkStat label="Proprietários" note="Empresas registadas" value={stats.proprietarios} onClick={() => router.push('/proprietarios')} />
           <LinkStat label="Províncias" note="Regiões administrativas" value={stats.provincias} onClick={() => router.push('/provincias')} />
@@ -650,7 +650,7 @@ function MiniStat({ value, label }: { value: number; label: string }) {
   );
 }
 
-/** Horizontal bars, each as a share of `total` */
+/** Barras horizontais, cada uma como parte de `total` */
 function BarList({ items, total }: { items: { label: string; value: number }[]; total: number }) {
   if (!items.length) return <p className="text-sm text-slate-500">Sem dados.</p>;
   return (
@@ -670,7 +670,7 @@ function BarList({ items, total }: { items: { label: string; value: number }[]; 
   );
 }
 
-/** `a` out of `a + b`, as a bar */
+/** `a` em `a + b`, como uma barra */
 function Split({ label, a, b, bLabel }: { label: string; a: number; b: number; bLabel: string }) {
   const total = Math.max(a + b, 1);
   return (

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-// The passenger's saved stops live in the "Missões" tab of the account page
+// As paragens guardadas pelo passageiro estão no separador "Missões" da página da conta
 export default function MyTransportsPage() {
   redirect("/user-info?tab=missoes");
 }

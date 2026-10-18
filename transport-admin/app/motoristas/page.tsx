@@ -52,7 +52,7 @@ export default function MotoristasPage() {
 
   async function fetchMotoristas() {
     try {
-      // Use listLoading for subsequent fetches, loading for initial load
+      // listLoading para os pedidos seguintes, loading para a primeira carga
       if (motoristas.length > 0) {
         setListLoading(true);
       } else {
@@ -61,7 +61,7 @@ export default function MotoristasPage() {
       
       const response = await fetch('/api/motoristas?limit=1000');
       const result = await response.json();
-      // Handle both array and paginated response formats
+      // Aceitar respostas em array e paginadas
       const data = Array.isArray(result) ? result : (result.data || []);
       setMotoristas(data);
     } catch (error) {
@@ -100,7 +100,7 @@ export default function MotoristasPage() {
         fetchMotoristas();
       } else {
         const error = await response.json();
-        // Check if error is about transporte assignment
+        // O erro é sobre a atribuição de um transporte?
         const hasTransporte = error.details?.includes('transporte') || error.error?.includes('transporte');
         setDeleteError({
           message: error.error || 'Erro ao eliminar motorista',
@@ -122,28 +122,28 @@ export default function MotoristasPage() {
   async function handleRemoveAssignments(id: string) {
     setDeleting(true);
     try {
-      // Step 1: Get the motorista to find the transporte
+      // Passo 1: ler o motorista para encontrar o transporte
       const motoristaResponse = await fetch(`/api/motoristas/${id}`);
       if (!motoristaResponse.ok) {
         throw new Error('Erro ao buscar motorista');
       }
       const motorista = await motoristaResponse.json();
 
-      // Step 2: If motorista has a transporte, remove the assignment
+      // Passo 2: se o motorista tem transporte, tirar a atribuição
       if (motorista.transporte?.id) {
         const removeResponse = await fetch(`/api/transportes/${motorista.transporte.id}/atribuir-motorista`, {
           method: 'DELETE',
         });
         
-        // It's ok if assignment doesn't exist (404), continue anyway
+        // Não faz mal se a atribuição não existir (404): continua
         if (!removeResponse.ok && removeResponse.status !== 404) {
           const error = await removeResponse.json();
           console.log('Erro ao remover atribuição:', error);
-          // Continue anyway, try to delete motorista
+          // Continuar na mesma e tentar apagar o motorista
         }
       }
 
-      // Step 3: Now delete the motorista
+      // Passo 3: apagar o motorista
       const deleteResponse = await fetch(`/api/motoristas/${id}`, {
         method: 'DELETE',
       });
@@ -175,7 +175,7 @@ export default function MotoristasPage() {
     
     const matchesStatus = filterStatus === "todos" || motorista.status === filterStatus;
     
-    // Apply status filter if set
+    // Aplicar o filtro de estado, se houver
     if (statusFilter === 'ativos') {
       return matchesSearch && motorista.status === 'ativo';
     } else if (statusFilter === 'inativos') {
@@ -187,13 +187,13 @@ export default function MotoristasPage() {
     return matchesSearch && matchesStatus;
   });
 
-  // Pagination logic
+  // Paginação
   const totalPages = Math.ceil(filteredMotoristas.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentMotoristas = filteredMotoristas.slice(startIndex, endIndex);
 
-  // Reset to page 1 when search term or filter changes
+  // Voltar à página 1 quando a pesquisa ou o filtro mudam
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchTerm, filterStatus, statusFilter, itemsPerPage]);
@@ -204,7 +204,7 @@ export default function MotoristasPage() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -235,7 +235,7 @@ export default function MotoristasPage() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Diálogo de confirmação do apagar */}
       {showDeleteModal && motoristaToDelete && (
         <div 
           className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm min-h-screen" 
@@ -353,9 +353,9 @@ export default function MotoristasPage() {
       )}
 
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
-        {/* Header - 2 Columns Layout */}
+        {/* Cabeçalho em 2 colunas */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          {/* Left - Title and Description */}
+          {/* Esquerda: título e descrição */}
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/dashboard')}
@@ -371,7 +371,7 @@ export default function MotoristasPage() {
             </div>
           </div>
 
-          {/* Right - Action Buttons */}
+          {/* À direita: botões de acção */}
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => router.push('/motoristas/atribuir')}
@@ -394,7 +394,7 @@ export default function MotoristasPage() {
           </div>
         </div>
 
-        {/* Filter Badge */}
+        {/* Etiqueta do filtro */}
         {statusFilter && (
           <div className="flex items-center space-x-2">
             <div className="inline-flex items-center space-x-2 bg-slate-100 border border-slate-300 rounded-xl px-4 py-2">
@@ -416,7 +416,7 @@ export default function MotoristasPage() {
           </div>
         )}
 
-        {/* Stats Cards - Smaller and More Compact */}
+        {/* Cartões de estatísticas, pequenos e compactos */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <button 
             onClick={() => setStatusFilter(null)}
@@ -708,7 +708,7 @@ export default function MotoristasPage() {
                 </svg>
               </button>
               
-              {/* Page numbers */}
+              {/* Números das páginas */}
               <div className="flex items-center space-x-1">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum;

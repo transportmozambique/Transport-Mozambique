@@ -6,9 +6,9 @@ import { orderStopsAlongRoute } from "@/lib/routeOrder";
 import RouteDrawer, { distanceToPath, parseLatLng, pathKm, pathPoints, type DrawnRoute, type Point, type RouteStop } from "@/app/components/RouteDrawer";
 
 /**
- * Redraws an existing route's path on the roads: the current path is shown dashed underneath,
- * the drawing can start from the route's stops, and only a road path is saved (PATCH
- * /api/vias/[id] with geoLocationPath and paragensIds).
+ * Redesenha nas estradas o percurso de uma via existente: o percurso actual aparece tracejado por
+ * baixo, o desenho pode começar a partir das paragens da via, e só se guarda um percurso pelas
+ * estradas (PATCH /api/vias/[id] com geoLocationPath e paragensIds).
  */
 
 interface Via {
@@ -37,7 +37,7 @@ export default function RedesenharPercurso() {
   const [allParagens, setAllParagens] = useState<RouteStop[]>([]);
   const [drawn, setDrawn] = useState<DrawnRoute>({ points: 0, path: [], hasRoute: false, ready: false, failed: false });
   const onDrawn = useCallback((route: DrawnRoute) => setDrawn(route), []);
-  const [excluded, setExcluded] = useState<string[]>([]); // stops the user unticked
+  const [excluded, setExcluded] = useState<string[]>([]); // paragens que o administrador desmarcou
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
@@ -62,11 +62,11 @@ export default function RedesenharPercurso() {
 
   const current = useMemo(() => toPoints(via?.geoLocationPath ?? null), [via]);
   const linked = useMemo(() => via?.paragens.map((vp) => vp.paragem) ?? [], [via]);
-  // A few points of the current path: the router puts the path between them on the roads
+  // Alguns pontos do percurso actual: o router põe o percurso entre eles nas estradas
   const seed = useMemo(() => ({ label: "Começar pelo percurso atual", points: pathPoints(current) }), [current]);
 
   const { hasRoute, ready, failed, path } = drawn;
-  // Stops on the new path, in travel order, and the linked ones it no longer passes
+  // Paragens no novo percurso, pela ordem de viagem, e as ligadas por onde já não passa
   const nearby = useMemo(() => {
     if (path.length < 2) return [];
     const near = allParagens.filter((p) => {

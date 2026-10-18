@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const countOnly = searchParams.get('countOnly') === 'true';
     const filter = searchParams.get('filter') || null;
 
-    // If only count is requested, return just the counts
+    // Quando só se pede a contagem, devolver só as contagens
     if (countOnly) {
       const total = await prisma.motorista.count();
       
@@ -37,11 +37,11 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    // Build where clause based on search and filter
+    // Condição pela pesquisa e pelo filtro
     let whereClause: any = {};
     
     if (search) {
-      // A phone number also matches phones stored with spaces ("+258 84 123 4567")
+      // Um número de telefone também encontra os telefones guardados com espaços ("+258 84 123 4567")
       const phoneIds = await idsByPhoneDigits('Motorista', search);
       whereClause.OR = [
         { nome: { contains: search, mode: 'insensitive' as const } },
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Apply filter
+    // Aplicar o filtro
     if (filter === 'ativos') {
       whereClause.status = 'ativo';
     } else if (filter === 'inativos') {
@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Erro ao criar motorista:', error);
     
-    // Handle Prisma unique constraint errors
+    // Erros de valor único do Prisma
     if (error.code === 'P2002') {
       const field = error.meta?.target?.[0] || 'campo';
       return NextResponse.json(

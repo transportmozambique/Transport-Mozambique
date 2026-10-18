@@ -88,7 +88,7 @@ export default function EditarMotorista() {
         setFotoPreview(data.foto);
       }
 
-      // Load current transport if exists
+      // Ler o transporte actual, se existir
       if (data.transporte) {
         setSelectedTransporte(data.transporte);
         setCurrentTransporteId(data.transporte.id);
@@ -235,7 +235,7 @@ export default function EditarMotorista() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -631,7 +631,7 @@ export default function EditarMotorista() {
                     />
                   </div>
 
-                  {/* The PIN is managed on the driver's page ("PIN de Acesso"), not in this form */}
+                  {/* O PIN gere-se na página do motorista ("PIN de Acesso"), não neste formulário */}
                   <div>
                     <p className="block text-sm font-semibold text-slate-900 mb-2">Acesso ao Portal</p>
                     <p className="text-sm text-slate-600">
@@ -762,7 +762,7 @@ export default function EditarMotorista() {
           </div>
         </form>
 
-        {/* Transport Selection Modal */}
+        {/* Janela de escolha do transporte */}
         {showTransportModal && (
           <div 
             className="fixed inset-0 z-50 backdrop-blur-sm min-h-screen" 
@@ -797,7 +797,7 @@ export default function EditarMotorista() {
                   />
                 </div>
 
-                {/* Transport List */}
+                {/* Lista de transportes */}
                 {loadingTransportes ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>

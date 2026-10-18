@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { getTripState, startTrip, endTrip } from '@/lib/driverTrips';
 import { driverIdFromRequest } from '@/lib/driverSession';
 
-// Trip state shared with the USSD driver menu (*6). Called from the driver portal with the
-// session token it got at login ("Authorization: Bearer"); a driver only changes their own trip.
+// Estado da viagem, partilhado com o menu USSD do motorista (*6). Chamado pelo portal do motorista
+// com o token de sessão recebido na entrada ("Authorization: Bearer"); um motorista só muda a sua própria viagem.
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     if (!state) return json({ error: 'Motorista não encontrado' }, 404);
     return json(state);
   } catch (error) {
-    console.error('Error reading driver trip:', error);
+    console.error('Erro ao ler a viagem do motorista:', error);
     return json({ error: 'Erro ao obter estado da viagem' }, 500);
   }
 }
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     if (!state) return json({ error: 'Motorista não encontrado' }, 404);
     return json(state);
   } catch (error) {
-    console.error('Error updating driver trip:', error);
+    console.error('Erro ao actualizar a viagem do motorista:', error);
     return json({ error: 'Erro ao atualizar a viagem' }, 500);
   }
 }

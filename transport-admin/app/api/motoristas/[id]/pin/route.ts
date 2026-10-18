@@ -4,11 +4,12 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 
 /**
- * Driver PIN for the driver portal and the USSD driver menu (*6). The admin generates it; it is
- * shown once and only its bcrypt hash is stored. A new PIN replaces the old one.
+ * PIN do motorista para o portal do motorista e o menu USSD do motorista (*6). O administrador
+ * gera-o; é mostrado uma vez e só o seu hash bcrypt fica guardado. Um PIN novo substitui o antigo.
+ * Porquê gerado e não escolhido: PINs escolhidos repetem-se (datas, 123456) e são fáceis de adivinhar.
  */
 
-// GET: whether the driver has a PIN
+// GET: se o motorista tem PIN
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const m = await prisma.motorista.findUnique({ where: { id }, select: { password: true } });
@@ -16,7 +17,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   return NextResponse.json({ definido: Boolean(m.password && /^\$2[aby]\$/.test(m.password)) });
 }
 
-// POST: generates a new 6-digit PIN
+// POST: gera um PIN novo de 6 algarismos
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const exists = await prisma.motorista.findUnique({ where: { id }, select: { id: true } });
@@ -27,7 +28,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
   return NextResponse.json({ pin });
 }
 
-// DELETE: removes the PIN (the driver can no longer sign in)
+// DELETE: remove o PIN (o motorista deixa de poder entrar)
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await prisma.motorista.update({ where: { id }, data: { password: null } });

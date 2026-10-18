@@ -24,7 +24,7 @@ export async function POST(
       );
     }
 
-    // Get admin with password
+    // Ler o administrador com a palavra-passe
     const admin = await prisma.administrador.findUnique({
       where: { id },
       select: {
@@ -40,7 +40,7 @@ export async function POST(
       );
     }
 
-    // Verify current password
+    // Confirmar a palavra-passe actual
     const isPasswordValid = await bcrypt.compare(currentPassword, admin.senha);
 
     if (!isPasswordValid) {
@@ -50,10 +50,10 @@ export async function POST(
       );
     }
 
-    // Hash new password
+    // Hash da nova palavra-passe (bcrypt: nunca se guarda em claro)
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update password
+    // Guardar a palavra-passe
     await prisma.administrador.update({
       where: { id },
       data: { senha: hashedPassword },

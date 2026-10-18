@@ -2,22 +2,22 @@ import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
 
 /**
- * Driver identity and trip state shared by the USSD driver menu and the
- * driver portal, so both see the same "trip in progress" flag.
- * Trip state lives in Motorista.emViagem / viagemIniciadaEm; Motorista.status
- * stays the account status set by the admin (ativo, inativo, suspenso).
+ * Identidade do motorista e estado da viagem, partilhados pelo menu USSD do motorista e pelo
+ * portal do motorista, para que os dois vejam o mesmo "viagem em curso".
+ * O estado da viagem fica em Motorista.emViagem / viagemIniciadaEm; Motorista.status continua a
+ * ser o estado da conta definido pelo administrador (ativo, inativo, suspenso).
  */
 
 export function normalizePhone(phone: string): string {
   return phone.replace(/\s+/g, '').replace('+258', '').replace(/^258/, '');
 }
 
-/** Finds the driver whose phone matches, ignoring spaces and the +258 prefix. */
+/** Encontra o motorista cujo telefone coincide, ignorando espaços e o prefixo +258. */
 export async function findDriverByPhone(phone: string) {
   const wanted = normalizePhone(phone);
   if (!wanted) return null;
 
-  // Phones are stored in mixed formats ("+258 84 123 4567"), so compare after normalising
+  // Os telefones estão guardados em formatos diferentes ("+258 84 123 4567"), por isso compara-se depois de normalizar
   const drivers = await prisma.motorista.findMany({ select: { id: true, telefone: true } });
   const match =
     drivers.find((d) => normalizePhone(d.telefone) === wanted) ??
@@ -27,8 +27,9 @@ export async function findDriverByPhone(phone: string) {
 }
 
 /**
- * Drivers sign in (portal and USSD *6) with the PIN the admin generated for them. Only its
- * bcrypt hash is stored; a driver without a PIN cannot sign in until the admin creates one.
+ * Os motoristas entram (portal e USSD *6) com o PIN que o administrador gerou para eles. Só se
+ * guarda o hash bcrypt (um PIN roubado da base de dados não serve); um motorista sem PIN não pode
+ * entrar até o administrador criar um.
  */
 export async function verifyDriverPin(stored: string | null, input: string): Promise<boolean> {
   if (!stored || !input || !/^\$2[aby]\$/.test(stored)) return false;
@@ -46,7 +47,7 @@ export async function getTripState(motoristaId: string): Promise<TripState | nul
   return prisma.motorista.findUnique({ where: { id: motoristaId }, select: tripSelect });
 }
 
-/** Starts a trip; if one is already in progress it is left as is (keeps its start time). */
+/** Inicia uma viagem; se já houver uma em curso, fica como está (mantém a hora de início). */
 export async function startTrip(motoristaId: string): Promise<TripState | null> {
   await prisma.motorista.updateMany({
     where: { id: motoristaId, emViagem: false },

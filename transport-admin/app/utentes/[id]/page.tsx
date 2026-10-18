@@ -86,7 +86,7 @@ export default function UtenteDetalhes() {
       } else {
         const error = await response.json();
         
-        // Check if error is about missoes associations
+        // O erro é sobre ligações a alertas?
         if (error.error && error.error.includes('missões')) {
           setDeleteError(error.details || error.error);
           setHasAssociations(true);
@@ -152,7 +152,7 @@ export default function UtenteDetalhes() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -183,7 +183,7 @@ export default function UtenteDetalhes() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Diálogo de confirmação do apagar */}
       {showDeleteModal && (
         <div 
           className="fixed inset-0 z-50 backdrop-blur-sm min-h-screen" 
@@ -336,9 +336,9 @@ export default function UtenteDetalhes() {
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Conteúdo principal */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Profile Card - Left Column (1/4) */}
+          {/* Cartão do perfil, coluna da esquerda (1/4) */}
           <div className="lg:col-span-1 space-y-6">
             {/* Avatar */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
@@ -371,7 +371,7 @@ export default function UtenteDetalhes() {
               </div>
             </div>
 
-            {/* Status Card */}
+            {/* Cartão do estado */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-4 pb-3 border-b border-slate-200">Status</h3>
               <div className="space-y-3 text-sm">
@@ -404,9 +404,9 @@ export default function UtenteDetalhes() {
             </div>
           </div>
 
-          {/* Details - Right Columns (3/4) */}
+          {/* Detalhes, colunas da direita (3/4) */}
           <div className="lg:col-span-3 space-y-6">
-            {/* Personal Information */}
+            {/* Informação pessoal */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Informações Pessoais</h3>
               

@@ -99,7 +99,7 @@ export default function AdministradoresPage() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -160,7 +160,7 @@ export default function AdministradoresPage() {
           </button>
         </div>
 
-        {/* Search and Filters */}
+        {/* Pesquisa e filtros */}
         <div className="bg-white rounded-2xl border border-slate-200 p-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
@@ -194,7 +194,7 @@ export default function AdministradoresPage() {
           </div>
         </div>
 
-        {/* Administradores Table */}
+        {/* Tabela dos administradores */}
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -363,7 +363,7 @@ export default function AdministradoresPage() {
         </div>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* Janela de confirmação */}
       {modal.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* Backdrop */}
@@ -372,7 +372,7 @@ export default function AdministradoresPage() {
             onClick={() => setModal({ show: false, title: '', message: '' })}
           />
           
-          {/* Modal Content */}
+          {/* Conteúdo da janela */}
           <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4">
             <h3 className="text-xl font-bold text-slate-900 mb-3">
               {modal.title}

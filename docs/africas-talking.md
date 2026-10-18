@@ -1,213 +1,262 @@
 # Africa's Talking
 
-[Africa's Talking](https://africastalking.com) (AT) is the gateway between phone networks and the platform. It carries two things:
+<!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
+[Documentação](README.md) › 5. Pôr online › **Africa's Talking** (página 20 de 23)
 
-- **USSD:** a phone dials the service code, and AT relays every keypress to `POST /api/ussd` on the passenger app ([USSD service](ussd.md)).
-- **SMS:** the passenger app sends USSD results, arrival alerts and driver trip confirmations through AT's SMS API.
+Anterior: [Guia da Neon](guia-neon.md) · [Índice](README.md) · Seguinte: [Testes](testes.md)
 
-The platform runs on the **sandbox** today. Sandbox USSD and SMS only reach AT's web simulator, not real phones. This page shows:
+<details>
+<summary>Todas as páginas</summary>
 
-- how the account was set up, step by step;
-- how to use the USSD menu in the simulator, screen by screen;
-- how a request reaches the code;
-- where to read the logs;
-- what going live involves.
+- 1. Conhecer o projecto: [Visão geral](visao-geral.md) · [Glossário](glossario.md) · [Fontes de dados](fontes-de-dados.md) · [Estado do projecto](estado-do-projecto.md)
+- 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
+- 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · [Localização e GPS](localizacao-gps.md) · [Serviço USSD](ussd.md) · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
+- 4. Usar as aplicações: [Aplicação dos passageiros](app-passageiros.md) · [Portal do motorista](portal-motorista.md) · [Painel de administração](painel-admin.md)
+- 5. Pôr online: [Publicação](publicacao.md) · [Guia da Vercel](guia-vercel.md) · [Guia da Neon](guia-neon.md) · **Africa's Talking**
+- 6. Manter: [Testes](testes.md) · [Resolução de problemas](resolucao-de-problemas.md) · [Limitações](limitacoes.md)
 
-**On this page:** [Current setup](#current-setup) · [How it was set up, step by step](#how-it-was-set-up-step-by-step) · [Use the menu in the simulator](#use-the-menu-in-the-simulator) · [How a request is handled](#how-a-request-is-handled) · [SMS](#sms) · [Logs and sessions](#logs-and-sessions) · [Going live](#going-live)
+</details>
+<!-- /navegação -->
+
+A [Africa's Talking](https://africastalking.com) (AT) é o gateway entre as redes de telemóvel e a plataforma. Leva duas coisas:
+
+- **USSD:** um telemóvel marca o código do serviço, e a AT passa cada tecla para `POST /api/ussd` da aplicação dos passageiros ([Serviço USSD](ussd.md)).
+- **SMS:** a aplicação dos passageiros envia os resultados do USSD, os alertas de chegada e as confirmações de viagem dos motoristas pela API de SMS da AT.
+
+Porquê a Africa's Talking: um só fornecedor para USSD e SMS em vários países africanos, com um ambiente de testes (sandbox) gratuito e um simulador de telemóvel no navegador, o que deixa construir e testar tudo antes de pagar um código.
+
+A plataforma corre hoje no **sandbox**. O USSD e os SMS do sandbox só chegam ao simulador da AT, não a telemóveis reais. Esta página mostra:
+
+- como a conta foi configurada, passo a passo;
+- como usar o menu USSD no simulador, ecrã a ecrã;
+- como um pedido chega ao código;
+- onde ler os registos;
+- o que é preciso para passar a produção.
+
+**Nesta página:** [Configuração actual](#configuração-actual) · [Como foi configurado, passo a passo](#como-foi-configurado-passo-a-passo) · [Usar o menu no simulador](#usar-o-menu-no-simulador) · [Como um pedido é tratado](#como-um-pedido-é-tratado) · [SMS](#sms) · [Registos e sessões](#registos-e-sessões) · [Passar a produção](#passar-a-produção)
 
 ---
 
-## Current setup
+## Configuração actual
 
-| Item | Value |
+| Item | Valor |
 |---|---|
-| AT account | the `transportmozambique` account |
-| App | Sandbox, username `sandbox` |
-| USSD service code | `*384*848080#` (channel `848080` on the shared sandbox code `*384#`) |
-| Callback URL | `https://transport-mz.vercel.app/api/ussd?key=<USSD_CALLBACK_KEY>`. Requests without the key get 403 (since 2026-10-17). |
-| Vercel project `transport-mz` | `AFRICASTALKING_USERNAME=sandbox`, `AFRICASTALKING_API_KEY` (sandbox key), `USSD_CALLBACK_KEY` (Secret, Production) |
-| Sender ID (`AFRICASTALKING_SHORTCODE`) | not set: SMS go out from AT's default sender (`AFRICASTKNG` in the simulator) |
-| Verified | USSD menus and SMS end to end in the simulator, 2026-10-18 |
-| Live (real phones in Mozambique) | not set up ([Going live](#going-live)) |
+| Conta da AT | a conta `transportmozambique` |
+| Aplicação | Sandbox, nome de utilizador `sandbox` |
+| Código USSD | `*384*848080#` (o canal `848080` no código partilhado do sandbox `*384#`) |
+| URL do callback | `https://transport-mz.vercel.app/api/ussd?key=<USSD_CALLBACK_KEY>`. Os pedidos sem a chave recebem 403 (desde 2026-10-17). |
+| Projecto `transport-mz` da Vercel | `AFRICASTALKING_USERNAME=sandbox`, `AFRICASTALKING_API_KEY` (chave do sandbox), `USSD_CALLBACK_KEY` (Secret, Production) |
+| Remetente dos SMS (`AFRICASTALKING_SHORTCODE`) | não definido: os SMS saem do remetente da AT por omissão (`AFRICASTKNG` no simulador) |
+| Verificado | menus USSD e SMS de ponta a ponta no simulador, 2026-10-18 |
+| Ao vivo (telemóveis reais em Moçambique) | não configurado ([Passar a produção](#passar-a-produção)) |
 
-## How it was set up, step by step
+## Como foi configurado, passo a passo
 
-The order matters: the API key and the callback key go into Vercel before the channel points at the app, so the first request already finds them.
+A ordem conta: a chave da API e a chave do callback vão para a Vercel antes de o canal apontar para a aplicação, para o primeiro pedido já as encontrar.
 
-### 1. Sign in
+```mermaid
+flowchart LR
+  A["1. Entrar na AT"] --> B["2. Abrir a aplicação<br/>sandbox"] --> C["3. Gerar a<br/>chave da API"] --> D["4. Pôr as chaves<br/>na Vercel"] --> E["5. Criar o<br/>canal USSD"] --> F["6. Publicar<br/>outra vez"] --> G["7. Testar"]
+```
 
-Go to [account.africastalking.com](https://account.africastalking.com) and sign in, or **Register** to create an account.
+### 1. Entrar
 
-<img src="images/at-login.png" alt="Africa's Talking sign-in page" width="560">
+Ir a [account.africastalking.com](https://account.africastalking.com) e entrar, ou **Register** para criar uma conta.
 
-### 2. Open the sandbox app
+<img src="images/at-login.png" alt="Página de entrada da Africa's Talking" width="560">
 
-The home page offers **Go To Sandbox App** for free testing, and **Teams** for production apps. Each app has its own username and API key. The sandbox's username is `sandbox`.
+### 2. Abrir a aplicação sandbox
 
-<img src="images/at-home.png" alt="Africa's Talking home: Go To Sandbox App, and Teams for production apps" width="720">
+A página inicial oferece **Go To Sandbox App** para testes gratuitos, e **Teams** para as aplicações de produção. Cada aplicação tem o seu nome de utilizador e a sua chave da API. O nome de utilizador do sandbox é `sandbox`.
 
-<img src="images/at-sandbox-dashboard.png" alt="Sandbox app dashboard: App Name Sandbox, Username sandbox" width="720">
+<img src="images/at-home.png" alt="Página inicial da Africa's Talking: Go To Sandbox App, e Teams para as aplicações de produção" width="720">
 
-### 3. Generate the API key
+<img src="images/at-sandbox-dashboard.png" alt="Painel da aplicação sandbox: App Name Sandbox, Username sandbox" width="720">
 
-In the sandbox app: **Settings → API Key**.
-1. Enter the account's password and click **Request**.
-2. AT emails a link to the account's address. Open it to generate the key.
+### 3. Gerar a chave da API
 
-Then:
-- The key is shown once: copy it straight into Vercel (next step), not into a file or a chat.
-- Generating a new key invalidates the previous one.
-- A fresh key can take a few minutes before the API accepts it. Until then AT answers "The supplied authentication is invalid".
+Na aplicação sandbox: **Settings → API Key**.
 
-### 4. Put the keys in Vercel
+1. Escrever a palavra-passe da conta e clicar em **Request**.
+2. A AT envia um link para o email da conta. Abri-lo gera a chave.
 
-Open the Vercel project **transport-mz** → **Settings → Environment Variables** ([Vercel, step by step](vercel-guide.md#environment-variables)):
+Depois:
 
-![transport-mz environment variables: USSD_CALLBACK_KEY (Secret), the session secrets, AFRICASTALKING_USERNAME](images/vercel-env-vars.png)
+- A chave aparece uma só vez: copia-se directamente para a Vercel (passo seguinte), e não para um ficheiro ou uma conversa.
+- Gerar uma chave nova invalida a anterior.
+- Uma chave nova pode demorar alguns minutos até a API a aceitar. Até lá a AT responde "The supplied authentication is invalid".
 
-Click **Add Environment Variable** and add, for **Production**:
+### 4. Pôr as chaves na Vercel
 
-| Key | Type | Value |
+Abrir o projecto **transport-mz** da Vercel → **Settings → Environment Variables** ([Guia da Vercel](guia-vercel.md#variáveis-de-ambiente)):
+
+![Variáveis de ambiente de transport-mz: USSD_CALLBACK_KEY (Secret), os segredos de sessão, AFRICASTALKING_USERNAME](images/vercel-env-vars.png)
+
+Clicar em **Add Environment Variable** e juntar, para **Production**:
+
+| Key | Tipo | Valor |
 |---|---|---|
-| `AFRICASTALKING_USERNAME` | Config | `sandbox` (the app's username) |
-| `AFRICASTALKING_API_KEY` | **Secret** | the key from step 3 |
-| `USSD_CALLBACK_KEY` | **Secret** | a long random value, for example the output of `openssl rand -hex 32` |
+| `AFRICASTALKING_USERNAME` | Config | `sandbox` (o nome de utilizador da aplicação) |
+| `AFRICASTALKING_API_KEY` | **Secret** | a chave do passo 3 |
+| `USSD_CALLBACK_KEY` | **Secret** | um valor aleatório longo, por exemplo o resultado de `openssl rand -hex 32` |
 
-![Add Environment Variable: Secret or Config, key, value, environments](images/vercel-env-add.png)
+![Add Environment Variable: Secret ou Config, chave, valor, ambientes](images/vercel-env-add.png)
 
-A **Secret** cannot be read again after saving, not even by the project's members. Keep a copy of `USSD_CALLBACK_KEY` until step 5 uses it, then delete the copy.
+Um **Secret** não se pode ler outra vez depois de gravado, nem pelos membros do projecto. Guarda-se uma cópia de `USSD_CALLBACK_KEY` até o passo 5 a usar, e depois apaga-se a cópia. Porquê a chave do callback: ver [Segurança → Resposta USSD](seguranca.md#resposta-ussd-callback).
 
-### 5. Create the USSD channel
+### 5. Criar o canal USSD
 
-Back in AT's sandbox app: **USSD → Create Channel**.
-- Pick the shared code `*384#` and a free channel number (here `848080`).
-- Enter the callback URL with the key:
+De volta à aplicação sandbox da AT: **USSD → Create Channel**.
+
+- Escolher o código partilhado `*384#` e um número de canal livre (aqui `848080`).
+- Escrever o URL do callback com a chave:
 
   ```text
   https://transport-mz.vercel.app/api/ussd?key=<USSD_CALLBACK_KEY>
   ```
 
-<img src="images/at-ussd-create-channel.png" alt="Create USSD Channel form: shared service code, channel, callback URL" width="720">
+<img src="images/at-ussd-create-channel.png" alt="Formulário Create USSD Channel: código partilhado, canal, URL do callback" width="720">
 
-**USSD → Service Codes** then lists the channel and its callback. The screenshot below was taken before the key was added; the URL now ends with `?key=…`.
+**USSD → Service Codes** lista então o canal e o seu callback. A captura abaixo foi feita antes de juntar a chave; hoje o URL acaba em `?key=…`.
 
-<img src="images/at-ussd-service-codes.png" alt="USSD Service Codes: *384*848080# with its callback URL" width="720">
+<img src="images/at-ussd-service-codes.png" alt="USSD Service Codes: *384*848080# com o URL do callback" width="720">
 
-AT offers two kinds of service code:
-- **Dedicated** codes such as `*144#`, issued by the regulator or the operator;
-- **Shared** codes such as `*384*848080#`: a channel number on AT's code. The sandbox only supports these.
+A AT oferece dois tipos de código:
 
-A preview deployment's URL also works as a callback, to test a branch before merging. Put the production URL back afterwards.
+- códigos **dedicados**, como `*144#`, atribuídos pelo regulador ou pelo operador;
+- códigos **partilhados**, como `*384*848080#`: um número de canal no código da AT. O sandbox só aceita estes.
 
-### 6. Redeploy
+O URL de uma pré-visualização também serve de callback, para testar um ramo antes do merge. Depois volta-se a pôr o URL de produção.
 
-Vercel functions read environment variables when they are deployed. In **transport-mz → Deployments**, open the menu (**⋯**) of the newest Production deployment and click **Redeploy** ([Vercel → Redeploy](vercel-guide.md#deployments)).
+### 6. Publicar outra vez
 
-### 7. Test
+As funções da Vercel lêem as variáveis de ambiente quando são publicadas. Em **transport-mz → Deployments**, abrir o menu (**⋯**) da publicação de produção mais nova e clicar em **Redeploy** ([Guia da Vercel → Publicações](guia-vercel.md#publicações)).
 
-- In the [simulator](#use-the-menu-in-the-simulator), the main menu appears.
-- Without the key, the endpoint refuses:
+### 7. Testar
+
+- No [simulador](#usar-o-menu-no-simulador), aparece o menu principal.
+- Sem a chave, o endpoint recusa:
 
   ```bash
-  curl -s -o /dev/null -w "%{http_code}\n" -X POST https://transport-mz.vercel.app/api/ussd -d "text="
+  curl -s -o /dev/null -w "%{http_code}\n" -X POST https://transport-mz.vercel.app/api/ussd \
+    -d "sessionId=g&serviceCode=*384*848080%23&phoneNumber=%2B258840000009&text="
   # 403
   ```
 
-When changing the key later, change the variable and the callback URL together, then redeploy ([Security → USSD callback](security.md#ussd-callback)).
+Para mudar a chave mais tarde, mudam-se a variável e o URL do callback juntos, e publica-se outra vez ([Segurança → Mudar segredos](seguranca.md#mudar-segredos)).
 
-## Use the menu in the simulator
+## Usar o menu no simulador
 
-The simulator needs no account. Every screen below is a real answer from production, on 2026-10-18.
+O simulador não precisa de conta. Os ecrãs abaixo são respostas reais.
 
-1. Open the [simulator](https://developers.africastalking.com/simulator). Choose Mozambique (+258) at the flag if it is not already chosen, type a test number (here `84 000 0001`) and press **Connect**.
-2. On the phone's home screen, tap the **phone** (left) to dial; the **messages** (middle) hold the SMS.
-3. Dial `*384*848080#` on the keypad and press the green button.
+1. Abrir o [simulador](https://developers.africastalking.com/simulator). Escolher Moçambique (+258) na bandeira se ainda não estiver escolhido, escrever um número de teste (aqui `84 000 0001`) e carregar em **Connect**.
+2. No ecrã inicial do telemóvel, o **telefone** (à esquerda) marca; as **mensagens** (ao meio) guardam os SMS.
+3. Marcar `*384*848080#` no teclado e carregar no botão verde.
 
-<img src="images/at-sim-connect.png" alt="Simulator: the phone number field, +258 84 000 0001, and Connect" width="200"> <img src="images/at-sim-home.png" alt="Simulator home screen: phone and messages apps" width="200"> <img src="images/at-sim-dial.png" alt="Simulator dialer with *384*848080#" width="200">
+<img src="images/at-sim-connect.png" alt="Simulador: o campo do número de telefone, +258 84 000 0001, e Connect" width="200"> <img src="images/at-sim-home.png" alt="Ecrã inicial do simulador: aplicações do telefone e das mensagens" width="200"> <img src="images/at-sim-dial.png" alt="Teclado do simulador com *384*848080#" width="200">
 
-4. The main menu appears. Type the option's number in the field at the bottom (here `2`, Procurar rotas) and press **SEND**.
-5. Option 2 lists the places routes start from, 6 a page. `7` shows the next page, `8` the previous one, `0` goes back.
+4. Aparece o menu principal. Escrever o número da opção no campo em baixo (aqui `2`, Procurar rotas) e carregar em **SEND**.
 
-<img src="images/at-sim-menu.png" alt="Main menu: 1 Encontrar transporte to 7 Ajuda" width="200"> <img src="images/at-sim-answer.png" alt="The answer 2 typed under the main menu" width="200"> <img src="images/at-sim-origins.png" alt="Procurar rotas - origem: page 1, 7 Proximo, 0 Voltar" width="200"> <img src="images/at-sim-origins-next.png" alt="Origins page 2, with 8 Anterior" width="200">
+<img src="images/at-sim-menu.png" alt="Menu principal: 1 Encontrar transporte a 7 Ajuda" width="200"> <img src="images/at-sim-answer.png" alt="A resposta 2 escrita por baixo do menu principal" width="200">
 
-6. On page 2, `6` chooses Baixa. The routes from there start with their code, the number on the bus.
-7. `1` chooses route 209. The final screen (`END`) closes the session: press **OK**.
-8. Open **messages**: the same result arrives as an SMS from `AFRICASTKNG`.
+5. A opção 2 pede um local ou o número de uma rota. Escrever `museu` e **SEND**: aparecem as rotas que passam no Museu, 4 por página, cada uma começada pelo código (o número no autocarro). `7` mostra a página seguinte, `8` a anterior, `0` volta atrás.
+6. Escrever `1` escolhe a primeira rota. O ecrã final (`END`) fecha a sessão: carregar em **OK**.
+7. Abrir as **mensagens**: o mesmo resultado chega por SMS de `AFRICASTKNG`.
 
-<img src="images/at-sim-routes.png" alt="Rotas de Baixa: 209 1o de Maio, 223 2a Rotunda, 401, 402, 53-0 and 66-0 Albazine" width="200"> <img src="images/at-sim-result.png" alt="Final screen: route 209 Baixa - 1o de Maio, 100 stops, 19.8 km, 199 MT, 2 buses" width="200"> <img src="images/at-sim-sms-result.png" alt="The same result received by SMS" width="200">
+Os ecrãs desta sessão, como o telemóvel os mostra (os mesmos de [Serviço USSD → 2 Procurar rotas](ussd.md#2-procurar-rotas)):
 
-**"This session has expired".** The simulator ends a session when an answer takes too long. Dial again and answer more quickly.
+```text
+text="2"                                  text="2*museu"                          text="2*museu*1"
+CON Rotas de um local                     CON Rotas em Museu:                     END 3-0 Museu - Praca dos Trabalhadores
+Escreva o nome do local ou o numero       1. 3-0 Museu - Praca dos Trabalha..     (Via Av. 24 de Julho)
+da rota (ex: Baixa ou X12)                2. 18-0 Museu - Magoanine (Via Av..     De: Museu
+0. Voltar                                 3. 21-0 Museu - Albazine(via Dom ..     Para: Praca dos Trabalhadores
+                                          4. 23-0 Museu - Matendene (Via Ja..     Paragens: 15
+                                          7. Proximo                              Distancia: 3.4 km
+                                          0. Voltar                               Tarifa (percurso todo): 35 MT
+                                                                                  Autocarros: 2
+```
 
-<img src="images/at-sim-expired.png" alt="Simulator: This session has expired" width="200">
+Quando o nome escrito coincide com vários locais (por exemplo `baixa`: o Terminal de Chapas da Baixa e várias ruas da Baixa), aparece primeiro "Qual local?" para escolher um.
 
-Notes:
-- **The number is a real passenger in production.** The simulated phone number is what the app receives as `phoneNumber`. Options 2 to 5 and 7 only read. Option 1's result creates a passwordless passenger for that number and an arrival alert in the **production** database. Use a test number such as `+25884000000x`, and see [Database](database.md#passengers-created-by-ussd-no-password-yet) to find or remove what it created.
-- **The driver menu.** To test option 6, connect with a driver's phone number and use the PIN the admin generated for that driver ([Admin dashboard → Drivers](admin-dashboard.md#drivers-motoristas)).
-- **Every option.** All menus, with their screens, are in [USSD service](ussd.md#menu-tree).
+![SMS recebidos no simulador (de uma versão anterior dos menus, com o mesmo remetente)](images/at-sim-sms.png)
 
-## How a request is handled
+**"This session has expired".** O simulador acaba uma sessão quando uma resposta demora demasiado. Marcar outra vez e responder mais depressa.
 
-For each answer, AT sends a form-encoded `POST` to the callback URL with `sessionId`, `serviceCode`, `phoneNumber`, `networkCode` and `text`. `text` holds every answer so far, joined with `*`. The app answers `text/plain` beginning with `CON` (show and wait for an answer) or `END` (show and close).
+<img src="images/at-sim-expired.png" alt="Simulador: This session has expired" width="200">
 
-The server keeps no session. It replays `text` from the main menu on every request, so any instance can answer any keypress. The steps in the code are:
-1. key check;
-2. replay of `text`;
-3. the option's database reads;
-4. the screen cut to 182 GSM-7 characters;
-5. the SMS after the answer.
+Notas:
 
-Each step is in [USSD service → Inside the handler](ussd.md#inside-the-handler).
+- **O número é um passageiro real na produção.** O número do telemóvel simulado é o que a aplicação recebe como `phoneNumber`. As opções 2 a 5 e 7 só lêem. O ecrã de viagem da opção 1 cria um passageiro sem palavra-passe para esse número e um alerta de chegada na base de dados de **produção**. Usa-se um número de teste como `+25884000000x`; [Base de dados → Passageiros criados por USSD](base-de-dados.md#passageiros-criados-por-ussd-ainda-sem-palavra-passe) mostra como encontrar ou apagar o que criou.
+- **O menu do motorista.** Para testar a opção 6, liga-se com o número de telefone de um motorista e usa-se o PIN que o painel gerou para ele ([Painel → Dar um PIN a um motorista](painel-admin.md#tarefa-pin)).
+- **Todas as opções.** Todos os menus, com os seus ecrãs, estão em [Serviço USSD → Árvore dos menus](ussd.md#árvore-dos-menus).
 
-![Vercel log of one USSD request and its response](images/vercel-log-request.png)
+## Como um pedido é tratado
+
+Em cada resposta, a AT envia um `POST` em formulário para o URL do callback com `sessionId`, `serviceCode`, `phoneNumber`, `networkCode` e `text`. `text` tem todas as respostas até agora, juntas com `*`. A aplicação responde `text/plain` a começar por `CON` (mostrar e esperar resposta) ou `END` (mostrar e fechar).
+
+O servidor não guarda sessão. Repete `text` a partir do menu principal em cada pedido, por isso qualquer instância responde a qualquer tecla. Os passos no código são:
+
+1. confirmar a chave;
+2. repetir `text`, lendo cada tecla como o ecrã a que respondeu a pede;
+3. as leituras da base de dados da opção;
+4. o ecrã cortado a 182 caracteres GSM-7;
+5. o SMS, depois da resposta.
+
+Cada passo está em [Serviço USSD → O caminho de um pedido](ussd.md#o-caminho-de-um-pedido) e [Dentro do handler](ussd.md#dentro-do-handler).
 
 ## SMS
 
-`transport-client/lib/notifications.ts` sends every SMS with the `africastalking` SDK:
+[`transport-client/lib/notifications.ts`](../transport-client/lib/notifications.ts) envia todos os SMS com o SDK `africastalking`:
 
-- **Recipient.** The phone is normalised to `+258…` first (`"84 123 4567"`, `"0841234567"` and `"258841234567"` all become `+258841234567`).
-- **Sender.** `from` is `AFRICASTALKING_SHORTCODE` when it is set, otherwise AT's default.
-- **No key.** Without `AFRICASTALKING_API_KEY`, nothing is sent and the log says `SMS não enviado para … AFRICASTALKING_API_KEY não configurada`.
-- **Failures never break a flow.** A failed send is logged (`❌ Erro ao enviar SMS para …`) and the USSD screen or arrival check carries on.
+- **Destinatário.** O telefone passa primeiro a `+258…` (`"84 123 4567"`, `"0841234567"` e `"258841234567"` dão todos `+258841234567`).
+- **Remetente.** `from` é `AFRICASTALKING_SHORTCODE` quando está definido, senão o da AT por omissão.
+- **Sem chave.** Sem `AFRICASTALKING_API_KEY`, nada se envia e o registo diz `SMS não enviado para … AFRICASTALKING_API_KEY não configurada`. Porquê: uma instalação local ou uma pré-visualização funciona sem enviar SMS reais.
+- **Uma falha nunca pára um fluxo.** Um envio falhado fica registado (`Erro ao enviar SMS para …`) e o ecrã USSD ou a verificação de chegadas continua.
 
-What is sent:
+O que se envia:
 
-| Trigger | Message | Where |
+| Quando | Mensagem | Onde |
 |---|---|---|
-| USSD options 1 to 6, on the final screen | the screen's content (option 1 only when asked) | after the response, with `waitUntil` ([USSD](ussd.md)) |
-| Arrival alert | "Autocarro {matrícula} está a {n} minutos da {paragem}!" | the arrival check ([Data flow](data-flow.md#arrival-alert-and-sms)) |
-| Driver starts or ends a trip on USSD | "Viagem iniciada com sucesso! Veiculo: … Bons trabalhos!" / "Viagem encerrada com sucesso. …" | USSD option 6 |
+| Opções 1 a 6 do USSD, no ecrã final | o conteúdo do ecrã (na opção 1, só quando se pede) | depois da resposta, com `waitUntil` ([Serviço USSD](ussd.md)) |
+| Alerta de chegada | "Autocarro {matrícula} está a {n} minutos da {paragem}!" | a verificação de chegadas ([Fluxos de dados](fluxos-de-dados.md#alerta-de-chegada-e-sms)) |
+| Um motorista inicia ou termina uma viagem pelo USSD | "Viagem iniciada com sucesso! Veiculo: … Bons trabalhos!" / "Viagem encerrada com sucesso. …" | opção 6 do USSD |
 
-**In the sandbox**, messages only reach phones open in the simulator. AT's sandbox messaging API is sometimes slow and can answer "The server was not able to produce a timely response" without anything being wrong on the platform's side. The send is then logged as an error and not retried, and the message may still arrive.
+**No sandbox**, as mensagens só chegam aos telemóveis abertos no simulador. A API de mensagens do sandbox às vezes é lenta e pode responder "The server was not able to produce a timely response" sem nada estar errado do lado da plataforma. O envio fica então registado como erro e não se repete, e a mensagem pode chegar na mesma.
 
-## Logs and sessions
+## Registos e sessões
 
-**AT side:** USSD → **Sessions** lists every session with its number of hops, duration and status. "Incomplete" means the phone left the session before an `END` screen, or the callback did not answer in time.
+**Do lado da AT:** USSD → **Sessions** lista cada sessão com o número de passos, a duração e o estado. "Incomplete" quer dizer que o telemóvel saiu da sessão antes de um ecrã `END`, ou que o callback não respondeu a tempo.
 
-<img src="images/at-ussd-sessions.png" alt="USSD Sessions log: date, service code, phone number, hops, duration, status" width="720">
+<img src="images/at-ussd-sessions.png" alt="Registo USSD Sessions: data, código, número de telefone, passos, duração, estado" width="720">
 
-**Platform side:** in Vercel, **transport-mz → Logs**, search for `/api/ussd` ([Vercel → Logs](vercel-guide.md#logs)). You will see:
-- one `POST` per keypress, with its `📤 USSD Response`;
-- requests refused for a missing key (403, "USSD pedido recusado");
-- SMS results;
-- clicking a row shows the `📱 USSD Request` it logged.
+**Do lado da plataforma:** na Vercel, **transport-mz → Logs**, pesquisar `/api/ussd` ([Guia da Vercel → Registos](guia-vercel.md#registos)). Aparecem:
 
-![Vercel logs filtered on /api/ussd: one POST per keypress, two 403s for requests without the key](images/vercel-logs-ussd.png)
+- um `POST` por tecla, com o seu `USSD Response`;
+- os pedidos recusados por falta da chave (403, "USSD pedido recusado");
+- os resultados dos SMS;
+- clicar numa linha mostra o `USSD Request` que registou.
 
-The request details in Vercel also show the URL's search parameters, so the callback key is visible to anyone who can read the project's logs. Give log access only to people who may know the key, and do not screenshot a request's details.
+![Registos da Vercel filtrados por /api/ussd: um POST por tecla, dois 403 de pedidos sem a chave](images/vercel-logs-ussd.png)
 
-## Going live
+Os detalhes de um pedido na Vercel também mostram os parâmetros do URL, por isso a chave do callback fica visível a quem puder ler os registos do projecto. O acesso aos registos dá-se só a quem pode saber a chave, e não se fazem capturas dos detalhes de um pedido.
 
-The code needs no change to go live; the account and configuration do. In order:
+## Passar a produção
 
-1. **Coverage.** Confirm with AT that USSD and SMS are available on the Mozambican networks you need (Vodacom, Movitel, Tmcel), and on which kind of code. This was not confirmed at the time of writing.
-2. **Production app.** On the AT home page, create a **Team**, then an app in it. Note its username, and generate its API key.
-3. **Service code.** Request a USSD code for that app (a dedicated code from the regulator or operator, or a channel on a shared code). Set its callback URL to `https://transport-mz.vercel.app/api/ussd?key=<USSD_CALLBACK_KEY>`.
-4. **Sender ID (optional).** Request an alphanumeric sender ID or short code for SMS, then set `AFRICASTALKING_SHORTCODE` to it.
-5. **Credit.** Top up the app's wallet: live USSD sessions and SMS are billed.
-6. **Vercel.** In `transport-mz`, set `AFRICASTALKING_USERNAME` to the app's username and `AFRICASTALKING_API_KEY` to its key, for **Production** only (keep previews keyless so they never send real SMS). Redeploy ([Deployment](deployment.md)).
-7. **Test** with a real phone on each network: the main menu, one option of each kind, an arrival SMS, and a driver trip.
-8. **Clean up.** Revoke API keys of accounts no longer used ([Security → Rotating secrets](security.md#rotating-secrets)).
+O código não precisa de mudar para ir ao vivo; a conta e a configuração sim. Por ordem:
+
+1. **Cobertura.** Confirmar com a AT que o USSD e os SMS estão disponíveis nas redes moçambicanas pretendidas (Vodacom, Movitel, Tmcel), e com que tipo de código. Isto não estava confirmado quando esta página foi escrita.
+2. **Aplicação de produção.** Na página inicial da AT, criar uma **Team**, e uma aplicação dentro dela. Apontar o nome de utilizador e gerar a chave da API.
+3. **Código USSD.** Pedir um código USSD para essa aplicação (um código dedicado do regulador ou do operador, ou um canal num código partilhado). Pôr o URL do callback em `https://transport-mz.vercel.app/api/ussd?key=<USSD_CALLBACK_KEY>`.
+4. **Remetente (opcional).** Pedir um remetente alfanumérico ou um código curto para os SMS, e pôr `AFRICASTALKING_SHORTCODE` com ele.
+5. **Crédito.** Carregar a carteira da aplicação: as sessões USSD e os SMS ao vivo são pagos.
+6. **Vercel.** Em `transport-mz`, pôr `AFRICASTALKING_USERNAME` com o nome de utilizador da aplicação e `AFRICASTALKING_API_KEY` com a sua chave, só em **Production** (as pré-visualizações ficam sem chave, para nunca enviarem SMS reais). Publicar outra vez ([Publicação](publicacao.md)).
+7. **Testar** com um telemóvel real em cada rede: o menu principal, uma opção de cada tipo, um SMS de chegada e uma viagem de motorista.
+8. **Limpar.** Revogar as chaves da API de contas que já não se usam ([Segurança → Mudar segredos](seguranca.md#mudar-segredos)).
+
+<!-- navegação-fim: gerada por .github/scripts/docs-nav.py -->
 
 ---
 
-[← Admin dashboard](admin-dashboard.md) · [Documentation index](README.md) · Next: [Viewing the data in Neon →](neon-guide.md)
+Anterior: [Guia da Neon](guia-neon.md) · [Índice](README.md) · Seguinte: [Testes](testes.md)
+<!-- /navegação-fim -->

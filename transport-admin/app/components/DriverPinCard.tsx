@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 
 /**
- * Driver PIN for the driver portal and the USSD driver menu (*6). A new PIN is shown only once
- * (only its hash is stored); generating another one replaces it.
+ * PIN do motorista para o portal do motorista e o menu USSD do motorista (*6). Um PIN novo é
+ * mostrado uma só vez (só o seu hash fica guardado); gerar outro substitui-o.
  */
 export default function DriverPinCard({ motoristaId }: { motoristaId: string }) {
   const [definido, setDefinido] = useState<boolean | null>(null);

@@ -1,6 +1,6 @@
 /**
- * Centralized logging utility for the admin dashboard
- * Helps control log verbosity across the application
+ * Registo centralizado do painel de administração: controla a quantidade de mensagens em toda a
+ * aplicação (detalhe em desenvolvimento, só erros em produção).
  */
 
 type LogLevel = 'error' | 'warn' | 'info' | 'debug';
@@ -44,6 +44,6 @@ export const logger = {
   },
 };
 
-// Export a function to check if we're in development mode
+// Diz se se está em modo de desenvolvimento
 export const isDevelopment = process.env.NODE_ENV === 'development';
 export const isProduction = process.env.NODE_ENV === 'production';

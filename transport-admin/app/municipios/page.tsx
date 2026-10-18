@@ -32,7 +32,7 @@ function MunicipiosContent() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<{message: string, details?: string, canRemove?: boolean} | null>(null);
 
-  // Get provincia name for header
+  // O nome da província para o cabeçalho
   const provinciaNames: Record<string, string> = {
     "1": "Cidade de Maputo",
     "2": "Maputo Província",
@@ -53,7 +53,7 @@ function MunicipiosContent() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Fetch municípios from API
+  // Pedir os municípios à API
   useEffect(() => {
     const fetchMunicipios = async () => {
       setListLoading(true);
@@ -119,7 +119,7 @@ function MunicipiosContent() {
   async function handleRemoveAssignments(id: string) {
     setDeleting(true);
     try {
-      // Fetch all data at once
+      // Pedir todos os dados de uma vez
       const [viasRes, transportesRes] = await Promise.all([
         fetch('/api/vias?limit=1000'),
         fetch('/api/transportes?limit=1000')
@@ -135,29 +135,29 @@ function MunicipiosContent() {
       const allVias = Array.isArray(viasData) ? viasData : (viasData.data || []);
       const allTransportes = Array.isArray(transportesData) ? transportesData : (transportesData.data || []);
 
-      // Filter vias by municipio
+      // As vias do município
       const viasToUpdate = allVias.filter((v: any) => v.municipioId === id);
       const viaIds = viasToUpdate.map((v: any) => v.id);
       
-      // Filter transportes by vias
+      // Os transportes das vias
       const transportesToUpdate = allTransportes.filter((t: any) => viaIds.includes(t.viaId));
 
-      // Remove associations (don't delete entities)
+      // Tirar as ligações (sem apagar as entidades)
       
-      // 1. Remove transporte associations (motorista, proprietarios, via)
+      // 1. Tirar as ligações dos transportes (motorista, proprietários, via)
       for (const transporte of transportesToUpdate) {
         try {
-          // Remove motorista (set to null)
+          // Tirar o motorista (a null)
           await fetch(`/api/transportes/${transporte.id}/atribuir-motorista`, {
             method: 'DELETE',
           }).catch(() => {});
           
-          // Remove proprietarios associations
+          // Tirar as ligações aos proprietários
           await fetch(`/api/transportes/${transporte.id}/proprietario`, {
             method: 'DELETE',
           }).catch(() => {});
           
-          // Remove via association (set viaId to null)
+          // Tirar a ligação à via (viaId a null)
           await fetch(`/api/transportes/${transporte.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -168,7 +168,7 @@ function MunicipiosContent() {
         }
       }
 
-      // 2. Remove via associations (set municipioId to null)
+      // 2. Tirar as ligações das vias (municipioId a null)
       for (const via of viasToUpdate) {
         try {
           await fetch(`/api/vias/${via.id}`, {
@@ -181,7 +181,7 @@ function MunicipiosContent() {
         }
       }
 
-      // 3. Delete municipio
+      // 3. Apagar o município
       const deleteResponse = await fetch(`/api/municipios/${id}`, {
         method: 'DELETE',
       });
@@ -204,7 +204,7 @@ function MunicipiosContent() {
     }
   }
 
-  // Filter by provincia if query param exists
+  // Filtrar pela província quando a query a traz
   const municipiosByProvincia = provinciaFilter 
     ? municipios.filter(m => m.provinciaId === provinciaFilter)
     : municipios;
@@ -215,13 +215,13 @@ function MunicipiosContent() {
     m.codigo?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
   );
 
-  // Pagination logic
+  // Paginação
   const totalPages = Math.ceil(filteredMunicipios.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedMunicipios = filteredMunicipios.slice(startIndex, endIndex);
 
-  // Reset to page 1 when search changes
+  // Voltar à página 1 quando a pesquisa muda
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchTerm, itemsPerPage]);
@@ -247,7 +247,7 @@ function MunicipiosContent() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Notification Toast */}
+      {/* Notificação */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
           <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
@@ -283,7 +283,7 @@ function MunicipiosContent() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Diálogo de confirmação do apagar */}
       {showDeleteModal && municipioToDelete && (
         <div 
           className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm min-h-screen" 
@@ -435,7 +435,7 @@ function MunicipiosContent() {
           </button>
         </div>
 
-        {/* Stats Cards - Smaller and More Compact */}
+        {/* Cartões de estatísticas, pequenos e compactos */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <button 
             onClick={() => router.push('/municipios')}
@@ -504,7 +504,7 @@ function MunicipiosContent() {
           </button>
         </div>
 
-        {/* Filter Badge */}
+        {/* Etiqueta do filtro */}
         {provinciaFilter && (
           <div className="flex items-center space-x-2">
             <div className="inline-flex items-center space-x-2 bg-slate-100 border border-slate-300 rounded-xl px-4 py-2">

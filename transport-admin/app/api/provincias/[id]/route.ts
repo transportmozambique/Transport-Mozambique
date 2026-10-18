@@ -32,7 +32,7 @@ export async function GET(
       );
     }
 
-    // Get all vias from all municípios in this província
+    // Todas as vias de todos os municípios desta província
     const vias = await prisma.via.findMany({
       where: {
         municipio: {
@@ -48,7 +48,7 @@ export async function GET(
       },
     });
 
-    // Get paragens count for each município (through vias)
+    // Número de paragens de cada município (através das vias)
     const municipiosWithCounts = await Promise.all(
       provincia.municipios.map(async (m) => {
         const paragensCount = await prisma.viaParagem.count({
@@ -117,7 +117,7 @@ export async function DELETE(
     const { searchParams } = new URL(request.url);
     const force = searchParams.get('force') === 'true';
     
-    // Check if província has associated municípios
+    // A província tem municípios?
     const provincia = await prisma.provincia.findUnique({
       where: { id },
       include: {
@@ -146,9 +146,9 @@ export async function DELETE(
       );
     }
 
-    // If force=true, remove associations first
+    // Com force=true, tirar primeiro as ligações
     if (force) {
-      // Set provinciaId to null for all municípios
+      // provinciaId a null em todos os municípios
       await prisma.municipio.updateMany({
         where: { provinciaId: id },
         data: { provinciaId: null as any },
@@ -161,7 +161,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting província:', error);
+    console.error('Erro ao apagar a província:', error);
     return NextResponse.json(
       { error: 'Erro ao eliminar província' },
       { status: 500 }
