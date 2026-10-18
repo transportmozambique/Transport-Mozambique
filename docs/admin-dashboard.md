@@ -39,7 +39,7 @@ The sidebar groups the sections:
 | Território | Províncias, Municípios |
 | Análise | Relatórios |
 
-On a computer the sidebar stays on the left; the arrow at its edge folds it down to icons. On a phone or a narrow window it is hidden: the button at the top left ("Abrir o menu") slides it in over the page, and choosing a section, tapping outside it or Esc closes it. The avatar menu at the top right has "Meu Perfil" and "Sair".
+On a computer (1024 px wide or more) the sidebar stays on the left; the arrow at its edge folds it down to icons. On a phone, a tablet or a narrower window there is no sidebar: the button at the top left ("Abrir o menu") opens the menu over the whole screen, and choosing a section, the X in the same corner, or Esc closes it. The avatar menu at the top right has "Meu Perfil" and "Sair".
 
 <img src="images/admin-dashboard-mobile.png" alt="Dashboard on a phone" width="300"> <img src="images/admin-menu-mobile.png" alt="The menu open on a phone" width="300">
 

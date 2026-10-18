@@ -119,10 +119,10 @@ const groups: { label: string; paths: string[] }[] = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { isExpanded, toggleSidebar, mobileOpen, setMobileOpen } = useSidebar();
-  // On a phone the sidebar is a drawer, always with its labels
+  // Below lg (phones, tablets) there is no sidebar: the header's button opens the menu over the whole screen
   const wide = isExpanded || mobileOpen;
 
-  // Esc closes the drawer
+  // Esc closes the menu
   useEffect(() => {
     if (!mobileOpen) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMobileOpen(false);
@@ -132,21 +132,24 @@ export default function Sidebar() {
 
   return (
     <>
-      {mobileOpen && <div className="fixed inset-0 z-40 bg-slate-900/50 md:hidden" onClick={() => setMobileOpen(false)} aria-hidden />}
       <aside
-        className={`scroll-dark fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col bg-slate-900 text-white transition-transform duration-300 md:static md:z-auto md:translate-x-0 md:transition-[width] ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        } ${isExpanded ? "md:w-64" : "md:w-20"}`}
+        className={`scroll-dark fixed inset-0 z-50 w-full shrink-0 flex-col bg-slate-900 text-white lg:static lg:z-auto lg:flex lg:transition-[width] lg:duration-300 ${
+          mobileOpen ? "flex" : "hidden"
+        } ${isExpanded ? "lg:w-64" : "lg:w-20"}`}
       >
-        {/* Brand, and the button that folds the sidebar */}
-        <div className="flex items-center gap-3 px-4 py-5">
+        {/* Brand, and the button that folds the sidebar (closes the menu on a phone) */}
+        <div className="flex items-center gap-3 px-3 py-3 sm:px-6 lg:px-4 lg:py-5">
           <button
             onClick={() => (mobileOpen ? setMobileOpen(false) : toggleSidebar())}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 transition-colors hover:bg-white/20"
             aria-label={mobileOpen ? "Fechar o menu" : isExpanded ? "Recolher o menu" : "Expandir o menu"}
           >
-            <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              {mobileOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6l12 12M18 6L6 18" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              )}
             </svg>
           </button>
           {wide && (
@@ -176,7 +179,7 @@ export default function Sidebar() {
                         key={item.path}
                         href={item.path}
                         onClick={() => setMobileOpen(false)}
-                        className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${wide ? "" : "justify-center"} ${
+                        className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-base font-medium transition-colors lg:py-2.5 lg:text-sm ${wide ? "" : "justify-center"} ${
                           isActive ? "bg-white text-slate-900 shadow-sm" : "text-slate-300 hover:bg-white/10 hover:text-white"
                         }`}
                         title={!wide ? item.name : undefined}

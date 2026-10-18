@@ -131,10 +131,10 @@ export default function Header() {
   return (
     <header className="z-30 shrink-0 border-b border-slate-200 bg-white/90 px-3 py-3 backdrop-blur sm:px-6">
       <div className="flex items-center justify-between gap-3">
-        {/* The menu, on a phone */}
+        {/* The menu, on a phone or tablet: it opens over the whole screen */}
         <button
           onClick={() => setMobileOpen(true)}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 md:hidden"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-slate-900 hover:bg-slate-100 lg:hidden"
           aria-label="Abrir o menu"
         >
           <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
