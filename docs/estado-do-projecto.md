@@ -64,9 +64,12 @@ O troço recto mais longo que resta numa rota tem 7,2 km, ao longo da EN1, que �
 
 Coisas que se fazem nas aplicações ou nas contas, não no código:
 
-1. **Redesenhar a V086 à mão** (Rua dos Bons Amigos – Antena), no painel: a rota → "Redesenhar percurso" → "Começar pelo percurso actual", e arrastar os pontos do troço recto de 2 km para as ruas ([Painel → Corrigir o percurso de uma rota](painel-admin.md#tarefa-redesenhar)).
-2. **Mudar a palavra-passe da base de dados na Neon**, e depois actualizar `DATABASE_URL` em `transport-mz` e `transport-mz-admin` e publicar outra vez os dois ([Guia da Vercel → Variáveis de ambiente](guia-vercel.md#variáveis-de-ambiente)).
-3. **Guardar os segredos das sessões como "Secret".** A Vercel marca `USER_SESSION_SECRET` e `DRIVER_SESSION_SECRET` de `transport-mz` com "Needs Attention" porque estão como valores legíveis ([Guia da Vercel → Variáveis de ambiente](guia-vercel.md#variáveis-de-ambiente)).
+1. **Mudar a palavra-passe da base de dados na Neon** e guardar o endereço novo como Secret. Porquê: em `transport-mz`, a `DATABASE_URL` de Production e Development é uma variável legível pelos membros do projecto, e um segredo que se pôde ler trata-se como conhecido; guardá-la como Secret sem mudar a palavra-passe deixava o valor antigo válido. Passo a passo:
+   1. Neon → projecto → ramo **production** → **Roles** → `neondb_owner` → **Reset password** ([Guia da Neon → Repor a palavra-passe](guia-neon.md#8-repor-a-palavra-passe)). A partir daqui as aplicações dão erro até ao passo 4.
+   2. Copiar o endereço de ligação novo com **Pooled connection** ligado.
+   3. Vercel → `transport-mz` → **Settings → Environment Variables** → `DATABASE_URL`: apagar as linhas antigas e juntar uma nova, de tipo **Secret**, com o endereço novo, para Production, Preview e Development. O mesmo em `transport-mz-admin` (Production e Preview). Os `.env` locais que apontam para a produção também mudam ([Guia da Vercel → Variáveis de ambiente](guia-vercel.md#variáveis-de-ambiente)).
+   4. Publicar outra vez os dois projectos (**Deployments** → a última publicação → **Redeploy**) e confirmar o mapa e uma entrada no painel ([Publicação → Confirmar uma publicação](publicacao.md#confirmar-uma-publicação)).
+2. **Apagar os passageiros de teste do USSD na produção**, criados pelos ensaios no simulador: as duas consultas de [Base de dados → Passageiros criados por USSD](base-de-dados.md#passageiros-criados-por-ussd-ainda-sem-palavra-passe), no [SQL Editor da Neon](guia-neon.md#2-abrir-o-sql-editor).
 
 ## Próximos passos
 
@@ -109,7 +112,7 @@ Os pull requests juntados na `main` de [transportmozambique/Transport-Mozambique
 | 41 | 2026-10-18 | O mapa inicial dos passageiros carrega 20 KB em vez de 1 MB; um autocarro tocado carrega a sua rota |
 | 42 | 2026-10-18 | Página da tarifa; o portal do motorista acompanha mudanças de veículo; pesquisa de telefones pelos algarismos; desenho de rotas com um segundo router; posição do passageiro fora dos registos; verificação de chegadas a cada 5 min no GitHub Actions; CI; fontes de dados, tarefas passo a passo e como contornar cada limitação |
 | 43 | 2026-10-18 | USSD: cada tecla lida pelo ecrã a que responde, pesquisa que aceita nomes mal escritos, escrever outro nome numa lista faz nova pesquisa; documentação toda em português, como guia passo a passo em seis partes, com o porquê das escolhas, mapa do código e navegação gerada; código, comentários e mensagens em português |
-| 43 | 2026-10-18 | Documentação em português como guia passo a passo, com os porquês e ligações ao código; navegação gerada em todas as páginas; USSD com pesquisa tolerante (erros, abreviaturas, grafias que soam igual) e nova pesquisa em qualquer lista; comentários do código em português |
+| 44 | 2026-10-18 | V086 confirmada na estrada (nada a redesenhar); segredos das sessões dos passageiros e dos motoristas trocados e guardados como Secret; SQL para apagar os passageiros de teste do USSD; os passos da mudança da palavra-passe da Neon |
 
 <!-- navegação-fim: gerada por .github/scripts/docs-nav.py -->
 
