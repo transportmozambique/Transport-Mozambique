@@ -127,7 +127,7 @@ These choices explain most of the code's shape.
 │   │   ├── api/               ussd, buses, bus/[id], stops, stops/[id], destinos, journeys, viagem, gps,
 │   │   │                      auth/*, user/*, driver/*, startup, simulation, ussd-telerivet
 │   │   └── components/        TripPlanner (map and planner), JourneyFollow (following a journey),
-│   │                          mapKit and Plate (shared by both), TransportMap (no longer used),
+│   │                          mapKit and Plate (shared by both), walkPaths, Sheet,
 │   │                          UserAvatar, LoadingScreen, Bus3D*
 │   ├── lib/                   vehiclePosition (positions, arrival times), fares (fare rule,
 │   │                          distances), busSimulator (arrival SMS check), notifications (SMS),
