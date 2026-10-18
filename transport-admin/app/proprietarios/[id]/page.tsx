@@ -44,7 +44,7 @@ export default function ProprietarioDetalhes() {
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
   
-  // Transportes pagination and search
+  // Paginação e pesquisa dos transportes
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [currentPage, setCurrentPage] = useState(1);
@@ -214,7 +214,7 @@ export default function ProprietarioDetalhes() {
       } else {
         const error = await response.json();
         
-        // Check if error is about transportes associations
+        // O erro é sobre ligações a transportes?
         if (error.error && error.error.includes('transportes')) {
           setDeleteError(error.details || error.error);
           setHasAssociations(true);
@@ -235,7 +235,7 @@ export default function ProprietarioDetalhes() {
     setDeleting(true);
     
     try {
-      // Force delete with associations removal
+      // Apagar à força, tirando primeiro as ligações
       const response = await fetch(`/api/proprietarios/${params.id}?force=true`, {
         method: 'DELETE',
       });
@@ -313,7 +313,7 @@ export default function ProprietarioDetalhes() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Diálogo de confirmação do apagar */}
       {showDeleteModal && (
         <div 
           className="fixed inset-0 z-50 backdrop-blur-sm min-h-screen" 
@@ -698,9 +698,9 @@ export default function ProprietarioDetalhes() {
                     <label className="block text-sm font-semibold text-slate-900 mb-2">Certificado de Autenticidade</label>
                     <button
                       onClick={() => {
-                        // Check if it's a base64 string
+                        // É um texto em base64?
                         if (proprietario.certificado?.startsWith('data:application/pdf;base64,')) {
-                          // Convert base64 to blob and open in new tab
+                          // Converter o base64 num blob e abri-lo num separador novo
                           const base64Data = proprietario.certificado.split(',')[1];
                           const byteCharacters = atob(base64Data);
                           const byteNumbers = new Array(byteCharacters.length);
@@ -711,10 +711,10 @@ export default function ProprietarioDetalhes() {
                           const blob = new Blob([byteArray], { type: 'application/pdf' });
                           const url = URL.createObjectURL(blob);
                           window.open(url, '_blank');
-                          // Clean up after a delay
+                          // Libertar depois de um momento
                           setTimeout(() => URL.revokeObjectURL(url), 100);
                         } else {
-                          // If it's a regular URL, open it
+                          // Se for um URL normal, abri-lo
                           window.open(proprietario.certificado, '_blank');
                         }
                       }}
@@ -769,7 +769,7 @@ export default function ProprietarioDetalhes() {
                 </button>
               </div>
 
-              {/* Search and Items Per Page */}
+              {/* Pesquisa e itens por página */}
               {totalTransportes > 0 && (
                 <div className="flex flex-col sm:flex-row gap-4 mb-4">
                   <div className="flex-1">

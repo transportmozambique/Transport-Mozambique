@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     const search = searchParams.get('search') || '';
     const countOnly = searchParams.get('countOnly') === 'true';
 
-    // If only count is requested, return just the count
+    // Quando só se pede a contagem, devolver só a contagem
     if (countOnly) {
       const total = await prisma.proprietario.count({
         where: search ? {
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('Erro ao criar proprietário:', error);
     
-    // Handle Prisma unique constraint errors
+    // Erros de valor único do Prisma
     if (error.code === 'P2002') {
       const field = error.meta?.target?.[0] || 'campo';
       return NextResponse.json(
@@ -127,7 +127,7 @@ export async function POST(request: Request) {
     }
     
     return NextResponse.json(
-      { error: 'Erro ao criar proprietário', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Erro ao criar proprietário', details: error instanceof Error ? error.message : 'Erro desconhecido' },
       { status: 500 }
     );
   }

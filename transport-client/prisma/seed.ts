@@ -1497,7 +1497,7 @@ async function main() {
   console.log('');
 }
 
-// Export main for use in API route
+// main exportado para poder ser usado numa rota da API
 export { main };
 
 main()

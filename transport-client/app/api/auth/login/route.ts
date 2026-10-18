@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     const { senha: _, ...utenteData } = utente;
     const token = createUserToken(utente.id);
     if (!token) {
-      console.error('USER_SESSION_SECRET is not set');
+      console.error('USER_SESSION_SECRET não está definido');
       return NextResponse.json({ error: 'Sessão indisponível. Tente mais tarde.' }, { status: 500 });
     }
 

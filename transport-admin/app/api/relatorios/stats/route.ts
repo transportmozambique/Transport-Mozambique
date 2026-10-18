@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// Totals for the "Estatísticas Gerais" report
+// Totais para o relatório "Estatísticas Gerais"
 export async function GET() {
   try {
     const [

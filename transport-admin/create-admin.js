@@ -1,7 +1,8 @@
-// Creates an admin, or sets a new password for an existing one, in the database named by
-// DATABASE_URL (environment or .env). Everything is asked in the terminal: no email or password
-// lives in this file, the password is not echoed, and only its bcrypt hash is stored.
-// Usage (in transport-admin): node create-admin.js
+// Cria um administrador, ou define uma palavra-passe nova para um existente, na base de dados de
+// DATABASE_URL (ambiente ou .env). Tudo é perguntado no terminal: nenhum email ou palavra-passe
+// fica neste ficheiro, a palavra-passe não aparece no ecrã, e só se guarda o seu hash bcrypt.
+// Porquê um script e não uma página: o primeiro administrador tem de existir antes de alguém poder entrar.
+// Uso (em transport-admin): node create-admin.js
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');

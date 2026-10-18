@@ -8,7 +8,7 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if admin is logged in
+    // O administrador tem sessão?
     const adminData = localStorage.getItem("admin");
     
     if (adminData) {

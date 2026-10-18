@@ -59,13 +59,13 @@ export default function EditarParagem() {
     }
   }, [paragem, nearbyVias]);
 
-  // Add via routes when nearbyVias changes and map is already loaded
+  // Juntar as vias quando nearbyVias muda e o mapa já carregou
   useEffect(() => {
     if (!mapInstanceRef.current || nearbyVias.length === 0) return;
     
     const map = mapInstanceRef.current;
     
-    // Wait for map to be loaded
+    // Esperar que o mapa carregue
     if (!map.loaded()) {
       map.once('load', () => addViaRoutes(map));
     } else {
@@ -87,7 +87,7 @@ export default function EditarParagem() {
             coordinates = parsed;
           }
         } catch {
-          // If not JSON, try semicolon-separated format
+          // Se não for JSON, tentar o formato separado por ponto e vírgula
           coordinates = via.geoLocationPath
             .split(';')
             .map(coord => {
@@ -102,7 +102,7 @@ export default function EditarParagem() {
         const sourceId = `route-${via.id}`;
         const layerId = `route-layer-${via.id}`;
 
-        // Remove existing source/layer if present
+        // Tirar a fonte/camada existente, se houver
         if (map.getLayer(layerId)) {
           map.removeLayer(layerId);
         }
@@ -137,7 +137,7 @@ export default function EditarParagem() {
           }
         });
       } catch (error) {
-        console.error('Error adding via route:', error);
+        console.error('Erro ao juntar a via ao mapa:', error);
       }
     });
   }
@@ -180,11 +180,11 @@ export default function EditarParagem() {
     try {
       const response = await fetch('/api/vias?limit=1000');
       const result = await response.json();
-      // Handle both array and paginated response formats
+      // Aceitar respostas em array e paginadas
       const data = Array.isArray(result) ? result : (result.data || []);
       setAllVias(data);
       
-      // Calculate nearby vias after loading
+      // Calcular as vias próximas depois de carregar
       if (paragem) {
         calculateNearbyVias(paragem.geoLocation, data);
       }
@@ -196,7 +196,7 @@ export default function EditarParagem() {
 
   // Calculate distance between two points using Haversine formula
   function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371e3; // Earth's radius in meters
+    const R = 6371e3; // raio da Terra em metros
     const φ1 = lat1 * Math.PI / 180;
     const φ2 = lat2 * Math.PI / 180;
     const Δφ = (lat2 - lat1) * Math.PI / 180;
@@ -207,10 +207,10 @@ export default function EditarParagem() {
               Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    return R * c; // Distance in meters
+    return R * c; // distância em metros
   }
 
-  // Check if a point is near a route path
+  // Diz se um ponto está perto do percurso de uma via
   function isPointNearRoute(lat: number, lng: number, geoLocationPath: string, threshold: number = 100): boolean {
     if (!geoLocationPath) return false;
 
@@ -224,7 +224,7 @@ export default function EditarParagem() {
           coordinates = parsed;
         }
       } catch {
-        // If not JSON, try semicolon-separated format
+        // Se não for JSON, tentar o formato separado por ponto e vírgula
         coordinates = geoLocationPath
           .split(';')
           .map(coord => {
@@ -236,7 +236,7 @@ export default function EditarParagem() {
 
       if (coordinates.length === 0) return false;
 
-      // Check if any point on the route is within threshold
+      // Algum ponto da via está dentro do limite?
       for (const [routeLng, routeLat] of coordinates) {
         const distance = calculateDistance(lat, lng, routeLat, routeLng);
         if (distance <= threshold) {
@@ -267,7 +267,7 @@ export default function EditarParagem() {
     setNearbyVias(nearby);
   }
 
-  // Recalculate nearby vias when location changes
+  // Recalcular as vias próximas quando o local muda
   useEffect(() => {
     if (formData.latitude && formData.longitude && allVias.length > 0) {
       const geoLocation = `${formData.latitude},${formData.longitude}`;
@@ -297,7 +297,7 @@ export default function EditarParagem() {
     map.addControl(new maplibregl.NavigationControl(), "top-right");
 
     map.on('load', () => {
-      // Add marker for paragem
+      // Juntar o marcador da paragem
       const el = document.createElement("div");
       el.style.cssText = `
         width: 18px;
@@ -321,13 +321,13 @@ export default function EditarParagem() {
       marker.togglePopup();
       markerRef.current = marker;
 
-      // Add via routes if available
+      // Juntar as vias, se houver
       if (nearbyVias.length > 0) {
         addViaRoutes(map);
       }
     });
 
-    // Allow clicking map to update location
+    // Clicar no mapa muda o local
     map.on('click', (e) => {
       const { lat, lng } = e.lngLat;
       
@@ -337,7 +337,7 @@ export default function EditarParagem() {
         longitude: lng.toFixed(6),
       }));
 
-      // Update marker
+      // Actualizar o marcador
       if (markerRef.current) {
         markerRef.current.setLngLat([lng, lat]);
       }

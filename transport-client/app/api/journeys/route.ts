@@ -4,13 +4,13 @@ import { maybeCheckArrivals } from '@/lib/busSimulator';
 import { waitUntil } from '@vercel/functions';
 
 /**
- * Journeys to `to` with changes of bus when no single bus goes there. Starts at `from`, or,
- * with `lat` and `lng`, at the passenger's position (the journey starts with a walk).
- * `from` and `to` are stop ids; several, comma-separated (or an array in a POST body), stand
- * for one place.
+ * Viagens até `to`, com transbordos quando nenhum autocarro vai directo. Começam em `from`, ou,
+ * com `lat` e `lng`, na posição do passageiro (a viagem começa com uma caminhada).
+ * `from` e `to` são ids de paragens; várias, separadas por vírgulas (ou um array no corpo de um
+ * POST), representam um local.
  *
- * POST with a JSON body is what the app uses: a position in a GET query would be kept in the
- * request logs. GET with the same fields in the query still works.
+ * A aplicação usa POST com um corpo JSON: uma posição na query de um GET ficaria nos registos de
+ * pedidos (privacidade). GET com os mesmos campos na query continua a funcionar.
  */
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;

@@ -32,7 +32,7 @@ interface Mission {
 
 type TabType = "profile" | "missions" | "security";
 
-// The session token saved with the passenger at login, for the /api/user endpoints
+// O token de sessão guardado com o passageiro na entrada, para os endpoints /api/user
 function storedToken(): string {
   try {
     return JSON.parse(localStorage.getItem("utente") || "{}").token ?? "";
@@ -45,7 +45,7 @@ function authHeader(): Record<string, string> {
   return { Authorization: `Bearer ${storedToken()}` };
 }
 
-// Saves fresh passenger data without losing the session token
+// Guarda os dados novos do passageiro sem perder o token de sessão
 function saveUtente(data: object) {
   localStorage.setItem("utente", JSON.stringify({ ...data, token: storedToken() }));
 }
@@ -96,7 +96,7 @@ function UserInfoContent() {
 
     const parsedUtente = JSON.parse(utenteData);
     
-    // Check for tab query parameter and set active tab
+    // Ler o separador pedido na query e abri-lo
     const tabParam = searchParams.get('tab');
     if (tabParam === 'missoes') {
       setActiveTab('missions');
@@ -106,13 +106,13 @@ function UserInfoContent() {
       setActiveTab('security');
     }
     
-    // Fetch fresh data from API
+    // Pedir os dados actuais à API
     Promise.all([
       fetch(`/api/user/${parsedUtente.id}`, { headers: authHeader() }),
       fetch(`/api/user/missions`, { headers: authHeader() }),
     ])
       .then(async ([userRes, missionsRes]) => {
-        // Session from before sessions were signed, or expired: sign in again
+        // Sessão de antes de as sessões serem assinadas, ou expirada: entrar outra vez
         if (userRes.status === 401) {
           localStorage.removeItem("utente");
           router.push("/auth");
@@ -120,7 +120,7 @@ function UserInfoContent() {
         }
         const [userData, missionsData] = await Promise.all([userRes.json(), missionsRes.json()]);
         if (userData.error) {
-          console.error('Error fetching user:', userData.error);
+          console.error('Erro ao carregar utilizador:', userData.error);
           setUtente(parsedUtente);
         } else {
           setUtente(userData);
@@ -135,7 +135,7 @@ function UserInfoContent() {
         setLoading(false);
       })
       .catch(error => {
-        console.error('Error fetching data:', error);
+        console.error('Erro ao carregar dados:', error);
         setUtente(parsedUtente);
         setNewNome(parsedUtente.nome);
         setLoading(false);
@@ -171,7 +171,7 @@ function UserInfoContent() {
       
       setTimeout(() => setProfileSuccess(""), 3000);
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("Erro ao actualizar o perfil:", error);
       setProfileError("Erro ao conectar ao servidor");
     } finally {
       setSavingProfile(false);
@@ -226,7 +226,7 @@ function UserInfoContent() {
       
       setTimeout(() => setPasswordSuccess(""), 3000);
     } catch (error) {
-      console.error("Error changing password:", error);
+      console.error("Erro ao alterar a palavra-passe:", error);
       setPasswordError("Erro ao conectar ao servidor");
     } finally {
       setChangingPassword(false);
@@ -260,7 +260,7 @@ function UserInfoContent() {
             return;
           }
 
-          // Remove mission from state
+          // Tirar o alerta do estado
           setMissions(missions.filter(m => m.id !== missionId));
           setModal({
             show: true,
@@ -269,7 +269,7 @@ function UserInfoContent() {
             message: 'Missão removida com sucesso!',
           });
         } catch (error) {
-          console.error('Error deleting mission:', error);
+          console.error('Erro ao apagar alerta:', error);
           setModal({
             show: true,
             type: 'alert',
@@ -317,7 +317,7 @@ function UserInfoContent() {
               <span className="text-lg font-medium">Voltar</span>
             </button>
             
-            {/* User Avatar in top right */}
+            {/* Avatar do passageiro no canto superior direito */}
             <UserAvatar />
           </div>
         </div>
@@ -325,7 +325,7 @@ function UserInfoContent() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left Sidebar - Hidden on mobile, shown on large screens */}
+          {/* Barra lateral esquerda: escondida nos telemóveis, visível em ecrãs grandes */}
           <div className="hidden lg:block lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden sticky top-8">
               {/* User Avatar */}
@@ -401,7 +401,7 @@ function UserInfoContent() {
             </div>
           </div>
 
-          {/* Main Content - Full width on mobile, 3 columns on large screens */}
+          {/* Conteúdo principal: largura inteira nos telemóveis, 3 colunas em ecrãs grandes */}
           <div className="lg:col-span-3">
             <div className="bg-white rounded-2xl shadow-lg p-8">
               {/* Profile Tab */}
@@ -458,7 +458,7 @@ function UserInfoContent() {
                       )}
                     </div>
 
-                    {/* Email (read-only) */}
+                    {/* Email (só leitura) */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Email
@@ -467,7 +467,7 @@ function UserInfoContent() {
                       <p className="text-xs text-slate-500 mt-1">O email não pode ser alterado</p>
                     </div>
 
-                    {/* Telefone (read-only) */}
+                    {/* Telefone (só leitura) */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Telefone
@@ -476,7 +476,7 @@ function UserInfoContent() {
                       <p className="text-xs text-slate-500 mt-1">O telefone não pode ser alterado</p>
                     </div>
 
-                    {/* MISSION ID (read-only) */}
+                    {/* ID MISSION (só leitura) */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
                         MISSION ID
@@ -598,12 +598,12 @@ function UserInfoContent() {
                             <div className="ml-4 flex flex-col space-y-2">
                               <button
                                 onClick={async () => {
-                                  // Find a transporte that serves this paragem
+                                  // Encontrar um transporte que sirva esta paragem
                                   try {
                                     const response = await fetch(`/api/buses?servesStop=${encodeURIComponent(mission.paragemId)}`);
 
                                     if (!response.ok) {
-                                      throw new Error('Failed to fetch buses');
+                                      throw new Error('Falha ao carregar autocarros');
                                     }
 
                                     const data = await response.json();
@@ -620,7 +620,7 @@ function UserInfoContent() {
                                       });
                                     }
                                   } catch (error) {
-                                    console.error('Error finding transporte:', error);
+                                    console.error('Erro ao procurar transporte:', error);
                                     setModal({
                                       show: true,
                                       type: 'alert',

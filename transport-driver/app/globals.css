@@ -44,7 +44,7 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
-/* Below the driver's card on a phone */
+/* Por baixo do cartão do motorista num telemóvel */
 .maplibregl-ctrl-top-right {
   top: 76px;
 }
@@ -55,8 +55,8 @@ body {
   }
 }
 
-/* Scroll bars in the app's colours: thin, with a rounded thumb on a clear track. Firefox and
-   current Chrome/Edge use the standard properties; Safari only knows the ::-webkit ones. */
+/* Barras de deslocamento nas cores da aplicação: finas, com o cursor arredondado sobre uma calha
+   clara. O Firefox e o Chrome/Edge actuais usam as propriedades normais; o Safari só conhece as ::-webkit. */
 * {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;

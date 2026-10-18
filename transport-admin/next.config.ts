@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['recharts', 'maplibre-gl'],
   },
   
-  // Optimize production builds (swcMinify is now default in Next.js 16)
+  // Optimizar as versões de produção (o swcMinify já vem por omissão no Next.js 16)
   compress: true,
   
   // Optimize images

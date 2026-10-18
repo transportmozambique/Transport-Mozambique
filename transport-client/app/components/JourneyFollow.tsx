@@ -15,16 +15,17 @@ import { useWalkPaths, type Walk } from "./walkPaths";
 import { BUS_SVG, EMPTY, at, duration, glideMarker, mePin, paintFace, soon, textOn, WALK_ATTRIBUTION } from "./mapKit";
 
 /**
- * Following a journey (/viagem): every bus of it, the walks and the passenger on one map, with
- * the step they are on now. The page works out the step from the passenger's position and the
- * buses' (on board when they are with the bus past the stop, off when the bus has passed their
- * stop), and the passenger can correct it ("Já entrei", "Já saí").
+ * Acompanhar uma viagem (/viagem): todos os seus autocarros, as caminhadas e o passageiro num só
+ * mapa, com o passo em que ele está agora. A página deduz o passo da posição do passageiro e das
+ * dos autocarros (a bordo quando está junto do autocarro depois da paragem de embarque, fora quando
+ * o autocarro passou a sua paragem), e o passageiro pode corrigi-lo ("Já entrei", "Já saí").
+ * Porquê deduzir: quem vai num autocarro cheio não tem mãos para carregar em botões a cada passo.
  */
 
 const REFRESH_MS = 10_000;
-/** Within this of the bus, past the boarding stop: the passenger is on it */
+/** A menos disto do autocarro, depois da paragem de embarque: o passageiro vai nele */
 const ON_BUS_M = 120;
-/** Within this of a stop: the passenger is there */
+/** A menos disto de uma paragem: o passageiro está lá */
 const AT_STOP_M = 50;
 
 type Phase = { a: number; bordo: boolean };
@@ -38,7 +39,7 @@ function readPhase(key: string): Phase {
     const saved = JSON.parse(sessionStorage.getItem(key) ?? "null");
     if (saved && typeof saved.a === "number") return { a: saved.a, bordo: Boolean(saved.bordo) };
   } catch {
-    // no storage (private window): start at the first leg
+    // sem armazenamento (janela privada): começa na primeira etapa
   }
   return { a: 0, bordo: false };
 }
@@ -77,7 +78,7 @@ export default function JourneyFollow() {
       try {
         sessionStorage.setItem(phaseKey, JSON.stringify(p));
       } catch {
-        // not kept across reloads
+        // não fica guardado entre recarregamentos
       }
     },
     [phaseKey],
@@ -110,8 +111,8 @@ export default function JourneyFollow() {
     return () => navigator.geolocation.clearWatch(id);
   }, []);
 
-  // ── Data, and the step the passenger is on ─────────────────────────────────
-  // Asked again as soon as the position is first known: the walk is measured from it
+  // ── Dados, e o passo em que o passageiro está ─────────────────────────────
+  // Pedidos outra vez logo que a posição é conhecida pela primeira vez: a caminhada mede-se a partir dela
   const hasMe = me !== null;
   useEffect(() => {
     if (!legs.length) return;
@@ -126,7 +127,7 @@ export default function JourneyFollow() {
         if (endId) q.set("para", endId);
       }
       try {
-        // POST, so the passenger's position stays out of the request logs
+        // POST, para a posição do passageiro ficar fora dos registos de pedidos
         const res = await fetch(`/api/viagem?${q}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -146,8 +147,8 @@ export default function JourneyFollow() {
         const v: FollowedJourney = data.viagem;
         setJourney(v);
 
-        // Moves on by itself: on board once with the bus past the boarding stop, off once the
-        // bus has passed the alighting stop (or the passenger is at it and the bus is not)
+        // Avança sozinho: a bordo quando está com o autocarro depois da paragem de embarque, fora
+        // quando o autocarro passou a paragem de saída (ou o passageiro está nela e o autocarro não)
         const cur = v.etapas.find((e): e is FollowBus => e.tipo === "autocarro" && e.estado === "agora");
         const ph = phaseRef.current;
         const pos = meRef.current;
@@ -266,7 +267,7 @@ export default function JourneyFollow() {
     };
   }, []);
 
-  // Lines and stops of the journey (or of the bus's route)
+  // Linhas e paragens da viagem (ou da via do autocarro)
   useEffect(() => {
     const m = map.current;
     if (!mapReady || !m) return;
@@ -298,13 +299,13 @@ export default function JourneyFollow() {
     (m.getSource("legs") as GeoJSONSource | undefined)?.setData({ type: "FeatureCollection", features: lines });
     (m.getSource("points") as GeoJSONSource | undefined)?.setData({ type: "FeatureCollection", features: points });
 
-    // The whole journey in view, once
+    // A viagem inteira à vista, uma vez
     if (!fitted.current && lines.length) {
       fitted.current = true;
       const bounds = new maplibregl.LngLatBounds();
       for (const f of lines) for (const c of (f.geometry as GeoJSON.LineString).coordinates) bounds.extend(c as [number, number]);
       if (meRef.current) bounds.extend([meRef.current[1], meRef.current[0]]);
-      // and the bus the passenger is waiting for, or is on
+      // e o autocarro de que o passageiro está à espera, ou em que vai
       const now = journey?.etapas.find((e): e is FollowBus => e.tipo === "autocarro" && e.estado === "agora");
       if (now) bounds.extend([now.autocarro.lng, now.autocarro.lat]);
       if (bus) bounds.extend([bus.autocarro.lng, bus.autocarro.lat]);
@@ -312,7 +313,7 @@ export default function JourneyFollow() {
     }
   }, [mapReady, journey, bus]);
 
-  // The walks, along the streets once their paths arrive
+  // As caminhadas, pelas ruas logo que os caminhos chegam
   const walkLegs = useMemo(() => (journey?.etapas ?? []).filter((e): e is FollowWalk => e.tipo === "pe"), [journey]);
   const walks = useMemo<Walk[]>(() => walkLegs.map((e) => ({ from: [e.de.lat, e.de.lng], to: [e.para.lat, e.para.lng] })), [walkLegs]);
   const walkLines = useWalkPaths(walks);
@@ -328,7 +329,7 @@ export default function JourneyFollow() {
     });
   }, [mapReady, walkLines, walkLegs]);
 
-  // The journey's buses, moving
+  // Os autocarros da viagem, em movimento
   useEffect(() => {
     const m = map.current;
     if (!mapReady || !m) return;
@@ -351,7 +352,7 @@ export default function JourneyFollow() {
     }
   }, [mapReady, journey, bus]);
 
-  // The passenger
+  // O passageiro
   useEffect(() => {
     const m = map.current;
     if (!mapReady || !m || !me) return;
@@ -417,7 +418,7 @@ export default function JourneyFollow() {
         <div className="h-full w-full" ref={mapRef} />
       </div>
 
-      {/* Map buttons: the whole journey, and the passenger */}
+      {/* Botões do mapa: a viagem inteira, e o passageiro */}
       <div className={`absolute z-30 right-3 flex flex-col gap-2 ${snap === "peek" ? "bottom-[108px]" : "bottom-[calc(50dvh+12px)]"} md:bottom-6`}>
         <button onClick={showAll} className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-slate-900 shadow-lg hover:bg-slate-50">
           Ver a viagem toda
@@ -441,7 +442,7 @@ export default function JourneyFollow() {
         <UserAvatar />
       </div>
 
-      {/* Panel: a card on the left on a computer, a bottom sheet on a phone (dragged up to the whole screen) */}
+      {/* Painel: um cartão à esquerda num computador, uma folha em baixo num telemóvel (arrastada até ao ecrã inteiro) */}
       <Sheet
         snap={snap}
         onSnap={setSnap}
@@ -489,12 +490,12 @@ function JourneyPanel({
   const last = journey.etapas[journey.etapas.length - 1];
   const finalWalk = !current && last?.tipo === "pe" ? last : null;
   const arrived = !current && (!finalWalk || (me !== null && distanceMeters(me, [finalWalk.para.lat, finalWalk.para.lng]) <= AT_STOP_M));
-  // Minutes from the last refresh (at most REFRESH_MS old)
+  // Minutos desde a última actualização (no máximo REFRESH_MS)
   const leftMin = journey.duracaoMin;
 
   return (
     <div>
-      {/* Where to, and when */}
+      {/* Para onde, e quando */}
       <div className="mb-3">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Destino</p>
         <p className="truncate text-lg font-bold text-slate-900">{toLabel || last?.para.nome}</p>
@@ -515,7 +516,7 @@ function JourneyPanel({
 
       <NowCard journey={journey} current={current} finalWalk={finalWalk} arrived={arrived} phase={phase} me={me} onPhase={onPhase} onFinish={onFinish} />
 
-      {/* Every step */}
+      {/* Todos os passos */}
       <ol className="mt-4 space-y-0">
         {journey.etapas.map((e, i) => (
           <Step key={i} e={e} last={i === journey.etapas.length - 1} />
@@ -535,7 +536,7 @@ function JourneyPanel({
   );
 }
 
-/** The step the passenger is on now, in large type, with what to do. */
+/** O passo em que o passageiro está agora, em letra grande, com o que fazer. */
 function NowCard({
   journey,
   current,
@@ -637,7 +638,7 @@ function NowCard({
             : current.embarque
               ? `O autocarro passa ${at(current.embarque)}`
               : "Sem hora para este autocarro"}
-          {/* How far it is only means something while it is on its way (not overnight) */}
+          {/* A distância só interessa enquanto o autocarro vem a caminho (não de noite) */}
           {comes !== null && comes < 60 && current.autocarro.metrosAteEmbarque ? ` · a ${formatDistance(current.autocarro.metrosAteEmbarque)}` : ""}
         </p>
         {current.perde && current.embarque && (
@@ -760,7 +761,7 @@ function BusPanel({ bus }: { bus: FollowedBus }) {
   );
 }
 
-/** An SMS alert when a bus is close to `paragem` (the passenger's account page lists them). */
+/** Um alerta por SMS quando um autocarro está perto de `paragem` (a página da conta lista-os). */
 function AlertButton({ transporteId, paragemId, paragem }: { transporteId: string; paragemId: string; paragem: string }) {
   const [state, setState] = useState<{ status: "idle" | "loading" | "done" | "error"; message?: string }>({ status: "idle" });
   const save = async () => {

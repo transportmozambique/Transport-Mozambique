@@ -8,7 +8,7 @@ describe('CRUD Operations', () => {
   let testMunicipioId: string;
 
   beforeAll(async () => {
-    // Get existing provincia and municipio for testing
+    // Ler uma província e um município existentes para os testes
     const provincia = await prisma.provincia.findFirst();
     const municipio = await prisma.municipio.findFirst();
     

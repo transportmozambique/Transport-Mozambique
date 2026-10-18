@@ -33,9 +33,10 @@ export const DRIVER_PROFILE_FIELDS = {
 } as const;
 
 /**
- * What the driver portal shows: the driver, their vehicle (with its current position) and the
- * vehicle's route with its stops in travel order. Sent at sign-in (POST /api/driver/login) and
- * again by GET /api/driver/me, so the portal follows a change of vehicle or route made in the admin.
+ * O que o portal do motorista mostra: o motorista, o seu veículo (com a posição actual) e a via
+ * do veículo com as paragens pela ordem de viagem. Enviado na entrada (POST /api/driver/login) e
+ * de novo por GET /api/driver/me, para que o portal acompanhe uma mudança de veículo ou de via
+ * feita no painel de administração sem o motorista ter de sair e entrar.
  */
 export async function driverProfile(driver: Driver) {
   const transporte = driver.transporteId
@@ -73,7 +74,7 @@ export async function driverProfile(driver: Driver) {
           modelo: transporte.modelo,
           cor: transporte.cor,
           lotacao: transporte.lotacao,
-          // Real GPS when fresh, otherwise the timetable position on the route
+          // GPS real quando recente, senão a posição pelo horário na via
           currGeoLocation: vehicleGeo(transporte, via?.geoLocationPath, new Date(), await getFareRule()) ?? transporte.currGeoLocation,
         }
       : null,

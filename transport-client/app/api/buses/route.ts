@@ -13,19 +13,19 @@ import { maybeCheckArrivals } from '@/lib/busSimulator';
 import { waitUntil } from '@vercel/functions';
 
 /**
- * API to find buses that go from user's origin to user's destination
- * 
- * Key concept: User's journey (origem → destino) is a SUBSET of bus route
- * 
- * Example:
- * - Bus route: Matola → Portagem → Museu → Baixa
- * - User journey: Portagem → Museu
- * 
- * Calculations:
- * - Tempo de Chegada: Time for bus to reach user's origem
- * - Distância Viagem: Distance from user's origem to user's destino
- * - Tempo de Viagem: Time user spends in bus (origem → destino)
- * - Preço: Based on user's journey distance, using the active Tarifa rule (lib/fares.ts)
+ * API para encontrar os autocarros que vão da origem ao destino do passageiro.
+ *
+ * Ideia principal: a viagem do passageiro (origem → destino) é uma PARTE da via do autocarro.
+ *
+ * Exemplo:
+ * - Via do autocarro: Matola → Portagem → Museu → Baixa
+ * - Viagem do passageiro: Portagem → Museu
+ *
+ * Cálculos:
+ * - Tempo de Chegada: tempo até o autocarro chegar à origem do passageiro
+ * - Distância Viagem: distância da origem ao destino do passageiro
+ * - Tempo de Viagem: tempo que o passageiro passa no autocarro (origem → destino)
+ * - Preço: pela distância da viagem do passageiro, com a regra de Tarifa activa (lib/fares.ts)
  */
 
 export async function GET(request: NextRequest) {
@@ -34,10 +34,10 @@ export async function GET(request: NextRequest) {
     const paragemId = searchParams.get('paragemId'); // User's origin
     const destinoId = searchParams.get('destinoId'); // User's destination
     const viaId = searchParams.get('viaId'); // Single via (legacy)
-    const viaIds = searchParams.get('viaIds'); // Multiple vias (new)
+    const viaIds = searchParams.get('viaIds'); // várias vias
     const rule = await getFareRule();
 
-    // Positions only (live map refresh): one light query, route paths cached per instance
+    // Só posições (actualização do mapa ao vivo): uma consulta leve, percursos das vias guardados por instância
     if (searchParams.get('fields') === 'position') {
       const [rows, paths] = await Promise.all([
         prisma.transporte.findMany({
@@ -53,12 +53,12 @@ export async function GET(request: NextRequest) {
           ? [{ id: t.id, latitude: pos.point[0], longitude: pos.point[1], fonte: pos.source, direcao: pos.heading }]
           : [];
       });
-      // The live map polls this every few seconds: a good moment to check arrival SMS
+      // O mapa ao vivo pede isto a cada poucos segundos: um bom momento para verificar os SMS de chegada
       waitUntil(maybeCheckArrivals());
       return NextResponse.json({ buses, total: buses.length });
     }
 
-    // The buses whose route serves one stop (an arrival alert's "track" button)
+    // Os autocarros cuja via serve uma paragem (o botão "seguir" de um alerta de chegada)
     const servesStop = searchParams.get('servesStop');
     if (servesStop) {
       const rows = await prisma.transporte.findMany({
@@ -70,8 +70,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ buses, total: buses.length });
     }
 
-    // The passenger map's first load: what a marker and its popup show, without every bus's route
-    // path and stops (about 1 MB compressed). A tapped bus's path comes from /api/bus/[id].
+    // A primeira carga do mapa do passageiro: o que um marcador e o seu balão mostram, sem o percurso
+    // e as paragens de todos os autocarros (cerca de 1 MB comprimido). O percurso de um autocarro tocado vem de /api/bus/[id].
     if (searchParams.get('fields') === 'map') {
       const [rows, paths] = await Promise.all([
         prisma.transporte.findMany({
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ buses, total: buses.length });
     }
 
-    // If no parameters, return all buses
+    // Sem parâmetros, devolve todos os autocarros
     if (!paragemId && !viaId && !viaIds && !destinoId) {
       
       const allTransportes = await prisma.transporte.findMany({
@@ -123,15 +123,15 @@ export async function GET(request: NextRequest) {
         .filter((t): t is typeof t & { via: NonNullable<typeof t.via> } => t.via != null)
         .map((transporte) => {
         const { via } = transporte;
-        // Stops in travel order (their id order is not)
+        // Paragens pela ordem de viagem (a ordem dos ids não é)
         via.paragens = orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation);
-        // Real GPS when fresh, otherwise the timetable position on the route
+        // GPS real quando recente, senão a posição pelo horário na via
         const position = vehiclePosition(transporte, via.geoLocationPath || transporte.routePath, now, rule);
         const [currentLat, currentLng] =
           position?.point ?? parseLatLng(via.paragens[0]?.paragem.geoLocation) ?? [-25.9655, 32.5892];
 
-        // The route's path comes first: the bus's own routePath is stale on most buses
-        // (it was copied from other routes), so it is only a fallback.
+        // O percurso da via vem primeiro: o routePath do próprio autocarro está desactualizado na
+        // maioria dos autocarros (foi copiado de outras vias), por isso é só um recurso.
         const routePath = parseRoutePath(via.geoLocationPath || transporte.routePath).map(
           ([lat, lng]) => [lng, lat] as [number, number]
         );
@@ -170,7 +170,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Require both origem and destino
+    // É preciso a origem e o destino
     if (!paragemId || !destinoId) {
       return NextResponse.json(
         { error: 'paragemId (origem) and destinoId are required' },
@@ -178,21 +178,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get origem and destino details
+    // Ler a origem e o destino
     const [origem, destino] = await Promise.all([
       prisma.paragem.findUnique({ where: { id: paragemId } }),
       prisma.paragem.findUnique({ where: { id: destinoId } })
     ]);
 
     if (!origem) {
-      return NextResponse.json({ error: 'Origem not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Origem não encontrada' }, { status: 404 });
     }
 
     if (!destino) {
-      return NextResponse.json({ error: 'Destino not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Destino não encontrado' }, { status: 404 });
     }
 
-    // Parse via IDs (support both single and multiple)
+    // Ler os ids das vias (uma ou várias)
     let viaIdFilter: string[] | undefined;
     if (viaIds) {
       viaIdFilter = viaIds.split(',');
@@ -200,7 +200,7 @@ export async function GET(request: NextRequest) {
       viaIdFilter = [viaId];
     }
 
-    // Find all transportes that pass through BOTH stops in correct order
+    // Encontrar todos os transportes que passam pelas DUAS paragens
     const allTransportes = await prisma.transporte.findMany({
       where: viaIdFilter ? { viaId: { in: viaIdFilter } } : {},
       include: {
@@ -228,12 +228,12 @@ export async function GET(request: NextRequest) {
         if (!transporte.via) return null;
         const { via } = transporte;
 
-        // Stops in travel order (their id order is not)
+        // Paragens pela ordem de viagem (a ordem dos ids não é)
         const stops = orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation)
           .map((vp) => ({ vp, point: parseLatLng(vp.paragem.geoLocation) }))
           .filter((s): s is { vp: typeof s.vp; point: LatLng } => s.point !== null);
 
-        // Bus must serve both stops; trips can go either way along the route
+        // O autocarro tem de servir as duas paragens; as viagens podem ir num sentido ou no outro da via
         const trip = estimateBusTrip({
           vehicle: transporte,
           path: via.geoLocationPath,
@@ -252,13 +252,13 @@ export async function GET(request: NextRequest) {
           matricula: transporte.matricula,
           via: via.nome,
           viaId: via.id,
-          // Direction of this trip, named by the route's first and last stops along its path
+          // Sentido desta viagem, com o nome das primeira e última paragens da via no seu percurso
           direcao: trip.sentido === 1
             ? `${stops[0].vp.paragem.nome} → ${stops[stops.length - 1].vp.paragem.nome}`
             : `${stops[stops.length - 1].vp.paragem.nome} → ${stops[0].vp.paragem.nome}`,
           distancia: Math.round(trip.distanciaViagem), // User's journey distance
-          tempoEstimado: trip.tempoChegada, // Time for bus to reach origem
-          tempoViagem: trip.tempoViagem, // Time user spends in bus
+          tempoEstimado: trip.tempoChegada, // tempo até o autocarro chegar à origem
+          tempoViagem: trip.tempoViagem, // tempo que o passageiro passa no autocarro
           velocidade: currentSpeedKmh(transporte, position, rule),
           latitude: bus[0],
           longitude: bus[1],
@@ -277,7 +277,7 @@ export async function GET(request: NextRequest) {
       })
       .filter((bus) => bus !== null);
 
-    // Sort by arrival time
+    // Ordenar pela hora de chegada
     validBuses.sort((a, b) => a.tempoEstimado - b.tempoEstimado);
 
     return NextResponse.json({
@@ -296,10 +296,10 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error('❌ Error fetching buses:', error);
+    console.error('❌ Erro ao carregar autocarros:', error);
     return NextResponse.json(
       { 
-        error: 'Internal server error',
+        error: 'Erro interno do servidor',
         message: error.message,
       },
       { status: 500 }

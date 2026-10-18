@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAndNotifyUsers, getSimulationStatus } from '@/lib/busSimulator';
 
-// GET: how positions are produced (real GPS or timetable) and the last arrival check.
+// GET: como são produzidas as posições (GPS real ou horário) e a última verificação de chegadas.
 export async function GET() {
   try {
     return NextResponse.json({ success: true, status: await getSimulationStatus() });
@@ -10,8 +10,8 @@ export async function GET() {
   }
 }
 
-// POST {"action": "check"}: run the arrival SMS check now. Positions need no start or stop:
-// they come from real GPS or from the timetable on every read.
+// POST {"action": "check"}: corre agora a verificação dos SMS de chegada (o GitHub Actions chama-o a cada 5 min).
+// As posições não precisam de arranque nem paragem: vêm do GPS real ou do horário a cada leitura.
 export async function POST(request: NextRequest) {
   try {
     const { action } = await request.json().catch(() => ({ action: null }));

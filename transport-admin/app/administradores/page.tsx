@@ -160,7 +160,7 @@ export default function AdministradoresPage() {
           </button>
         </div>
 
-        {/* Search and Filters */}
+        {/* Pesquisa e filtros */}
         <div className="bg-white rounded-2xl border border-slate-200 p-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">

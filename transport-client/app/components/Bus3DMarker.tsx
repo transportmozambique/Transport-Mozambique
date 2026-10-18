@@ -27,7 +27,7 @@ export function createBus3DMarkerElement(props: Bus3DMarkerProps) {
   markerDiv.appendChild(labelDiv);
   container.appendChild(markerDiv);
   
-  // Render React component into the canvas container
+  // Desenhar o componente React dentro do contentor do canvas
   const root = createRoot(busContainer);
   root.render(<Bus3D rotation={props.rotation || 0} scale={1} />);
   

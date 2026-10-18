@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     const search = searchParams.get('search') || '';
     const countOnly = searchParams.get('countOnly') === 'true';
 
-    // If only count is requested, return just the count
+    // Quando só se pede a contagem, devolver só a contagem
     if (countOnly) {
       const total = await prisma.paragem.count({
         where: search ? {
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
         } : undefined,
       });
 
-      // Also get terminal counts
+      // Também as contagens de terminais
       const terminais = await prisma.paragem.count({
         where: {
           vias: {
@@ -82,9 +82,9 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error('Error fetching paragens:', error);
+    console.error('Erro ao carregar paragens:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch paragens' },
+      { error: 'Falha ao carregar paragens' },
       { status: 500 }
     );
   }
@@ -98,12 +98,12 @@ export async function POST(request: Request) {
     // Validation
     if (!nome || !codigo || !geoLocation || !viaIds || viaIds.length === 0) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Campos obrigatórios em falta' },
         { status: 400 }
       );
     }
 
-    // Check if codigo already exists
+    // O código já existe?
     const existingParagem = await prisma.paragem.findUnique({
       where: { codigo },
     });
@@ -115,7 +115,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Fetch via codes for the selected vias
+    // Os códigos das vias escolhidas
     const vias = await prisma.via.findMany({
       where: {
         id: {
@@ -128,7 +128,7 @@ export async function POST(request: Request) {
       }
     });
 
-    // Create paragem with via associations
+    // Criar a paragem com as ligações às vias
     const paragem = await prisma.paragem.create({
       data: {
         nome,
@@ -162,9 +162,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(paragem, { status: 201 });
   } catch (error: any) {
-    console.error('Error creating paragem:', error);
+    console.error('Erro ao criar paragem:', error);
     
-    // Handle Prisma unique constraint errors
+    // Erros de valor único do Prisma
     if (error.code === 'P2002') {
       const field = error.meta?.target?.[0] || 'campo';
       return NextResponse.json(
@@ -174,7 +174,7 @@ export async function POST(request: Request) {
     }
     
     return NextResponse.json(
-      { error: 'Erro ao criar paragem', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Erro ao criar paragem', details: error instanceof Error ? error.message : 'Erro desconhecido' },
       { status: 500 }
     );
   }

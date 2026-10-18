@@ -57,7 +57,7 @@ export default function EditarProprietario() {
       }
       const data: Proprietario = await response.json();
       
-      // Format date for input (YYYY-MM-DD)
+      // Data no formato do campo (AAAA-MM-DD)
       const date = new Date(data.birthDate);
       const formattedDate = date.toISOString().split('T')[0];
       

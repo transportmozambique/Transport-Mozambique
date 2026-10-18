@@ -60,9 +60,9 @@ export default function EditarMunicipio() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Helper function to check if a point is within a circle
+  // Diz se um ponto está dentro de um círculo
   const isPointInCircle = (pointLat: number, pointLng: number, centerLat: number, centerLng: number, radiusKm: number) => {
-    const R = 6371; // Earth's radius in km
+    const R = 6371; // raio da Terra em km
     const dLat = (pointLat - centerLat) * Math.PI / 180;
     const dLng = (pointLng - centerLng) * Math.PI / 180;
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -73,7 +73,7 @@ export default function EditarMunicipio() {
     return distance <= radiusKm;
   };
 
-  // Helper function to check if a via passes through the circle
+  // Diz se uma via passa pelo círculo
   const viaPassesThroughCircle = (geoLocationPath: string, centerLat: number, centerLng: number, radiusKm: number) => {
     try {
       const coordinates = geoLocationPath
@@ -85,7 +85,7 @@ export default function EditarMunicipio() {
         })
         .filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
 
-      // Check if any point of the route is within the circle
+      // Algum ponto da via está dentro do círculo?
       return coordinates.some(coord => 
         isPointInCircle(coord.lat, coord.lng, centerLat, centerLng, radiusKm)
       );
@@ -139,11 +139,11 @@ export default function EditarMunicipio() {
       showCompass: true
     }), 'top-right');
 
-    // Click on map to set location
+    // Clicar no mapa para escolher o local
     map.on('click', (e) => {
       const { lat, lng } = e.lngLat;
       
-      // Update center point
+      // Actualizar o ponto central
       const centerSource = map.getSource('center-point') as maplibregl.GeoJSONSource;
       if (centerSource) {
         centerSource.setData({
@@ -222,7 +222,7 @@ export default function EditarMunicipio() {
         }
       });
 
-      // Add circle source and layer
+      // Juntar a fonte e a camada do círculo
       map.addSource(circleLayerId, {
         type: 'geojson',
         data: createCircle(lat, lng, radius)
@@ -248,13 +248,13 @@ export default function EditarMunicipio() {
         }
       });
 
-      // Add vias (routes) to the map - only show vias that pass through the circle
+      // Juntar as vias ao mapa: só as que passam pelo círculo
       if (municipioData && municipioData.vias && municipioData.vias.length > 0) {
         municipioData.vias.forEach((via) => {
           if (via.geoLocationPath) {
-            // Check if via passes through the circle
+            // A via passa pelo círculo?
             if (!viaPassesThroughCircle(via.geoLocationPath, lat, lng, radius)) {
-              return; // Skip vias that don't pass through the circle
+              return; // saltar as vias que não passam pelo círculo
             }
 
             try {
@@ -296,7 +296,7 @@ export default function EditarMunicipio() {
                   }
                 });
 
-                // Add click event to show via info
+                // Clicar mostra os dados da via
                 map.on('click', `via-${via.id}`, (e) => {
                   if (e.features && e.features[0]) {
                     const feature = e.features[0];
@@ -312,7 +312,7 @@ export default function EditarMunicipio() {
                   }
                 });
 
-                // Change cursor on hover
+                // Mudar o cursor ao passar por cima
                 map.on('mouseenter', `via-${via.id}`, () => {
                   map.getCanvas().style.cursor = 'pointer';
                 });
@@ -337,14 +337,14 @@ export default function EditarMunicipio() {
     };
   }, [loading]);
 
-  // Update circle when radius changes
+  // Actualizar o círculo quando o raio muda
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const [lat, lng] = formData.geoLocation.split(',').map(Number);
     updateCircle(mapInstanceRef.current, lat, lng, radius);
   }, [radius]);
 
-  // Create circle GeoJSON
+  // Criar o GeoJSON do círculo
   const createCircle = (lat: number, lng: number, radiusKm: number) => {
     const points = 64;
     const coords = [];
@@ -369,7 +369,7 @@ export default function EditarMunicipio() {
     } as any;
   };
 
-  // Update circle on map
+  // Actualizar o círculo no mapa
   const updateCircle = (map: maplibregl.Map, lat: number, lng: number, radiusKm: number) => {
     const source = map.getSource(circleLayerId) as maplibregl.GeoJSONSource;
     if (source) {
@@ -377,7 +377,7 @@ export default function EditarMunicipio() {
     }
   };
 
-  // Fetch data
+  // Pedir os dados
   useEffect(() => {
     const fetchData = async () => {
       try {

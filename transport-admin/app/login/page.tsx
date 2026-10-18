@@ -32,10 +32,10 @@ export default function LoginPage() {
         return;
       }
 
-      // Store admin data in localStorage
+      // Guardar os dados do administrador no localStorage
       localStorage.setItem("admin", JSON.stringify(data.admin));
       
-      // Force a hard navigation to ensure AuthContext picks up the new data
+      // Navegação completa, para o AuthContext ler os dados novos
       window.location.href = "/dashboard";
     } catch (error) {
       console.error("Erro ao fazer login:", error);

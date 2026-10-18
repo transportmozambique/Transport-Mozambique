@@ -3,9 +3,9 @@ import { waitUntil } from '@vercel/functions';
 import { getSimulationStatus, maybeCheckArrivals } from '@/lib/busSimulator';
 
 /**
- * Called by the home page when it opens. Positions need no start-up any more (they are
- * computed on read, see lib/vehiclePosition.ts); this only triggers the arrival SMS check and
- * reports how positions are produced.
+ * Chamado pela página inicial quando abre. As posições já não precisam de arranque (são
+ * calculadas na leitura, ver lib/vehiclePosition.ts); isto só dispara a verificação dos SMS de
+ * chegada e diz como são produzidas as posições.
  */
 export async function GET() {
   try {

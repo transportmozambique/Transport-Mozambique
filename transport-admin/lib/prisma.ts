@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 
-// Create Prisma Client singleton with better connection handling.
-// Driver PIN hashes are never read by the dashboard (except the PIN route, with an explicit select).
+// Um só cliente Prisma por processo, com melhor tratamento das ligações.
+// Os hashes dos PINs dos motoristas nunca são lidos pelo painel (excepto pela rota do PIN, com um select explícito).
 function createClient() {
   return new PrismaClient({
     log: process.env.NODE_ENV === 'production'
@@ -24,7 +24,7 @@ export const prisma = globalForPrisma.prisma || createClient();
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-// Handle connection errors gracefully
+// Tratar os erros de ligação sem derrubar a aplicação
 prisma.$connect().catch((error) => {
-  console.error('Failed to connect to database:', error);
+  console.error('Falha ao ligar à base de dados:', error);
 });

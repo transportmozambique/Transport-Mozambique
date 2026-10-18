@@ -4,8 +4,9 @@ import { maybeCheckArrivals } from '@/lib/busSimulator';
 import { waitUntil } from '@vercel/functions';
 
 /**
- * A stop's routes, each direction's next bus and the stops reachable without changing bus, and
- * (`destinos`) every place reachable from it, with changes of bus, earliest arrival first.
+ * As vias de uma paragem, o próximo autocarro de cada sentido e as paragens a que se chega sem
+ * mudar de autocarro, e (`destinos`) todos os locais a que se chega a partir dela, com
+ * transbordos, a chegada mais cedo primeiro.
  */
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

@@ -12,7 +12,7 @@ export async function GET(request: Request) {
 
     const skip = (page - 1) * limit;
 
-    // Build where clause for search; a phone number also matches phones stored with spaces
+    // Condição da pesquisa; um número de telefone também encontra telefones guardados com espaços
     const phoneIds = search ? await idsByPhoneDigits('Utente', search) : [];
     const where = search
       ? {
@@ -26,10 +26,10 @@ export async function GET(request: Request) {
         }
       : {};
 
-    // Get total count
+    // Total de linhas
     const total = await prisma.utente.count({ where });
 
-    // Get paginated utentes
+    // A página pedida
     const utentes = await prisma.utente.findMany({
       where,
       skip,
@@ -46,7 +46,7 @@ export async function GET(request: Request) {
       },
     });
 
-    // Remove password from response
+    // Tirar a palavra-passe da resposta
     const sanitizedUtentes = utentes.map(({ senha, ...utente }) => utente);
 
     return NextResponse.json({
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if email already exists
+    // O email já existe?
     const emailExists = await prisma.utente.findUnique({
       where: { email },
     });
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if telefone already exists
+    // O telefone já existe?
     const telefoneExists = await prisma.utente.findUnique({
       where: { telefone },
     });
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if MISSION already exists
+    // O MISSION já existe?
     const missionExists = await prisma.utente.findUnique({
       where: { mISSION },
     });
@@ -114,7 +114,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create utente with hashed password
+    // Criar o utente com a palavra-passe em hash
     const hashedPassword = await bcrypt.hash(senha, 10);
     
     const utente = await prisma.utente.create({
@@ -137,14 +137,14 @@ export async function POST(request: Request) {
       },
     });
 
-    // Remove password from response
+    // Tirar a palavra-passe da resposta
     const { senha: _, ...sanitizedUtente } = utente;
 
     return NextResponse.json(sanitizedUtente, { status: 201 });
   } catch (error: any) {
     console.error('Erro ao criar utente:', error);
     
-    // Handle Prisma unique constraint errors
+    // Erros de valor único do Prisma
     if (error.code === 'P2002') {
       const field = error.meta?.target?.[0] || 'campo';
       return NextResponse.json(

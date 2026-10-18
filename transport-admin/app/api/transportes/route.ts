@@ -11,10 +11,10 @@ export async function GET(request: NextRequest) {
 
     let whereClause: any = {};
 
-    // Filter only transportes without motorista if requested
+    // Só os transportes sem motorista, quando pedido
     if (availableOnly) {
       if (includeTransportId) {
-        // Show available transportes OR the specific transport (even if it has a motorista)
+        // Os transportes livres OU o transporte indicado (mesmo que tenha motorista)
         whereClause.OR = [
           { motorista: { is: null } },
           { id: includeTransportId }
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Plate, model, make or route name, ignoring case (the header search)
+    // Matrícula, modelo, marca ou nome da via, sem distinguir maiúsculas (a pesquisa do cabeçalho)
     if (search) {
       const contains = { contains: search, mode: 'insensitive' as const };
       whereClause = {
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Erro ao criar transporte:', error);
     
-    // Handle Prisma unique constraint errors
+    // Erros de valor único do Prisma
     if (error.code === 'P2002') {
       const field = error.meta?.target?.[0] || 'campo';
       return NextResponse.json(

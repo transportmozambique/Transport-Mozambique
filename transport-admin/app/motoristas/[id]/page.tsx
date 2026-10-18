@@ -103,7 +103,7 @@ export default function MotoristaDetalhes() {
       } else {
         const error = await response.json();
         
-        // Check if error is about transporte association
+        // O erro é sobre a ligação a um transporte?
         if (error.error && error.error.includes('transporte')) {
           setDeleteError(error.details || error.error);
           setHasAssociations(true);
@@ -124,7 +124,7 @@ export default function MotoristaDetalhes() {
     setDeleting(true);
     
     try {
-      // Force delete with associations removal
+      // Apagar à força, tirando primeiro as ligações
       const response = await fetch(`/api/motoristas/${params.id}?force=true`, {
         method: 'DELETE',
       });
@@ -527,7 +527,7 @@ export default function MotoristaDetalhes() {
           </div>
         )}
 
-        {/* Delete Confirmation Modal */}
+        {/* Diálogo de confirmação do apagar */}
         {showDeleteModal && (
           <div 
             className="fixed inset-0 z-50 backdrop-blur-sm min-h-screen" 

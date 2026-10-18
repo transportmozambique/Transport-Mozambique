@@ -31,7 +31,7 @@ interface StatsData {
   utentesSubscritos?: number;
 }
 
-// Most records a report loads (the table shows the first 100)
+// Máximo de linhas que um relatório carrega (a tabela mostra as primeiras 100)
 const REPORT_LIMIT = 5000;
 
 export default function Relatorios() {
@@ -143,14 +143,14 @@ export default function Relatorios() {
       try {
         const statsRes = await fetch('/api/relatorios/stats');
         if (!statsRes.ok) {
-          throw new Error(`HTTP error! status: ${statsRes.status}`);
+          throw new Error(`Erro HTTP ${statsRes.status}`);
         }
         const statsData = await statsRes.json();
         setStats(statsData);
         setShowReportModal(true);
         setSelectedReport(report);
       } catch (error) {
-        console.error("Error fetching stats:", error);
+        console.error("Erro ao carregar estatísticas:", error);
         showNotification("Erro ao carregar estatísticas", "error");
       } finally {
         setIsLoadingData(false);
@@ -158,13 +158,13 @@ export default function Relatorios() {
       return;
     }
 
-    // This dashboard's own API (the session cookie authorises it); every list returns { data }
+    // A API deste painel (o cookie de sessão autoriza-a); todas as listas devolvem { data }
     const url = `/api/${report.entity}?limit=${REPORT_LIMIT}`;
 
     try {
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`Erro HTTP ${response.status}`);
       }
       const jsonData = await response.json();
       const data: any[] = Array.isArray(jsonData.data) ? jsonData.data : [];
@@ -173,7 +173,7 @@ export default function Relatorios() {
       setShowReportModal(true);
       setSelectedReport(report);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Erro ao carregar dados:", error);
       showNotification("Erro ao carregar dados do relatório: " + (error as Error).message, "error");
     } finally {
       setIsLoadingData(false);
@@ -380,7 +380,7 @@ export default function Relatorios() {
               <p className="hidden lg:block text-slate-600 mt-1">Gere relatórios e análises do sistema</p>
             </div>
           </div>
-          {/* "Histórico" and "Agendar" are not built yet (their pages only say so), so they have no button */}
+          {/* "Histórico" e "Agendar" ainda não existem (as suas páginas só o dizem), por isso não têm botão */}
         </div>
 
         {/* Stats Cards */}

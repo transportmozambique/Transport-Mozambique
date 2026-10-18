@@ -1,14 +1,14 @@
 /**
- * Read-only lists from the database, with Prisma Client.
+ * Listas só de leitura da base de dados, com o Prisma Client.
  *
  *   cd transport-client
- *   npx tsx scripts/queries.ts <list> [argument]
+ *   npx tsx scripts/queries.ts <lista> [argumento]
  *
- * Lists: counts · routes [municipality] · stops <route code> · vehicles [route code]
- *        drivers · alerts
+ * Listas: counts · routes [município] · stops <código da rota> · vehicles [código da rota]
+ *         drivers · alerts
  *
- * Uses DATABASE_URL from .env (or the environment). Nothing here writes.
- * Documented in docs/database.md#prisma-client-in-a-script.
+ * Usa DATABASE_URL do .env (ou do ambiente). Nada aqui escreve, por isso pode correr contra a
+ * produção sem risco. Explicado em docs/base-de-dados.md#prisma-client-num-script.
  */
 import './load-env';
 import { prisma } from '../lib/prisma';
@@ -32,7 +32,7 @@ const lists: Record<string, (arg?: string) => Promise<void>> = {
     console.table({ vias, paragens, transportes, motoristas, utentes, alertas });
   },
 
-  // Routes, optionally of one municipality, with their number of stops and vehicles
+  // Rotas, opcionalmente de um município, com o número de paragens e de veículos
   async routes(municipio) {
     const vias = await prisma.via.findMany({
       where: municipio ? { municipio: { nome: { contains: municipio, mode: 'insensitive' } } } : {},
@@ -55,7 +55,7 @@ const lists: Record<string, (arg?: string) => Promise<void>> = {
     );
   },
 
-  // The stops of one route, in travel order
+  // As paragens de uma rota, pela ordem de viagem
   async stops(codigo) {
     if (!codigo) throw new Error('Usage: stops <route code>, e.g. stops VIA-0001');
     const via = await prisma.via.findUnique({
@@ -76,7 +76,7 @@ const lists: Record<string, (arg?: string) => Promise<void>> = {
     console.table(ordered.map((p, i) => ({ ordem: i + 1, codigo: p.codigo, nome: p.nome, coordenadas: p.geoLocation })));
   },
 
-  // Vehicles, optionally of one route, with their driver and whether GPS is live
+  // Veículos, opcionalmente de uma rota, com o motorista e se o GPS está ao vivo
   async vehicles(codigo) {
     const transportes = await prisma.transporte.findMany({
       where: codigo ? { via: { codigo } } : {},
@@ -108,7 +108,7 @@ const lists: Record<string, (arg?: string) => Promise<void>> = {
     );
   },
 
-  // Drivers: PIN set or not, trip state and vehicle
+  // Motoristas: com PIN ou não, estado da viagem e veículo
   async drivers() {
     const motoristas = await prisma.motorista.findMany({
       select: {
@@ -134,7 +134,7 @@ const lists: Record<string, (arg?: string) => Promise<void>> = {
     );
   },
 
-  // Arrival alerts of the last 24 hours (no passenger names or phones)
+  // Alertas de chegada das últimas 24 horas (sem nomes nem telefones de passageiros)
   async alerts() {
     const desde = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const missoes = await prisma.mISSION.findMany({

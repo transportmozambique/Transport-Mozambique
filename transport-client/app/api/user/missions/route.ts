@@ -4,7 +4,7 @@ import { utenteIdFromRequest, unauthorized } from '@/lib/userSession';
 
 export async function GET(request: NextRequest) {
   try {
-    // The passenger's own alerts; a utenteId in the query must be theirs
+    // Os alertas do próprio passageiro; um utenteId na query tem de ser o dele
     const utenteId = utenteIdFromRequest(request);
     const asked = request.nextUrl.searchParams.get('utenteId');
     if (!utenteId || (asked && asked !== utenteId)) return unauthorized();

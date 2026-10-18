@@ -2,8 +2,8 @@ import AfricasTalking from 'africastalking';
 
 type SmsClient = ReturnType<typeof AfricasTalking>['SMS'];
 
-// Created on first use: the SDK throws when the API key is empty, and doing that
-// at import time took the whole USSD route down instead of only skipping SMS.
+// Criado no primeiro uso: o SDK dá erro quando a chave da API está vazia, e fazê-lo ao importar
+// derrubava a rota USSD inteira em vez de só deixar de enviar SMS.
 let sms: SmsClient | null = null;
 
 function smsClient(): SmsClient | null {
@@ -17,7 +17,7 @@ function smsClient(): SmsClient | null {
   return sms;
 }
 
-/** "+258 84 123 4567", "258841234567", "0841234567" or "841234567" -> "+258841234567" */
+/** "+258 84 123 4567", "258841234567", "0841234567" ou "841234567" -> "+258841234567" */
 export function toInternationalPhone(to: string): string {
   const digits = to.replace(/[^\d+]/g, '');
   if (digits.startsWith('+')) return digits;

@@ -3,8 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { driverIdFromRequest } from '@/lib/driverSession';
 import { DRIVER_PROFILE_FIELDS, driverProfile } from '@/lib/driverProfile';
 
-// The signed-in driver's current vehicle and route, as at sign-in. The driver portal asks again
-// when it opens and every few minutes, so a change made in the admin shows without signing out.
+// O veículo e a via actuais do motorista com sessão, como na entrada. O portal pergunta outra vez
+// quando abre e a cada poucos minutos, para uma alteração feita no painel aparecer sem sair e entrar.
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     if (!driver) return json({ error: 'Motorista não encontrado' }, 404);
     return json(await driverProfile(driver));
   } catch (error) {
-    console.error('Error reading driver profile:', error);
+    console.error('Erro ao ler o perfil do motorista:', error);
     return json({ error: 'Erro ao obter os dados do motorista' }, 500);
   }
 }

@@ -54,17 +54,17 @@ export default function PerfilPage() {
         return;
       }
 
-      // Update localStorage
+      // Actualizar o localStorage
       const updatedAdmin = { ...admin, nome: data.nome };
       localStorage.setItem("admin", JSON.stringify(updatedAdmin));
       
       setSuccess("Nome atualizado com sucesso!");
       setEditingNome(false);
       
-      // Reload page to update header
+      // Recarregar a página para actualizar o cabeçalho
       setTimeout(() => window.location.reload(), 1500);
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("Erro ao actualizar o perfil:", error);
       setError("Erro ao conectar ao servidor");
     } finally {
       setLoading(false);
@@ -119,7 +119,7 @@ export default function PerfilPage() {
 
       setTimeout(() => setPasswordSuccess(""), 3000);
     } catch (error) {
-      console.error("Error changing password:", error);
+      console.error("Erro ao alterar a palavra-passe:", error);
       setPasswordError("Erro ao conectar ao servidor");
     } finally {
       setChangingPassword(false);
@@ -303,7 +303,7 @@ export default function PerfilPage() {
                       )}
                     </div>
 
-                    {/* Email (read-only) */}
+                    {/* Email (só leitura) */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Email
@@ -312,7 +312,7 @@ export default function PerfilPage() {
                       <p className="text-xs text-slate-500 mt-1">O email não pode ser alterado</p>
                     </div>
 
-                    {/* Role (read-only) */}
+                    {/* Papel (só leitura) */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Função
@@ -322,7 +322,7 @@ export default function PerfilPage() {
                       </span>
                     </div>
 
-                    {/* ID (read-only) */}
+                    {/* ID (só leitura) */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
                         ID do Administrador

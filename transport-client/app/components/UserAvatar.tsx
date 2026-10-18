@@ -18,7 +18,7 @@ export default function UserAvatar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Load user from localStorage
+    // Ler o passageiro do localStorage
     const utenteData = localStorage.getItem("utente");
     if (utenteData) {
       setUtente(JSON.parse(utenteData));
@@ -26,7 +26,7 @@ export default function UserAvatar() {
   }, []);
 
   useEffect(() => {
-    // Close dropdown when clicking outside
+    // Fechar o menu ao clicar fora
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);

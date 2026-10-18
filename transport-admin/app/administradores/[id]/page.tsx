@@ -57,9 +57,9 @@ export default function AdministradorDetalhes() {
     } catch (error: any) {
       console.error('Erro ao carregar administrador:', error);
       showNotification(error.message || 'Erro ao carregar administrador', 'error');
-      // If it's not a 404, we might still want to show the error message in the UI
+      // Se não for um 404, a mensagem de erro aparece na mesma na página
       if (error.message !== 'Administrador não encontrado') {
-        setAdministrador(null); // Ensure UI shows error state
+        setAdministrador(null); // para a página mostrar o estado de erro
       }
     } finally {
       setLoading(false);
@@ -145,7 +145,7 @@ export default function AdministradorDetalhes() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Diálogo de confirmação do apagar */}
       {showDeleteModal && (
         <div 
           className="fixed inset-0 z-50 backdrop-blur-sm min-h-screen" 

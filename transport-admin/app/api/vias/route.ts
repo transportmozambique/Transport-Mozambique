@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     const search = searchParams.get('search') || '';
     const countOnly = searchParams.get('countOnly') === 'true';
 
-    // Name, code or municipality, ignoring case (what the list's search box promises)
+    // Nome, código ou município, sem distinguir maiúsculas (o que a caixa de pesquisa da lista promete)
     const whereClause = search ? {
       OR: [
         { nome: { contains: search, mode: 'insensitive' as const } },
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       ],
     } : {};
 
-    // If only count is requested, return just the count
+    // Quando só se pede a contagem, devolver só a contagem
     if (countOnly) {
       const total = await prisma.via.count({ where: whereClause });
       return NextResponse.json({ total });
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
 
     const skip = (page - 1) * limit;
 
-    // Totals over every matching route, not just this page (the list page's counters)
+    // Totais de todas as vias que coincidem, não só desta página (os contadores da lista)
     const [vias, total, totalTransportes, totalParagens] = await Promise.all([
       prisma.via.findMany({
         where: whereClause,
@@ -79,24 +79,24 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    console.log('POST /api/vias - Creating new via');
+    console.log('POST /api/vias: a criar uma via nova');
     
     const body = await request.json();
-    console.log('Request body:', JSON.stringify(body, null, 2));
+    console.log('Corpo do pedido:', JSON.stringify(body, null, 2));
     
     const { nome, codigo, cor, terminalPartida, terminalChegada, municipioId, geoLocationPath, paragensIds } = body;
 
     // Validation
     if (!nome || !codigo || !municipioId || !geoLocationPath) {
-      console.error('Validation failed - missing fields:', { nome: !!nome, codigo: !!codigo, municipioId: !!municipioId, geoLocationPath: !!geoLocationPath });
+      console.error('Validação falhou: campos em falta:', { nome: !!nome, codigo: !!codigo, municipioId: !!municipioId, geoLocationPath: !!geoLocationPath });
       return NextResponse.json(
-        { error: 'Missing required fields: nome, codigo, municipioId, geoLocationPath' },
+        { error: 'Campos obrigatórios em falta: nome, codigo, municipioId, geoLocationPath' },
         { status: 400 }
       );
     }
 
-    // Stored as "lng,lat;lng,lat;..." whatever the form sent: the client apps, the bus
-    // simulator and fares only read that format.
+    // Guardado como "lng,lat;lng,lat;..." seja o que for que o formulário enviou: as aplicações, o
+    // horário dos autocarros e as tarifas só lêem esse formato.
     const storedPath = toStoredPath(geoLocationPath);
     if (!storedPath) {
       return NextResponse.json(
@@ -112,42 +112,42 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('Attempting to connect to database...');
+    console.log('A ligar à base de dados...');
     
     // Test database connection
     try {
       await prisma.$connect();
-      console.log('Database connected successfully');
+      console.log('Ligado à base de dados');
     } catch (connError) {
-      console.error('Database connection failed:', connError);
+      console.error('A ligação à base de dados falhou:', connError);
       return NextResponse.json(
         { 
-          error: 'Failed to connect to database',
-          details: connError instanceof Error ? connError.message : 'Unknown connection error'
+          error: 'Falha ao ligar à base de dados',
+          details: connError instanceof Error ? connError.message : 'Erro de ligação desconhecido'
         },
         { status: 503 }
       );
     }
 
-    console.log('Fetching municipio to get codigo...');
+    console.log('A ler o município para o código...');
     
-    // Get municipio codigo
+    // O código do município
     const municipio = await prisma.municipio.findUnique({
       where: { id: municipioId },
       select: { codigo: true },
     });
 
     if (!municipio) {
-      console.error('Municipio not found:', municipioId);
+      console.error('Município não encontrado:', municipioId);
       return NextResponse.json(
         { error: 'Município não encontrado' },
         { status: 404 }
       );
     }
 
-    console.log('Creating via in database...');
+    console.log('A criar a via na base de dados...');
     
-    // Create via with paragens associations
+    // Criar a via com as ligações às paragens
     const via = await prisma.via.create({
       data: {
         nome,
@@ -175,13 +175,13 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log('Via created successfully:', via.id);
+    console.log('Via criada:', via.id);
 
-    // Create ViaParagem associations if paragensIds provided
+    // Criar as ligações ViaParagem, quando há paragensIds
     if (paragensIds && paragensIds.length > 0) {
-      console.log('Creating', paragensIds.length, 'ViaParagem associations...');
+      console.log('A criar', paragensIds.length, 'ViaParagem associations...');
       
-      // Get paragem codes for the selected paragens
+      // Os códigos das paragens escolhidas
       const paragens = await prisma.paragem.findMany({
         where: {
           id: {
@@ -194,7 +194,7 @@ export async function POST(request: Request) {
         },
       });
 
-      // Create ViaParagem records
+      // Criar as linhas ViaParagem
       const viaParagens = await prisma.viaParagem.createMany({
         data: paragens.map((paragem) => ({
           viaId: via.id,
@@ -205,10 +205,10 @@ export async function POST(request: Request) {
         })),
       });
 
-      console.log('Created', viaParagens.count, 'ViaParagem associations');
+      console.log('Criadas', viaParagens.count, 'ViaParagem associations');
     }
 
-    // Fetch the via again with paragens included
+    // Ler a via outra vez com as paragens
     const viaWithParagens = await prisma.via.findUnique({
       where: { id: via.id },
       include: {
@@ -227,22 +227,22 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log('Via created with', viaWithParagens?.paragens.length || 0, 'paragens');
+    console.log('Via criada com', viaWithParagens?.paragens.length || 0, 'paragens');
     return NextResponse.json(viaWithParagens, { status: 201 });
   } catch (error) {
-    console.error('Error creating via:', error);
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('Erro ao criar via:', error);
+    console.error('Pilha do erro:', error instanceof Error ? error.stack : 'No stack trace');
     
     return NextResponse.json(
       { 
-        error: 'Failed to create via',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Falha ao criar a via',
+        details: error instanceof Error ? error.message : 'Erro desconhecido',
         type: error instanceof Error ? error.constructor.name : 'Unknown'
       },
       { status: 500 }
     );
   } finally {
-    // Don't disconnect in development (causes issues with hot reload)
+    // Não desligar em desenvolvimento (dá problemas com o recarregamento)
     if (process.env.NODE_ENV === 'production') {
       await prisma.$disconnect();
     }

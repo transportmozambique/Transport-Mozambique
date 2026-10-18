@@ -156,7 +156,7 @@ export default function EditarTransporte() {
       );
     });
 
-    // Click to set location
+    // Clicar para escolher o local
     map.on('click', (e) => {
       setFormData(prev => ({
         ...prev,
@@ -173,7 +173,7 @@ export default function EditarTransporte() {
     };
   }, []);
 
-  // Update marker when coordinates change
+  // Actualizar o marcador quando as coordenadas mudam
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
@@ -369,7 +369,7 @@ export default function EditarTransporte() {
         observacoes: data.observacoes || ""
       });
     } catch (error) {
-      console.error('Error fetching transporte:', error);
+      console.error('Erro ao carregar transporte:', error);
     } finally {
       setLoading(false);
     }

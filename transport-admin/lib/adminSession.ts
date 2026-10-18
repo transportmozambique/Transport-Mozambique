@@ -1,15 +1,16 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
 /**
- * Admin session: a signed, HttpOnly cookie set at login and checked by
- * proxy.ts on every /api request. Token format: "<adminId>.<expiresAt>.<signature>".
+ * Sessão do administrador: um cookie assinado e HttpOnly, posto na entrada e verificado pelo
+ * proxy.ts em cada pedido a /api. Formato do token: "<adminId>.<expiraEm>.<assinatura>".
+ * Porquê HttpOnly: o JavaScript da página não o consegue ler, por isso um script injectado não rouba a sessão.
  */
 export const SESSION_COOKIE = "admin_session";
 const MAX_AGE_SECONDS = 12 * 60 * 60;
 
 function secret(): string | null {
   if (process.env.ADMIN_SESSION_SECRET) return process.env.ADMIN_SESSION_SECRET;
-  // Without a secret in production every session is rejected (fail closed)
+  // Sem segredo em produção, todas as sessões são recusadas (falha fechada)
   return process.env.NODE_ENV === "production" ? null : "dev-only-admin-session-secret";
 }
 
@@ -24,7 +25,7 @@ export function createSessionToken(adminId: string): string | null {
   return `${payload}.${sign(payload, key)}`;
 }
 
-/** Returns the admin id when the token is valid and not expired. */
+/** Devolve o id do administrador quando o token é válido e não expirou. */
 export function verifySessionToken(token: string | undefined): string | null {
   const key = secret();
   if (!key || !token) return null;

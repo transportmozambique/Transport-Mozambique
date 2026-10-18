@@ -5,21 +5,22 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 /**
- * The map where a route is drawn: the admin clicks points (or stops), and the path between them
- * follows the roads (a public OSRM router). Only a road path can be saved: when no router
- * answers, the line is dashed and the page that uses it refuses to save. Used to create a route
- * (/vias/novo) and to redraw one (/vias/[id]/percurso).
+ * O mapa onde se desenha uma via: o administrador clica em pontos (ou paragens), e o percurso
+ * entre eles segue as estradas (um router OSRM público). Só um percurso pelas estradas pode ser
+ * guardado: quando nenhum router responde, a linha fica tracejada e a página que o usa recusa
+ * guardar. Porquê: um percurso em linhas rectas daria distâncias, tarifas e posições erradas.
+ * Usado para criar uma via (/vias/novo) e para a redesenhar (/vias/[id]/percurso).
  */
 
 export type Point = [number, number]; // [lng, lat]
 
-/** Public OSRM car routers, tried in order: FOSSGIS's (openstreetmap.de), then the OSRM demo server */
+/** Routers OSRM públicos de carro, por ordem: o da FOSSGIS (openstreetmap.de), depois o servidor de demonstração do OSRM */
 const ROUTERS = [
   "https://routing.openstreetmap.de/routed-car/route/v1/driving",
   "https://router.project-osrm.org/route/v1/driving",
 ];
 
-/** The road path through `pointsKey` ("lng,lat;lng,lat;…"), or null when no router has one */
+/** O percurso pelas estradas através de `pointsKey` ("lng,lat;lng,lat;…"), ou null quando nenhum router tem um */
 async function routeThroughPoints(pointsKey: string): Promise<Point[] | null> {
   for (const base of ROUTERS) {
     try {
@@ -27,7 +28,7 @@ async function routeThroughPoints(pointsKey: string): Promise<Point[] | null> {
       const data = await res.json();
       if (data.code === "Ok" && data.routes?.[0]) return data.routes[0].geometry.coordinates;
     } catch (error) {
-      console.error(`Router ${base} failed:`, error);
+      console.error(`O router ${base} falhou:`, error);
     }
   }
   return null;
@@ -40,21 +41,21 @@ export interface RouteStop {
   geoLocation: string | null; // "lat,lng"
 }
 
-/** What the drawing gives the page: the road path, and whether it can be saved */
+/** O que o desenho dá à página: o percurso pelas estradas, e se pode ser guardado */
 export interface DrawnRoute {
   /** Points clicked */
   points: number;
-  /** The road path, or the straight lines between the points while it is computed or failed */
+  /** O percurso pelas estradas, ou as linhas rectas entre os pontos enquanto é calculado ou quando falhou */
   path: Point[];
   /** At least two points */
   hasRoute: boolean;
-  /** The path matches the current points */
+  /** O percurso corresponde aos pontos actuais */
   ready: boolean;
-  /** The router found no road: the path is straight lines, not to be saved */
+  /** O router não encontrou estrada: o percurso são linhas rectas, que não se guardam */
   failed: boolean;
 }
 
-// The points clicked on the map, with undo/redo history (every change can be undone, also "Limpar")
+// Os pontos clicados no mapa, com histórico para desfazer/refazer (tudo se pode desfazer, também "Limpar")
 interface Drawing {
   points: Point[];
   past: Point[][];
@@ -95,7 +96,7 @@ export function parseLatLng(geo: string | null): [number, number] | null {
   return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
 }
 
-/** Distance in metres from a stop to the closest vertex of a road path (OSRM paths are dense) */
+/** Distância em metros de uma paragem ao vértice mais próximo de um percurso (os percursos do OSRM são densos) */
 export function distanceToPath([lat, lng]: [number, number], path: Point[]): number {
   const k = Math.cos((lat * Math.PI) / 180);
   let best = Infinity;
@@ -116,8 +117,8 @@ export function pathKm(path: Point[]): number {
 }
 
 /**
- * A few points along a path (Douglas–Peucker, the tolerance doubled until at most max are left):
- * a drawing that starts from them follows the path's turns with few points to adjust.
+ * Poucos pontos ao longo de um percurso (Douglas–Peucker, com a tolerância a dobrar até ficarem no
+ * máximo max): um desenho que parte deles segue as curvas do percurso com poucos pontos a ajustar.
  */
 export function pathPoints(path: Point[], max = 25): Point[] {
   if (path.length <= 2) return path;
@@ -167,13 +168,13 @@ export default function RouteDrawer({
   className = "",
 }: {
   color: string;
-  /** Every stop, on the map; clicking one adds a point exactly on it */
+  /** Todas as paragens, no mapa; clicar numa junta um ponto exactamente nela */
   stops: RouteStop[];
-  /** Stops highlighted as being on the route */
+  /** Paragens realçadas por estarem na via */
   nearIds: Set<string>;
-  /** A path shown dashed and grey under the drawing (the route's current path) */
+  /** Um percurso mostrado tracejado e cinzento por baixo do desenho (o percurso actual da via) */
   reference?: Point[];
-  /** A button that starts the drawing from these points (a few points of the current path) */
+  /** Um botão que começa o desenho a partir destes pontos (alguns pontos do percurso actual) */
   seed?: { label: string; points: Point[] };
   onChange: (route: DrawnRoute) => void;
   title?: string;
@@ -186,10 +187,10 @@ export default function RouteDrawer({
   const stopMarkersRef = useRef(new Map<string, maplibregl.Marker>());
   const [drawing, dispatch] = useReducer(drawingReducer, { points: [], past: [], future: [] });
   const [route, setRoute] = useState<{ key: string; path: Point[]; failed: boolean } | null>(null);
-  const [routeAttempt, setRouteAttempt] = useState(0); // "Tentar de novo" asks the routers again
+  const [routeAttempt, setRouteAttempt] = useState(0); // "Tentar de novo" pergunta outra vez aos routers
 
-  // Road-following path for the clicked points. Each answer is tied to the points it was asked
-  // for, so a slow answer for older points never replaces the path of the current ones.
+  // Percurso pelas estradas para os pontos clicados. Cada resposta fica ligada aos pontos para que
+  // foi pedida, para uma resposta lenta de pontos antigos nunca substituir o percurso dos actuais.
   const pointsKey = drawing.points.map(([lng, lat]) => `${lng},${lat}`).join(";");
   useEffect(() => {
     const points = pointsKey ? pointsKey.split(";").map((p) => p.split(",").map(Number) as Point) : [];
@@ -206,7 +207,7 @@ export default function RouteDrawer({
   const hasRoute = drawing.points.length >= 2;
   const routeReady = hasRoute && route?.key === pointsKey;
   const routingFailed = routeReady && route.failed;
-  // While a new path is being computed the previous one stays on the map
+  // Enquanto um percurso novo é calculado, o anterior fica no mapa
   const routedPath: Point[] = useMemo(() => (hasRoute && route ? route.path : []), [hasRoute, route]);
 
   useEffect(() => {
@@ -240,10 +241,10 @@ export default function RouteDrawer({
       map.current.addControl(new maplibregl.NavigationControl(), "top-right");
       map.current.on("error", (e) => {
         if (e.error?.message?.includes("Failed to fetch") || e.error?.message?.includes("tile")) return;
-        console.error("Map error:", e);
+        console.error("Erro do mapa:", e);
       });
-      // Ready once the style is read, without waiting for every tile ("load"): on a slow network
-      // the tilted view's many tiles would keep the points and stops off the map for a long time
+      // Pronto logo que o estilo é lido, sem esperar por todos os mosaicos ("load"): numa rede lenta,
+      // os muitos mosaicos da vista inclinada deixariam os pontos e as paragens fora do mapa muito tempo
       map.current.once("style.load", () => {
         if (!map.current) return;
         map.current.addSource("openmaptiles", { type: "vector", url: "https://tiles.openfreemap.org/planet" });
@@ -262,10 +263,10 @@ export default function RouteDrawer({
         });
         setMapReady(true);
       });
-      // Click to add a route point
+      // Clicar para juntar um ponto da via
       map.current.on("click", (e) => dispatch({ type: "add", point: [e.lngLat.lng, e.lngLat.lat] }));
     };
-    // Delay map initialization to ensure container is rendered
+    // Atrasar a criação do mapa para o contentor já estar desenhado
     const timeoutId = setTimeout(() => requestAnimationFrame(initMap), 100);
     return () => {
       clearTimeout(timeoutId);
@@ -274,7 +275,7 @@ export default function RouteDrawer({
     };
   }, []);
 
-  // Undo / redo from the keyboard (not while typing in a field: those have their own undo)
+  // Desfazer / refazer pelo teclado (não enquanto se escreve num campo: esses têm o seu próprio desfazer)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
@@ -293,7 +294,7 @@ export default function RouteDrawer({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // The current path, under the drawing, and the map fitted to it
+  // O percurso actual, por baixo do desenho, e o mapa enquadrado nele
   const referenceKey = reference?.length ? `${reference[0]}|${reference.length}` : "";
   useEffect(() => {
     const m = map.current;
@@ -316,7 +317,7 @@ export default function RouteDrawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refit only for another path
   }, [referenceKey, mapReady]);
 
-  // Numbered markers for the clicked points: drag one to move it, click one to remove it
+  // Marcadores numerados para os pontos clicados: arrastar um para o mover, clicar num para o tirar
   useEffect(() => {
     const m = map.current;
     pointMarkersRef.current.forEach((marker) => marker.remove());
@@ -342,7 +343,7 @@ export default function RouteDrawer({
         dispatch({ type: "move", index, point: [lng, lat] });
       });
       el.addEventListener("click", (ev) => {
-        ev.stopPropagation(); // not a new point on the map
+        ev.stopPropagation(); // não é um ponto novo no mapa
         if (dragged) {
           dragged = false;
           return;
@@ -379,7 +380,7 @@ export default function RouteDrawer({
     m.setPaintProperty("route", "line-dasharray", routingFailed ? [2, 2] : [1, 0]);
   }, [routedPath, routingFailed, color, mapReady]);
 
-  // Every stop on the map. Clicking one adds a route point exactly on it.
+  // Todas as paragens no mapa. Clicar numa junta um ponto da via exactamente nela.
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
@@ -415,7 +416,7 @@ export default function RouteDrawer({
     });
   }, [stops, mapReady]);
 
-  // Highlight the stops along the route
+  // Realçar as paragens ao longo da via
   useEffect(() => {
     stopMarkersRef.current.forEach((marker, id) => {
       const el = marker.getElement();

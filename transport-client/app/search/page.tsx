@@ -1,2 +1,2 @@
-// Signed-in passengers land here; the trip planner is the same as on the home page
+// Os passageiros com sessão chegam aqui; o planeador de viagens é o mesmo da página inicial
 export { default } from "../page";

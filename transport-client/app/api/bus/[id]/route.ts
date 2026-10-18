@@ -28,29 +28,29 @@ export async function GET(
     });
 
     if (!transporte) {
-      return NextResponse.json({ error: 'Bus not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Autocarro não encontrado' }, { status: 404 });
     }
     if (!transporte.via) {
-      return NextResponse.json({ error: 'Route (via) not assigned to this transport' }, { status: 400 });
+      return NextResponse.json({ error: 'Este transporte não tem via atribuída' }, { status: 400 });
     }
 
     const { via } = transporte;
     const rule = await getFareRule();
 
-    // Stops in travel order (their id order is not)
+    // Paragens pela ordem de viagem (a ordem dos ids não é)
     const stops = orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation)
       .map((vp) => ({ vp, point: parseLatLng(vp.paragem.geoLocation) }))
       .filter((s): s is { vp: typeof s.vp; point: LatLng } => s.point !== null);
 
-    // Real GPS when fresh, otherwise the timetable position on the route
+    // GPS real quando recente, senão a posição pelo horário na via
     const now = new Date();
     const position = vehiclePosition(transporte, via.geoLocationPath || transporte.routePath, now, rule);
     const bus: LatLng = position?.point ?? stops[0]?.point ?? [-25.9692, 32.5732];
 
-    // Path drawn on the map: the via's, else the bus's own ([lng, lat] pairs)
+    // Percurso desenhado no mapa: o da via, senão o do próprio autocarro (pares [lng, lat])
     const routeCoords = parseRoutePath(via.geoLocationPath || transporte.routePath).map(([lat, lng]) => [lng, lat]);
 
-    // Trips can go either way along the route (a destination before the origin is the return leg)
+    // As viagens podem ir num sentido ou no outro da via (um destino antes da origem é a volta)
     const trip = paragemId && destinoId
       ? estimateBusTrip({
           vehicle: transporte,
@@ -68,7 +68,7 @@ export async function GET(
       matricula: transporte.matricula,
       via: via.nome,
       viaId: via.id,
-      // Direction of the passenger's trip (or of the route), by its first and last stops
+      // Sentido da viagem do passageiro (ou da via), pelas suas primeira e última paragens
       direcao: stops.length
         ? trip?.sentido === -1
           ? `${stops[stops.length - 1].vp.paragem.nome} → ${stops[0].vp.paragem.nome}`
@@ -91,7 +91,7 @@ export async function GET(
         isPickup: vp.paragem.id === paragemId,
         isDestination: vp.paragem.id === destinoId,
       })),
-      // Defaults when no valid origin -> destination pair was given
+      // Valores por omissão quando não foi dado um par origem -> destino válido
       tempoEstimado: trip?.tempoChegada ?? 5,
       distancia: Math.round(trip?.distanciaAteOrigem ?? 1000),
       jaPassou: trip?.jaPassou ?? false,
@@ -100,10 +100,10 @@ export async function GET(
       fare: trip?.fare ?? rule.tarifaMinima,
     });
   } catch (error: any) {
-    console.error('Error fetching bus:', error);
+    console.error('Erro ao carregar autocarro:', error);
     return NextResponse.json(
       {
-        error: 'Internal server error',
+        error: 'Erro interno do servidor',
         message: error.message,
         details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       },

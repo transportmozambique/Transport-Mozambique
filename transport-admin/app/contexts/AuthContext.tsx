@@ -35,8 +35,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // The server session (HttpOnly cookie) decides who is logged in;
-    // localStorage only keeps the profile shown in the UI
+    // A sessão no servidor (cookie HttpOnly) decide quem tem sessão;
+    // o localStorage só guarda o perfil mostrado na interface
     fetch("/api/auth/admin/session")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -48,11 +48,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setAdmin(null);
         }
       })
-      .catch((error) => console.error("Error checking session:", error))
+      .catch((error) => console.error("Erro ao verificar a sessão:", error))
       .finally(() => setLoading(false));
   }, []);
 
-  // A 401 from the admin API means the session expired: log out so the user is sent to /login
+  // Um 401 da API do painel quer dizer que a sessão expirou: sair, para o utilizador ir para /login
   useEffect(() => {
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
@@ -77,10 +77,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const isRootPage = pathname === "/";
       
       if (!admin && !isLoginPage && !isRootPage) {
-        // Not authenticated and trying to access protected route
+        // Sem sessão e a tentar abrir uma página protegida
         router.push("/login");
       } else if (admin && (isLoginPage || isRootPage)) {
-        // Authenticated and on login/root page
+        // Com sessão e na página de entrada ou na raiz
         router.push("/dashboard");
       }
     }
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         setAdmin(JSON.parse(adminData));
       } catch (error) {
-        console.error("Error parsing admin data:", error);
+        console.error("Erro ao ler os dados do administrador:", error);
       }
     }
   };

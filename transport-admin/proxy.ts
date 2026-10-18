@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "./lib/adminSession";
 
-// API routes callable without a session
+// Rotas da API que se podem chamar sem sessão
 const PUBLIC_API = new Set(["/api/auth/admin/login", "/api/auth/admin/logout"]);
 
-// Every admin API call needs a valid session cookie (set at login)
+// Cada chamada à API do painel precisa de um cookie de sessão válido (posto na entrada)
 export function proxy(request: NextRequest) {
   if (PUBLIC_API.has(request.nextUrl.pathname)) return NextResponse.next();
 

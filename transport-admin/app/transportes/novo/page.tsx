@@ -110,7 +110,7 @@ export default function NovoTransporte() {
       );
     });
 
-    // Click to set location
+    // Clicar para escolher o local
     map.on('click', (e) => {
       setFormData(prev => ({
         ...prev,
@@ -127,7 +127,7 @@ export default function NovoTransporte() {
     };
   }, []);
 
-  // Update marker when coordinates change
+  // Actualizar o marcador quando as coordenadas mudam
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
@@ -169,7 +169,7 @@ export default function NovoTransporte() {
       const data = await response.json();
       setVias(data.data || []);
     } catch (error) {
-      console.error('Error fetching vias:', error);
+      console.error('Erro ao carregar vias:', error);
     } finally {
       setLoading(false);
     }

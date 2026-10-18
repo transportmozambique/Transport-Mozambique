@@ -1,8 +1,8 @@
-// Jest setup file
+// Preparação do Jest
 
-// The suites use the database named by DATABASE_URL (environment, or .env as Prisma reads it), and
-// auth.test.ts creates an administrator with a known password. Refuse anything but a local
-// database, so `npm test` can never write to production.
+// Os testes usam a base de dados de DATABASE_URL (ambiente, ou .env como o Prisma o lê), e o
+// auth.test.ts cria um administrador com uma palavra-passe conhecida. Recusa-se tudo o que não
+// seja uma base de dados local, para `npm test` nunca poder escrever na produção.
 const fs = require('fs');
 const path = require('path');
 
@@ -25,7 +25,7 @@ if (!LOCAL_HOSTS.has(host)) {
   throw new Error(`The Jest suites write to the database; refusing to run against ${host}. Use a local database.`);
 }
 
-// Suppress console logs during tests (optional)
+// Silenciar o console durante os testes (opcional)
 // global.console = {
 //   ...console,
 //   log: jest.fn(),

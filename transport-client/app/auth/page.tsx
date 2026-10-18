@@ -234,7 +234,7 @@ export default function AuthPage() {
           </div>
         </div>
 
-        {/* Back to Home */}
+        {/* Voltar ao início */}
         <div className="mt-6 text-center">
           <button
             onClick={() => router.push("/")}

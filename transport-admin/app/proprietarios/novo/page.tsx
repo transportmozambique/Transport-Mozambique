@@ -128,7 +128,7 @@ export default function NovoProprietario() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          // This form only creates companies (company name, NUIT, start of operations).
+          // Este formulário só cria empresas (nome da empresa, NUIT, início de actividade).
           tipoProprietario: 'Empresa',
           nome: formData.nome.trim(),
           bi: formData.bi.trim(),

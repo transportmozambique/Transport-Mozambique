@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 
-// Create Prisma Client singleton
+// Um só cliente Prisma por processo: em desenvolvimento, o recarregamento do Next.js criaria um novo a cada alteração e esgotaria as ligações
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };

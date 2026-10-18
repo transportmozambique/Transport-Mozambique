@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
     const skip = (page - 1) * limit;
 
-    // Build where clause for search
+    // Condição da pesquisa
     const where = search
       ? {
           OR: [
@@ -23,10 +23,10 @@ export async function GET(request: Request) {
         }
       : {};
 
-    // Get total count
+    // Total de linhas
     const total = await prisma.administrador.count({ where });
 
-    // Get paginated data
+    // A página pedida
     const administradores = await prisma.administrador.findMany({
       where,
       skip,
@@ -62,7 +62,7 @@ export async function GET(request: Request) {
       }
     );
   } catch (error: any) {
-    console.error('Error fetching administradores:', error);
+    console.error('Erro ao carregar administradores:', error);
     return NextResponse.json(
       { error: 'Erro ao carregar administradores', details: error.message },
       { status: 500 }
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if email already exists
+    // O email já existe?
     const existing = await prisma.administrador.findUnique({
       where: { email },
     });
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash(senha, 10);
 
-    // Create administrador
+    // Criar o administrador
     const administrador = await prisma.administrador.create({
       data: {
         nome,
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(administrador, { status: 201 });
   } catch (error: any) {
-    console.error('Error creating administrador:', error);
+    console.error('Erro ao criar administrador:', error);
     return NextResponse.json(
       { error: 'Erro ao criar administrador', details: error.message },
       { status: 500 }

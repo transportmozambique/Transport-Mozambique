@@ -16,15 +16,15 @@ interface MotoristaData {
   status: string;
   categoriaCarta: string;
   experienciaAnos: number;
-  token?: string; // session token from the login, sent as "Authorization: Bearer"
+  token?: string; // token de sessão da entrada, enviado como "Authorization: Bearer"
   transporte?: { id: string; matricula: string; marca: string; modelo: string; cor: string; lotacao: number; currGeoLocation?: string; };
   via?: { id: string; nome: string; codigo: string; terminalPartida: string; terminalChegada: string; geoLocationPath: string; municipio: string; paragens: Array<{ id: string; nome: string; geoLocation: string; isTerminal: boolean; }>; };
 }
 
-// Passengers waiting along the route (stop alerts asked for in the last 3 hours)
+// Passageiros à espera ao longo da via (alertas de paragem pedidos nas últimas 3 horas)
 interface Waiting { total: number; paragens: Array<{ nome: string; aEspera: number; }>; }
 
-/** What the admin can change about a driver: when it differs, the portal shows the new data */
+/** O que o administrador pode mudar num motorista: quando difere, o portal mostra os dados novos */
 function assignmentKey(m: MotoristaData) {
   const t = m.transporte;
   const v = m.via;
@@ -45,7 +45,7 @@ const BUS_SVG = `<svg width="40" height="48" viewBox="0 0 48 56" style="display:
   <circle cx="33" cy="50" r="4" fill="#1e293b"/>
 </svg>`;
 
-/** A route path, "lng,lat;lng,lat;…", as [lng, lat] points */
+/** Um percurso de via, "lng,lat;lng,lat;…", como pontos [lng, lat] */
 function parsePoints(text: string | undefined | null): [number, number][] {
   return (text ?? "")
     .split(";")
@@ -54,8 +54,8 @@ function parsePoints(text: string | undefined | null): [number, number][] {
 }
 
 /**
- * The part of the map the panel leaves visible, as the map's padding (so centring uses it):
- * above the sheet on a phone, right of the card on a computer.
+ * A parte do mapa que o painel deixa à vista, como padding do mapa (para o centrar a usar): acima
+ * da folha num telemóvel, à direita do cartão num computador.
  */
 function mapPadding(snap: SheetSnap) {
   return window.matchMedia('(min-width: 768px)').matches
@@ -87,11 +87,11 @@ export default function DashboardPage() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const busRef = useRef<Marker | null>(null);
-  // The phone's position: the bus marker follows it
+  // A posição do telemóvel: o marcador do autocarro segue-a
   const [here, setHere] = useState<[number, number] | null>(null);
   const hereRef = useRef<[number, number] | null>(null);
-  // Real GPS: during a trip the phone's position goes to /api/gps with the vehicle's device code
-  // (created in the admin, Transporte → Rastreador GPS), saved once on this phone.
+  // GPS real: durante uma viagem a posição do telemóvel vai para /api/gps com o código do dispositivo
+  // do veículo (criado no painel, Transporte → Rastreador GPS), guardado uma vez neste telemóvel.
   const [gpsCode, setGpsCode] = useState("");
   const [gpsInput, setGpsInput] = useState("");
   const [gpsStatus, setGpsStatus] = useState("");
@@ -146,7 +146,7 @@ export default function DashboardPage() {
     setGpsStatus(code ? 'Código guardado: a posição é enviada durante a viagem' : 'Código removido');
   };
 
-  // The map, tilted with 3D buildings, with the route, its stops and the bus
+  // O mapa, inclinado com edifícios em 3D, com a via, as suas paragens e o autocarro
   useEffect(() => {
     if (!motorista || !mapContainerRef.current || mapRef.current) return;
     let cancelled = false;
@@ -193,7 +193,7 @@ export default function DashboardPage() {
         map.addLayer({ id: 'route-casing', type: 'line', source: 'route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#ffffff', 'line-width': 10 } });
         map.addLayer({ id: 'route-line', type: 'line', source: 'route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#2563eb', 'line-width': 6 } });
 
-        // A stop's position is "lat,lng" (the other way round from the path)
+        // A posição de uma paragem é "lat,lng" (ao contrário do percurso)
         const stops = (motorista.via?.paragens ?? []).flatMap((s) => {
           const [lat, lng] = s.geoLocation.split(',').map(Number);
           return Number.isFinite(lat) && Number.isFinite(lng)
@@ -236,7 +236,7 @@ export default function DashboardPage() {
     };
   }, [motorista]);
 
-  // The bus marker is where the phone is, once its position is known
+  // O marcador do autocarro fica onde está o telemóvel, logo que a sua posição é conhecida
   useEffect(() => {
     hereRef.current = here;
     if (here) busRef.current?.setLngLat(here);
@@ -251,7 +251,7 @@ export default function DashboardPage() {
     if (at) mapRef.current?.flyTo({ center: at, zoom: 16, pitch: 60 });
   };
 
-  // Trip state is stored on the server and shared with the USSD driver menu
+  // O estado da viagem fica no servidor e é partilhado com o menu USSD do motorista
   const applyTrip = useCallback((trip: TripState) => {
     setIsActive(trip.emViagem);
     setTripStart(trip.emViagem && trip.viagemIniciadaEm ? new Date(trip.viagemIniciadaEm).getTime() : null);
@@ -259,8 +259,8 @@ export default function DashboardPage() {
 
   const handleLogout = useCallback(() => { localStorage.removeItem('motorista'); router.push('/'); }, [router]);
 
-  // Load it on open and re-check every 30s, so a trip started or ended by USSD shows up here.
-  // The session token from the login identifies the driver; without a valid one, sign in again.
+  // Lido ao abrir e verificado a cada 30 s, para uma viagem iniciada ou terminada por USSD aparecer aqui.
+  // O token de sessão da entrada identifica o motorista; sem um válido, entra-se outra vez.
   const sessionToken: string | undefined = motorista?.token;
   useEffect(() => {
     if (!motorista) return;
@@ -278,7 +278,7 @@ export default function DashboardPage() {
     return () => { cancelled = true; clearInterval(i); };
   }, [motorista, sessionToken, applyTrip, handleLogout]);
 
-  // Passengers waiting at the route's stops, refreshed every minute
+  // Passageiros à espera nas paragens da via, actualizados a cada minuto
   useEffect(() => {
     if (!sessionToken) return;
     let cancelled = false;
@@ -291,8 +291,8 @@ export default function DashboardPage() {
     return () => { cancelled = true; clearInterval(i); };
   }, [sessionToken]);
 
-  // The vehicle and route as the admin has them now: asked on open and every 5 minutes, so a
-  // reassignment shows without signing out. The map is redrawn only when they changed.
+  // O veículo e a via como o administrador os tem agora: pedidos ao abrir e a cada 5 minutos, para
+  // uma nova atribuição aparecer sem sair e entrar. O mapa só é redesenhado quando mudaram.
   useEffect(() => {
     if (!sessionToken) return;
     let cancelled = false;
@@ -351,9 +351,9 @@ export default function DashboardPage() {
 
   const via = motorista.via;
   const terminals = new Set((via?.paragens ?? []).filter((s) => s.isTerminal).map((s) => s.nome));
-  // The route's stops in travel order, with the passengers waiting at each (until the count
-  // arrives, the stops from the sign-in). Stops in a row with the same name (both sides of a
-  // street) are shown once, with their passengers added up.
+  // As paragens da via pela ordem de viagem, com os passageiros à espera em cada uma (até a contagem
+  // chegar, as paragens da entrada). Paragens seguidas com o mesmo nome (os dois lados de uma rua)
+  // aparecem uma vez, com os passageiros somados.
   const stops = (waiting?.paragens.length ? waiting.paragens : (via?.paragens ?? []).map((s) => ({ nome: s.nome, aEspera: 0 }))).reduce<
     { nome: string; aEspera: number }[]
   >((list, s) => {
@@ -381,7 +381,7 @@ export default function DashboardPage() {
         <div ref={mapContainerRef} className="h-full w-full" />
       </div>
 
-      {/* Phone: the driver and the trip state on top of the map */}
+      {/* Telemóvel: o motorista e o estado da viagem por cima do mapa */}
       <div className="absolute left-3 right-3 top-3 z-40 flex items-center gap-3 rounded-2xl bg-white/95 px-3 py-2.5 shadow-lg backdrop-blur md:hidden">
         {driverCard}
         {statusPill}

@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   // Ensure proper rendering
   reactStrictMode: true,
   
-  // Optimize for production (compress is enabled by default in Next.js 16)
+  // Optimizado para produção (a compressão já vem ligada por omissão no Next.js 16)
   compress: true,
 
   // Image optimization

@@ -3,19 +3,20 @@
 import { useEffect, useRef, type PointerEvent, type ReactNode } from "react";
 
 /**
- * The panel of the map pages: a card on the left on a computer, a bottom sheet on a phone. The
- * sheet has three heights: lowered (only its top shows), half the screen, and the whole screen
- * (the map hidden). It moves with the finger from its top, and from its list too, as in map
- * apps: pushing the list up raises the sheet until it fills the screen, and only then scrolls the
- * list; pulling it down at the top of the list lowers the sheet. A tap on the bar raises it a step.
+ * O painel das páginas de mapa: um cartão à esquerda num computador, uma folha em baixo num
+ * telemóvel. A folha tem três alturas: baixa (só se vê o topo), meio ecrã e ecrã inteiro (o mapa
+ * escondido). Move-se com o dedo a partir do topo, e também a partir da lista, como nas aplicações
+ * de mapas: empurrar a lista para cima sobe a folha até encher o ecrã, e só então desliza a lista;
+ * puxá-la para baixo no topo da lista desce a folha. Um toque na barra sobe-a um degrau.
+ * Porquê assim: num telemóvel o mapa e a lista disputam o mesmo ecrã pequeno.
  */
 
 export type SheetSnap = "peek" | "half" | "full";
 
 const ORDER: SheetSnap[] = ["peek", "half", "full"];
-/** A move shorter than this is a tap */
+/** Um movimento mais curto do que isto é um toque */
 const TAP_PX = 6;
-/** Faster than this (px/ms) when let go, the sheet goes on to the next height that way */
+/** Mais rápido do que isto (px/ms) ao largar, a folha segue para a altura seguinte nesse sentido */
 const FLICK = 0.5;
 const isDesktop = () => window.matchMedia("(min-width: 768px)").matches;
 
@@ -33,26 +34,26 @@ export default function Sheet({
 }: {
   snap: SheetSnap;
   onSnap: (snap: SheetSnap) => void;
-  /** Height in px of the lowered sheet */
+  /** Altura em px da folha baixa */
   peek: number;
-  /** Top of the panel: always on a computer; on a phone only when the sheet fills the screen */
+  /** Topo do painel: sempre num computador; num telemóvel só quando a folha enche o ecrã */
   header?: ReactNode;
   label: string;
   children: ReactNode;
 }) {
   const sheet = useRef<HTMLElement>(null);
   const body = useRef<HTMLDivElement>(null);
-  // A drag let go over the handle also clicks it; that click is not a tap
+  // Um arrasto largado sobre a pega também lhe faz um clique; esse clique não é um toque
   const dragged = useRef(false);
-  // The latest props, for the touch listeners set up once
+  // As props mais recentes, para os ouvintes de toque registados uma só vez
   const latest = useRef({ snap, onSnap, peek });
   useEffect(() => {
     latest.current = { snap, onSnap, peek };
   }, [snap, onSnap, peek]);
 
   /**
-   * A drag of the sheet from `y0`. While it moves, the height is set on the element itself (no
-   * render of the panel's content at every move) and the sheet stays above the page's top bar.
+   * Um arrasto da folha a partir de `y0`. Durante o movimento a altura é posta no próprio elemento
+   * (sem redesenhar o conteúdo do painel a cada movimento) e a folha fica acima da barra do topo.
    */
   const startDrag = (y0: number) => {
     const el = sheet.current!;
@@ -69,12 +70,12 @@ export default function Sheet({
       end(y: number) {
         const h = clamp(y);
         const speed = (y - y0) / Math.max(1, performance.now() - t0);
-        // The nearest height, or the next one in the direction of a flick
+        // A altura mais próxima, ou a seguinte no sentido de um gesto rápido
         const heights = ORDER.map((s) => heightOf(s, min));
         let i = heights.reduce((best, x, k) => (Math.abs(x - h) < Math.abs(heights[best] - h) ? k : best), 0);
         if (speed < -FLICK) i = heights.findIndex((x) => x > h + 1) === -1 ? ORDER.length - 1 : heights.findIndex((x) => x > h + 1);
         if (speed > FLICK) i = Math.max(0, heights.filter((x) => x < h - 1).length - 1);
-        // Back to the class height, animated from where the finger left it
+        // De volta à altura da classe, animada a partir de onde o dedo a deixou
         el.style.transition = "";
         el.style.height = "";
         el.style.zIndex = "";
@@ -85,7 +86,7 @@ export default function Sheet({
     };
   };
 
-  // The handle and the header: followed on the window, so a mouse can leave the handle
+  // A pega e o cabeçalho: seguidos na janela, para o rato poder sair da pega
   const onDown = (e: PointerEvent) => {
     if (isDesktop()) return;
     const y0 = e.clientY;
@@ -99,14 +100,14 @@ export default function Sheet({
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
-      drag?.end(ev.clientY); // without a drag it was a tap: the buttons take it
+      drag?.end(ev.clientY); // sem arrasto foi um toque: os botões tratam dele
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
   };
 
-  // The list: a finger moves the sheet first, then scrolls (touch only; a mouse scrolls)
+  // A lista: um dedo move primeiro a folha, depois desliza (só toque; o rato desliza)
   useEffect(() => {
     const list = body.current;
     if (!list) return;
@@ -150,10 +151,10 @@ export default function Sheet({
       list.removeEventListener("touchend", onEnd);
       list.removeEventListener("touchcancel", onEnd);
     };
-    // startDrag reads the element and the latest props through refs
+    // startDrag lê o elemento e as props mais recentes através de refs
   }, []);
 
-  // A tap on the handle: up a step, or back to half from the whole screen
+  // Um toque na pega: sobe um degrau, ou volta a meio a partir do ecrã inteiro
   const cycle = () => !dragged.current && onSnap(snap === "peek" ? "half" : snap === "half" ? "full" : "half");
 
   const full = snap === "full";

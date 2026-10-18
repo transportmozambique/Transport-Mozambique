@@ -1,7 +1,7 @@
 /**
- * Converts a route path to the stored format "lng,lat;lng,lat;...", which every app reads.
- * Accepts that format, a JSON array of [lng, lat] pairs (as a string or already parsed), and
- * returns null when there are fewer than two valid points.
+ * Converte um percurso para o formato guardado "lng,lat;lng,lat;...", que todas as aplicações lêem.
+ * Aceita esse formato e um array JSON de pares [lng, lat] (como texto ou já lido), e devolve null
+ * quando há menos de dois pontos válidos.
  */
 export function toStoredPath(input: unknown): string | null {
   let points: unknown = input;
@@ -27,10 +27,10 @@ export function toStoredPath(input: unknown): string | null {
 }
 
 /**
- * Orders a route's stops by where they fall on its drawn path (Via.geoLocationPath,
- * "lng,lat;lng,lat;..."). ViaParagem rows have no sequence column and their id order
- * is not the travel order on most routes. Keeps the given order when there is no path.
- * Same logic as transport-client/lib/fares.ts (orderStopsAlongRoute).
+ * Ordena as paragens de uma via pelo sítio onde ficam no percurso desenhado (Via.geoLocationPath,
+ * "lng,lat;lng,lat;..."). As linhas ViaParagem não têm coluna de ordem e a ordem dos ids não é a
+ * ordem de viagem na maioria das vias. Mantém a ordem dada quando não há percurso.
+ * A mesma lógica de transport-client/lib/fares.ts (orderStopsAlongRoute).
  */
 export function orderStopsAlongRoute<T>(
   stops: T[],

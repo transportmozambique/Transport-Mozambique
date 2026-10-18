@@ -50,7 +50,7 @@ export default function ParagemDetalhes() {
 
   async function fetchParagem(id: string) {
     try {
-      // Fetch specific paragem by ID instead of all paragens
+      // Pedir só esta paragem pelo id, não todas
       const response = await fetch(`/api/paragens/${id}`);
       
       if (!response.ok) {
@@ -90,10 +90,10 @@ export default function ParagemDetalhes() {
       maxZoom: 19,
     }).addTo(map);
 
-    // Create custom marker icon
+    // Criar o ícone do marcador
     const isTerminal = paragem.vias.some(v => v.terminalBoolean);
-    const markerColor = isTerminal ? '#1f2937' : '#6b7280'; // Black for terminal, gray for regular
-    const markerSize = '14px'; // Same size for both
+    const markerColor = isTerminal ? '#1f2937' : '#6b7280'; // preto para terminal, cinzento para as outras
+    const markerSize = '14px'; // o mesmo tamanho para as duas
 
     const customIcon = L.divIcon({
       className: 'custom-stop-marker',
@@ -124,7 +124,7 @@ export default function ParagemDetalhes() {
       iconAnchor: [parseInt(markerSize) / 2, parseInt(markerSize) / 2],
     });
 
-    // Add marker for the paragem
+    // Juntar o marcador da paragem
     const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
     marker.bindPopup(`<b>${paragem.nome}</b><br>${paragem.codigo}<br>${isTerminal ? 'Terminal' : 'Paragem'}`).openPopup();
 
@@ -283,7 +283,7 @@ export default function ParagemDetalhes() {
           </div>
         </div>
 
-        {/* Confirm Delete Dialog */}
+        {/* Diálogo de confirmação do apagar */}
         <ConfirmDialog
           isOpen={showDeleteDialog}
           title="Eliminar Paragem"

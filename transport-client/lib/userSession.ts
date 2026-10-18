@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { createToken, idFromRequest, type SessionKind } from './signedToken';
 
 /**
- * Passenger session: login and registration return a signed token, kept with the passenger in
- * localStorage and sent as "Authorization: Bearer <token>" to the /api/user endpoints, which only
- * act on that passenger's own data.
+ * Sessão do passageiro: a entrada e o registo devolvem um token assinado, guardado com o
+ * passageiro no localStorage e enviado como "Authorization: Bearer <token>" aos endpoints
+ * /api/user, que só agem sobre os dados desse passageiro.
  */
 const PASSENGER: SessionKind = { secretEnv: 'USER_SESSION_SECRET', maxAgeSeconds: 90 * 24 * 60 * 60 };
 
@@ -12,7 +12,7 @@ export function createUserToken(utenteId: string): string | null {
   return createToken(PASSENGER, utenteId);
 }
 
-/** The passenger id of a valid, unexpired "Authorization: Bearer" token, else null. */
+/** O id do passageiro de um token "Authorization: Bearer" válido e não expirado; senão null. */
 export function utenteIdFromRequest(request: Request): string | null {
   return idFromRequest(PASSENGER, request);
 }

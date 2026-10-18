@@ -10,11 +10,11 @@ export async function GET(
   context: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    // Handle both Promise and direct params (Next.js 15+ compatibility)
+    // Aceitar params como Promise ou directo (compatibilidade com o Next.js 15+)
     const params = await Promise.resolve(context.params);
-    console.log('Fetching via with id:', params.id);
+    console.log('A ler a via com o id:', params.id);
     
-    // Fetch via with all related data
+    // Ler a via com todos os dados relacionados
     const via = await prisma.via.findUnique({
       where: {
         id: params.id,
@@ -68,17 +68,17 @@ export async function GET(
     });
 
     if (!via) {
-      console.log('Via not found:', params.id);
+      console.log('Via não encontrada:', params.id);
       return NextResponse.json(
         { error: 'Via não encontrada' },
         { status: 404 }
       );
     }
 
-    // Stops in travel order (their id order is not)
+    // Paragens pela ordem de viagem (a ordem dos ids não é)
     via.paragens = orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation);
 
-    // Travel speed of the active fare rule: the timetable and every time estimate use it
+    // Velocidade de viagem da regra de tarifa activa: o horário e todas as estimativas de tempo usam-na
     const tarifa = await prisma.tarifa.findFirst({ where: { ativa: true }, orderBy: { updatedAt: 'desc' } });
 
     return NextResponse.json({ ...via, velocidadeViagemKmh: tarifa?.velocidadeViagemKmh ?? 30 }, {
@@ -89,13 +89,13 @@ export async function GET(
       },
     });
   } catch (error: any) {
-    console.error('Error fetching via:', error);
-    console.error('Error message:', error.message);
-    console.error('Error code:', error.code);
+    console.error('Erro ao carregar via:', error);
+    console.error('Mensagem do erro:', error.message);
+    console.error('Código do erro:', error.code);
     
     return NextResponse.json(
       { 
-        error: 'Internal server error',
+        error: 'Erro interno do servidor',
         message: error.message,
         code: error.code || 'Unknown error',
       },
@@ -115,9 +115,9 @@ export async function PATCH(
     const body = await request.json();
     const { nome, terminalPartida, terminalChegada, cor, municipioId, paragensIds, geoLocationPath } = body;
 
-    // Update via basic info
+    // Dados básicos da via
     const updateData: any = {};
-    // A new path (Vias → Percurso), stored as "lng,lat;lng,lat;..." like on creation
+    // Um percurso novo (Vias → Percurso), guardado como "lng,lat;lng,lat;..." como na criação
     if (geoLocationPath !== undefined) {
       const storedPath = toStoredPath(geoLocationPath);
       if (!storedPath) {
@@ -133,7 +133,7 @@ export async function PATCH(
     if (terminalChegada) updateData.terminalChegada = terminalChegada;
     if (cor) updateData.cor = cor;
     
-    // Update município if provided
+    // O município, quando dado
     if (municipioId) {
       updateData.municipio = {
         connect: { id: municipioId }
@@ -147,8 +147,8 @@ export async function PATCH(
       data: updateData,
     });
 
-    // The route's stops become exactly paragensIds. Links that stay are kept as they are (their
-    // terminal flag too); only the removed ones are deleted and the new ones created.
+    // As paragens da via passam a ser exactamente paragensIds. As ligações que ficam mantêm-se como
+    // estão (também a marca de terminal); só as removidas são apagadas e as novas criadas.
     if (paragensIds !== undefined && Array.isArray(paragensIds)) {
       const ids = paragensIds.filter((id: unknown): id is string => typeof id === 'string');
       await prisma.viaParagem.deleteMany({
@@ -176,7 +176,7 @@ export async function PATCH(
       }
     }
 
-    // Fetch updated via with paragens
+    // Ler a via actualizada com as paragens
     const updatedVia = await prisma.via.findUnique({
       where: { id: params.id },
       include: {
@@ -200,10 +200,10 @@ export async function PATCH(
     if (error.code === 'P2025') {
       return NextResponse.json({ error: 'Via não encontrada' }, { status: 404 });
     }
-    console.error('Error updating via:', error);
+    console.error('Erro ao actualizar via:', error);
     return NextResponse.json(
       { 
-        error: 'Internal server error',
+        error: 'Erro interno do servidor',
         message: error.message,
       },
       { status: 500 }
@@ -220,7 +220,7 @@ export async function DELETE(
   try {
     const params = await Promise.resolve(context.params);
     
-    // Check if via exists
+    // A via existe?
     const via = await prisma.via.findUnique({
       where: { id: params.id },
       include: {
@@ -240,7 +240,7 @@ export async function DELETE(
       );
     }
 
-    // Desassociar todos os transportes desta via (set viaId to null)
+    // Desassociar todos os transportes desta via (viaId a null)
     if (via._count.transportes > 0) {
       await prisma.transporte.updateMany({
         where: { viaId: params.id },
@@ -248,7 +248,7 @@ export async function DELETE(
       });
     }
 
-    // Delete via (paragens will be deleted automatically due to onDelete: Cascade)
+    // Apagar a via (as ligações às paragens apagam-se sozinhas, onDelete: Cascade)
     await prisma.via.delete({
       where: {
         id: params.id,
@@ -257,7 +257,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('Error deleting via:', error);
+    console.error('Erro ao apagar via:', error);
     return NextResponse.json(
       { 
         error: 'Erro ao eliminar via',

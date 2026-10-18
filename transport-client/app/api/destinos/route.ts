@@ -4,9 +4,10 @@ import { maybeCheckArrivals } from '@/lib/busSimulator';
 import { waitUntil } from '@vercel/functions';
 
 /**
- * Every place reachable from a start, earliest arrival first, with the stop where the first bus
- * is taken: A (the start) → B (that stop) → C (each destination). The start is `lat` and `lng`
- * (the passenger's position or a point they picked) or `from`: stop ids, several for one place.
+ * Todos os locais a que se chega a partir de um início, a chegada mais cedo primeiro, com a
+ * paragem onde se apanha o primeiro autocarro: A (o início) → B (essa paragem) → C (cada destino).
+ * O início é `lat` e `lng` (a posição do passageiro ou um ponto escolhido no mapa) ou `from`: ids de
+ * paragens, várias para um local.
  */
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;

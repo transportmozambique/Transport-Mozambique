@@ -117,7 +117,7 @@ const menuItems = [
   },
 ];
 
-/** The sections, grouped: the network, the people, the territory, reports and settings */
+/** As secções, em grupos: a rede, as pessoas, o território, os relatórios e a configuração */
 const groups: { label: string; paths: string[] }[] = [
   { label: "Rede", paths: ["/dashboard", "/transportes", "/vias", "/paragens"] },
   { label: "Pessoas", paths: ["/motoristas", "/proprietarios", "/utentes", "/administradores"] },
@@ -129,10 +129,10 @@ const groups: { label: string; paths: string[] }[] = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { isExpanded, toggleSidebar, mobileOpen, setMobileOpen } = useSidebar();
-  // Below lg (phones, tablets) there is no sidebar: the header's button opens the menu over the whole screen
+  // Abaixo de lg (telemóveis, tablets) não há barra lateral: o botão do cabeçalho abre o menu por cima do ecrã inteiro
   const wide = isExpanded || mobileOpen;
 
-  // Esc closes the menu
+  // Esc fecha o menu
   useEffect(() => {
     if (!mobileOpen) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMobileOpen(false);
@@ -147,7 +147,7 @@ export default function Sidebar() {
           mobileOpen ? "flex" : "hidden"
         } ${isExpanded ? "lg:w-64" : "lg:w-20"}`}
       >
-        {/* Brand, and the button that folds the sidebar (closes the menu on a phone) */}
+        {/* Marca, e o botão que recolhe a barra lateral (fecha o menu num telemóvel) */}
         <div className="flex items-center gap-3 px-3 py-3 sm:px-6 lg:px-4 lg:py-5">
           <button
             onClick={() => (mobileOpen ? setMobileOpen(false) : toggleSidebar())}
@@ -182,7 +182,7 @@ export default function Sidebar() {
                 {menuItems
                   .filter((item) => group.paths.includes(item.path))
                   .map((item) => {
-                    // Active on the section's own pages too (details, editing)
+                    // Activa também nas páginas da própria secção (detalhes, edição)
                     const isActive = pathname === item.path || pathname.startsWith(item.path + "/");
                     return (
                       <Link

@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     const search = searchParams.get('search') || '';
     const countOnly = searchParams.get('countOnly') === 'true';
 
-    // If only count is requested, return just the count
+    // Quando só se pede a contagem, devolver só a contagem
     if (countOnly) {
       const total = await prisma.provincia.count({
         where: search ? {
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
       prisma.provincia.count({ where: whereClause }),
     ]);
 
-    // Get counts for vias and transportes for each provincia
+    // Número de vias e de transportes de cada província
     const provinciasWithCounts = await Promise.all(
       provincias.map(async (provincia) => {
         const [viasCount, transportesCount] = await Promise.all([
@@ -99,7 +99,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       { 
         error: 'Erro ao buscar províncias',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: error instanceof Error ? error.message : 'Erro desconhecido',
       },
       { status: 500 }
     );
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if codigo already exists
+    // O código já existe?
     const existing = await prisma.provincia.findUnique({
       where: { codigo: body.codigo },
     });
@@ -143,7 +143,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { 
         error: 'Erro ao criar província',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
       },
       { status: 500 }
     );

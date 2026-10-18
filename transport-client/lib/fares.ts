@@ -1,9 +1,9 @@
 import { prisma } from './prisma';
 
 /**
- * Fare and travel-time rules shared by the web API and USSD.
- * Values come from the active `Tarifa` row, so prices are changed in the
- * database, not in code.
+ * Regras de tarifa e de tempo de viagem, partilhadas pela API web e pelo USSD.
+ * Os valores vêm da linha activa de `Tarifa`, por isso os preços mudam-se na base de dados (página
+ * Tarifa do painel), não no código: não é preciso publicar uma nova versão para mudar um preço.
  */
 export interface FareRule {
   tarifaMinima: number;
@@ -13,7 +13,7 @@ export interface FareRule {
   velocidadeChegadaKmh: number;
 }
 
-// Used only if the table has no active row, so a missing row never breaks quotes.
+// Usado só se a tabela não tiver nenhuma linha activa, para que a falta da linha nunca impeça um preço.
 const DEFAULT_RULE: FareRule = {
   tarifaMinima: 10,
   precoPorKm: 10,
@@ -22,7 +22,7 @@ const DEFAULT_RULE: FareRule = {
   velocidadeChegadaKmh: 45,
 };
 
-// Each USSD hop replays the whole menu, so avoid one query per hop.
+// Cada passo do USSD repete o menu inteiro, por isso evita-se uma consulta por passo.
 const CACHE_MS = 60_000;
 let cached: { rule: FareRule; at: number } | null = null;
 
@@ -50,14 +50,14 @@ export async function getFareRule(): Promise<FareRule> {
 
 export type LatLng = [number, number];
 
-/** Parses a "lat,lng" string; returns null when it is missing or malformed. */
+/** Lê um texto "lat,lng"; devolve null quando falta ou está mal formado. */
 export function parseLatLng(geo: string | null | undefined): LatLng | null {
   if (!geo || !geo.includes(',')) return null;
   const [lat, lng] = geo.split(',').map(Number);
   return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
 }
 
-/** Great-circle distance in metres. */
+/** Distância em metros sobre a superfície da Terra (círculo máximo). */
 export function haversineMeters([lat1, lng1]: LatLng, [lat2, lng2]: LatLng): number {
   const R = 6371e3;
   const φ1 = (lat1 * Math.PI) / 180;
@@ -70,19 +70,19 @@ export function haversineMeters([lat1, lng1]: LatLng, [lat2, lng2]: LatLng): num
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-/** Length in metres of the path through consecutive points (e.g. a route's stops). */
+/** Comprimento em metros do caminho pelos pontos seguidos (ex: as paragens de uma via). */
 export function pathLengthMeters(points: LatLng[]): number {
   let total = 0;
   for (let i = 0; i < points.length - 1; i++) total += haversineMeters(points[i], points[i + 1]);
   return total;
 }
 
-/** Parses a route path stored as "lng,lat;lng,lat;..." (Via.geoLocationPath). */
+/** Lê um percurso guardado como "lng,lat;lng,lat;..." (Via.geoLocationPath). */
 export function parseRoutePath(path: string | null | undefined): LatLng[] {
   if (!path) return [];
   let pairs: number[][];
   if (path.trim().startsWith('[')) {
-    // Older admin versions saved the path as a JSON array of [lng, lat]
+    // Versões antigas do painel guardavam o percurso como um array JSON de [lng, lat]
     try {
       pairs = (JSON.parse(path) as unknown[]).map((p) => (Array.isArray(p) ? p.map(Number) : []));
     } catch {
@@ -97,15 +97,16 @@ export function parseRoutePath(path: string | null | undefined): LatLng[] {
 }
 
 /**
- * Orders a route's stops by where they fall on its drawn path. ViaParagem rows
- * have no sequence column and their id order is not the travel order on most
- * routes, which made stop-to-stop distances (and fares) far too long.
- * Keeps the given order when the route has no path.
+ * Ordena as paragens de uma via pelo sítio onde ficam no percurso desenhado. As linhas de
+ * ViaParagem não têm coluna de ordem e a ordem dos ids não é a ordem de viagem na maioria das
+ * vias, o que tornava as distâncias entre paragens (e as tarifas) demasiado longas.
+ * Mantém a ordem dada quando a via não tem percurso.
  */
 /**
- * Where `point` falls along `path`: the nearest segment, and how far along it (0 to 1). Paths
- * can have long straight segments (a simplified avenue), so points are projected on the
- * segments, not snapped to the nearest vertex. Flat-earth distances are enough to compare.
+ * Onde `point` fica ao longo de `path`: o segmento mais próximo, e quanto se avançou nele (0 a 1).
+ * Os percursos podem ter segmentos rectos longos (uma avenida simplificada), por isso os pontos
+ * são projectados nos segmentos, não colados ao vértice mais próximo. Distâncias em plano chegam
+ * para comparar.
  */
 export function projectOnPath(path: LatLng[], point: LatLng): { segment: number; t: number } {
   const k = Math.cos((point[0] * Math.PI) / 180);
@@ -137,7 +138,7 @@ export function orderStopsAlongRoute<T>(
   const path = parseRoutePath(geoLocationPath);
   if (path.length < 2) return stops;
 
-  // Segment and fraction along it, as one number that sorts in path order
+  // Segmento e fracção nele, como um só número que ordena pela ordem do percurso
   const positionOnPath = (geo: string | null | undefined) => {
     const pt = parseLatLng(geo);
     if (!pt) return path.length;
@@ -151,7 +152,7 @@ export function orderStopsAlongRoute<T>(
     .map((s) => s.stop);
 }
 
-/** Road-distance estimate for when the route between two points is unknown. */
+/** Estimativa da distância por estrada quando não se conhece a via entre dois pontos. */
 export function estimatedRoadMeters(from: LatLng, to: LatLng, rule: FareRule): number {
   return haversineMeters(from, to) * rule.fatorEstrada;
 }
@@ -160,12 +161,12 @@ export function fareFor(distanceMeters: number, rule: FareRule): number {
   return Math.max(rule.tarifaMinima, Math.ceil((distanceMeters / 1000) * rule.precoPorKm));
 }
 
-/** Minutes until a bus `distanceMeters` away reaches the stop (at least 1). */
+/** Minutos até um autocarro a `distanceMeters` chegar à paragem (pelo menos 1). */
 export function arrivalMinutes(distanceMeters: number, rule: FareRule): number {
   return Math.max(1, Math.ceil((distanceMeters / 1000 / rule.velocidadeChegadaKmh) * 60));
 }
 
-/** Minutes the passenger spends on board for a journey of `distanceMeters`. */
+/** Minutos que o passageiro passa a bordo numa viagem de `distanceMeters`. */
 export function travelMinutes(distanceMeters: number, rule: FareRule): number {
   return Math.ceil((distanceMeters / 1000 / rule.velocidadeViagemKmh) * 60);
 }
@@ -176,26 +177,25 @@ export interface RouteStop {
 }
 
 export interface TripEstimate {
-  /** Metres the bus still has to travel to reach the origin stop */
+  /** Metros que o autocarro ainda tem de percorrer até à paragem de origem */
   distanciaAteOrigem: number;
-  /** Minutes until the bus reaches the origin stop */
+  /** Minutos até o autocarro chegar à paragem de origem */
   tempoChegada: number;
-  /** The bus is past the origin and has to finish its loop first */
+  /** O autocarro já passou a origem e tem de acabar a volta primeiro */
   jaPassou: boolean;
-  /** Metres from origin to destination along the route */
+  /** Metros da origem ao destino ao longo da via */
   distanciaViagem: number;
   tempoViagem: number;
   fare: number;
 }
 
-// Extra wait when the bus already passed the origin and has to turn around
+// Espera extra quando o autocarro já passou a origem e tem de dar a volta
 const TURNAROUND_MIN = 10;
 
 /**
- * Arrival time, trip length, trip time and fare for a passenger going from
- * `origemId` to `destinoId` on a bus at `bus`. `stops` must be in travel order
- * (see orderStopsAlongRoute). Returns null unless the origin comes before the
- * destination on the route.
+ * Hora de chegada, distância, tempo de viagem e tarifa para um passageiro que vai de `origemId`
+ * a `destinoId` num autocarro em `bus`. `stops` tem de estar pela ordem de viagem (ver
+ * orderStopsAlongRoute). Devolve null a não ser que a origem venha antes do destino na via.
  */
 export function estimateTrip(
   stops: RouteStop[],
@@ -210,7 +210,7 @@ export function estimateTrip(
 
   const along = (from: number, to: number) => pathLengthMeters(stops.slice(from, to + 1).map((s) => s.point));
 
-  // Where the bus is on the route: its nearest stop
+  // Onde está o autocarro na via: a paragem mais próxima
   let closest = 0;
   let closestDist = Infinity;
   stops.forEach((s, i) => {

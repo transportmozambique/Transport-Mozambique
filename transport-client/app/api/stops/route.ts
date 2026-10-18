@@ -4,9 +4,10 @@ import { parseLatLng } from '@/lib/fares';
 import { prisma } from '@/lib/prisma';
 
 /**
- * Every stop served by a bus, with the routes through it, for the map and the stop search.
- * Compact: each stop lists its routes as indexes into `vias`. `semAutocarro` lists the other
- * stops (no route with a vehicle passes there), so the map can still show them.
+ * Todas as paragens servidas por um autocarro, com as vias que passam por elas, para o mapa e a
+ * pesquisa de paragens. Compacto (é a maior resposta da aplicação): cada paragem lista as suas vias
+ * como índices em `vias`. `semAutocarro` lista as outras paragens (nenhuma via com veículo passa lá),
+ * para o mapa ainda as poder mostrar.
  */
 export async function GET() {
   try {

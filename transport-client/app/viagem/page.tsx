@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "A sua viagem · Transportes Moçambique" };
 
-// The map needs the browser
+// O mapa precisa do navegador (sem renderização no servidor)
 const JourneyFollow = dynamic(() => import("../components/JourneyFollow"));
 
 export default function ViagemPage() {

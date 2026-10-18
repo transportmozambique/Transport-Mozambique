@@ -3,9 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { orderStopsAlongRoute } from '@/lib/fares';
 import { driverIdFromRequest } from '@/lib/driverSession';
 
-// Passengers waiting along the driver's route: alerts asked for (web or USSD) in the last
-// 3 hours at a stop of the route. Alerts already answered by an arrival SMS still count: that SMS
-// goes out when a bus is 1 km away, which is when the driver most needs the number. Driver portal only.
+// Passageiros à espera ao longo da via do motorista: alertas pedidos (web ou USSD) nas últimas
+// 3 horas numa paragem da via. Os alertas já respondidos por um SMS de chegada contam na mesma: esse
+// SMS sai quando um autocarro está a 1 km, que é quando o motorista mais precisa do número. Só para o portal do motorista.
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -57,7 +57,7 @@ export async function GET(request: Request) {
     const paragens = stops.map((s) => ({ nome: s.nome, aEspera: byStop.get(s.id) ?? 0 }));
     return json({ total: paragens.reduce((sum, p) => sum + p.aEspera, 0), paragens });
   } catch (error) {
-    console.error('Error reading waiting passengers:', error);
+    console.error('Erro ao ler os passageiros à espera:', error);
     return json({ error: 'Erro ao obter passageiros à espera' }, 500);
   }
 }

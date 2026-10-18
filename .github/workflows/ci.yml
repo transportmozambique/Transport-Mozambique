@@ -1,8 +1,9 @@
-# Checks every pull request and every push to main: the three apps type-check, the three copies
-# of the Prisma schema agree, and the documentation's links and anchors resolve.
-# The admin's Jest and Playwright suites need a local copy of the database and are run by hand
-# (docs/testing.md).
-name: CI
+# Verifica cada pull request e cada push para a main: os tipos das três aplicações, as três cópias
+# do esquema Prisma iguais, e as ligações e âncoras da documentação.
+# Os testes Jest e Playwright do painel precisam de uma cópia local da base de dados e correm-se à
+# mão (docs/testes.md). Porquê só isto aqui: não precisa de segredos nem de base de dados, por isso
+# corre em qualquer fork sem configuração.
+name: Verificações
 
 on:
   pull_request:
@@ -14,7 +15,7 @@ permissions:
 
 jobs:
   typecheck:
-    name: Type check (${{ matrix.app }})
+    name: Tipos (${{ matrix.app }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -31,20 +32,20 @@ jobs:
           cache: npm
           cache-dependency-path: ${{ matrix.app }}/package-lock.json
       - run: npm ci
-      # The Prisma client's types; transport-driver has no database access
+      # Os tipos do cliente Prisma; o transport-driver não acede à base de dados
       - if: matrix.app != 'transport-driver'
         run: npx prisma generate
       - run: npx tsc --noEmit
 
   consistency:
-    name: Schemas and documentation
+    name: Esquemas e documentação
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: The three Prisma schemas agree
+      - name: Os três esquemas Prisma são iguais
         run: node .github/scripts/check-schemas.mjs
-      - name: Documentation links and anchors resolve
+      - name: As ligações e âncoras da documentação existem
         run: python3 .github/scripts/check-doc-links.py .

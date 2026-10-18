@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * End-to-end CRUD tests for the admin dashboard. They create, edit and delete real rows, so they
- * only run against a local database (see e2e/README.md); global-setup refuses any other host.
+ * Testes ponta a ponta (CRUD) do painel de administração. Criam, editam e apagam linhas reais, por
+ * isso só correm contra uma base de dados local (ver e2e/README.md); o global-setup recusa qualquer outro servidor.
  */
 const PORT = Number(process.env.E2E_PORT || 3102);
 const DATABASE_URL = process.env.E2E_DATABASE_URL || 'postgresql://postgres@127.0.0.1:55432/transport_test';
@@ -24,12 +24,12 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  // Serves the production build (`npm run build` first). `next start` is used instead of
-  // `next dev` because Next allows only one dev server per folder.
+  // Serve a versão de produção (`npm run build` primeiro). Usa-se `next start` em vez de
+  // `next dev` porque o Next só permite um servidor de desenvolvimento por pasta.
   webServer: {
     command: `npx next start -p ${PORT}`,
     url: `http://localhost:${PORT}/login`,
-    // A server left on the port may serve an older build; set E2E_REUSE_SERVER=1 to use it anyway.
+    // Um servidor deixado na porta pode servir uma versão antiga; E2E_REUSE_SERVER=1 usa-o mesmo assim.
     reuseExistingServer: Boolean(process.env.E2E_REUSE_SERVER),
     timeout: 180_000,
     env: {

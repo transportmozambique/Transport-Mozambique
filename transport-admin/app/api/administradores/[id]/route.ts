@@ -10,7 +10,7 @@ export async function GET(
 ) {
   try {
     const params = await Promise.resolve(context.params);
-    console.log(`[API] Buscando administrador com ID: ${params.id}`);
+    console.log(`[API] A carregar o administrador com o id ${params.id}`);
     
     const administrador = await prisma.administrador.findUnique({
       where: { id: params.id },
@@ -44,7 +44,7 @@ export async function GET(
       },
     });
   } catch (error: any) {
-    console.error('Error fetching administrador:', error);
+    console.error('Erro ao carregar administrador:', error);
     return NextResponse.json(
       { error: 'Erro ao carregar administrador', details: error.message },
       { status: 500 }
@@ -63,12 +63,12 @@ export async function PATCH(
     const body = await request.json();
     const { nome, email, senha } = body;
 
-    // Build update data
+    // Montar os dados a actualizar
     const updateData: any = {};
     if (nome) updateData.nome = nome;
     if (email) updateData.email = email;
     
-    // Hash password if provided
+    // Hash da palavra-passe, quando foi dada
     if (senha) {
       const bcrypt = require('bcryptjs');
       updateData.senha = await bcrypt.hash(senha, 10);
@@ -88,7 +88,7 @@ export async function PATCH(
 
     return NextResponse.json(administrador);
   } catch (error: any) {
-    console.error('Error updating administrador:', error);
+    console.error('Erro ao actualizar administrador:', error);
     return NextResponse.json(
       { error: 'Erro ao atualizar administrador', details: error.message },
       { status: 500 }
@@ -105,7 +105,7 @@ export async function DELETE(
   try {
     const params = await Promise.resolve(context.params);
 
-    // Check if administrador exists
+    // O administrador existe?
     const administrador = await prisma.administrador.findUnique({
       where: { id: params.id },
     });
@@ -117,14 +117,14 @@ export async function DELETE(
       );
     }
 
-    // Delete administrador
+    // Apagar o administrador
     await prisma.administrador.delete({
       where: { id: params.id },
     });
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('Error deleting administrador:', error);
+    console.error('Erro ao apagar administrador:', error);
     return NextResponse.json(
       { error: 'Erro ao eliminar administrador', details: error.message },
       { status: 500 }

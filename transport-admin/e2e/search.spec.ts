@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-// The search box in the header finds vehicles, routes and drivers and opens their pages
+// A caixa de pesquisa do cabeçalho encontra veículos, vias e motoristas e abre as suas páginas
 test('Pesquisa no cabeçalho: encontra transporte, via e motorista', async ({ page }) => {
   const [transportes, vias, motoristas] = await Promise.all([
     page.request.get('/api/transportes?limit=1').then((r) => r.json()),
@@ -17,7 +17,7 @@ test('Pesquisa no cabeçalho: encontra transporte, via e motorista', async ({ pa
   const search = page.getByLabel('Pesquisar transportes, vias e motoristas');
   const group = (label: string) => page.getByRole('group', { name: label });
 
-  // Lower case still matches (the search ignores case)
+  // As minúsculas também coincidem (a pesquisa ignora maiúsculas)
   await search.fill(transporte.matricula.toLowerCase());
   await group('Transportes').getByRole('button', { name: new RegExp(escapeRegExp(transporte.matricula)) }).first().click();
   await expect(page).toHaveURL(new RegExp(`/transportes/${transporte.id}$`));
@@ -26,7 +26,7 @@ test('Pesquisa no cabeçalho: encontra transporte, via e motorista', async ({ pa
   await group('Vias').getByRole('button', { name: new RegExp(escapeRegExp(via.nome)) }).first().click();
   await expect(page).toHaveURL(new RegExp(`/vias/${via.id}$`));
 
-  // Enter opens the first result
+  // Enter abre o primeiro resultado
   await search.fill(motorista.nome);
   await expect(group('Motoristas')).toBeVisible();
   await search.press('Enter');
@@ -36,7 +36,7 @@ test('Pesquisa no cabeçalho: encontra transporte, via e motorista', async ({ pa
   await expect(page.getByText('Sem resultados para "zzzz-nada-assim"')).toBeVisible();
 });
 
-// A phone is found by its digits, whatever spacing it was stored with
+// Um telefone é encontrado pelos seus algarismos, seja com que espaços foi guardado
 test('Pesquisa por telefone: os dígitos encontram o motorista', async ({ page }) => {
   const motoristas = await (await page.request.get('/api/motoristas?limit=1')).json();
   const motorista = motoristas.data[0];

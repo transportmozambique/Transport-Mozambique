@@ -18,8 +18,8 @@ export default async function globalSetup(config: FullConfig) {
     throw new Error(`E2E tests write to the database; refusing to run against ${host}. Use a local database.`);
   }
 
-  // The test admin exists only in the local database, so logging in below also proves that the
-  // server under test is connected to it and not to production.
+  // O administrador de teste só existe na base de dados local, por isso a entrada abaixo também prova
+  // que o servidor em teste está ligado a ela e não à produção.
   const prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
   const senha = await bcrypt.hash(E2E_ADMIN.senha, 10);
   await prisma.administrador.upsert({

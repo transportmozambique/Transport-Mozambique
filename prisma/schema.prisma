@@ -176,7 +176,7 @@ model Transporte {
   codigo            Int      @unique
   codigoVia         String
   currGeoLocation   String?
-  routePath         String?  // Individual route path for this bus (format: lng,lat;lng,lat;...)
+  routePath         String?  // Percurso próprio do autocarro (formato lng,lat;lng,lat;...); desactualizado na maioria, o da via tem prioridade
   gpsDispositivoHash String?   @unique // SHA-256 do código do dispositivo GPS (o código só é mostrado uma vez)
   gpsAtualizadoEm    DateTime? // Hora da última posição GPS real (currGeoLocation)
   gpsVelocidade      Float?    // km/h na última posição GPS
@@ -237,7 +237,7 @@ model Motorista {
   dataValidadeCarta DateTime
   categoriaCarta  String   @default("B") // A, B, C, D, E
   experienciaAnos Int      @default(0) // Anos de experiência como motorista
-  password        String?  // Password for driver login
+  password        String?  // Hash bcrypt do PIN do motorista (gerado no painel, nunca devolvido)
   observacoes     String?  @db.Text
   status          String   @default("ativo") // ativo, inativo, suspenso
   emViagem        Boolean  @default(false)    // Viagem em curso (USSD e portal do motorista)
@@ -261,7 +261,7 @@ model Utente {
   nome            String
   email           String   @unique
   telefone        String   @unique
-  senha           String   // Password hash
+  senha           String   // Hash bcrypt da palavra-passe
   mISSION         String   @unique
   geoLocation     String?
   subscrito       Boolean  @default(false)
@@ -317,13 +317,13 @@ model GeoLocation {
   @@index([transporteId])
 }
 
-// Regra de tarifa partilhada pela web e pelo USSD (uma linha ativa)
+// Regra de tarifa partilhada pela web e pelo USSD (uma linha activa)
 model Tarifa {
   id                   String   @id @default(cuid())
   nome                 String   @unique
   tarifaMinima         Int      @default(10)  // MT
   precoPorKm           Float    @default(10)  // MT por km
-  fatorEstrada         Float    @default(1.3) // linha reta -> distância por estrada quando o percurso não é conhecido
+  fatorEstrada         Float    @default(1.3) // linha recta -> distância por estrada quando o percurso não é conhecido
   velocidadeViagemKmh  Float    @default(30)  // tempo de viagem do utente
   velocidadeChegadaKmh Float    @default(45)  // tempo até o autocarro chegar à paragem
   ativa                Boolean  @default(true)

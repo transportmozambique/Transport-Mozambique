@@ -1,9 +1,9 @@
 type LoadingScreenProps = {
-  /** Full window (login, redirects). Admin app main area uses `admin`. */
+  /** Janela inteira (entrada, redireccionamentos). A área principal do painel usa `admin`. */
   layout?: "viewport" | "admin";
-  /** Table-level spinner; no full-bleed overlay */
+  /** Indicador ao nível da tabela; sem camada por cima de tudo */
   size?: "default" | "compact";
-  /** Dark full-screen shell (e.g. root redirect before route) */
+  /** Fundo escuro de ecrã inteiro (ex: o redireccionamento da raiz antes de escolher a página) */
   tone?: "light" | "dark";
 };
 

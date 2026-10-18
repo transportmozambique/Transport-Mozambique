@@ -20,7 +20,7 @@ export default function NovaVia() {
   const onDrawn = useCallback((route: DrawnRoute) => setDrawn(route), []);
   const [municipios, setMunicipios] = useState<Municipio[]>([]);
   const [allParagens, setAllParagens] = useState<RouteStop[]>([]);
-  const [excludedParagens, setExcludedParagens] = useState<string[]>([]); // stops near the route the user unticked
+  const [excludedParagens, setExcludedParagens] = useState<string[]>([]); // paragens perto da via que o administrador desmarcou
 
   const [formData, setFormData] = useState({
     nome: '',
@@ -44,7 +44,7 @@ export default function NovaVia() {
         console.error('Erro ao carregar municípios:', error);
         setNotification({ message: 'Erro ao carregar municípios', type: 'error' });
       });
-    // Every stop (there are more than 1000)
+    // Todas as paragens (são mais de 1000)
     fetch('/api/paragens?limit=10000')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((result) => setAllParagens(result.data || []))
@@ -53,7 +53,7 @@ export default function NovaVia() {
 
   const { hasRoute, ready: routeReady, failed: routingFailed, path: routedPath } = drawn;
 
-  // Stops close to the route, in travel order
+  // Paragens perto da via, pela ordem de viagem
   const nearbyParagens = useMemo(() => {
     if (routedPath.length < 2) return [];
     const near = allParagens.filter((p) => {
@@ -99,7 +99,7 @@ export default function NovaVia() {
 
     setLoading(true);
     try {
-      // Save the road-following path in the stored "lng,lat;lng,lat" format
+      // Guardar o percurso pelas estradas no formato guardado "lng,lat;lng,lat"
       const geoLocationPath = routedPath.map(([lng, lat]) => `${lng},${lat}`).join(';');
 
       const response = await fetch('/api/vias', {
@@ -119,7 +119,7 @@ export default function NovaVia() {
         setTimeout(() => router.push('/vias'), 1500);
       } else {
         const errorText = await response.text();
-        console.error('Error response:', errorText);
+        console.error('Resposta de erro:', errorText);
         try {
           const error = JSON.parse(errorText);
           showNotification(error.details || error.error || 'Erro ao criar via', 'error');
@@ -128,7 +128,7 @@ export default function NovaVia() {
         }
       }
     } catch (error) {
-      console.error('Exception creating via:', error);
+      console.error('Excepção ao criar via:', error);
       showNotification(
         error instanceof Error ? error.message : 'Erro ao criar via',
         'error'
@@ -284,7 +284,7 @@ export default function NovaVia() {
                 </div>
               </div>
 
-              {/* Stops along the drawn route, in travel order */}
+              {/* Paragens ao longo da via desenhada, pela ordem de viagem */}
               {nearbyParagens.length > 0 && (
                 <div className="pt-4 border-t border-slate-200">
                   <div className="flex items-center justify-between mb-3">
@@ -354,7 +354,7 @@ export default function NovaVia() {
             </form>
           </div>
 
-          {/* Map: stays in view while the form scrolls */}
+          {/* Mapa: fica à vista enquanto o formulário desliza */}
           <RouteDrawer
             color={formData.cor}
             stops={allParagens}

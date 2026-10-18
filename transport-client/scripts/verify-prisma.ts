@@ -20,7 +20,7 @@ async function main() {
     console.log(`   - Paragens: ${paragemCount}`);
     console.log(`   - Utentes: ${utenteCount}\n`);
 
-    // Fetch one transport with details
+    // Ler um transporte com os detalhes
     const transport = await prisma.transporte.findFirst({
       include: {
         via: true,

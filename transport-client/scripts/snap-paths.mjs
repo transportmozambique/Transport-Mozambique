@@ -1,34 +1,37 @@
 #!/usr/bin/env node
 /**
- * Puts the routes' paths on the roads where they cut across the map.
+ * Põe nas estradas os percursos das rotas onde eles cortam pelo mapa.
  *
- *   node scripts/snap-paths.mjs                        # dry run: what would change, nothing written
- *   node scripts/snap-paths.mjs --apply                # write to DATABASE_URL (local databases only)
- *   node scripts/snap-paths.mjs --apply --production   # also allows a remote database
- *   options: --min 300 (shortest stretch checked, m), --verbose (every route listed)
+ *   node scripts/snap-paths.mjs                        # ensaio: o que mudaria, nada é escrito
+ *   node scripts/snap-paths.mjs --apply                # escreve em DATABASE_URL (só bases de dados locais)
+ *   node scripts/snap-paths.mjs --apply --production   # permite também uma base de dados remota
+ *   opções: --min 300 (troço mais curto verificado, m), --verbose (todas as rotas listadas)
  *
- * Some stored paths (Via.geoLocationPath) jump in a straight line between two points far apart:
- * where an OpenStreetMap route relation has a hole in it or lists its ways out of order (the OSM
- * import joined its ways in order), and on routes drawn stop to stop by the first data scripts,
- * whose straight lines are cut into points a few tens of metres apart. The path is read as
- * straight stretches (the points in one line, within 3 m). For every stretch of at least --min
- * metres, the script asks a public OSRM car router for the road between its two ends:
- * - the road stays within 50 m of the straight line: the road is straight, the stretch is kept;
- * - the road stays within a quarter of the stretch's length (at least 300 m) of the line, and is
- *   at most 3 times as long (+500 m): the stretch is replaced by the road;
- * - otherwise the car road is another way altogether (a ring road, the city centre). The foot
- *   router, which ignores one-way streets and takes tracks, is asked too: when its road follows
- *   the line (a dual carriageway, a one-way street, a track), the stretch is a road and is kept.
- *   Else the stretch is kept and listed: scripts/redraw-from-osm.mjs rebuilds such routes from
- *   their OpenStreetMap stops, and the others are redrawn in the admin (Vias → the route → Redesenhar percurso).
- * The new path is simplified (4 m) and written only when it changed.
+ * Alguns percursos guardados (Via.geoLocationPath) saltam em linha recta entre dois pontos
+ * afastados: onde uma relação de rota do OpenStreetMap tem um buraco ou lista as suas vias fora
+ * de ordem (a importação do OSM juntou as vias por ordem), e nas rotas desenhadas de paragem em
+ * paragem pelos primeiros scripts de dados, cujas linhas rectas estão cortadas em pontos a poucas
+ * dezenas de metros uns dos outros. O percurso é lido como troços rectos (os pontos numa linha, a
+ * menos de 3 m). Para cada troço de pelo menos --min metros, o script pede a um router OSRM
+ * público de carro a estrada entre as suas duas pontas:
+ * - a estrada fica a menos de 50 m da linha recta: a estrada é recta, o troço fica;
+ * - a estrada fica a menos de um quarto do comprimento do troço (pelo menos 300 m) da linha, e é
+ *   no máximo 3 vezes mais longa (+500 m): o troço é substituído pela estrada;
+ * - senão a estrada de carro vai por outro lado (uma circular, o centro da cidade). Pergunta-se
+ *   também ao router a pé, que ignora os sentidos únicos e usa caminhos de terra: quando o seu
+ *   caminho segue a linha (uma estrada com separador, uma rua de sentido único, um caminho), o
+ *   troço é uma estrada e fica. Senão o troço fica e é listado: scripts/redraw-from-osm.mjs
+ *   reconstrói essas rotas a partir das suas paragens do OpenStreetMap, e as outras redesenham-se
+ *   no painel (Vias → a rota → Redesenhar percurso).
+ * O novo percurso é simplificado (4 m) e só é escrito quando mudou.
  *
- * The routers' answers are kept in osm-data/road-cache.json (scripts/roads.mjs), so a second run
- * on the same data (production after a local run) asks nothing again.
+ * As respostas dos routers ficam em osm-data/road-cache.json (scripts/roads.mjs), por isso uma
+ * segunda corrida com os mesmos dados (a produção depois de uma corrida local) não pergunta nada outra vez.
  *
- * --apply first saves every route's id, code and path to osm-data/backup-paths-<time>.json (to
- * undo: write those paths back), and only updates a route whose path is still the one read.
- * Road data © OpenStreetMap contributors (ODbL), routing by OSRM / FOSSGIS.
+ * --apply guarda primeiro o id, o código e o percurso de cada rota em
+ * osm-data/backup-paths-<hora>.json (para desfazer: escrever esses percursos de volta), e só
+ * actualiza uma rota cujo percurso ainda é o que foi lido.
+ * Dados das estradas © contribuidores do OpenStreetMap (ODbL), caminhos por OSRM / FOSSGIS.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -44,7 +47,7 @@ const option = (name, fallback) => {
 };
 const DATA = path.resolve(option('--data', path.join(__dirname, '..', 'osm-data')));
 const MIN_SEGMENT_M = Number(option('--min', '300'));
-/** A route left with a straight jump this long is listed */
+/** Uma rota que fica com um salto em linha recta deste comprimento é listada */
 const LIST_JUMP_M = 1000;
 
 function longStretches(points) {
@@ -53,11 +56,11 @@ function longStretches(points) {
     .filter(([a, b]) => meters(a, b) >= MIN_SEGMENT_M);
 }
 
-/** The route's new path, and what was done to its long stretches */
+/** O novo percurso da rota, e o que foi feito aos seus troços longos */
 function snapRoute(points) {
   const out = [points[0]];
   const stats = { road: 0, straight: 0, stray: 0, unknown: 0 };
-  /** Lengths (m) of the stretches kept straight for want of a road along them */
+  /** Comprimentos (m) dos troços mantidos rectos por falta de uma estrada ao longo deles */
   const kept = [];
   for (const [i, j] of stretches(points)) {
     const a = points[i];
@@ -89,7 +92,7 @@ function snapRoute(points) {
     const parsed = vias.map((v) => ({ ...v, points: parsePath(v.geoLocationPath) })).filter((v) => v.points.length >= 2);
     const long = parsed.flatMap((v) => longStretches(v.points));
     await fetchRoutes(long.map((points) => ({ profile: 'car', points })), 'car roads');
-    // The foot router, only where the car road strays
+    // O router a pé, só onde a estrada de carro se afasta
     await fetchRoutes(long.filter(([a, b]) => classify(a, b).kind === 'ask-foot').map((points) => ({ profile: 'foot', points })), 'foot roads');
 
     const changes = [];

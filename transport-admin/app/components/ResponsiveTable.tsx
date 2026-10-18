@@ -8,7 +8,7 @@ interface Column {
   accessor: string;
   render?: (value: any, row: any) => ReactNode;
   mobileLabel?: string;
-  showOnMobile?: boolean; // New: control which columns show on mobile
+  showOnMobile?: boolean; // que colunas aparecem no telemóvel
 }
 
 interface ResponsiveTableProps {
@@ -18,8 +18,8 @@ interface ResponsiveTableProps {
   actions?: (row: any) => ReactNode;
   emptyMessage?: string;
   loading?: boolean;
-  mobileCardTitle?: (row: any) => ReactNode; // Main title for mobile card
-  mobileCardSubtitle?: (row: any) => ReactNode; // Subtitle for mobile card
+  mobileCardTitle?: (row: any) => ReactNode; // título principal do cartão no telemóvel
+  mobileCardSubtitle?: (row: any) => ReactNode; // subtítulo do cartão no telemóvel
 }
 
 export default function ResponsiveTable({
@@ -50,7 +50,7 @@ export default function ResponsiveTable({
     );
   }
 
-  // Filter columns for mobile (only show columns with showOnMobile !== false)
+  // Colunas para o telemóvel (só as que têm showOnMobile !== false)
   const mobileColumns = columns.filter(col => col.showOnMobile !== false);
 
   return (
@@ -108,7 +108,7 @@ export default function ResponsiveTable({
             onClick={() => onRowClick?.(row)}
             className={`p-4 ${onRowClick ? 'hover:bg-slate-50 cursor-pointer' : ''}`}
           >
-            {/* Title and Subtitle */}
+            {/* Título e subtítulo */}
             {(mobileCardTitle || mobileCardSubtitle) && (
               <div className="mb-3">
                 {mobileCardTitle && (
@@ -124,7 +124,7 @@ export default function ResponsiveTable({
               </div>
             )}
 
-            {/* Only show essential columns on mobile */}
+            {/* Só as colunas essenciais no telemóvel */}
             {mobileColumns.length > 0 && (
               <div className="grid grid-cols-2 gap-2 mb-3">
                 {mobileColumns.slice(0, 4).map((column, colIndex) => (

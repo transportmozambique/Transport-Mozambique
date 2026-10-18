@@ -12,12 +12,12 @@ async function backupDatabase() {
   try {
     console.log('🔄 Starting database backup...\n');
 
-    // Create backups directory if it doesn't exist
+    // Criar a pasta das cópias se não existir
     if (!fs.existsSync(backupDir)) {
       fs.mkdirSync(backupDir, { recursive: true });
     }
 
-    // Fetch all data from all tables
+    // Ler todos os dados de todas as tabelas
     const [
       provincias,
       municipios,
@@ -88,7 +88,7 @@ async function backupDatabase() {
       }
     };
 
-    // Write backup to file
+    // Escrever a cópia no ficheiro
     fs.writeFileSync(backupFile, JSON.stringify(backup, null, 2));
 
     console.log('✅ Database backup completed successfully!\n');

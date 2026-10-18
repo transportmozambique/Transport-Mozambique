@@ -16,7 +16,7 @@ interface SearchGroup {
   hits: SearchHit[];
 }
 
-/** Results for one search term; while the term differs from the box, a search is pending. */
+/** Resultados de um termo de pesquisa; enquanto o termo é diferente da caixa, há uma pesquisa pendente. */
 interface SearchResults {
   term: string;
   groups: SearchGroup[];
@@ -28,7 +28,7 @@ interface MotoristaRow { id: string; nome: string; telefone?: string; transporte
 
 const SEARCH_LIMIT = 5;
 
-// Lists from this dashboard's API; a failed request just contributes no results
+// Listas da API deste painel; um pedido falhado só não dá resultados
 async function fetchList<T>(url: string): Promise<T[]> {
   try {
     const response = await fetch(url);
@@ -55,7 +55,7 @@ export default function Header() {
   const term = query.trim();
   const currentGroups = results?.term === term ? results.groups : null;
 
-  // Close dropdowns when clicking outside
+  // Fechar os menus ao clicar fora
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -75,7 +75,7 @@ export default function Header() {
     };
   }, [showProfile, showResults]);
 
-  // Vehicles, routes and drivers matching the search box, 300 ms after the last keystroke
+  // Veículos, vias e motoristas que coincidem com a caixa de pesquisa, 300 ms depois da última tecla (para não pedir a cada letra)
   useEffect(() => {
     if (term.length < 2) return;
     let alive = true;
@@ -131,7 +131,7 @@ export default function Header() {
   return (
     <header className="z-30 shrink-0 border-b border-slate-200 bg-white/90 px-3 py-3 backdrop-blur sm:px-6">
       <div className="flex items-center justify-between gap-3">
-        {/* The menu, on a phone or tablet: it opens over the whole screen */}
+        {/* O menu, num telemóvel ou tablet: abre por cima do ecrã inteiro */}
         <button
           onClick={() => setMobileOpen(true)}
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-slate-900 hover:bg-slate-100 lg:hidden"
@@ -167,7 +167,7 @@ export default function Header() {
               onFocus={() => setShowResults(true)}
               onKeyDown={(e) => {
                 if (e.key === "Escape") setShowResults(false);
-                // Enter opens the first result
+                // Enter abre o primeiro resultado
                 if (e.key === "Enter" && currentGroups?.[0]?.hits[0]) openResult(currentGroups[0].hits[0].href);
               }}
               placeholder="Pesquisar transportes, vias, motoristas..."

@@ -4,17 +4,17 @@ import { prisma } from '@/lib/prisma';
 import { GPS_FRESH_MS } from '@/lib/vehiclePosition';
 
 /**
- * GPS device of a vehicle. The device (a phone with Traccar Client, or a tracker forwarded by
- * Traccar) sends positions to the passenger app's /api/gps with this code; only its SHA-256 is
- * stored, so the code is shown once, when it is created.
+ * Dispositivo GPS de um veículo. O dispositivo (um telemóvel com o Traccar Client, ou um
+ * rastreador reencaminhado pelo Traccar) envia posições para /api/gps da aplicação dos passageiros
+ * com este código; só o seu SHA-256 fica guardado, por isso o código é mostrado uma vez, ao ser criado.
  */
 
-// Where devices send positions (the passenger app, transport-client)
+// Para onde os dispositivos enviam posições (a aplicação dos passageiros, transport-client)
 const GPS_SERVER_URL = process.env.GPS_SERVER_URL || 'https://transport-mz.vercel.app/api/gps';
 
 type Params = { params: Promise<{ id: string }> };
 
-// GET: is a device set up, and when did it last send a position
+// GET: há um dispositivo configurado, e quando enviou a última posição
 export async function GET(_request: NextRequest, { params }: Params) {
   const { id } = await params;
   const t = await prisma.transporte.findUnique({
@@ -31,7 +31,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
   });
 }
 
-// POST: create a new device code (replaces the previous one, which stops working)
+// POST: cria um código novo (substitui o anterior, que deixa de funcionar)
 export async function POST(_request: NextRequest, { params }: Params) {
   const { id } = await params;
   const codigo = randomBytes(15).toString('base64url'); // 20 characters, 120 bits
@@ -46,7 +46,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
   return NextResponse.json({ codigo, servidor: GPS_SERVER_URL });
 }
 
-// DELETE: revoke the device code; the vehicle goes back to timetable positions
+// DELETE: revoga o código; o veículo volta às posições pelo horário
 export async function DELETE(_request: NextRequest, { params }: Params) {
   const { id } = await params;
   try {

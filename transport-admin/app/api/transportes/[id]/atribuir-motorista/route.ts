@@ -73,7 +73,7 @@ export async function POST(
       message: 'Motorista atribuído com sucesso'
     });
   } catch (error) {
-    console.error('Error assigning motorista:', error);
+    console.error('Erro ao atribuir motorista:', error);
     return NextResponse.json(
       { error: 'Erro ao atribuir motorista' },
       { status: 500 }
@@ -87,7 +87,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    // Find the motorista assigned to this transporte
+    // O motorista atribuído a este transporte
     const motorista = await prisma.motorista.findFirst({
       where: { transporteId: id }
     });
@@ -110,7 +110,7 @@ export async function DELETE(
       message: 'Motorista removido com sucesso'
     });
   } catch (error) {
-    console.error('Error removing motorista:', error);
+    console.error('Erro ao tirar motorista:', error);
     return NextResponse.json(
       { error: 'Erro ao remover motorista' },
       { status: 500 }

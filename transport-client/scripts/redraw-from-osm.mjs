@@ -1,40 +1,42 @@
 #!/usr/bin/env node
 /**
- * Redraws routes whose path still jumps in a straight line, from their OpenStreetMap stops.
+ * Redesenha as rotas cujo percurso ainda salta em linha recta, a partir das suas paragens do
+ * OpenStreetMap.
  *
- *   node scripts/redraw-from-osm.mjs                        # dry run: what would change, nothing written
- *   node scripts/redraw-from-osm.mjs --apply                # write to DATABASE_URL (local databases only)
- *   node scripts/redraw-from-osm.mjs --apply --production   # also allows a remote database
- *   options: --routes 214,504 (these routes instead of the ones found), --verbose,
- *            --unlink-far 503,X05 (unlink these routes' stops far from their path, below)
+ *   node scripts/redraw-from-osm.mjs                        # ensaio: o que mudaria, nada é escrito
+ *   node scripts/redraw-from-osm.mjs --apply                # escreve em DATABASE_URL (só bases de dados locais)
+ *   node scripts/redraw-from-osm.mjs --apply --production   # permite também uma base de dados remota
+ *   opções: --routes 214,504 (estas rotas em vez das encontradas), --verbose,
+ *           --unlink-far 503,X05 (desligar as paragens destas rotas longe do percurso, ver abaixo)
  *
- * Run it after scripts/snap-paths.mjs, with the OSM data from `import-osm.mjs --fetch` in
- * osm-data/. It takes the routes with a straight jump of 1 km or more that no road follows
- * (the same test as snap-paths), and that have an OpenStreetMap route relation with the same
- * number (214 → 214i and 214v). Such a jump comes from the relation itself: OSM lists its ways
- * out of order, or misses some, and the import joined them in order.
+ * Corre depois de scripts/snap-paths.mjs, com os dados do OSM de `import-osm.mjs --fetch` em
+ * osm-data/. Pega nas rotas com um salto em linha recta de 1 km ou mais que nenhuma estrada segue
+ * (o mesmo teste do snap-paths) e que têm uma relação de rota no OpenStreetMap com o mesmo número
+ * (214 → 214i e 214v). Um salto desses vem da própria relação: o OSM lista as suas vias fora de
+ * ordem, ou faltam-lhe algumas, e a importação juntou-as por ordem.
  *
- * The new path goes through the relation's stops in travel order, by car, on the public OSRM
- * routers (scripts/roads.mjs): stop positions on the road, or the platforms when the relation
- * has none. As in the import, the path is one direction, the "i" relation's (the buses come
- * back along it), so the route keeps its direction. A stop the router only reaches by going
- * round a block (on the far side of a dual carriageway) is passed by.
+ * O novo percurso passa pelas paragens da relação pela ordem de viagem, de carro, nos routers OSRM
+ * públicos (scripts/roads.mjs): os stop positions na estrada, ou as plataformas quando a relação
+ * não os tem. Como na importação, o percurso é de um sentido, o da relação "i" (os autocarros
+ * voltam por ele), por isso a rota mantém o seu sentido. Uma paragem a que o router só chega
+ * dando a volta a um quarteirão (do outro lado de uma estrada com separador) é saltada.
  *
- * The relations' stops that now lie on the path (a stop in the database within 35 m of the OSM
- * stop, and within 30 m of the new path) are linked to the route if they were not; the stops
- * the old jump had picked up stay linked, and the ones now far from the path are listed.
+ * As paragens das relações que agora ficam no percurso (uma paragem da base de dados a menos de
+ * 35 m da paragem do OSM, e a menos de 30 m do novo percurso) são ligadas à rota se não estavam;
+ * as paragens que o salto antigo tinha apanhado continuam ligadas, e as que agora ficam longe do
+ * percurso são listadas.
  *
- * --unlink-far 503,X05 unlinks, from the routes named, the linked stops more than 100 m from
- * their path: the path drawn in this run, or the current one for a route redrawn before. A far
- * stop that is a stop of the route's own OSM relations is kept: the bus comes back by another
- * street there (the "v" direction), and the path holds only one direction. Only the routes
- * named lose stops, so each removal is a decision taken route by route.
+ * --unlink-far 503,X05 desliga, das rotas indicadas, as paragens ligadas a mais de 100 m do seu
+ * percurso: o desenhado nesta corrida, ou o actual para uma rota redesenhada antes. Uma paragem
+ * longe que é paragem das próprias relações OSM da rota fica: o autocarro volta por outra rua
+ * nesse sítio (o sentido "v"), e o percurso só tem um sentido. Só as rotas indicadas perdem
+ * paragens, para cada remoção ser uma decisão tomada rota a rota.
  *
- * --apply first saves the routes' paths and stop links to osm-data/backup-redraw-<time>.json,
- * writes a path only if it is still the one read, and lists the links it added and removed in
- * osm-data/created-redraw-<time>.json (to undo: write the paths back, delete the links added,
- * create the links removed again).
- * Data © OpenStreetMap contributors (ODbL), routing by OSRM / FOSSGIS.
+ * --apply guarda primeiro os percursos e as ligações às paragens das rotas em
+ * osm-data/backup-redraw-<hora>.json, só escreve um percurso se ainda for o que foi lido, e lista
+ * as ligações juntadas e removidas em osm-data/created-redraw-<hora>.json (para desfazer:
+ * escrever os percursos de volta, apagar as ligações juntadas, criar outra vez as removidas).
+ * Dados © contribuidores do OpenStreetMap (ODbL), caminhos por OSRM / FOSSGIS.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -53,11 +55,11 @@ const ONLY = option('--routes', '').split(',').map((s) => s.trim()).filter(Boole
 const UNLINK = option('--unlink-far', '').split(',').map((s) => s.trim()).filter(Boolean);
 const MIN_SEGMENT_M = 300;
 const JUMP_M = 1000;
-/** A stop in the database this close to an OSM stop is that stop */
+/** Uma paragem da base de dados tão perto de uma paragem do OSM é essa paragem */
 const SAME_STOP_M = 35;
-/** A stop this close to the new path is on it */
+/** Uma paragem tão perto do novo percurso está nele */
 const ON_PATH_M = 30;
-/** A linked stop this far from the new path is listed */
+/** Uma paragem ligada tão longe do novo percurso é listada */
 const FAR_M = 100;
 
 const nearestOn = (points) => (p) => {
@@ -70,7 +72,7 @@ const latLng = (text) => {
   return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
 };
 
-/** The longest straight jump no road follows, in metres (0 when none), and what to ask first */
+/** O salto em linha recta mais longo que nenhuma estrada segue, em metros (0 quando não há), e o que perguntar primeiro */
 function longestJump(points) {
   let longest = 0;
   for (const [i, j] of stretches(points)) {
@@ -117,7 +119,7 @@ function longestJump(points) {
       .map((p) => ({ ...p, point: latLng(p.geoLocation) }))
       .filter((p) => p.point);
 
-    // Which routes: the ones asked for, or the ones still jumping
+    // Que rotas: as pedidas, ou as que ainda saltam
     let chosen;
     if (ONLY.length) chosen = vias.filter((v) => ONLY.includes(v.codigo));
     else {
@@ -137,7 +139,7 @@ function longestJump(points) {
         skipped.push({ v, why: 'no OpenStreetMap route with stops: redraw it in the admin (Vias → the route → Redesenhar percurso)' });
         continue;
       }
-      // The relation the import drew the route from: the "i" direction when there is one
+      // A relação de onde a importação desenhou a rota: o sentido "i" quando existe
       const rel = rels.sort((a, b) => (/i$/.test(b.tags.ref) ? 1 : 0) - (/i$/.test(a.tags.ref) ? 1 : 0))[0];
       const stops = stopsOf(rel);
       const routed = await routeThrough(stops);
@@ -153,7 +155,7 @@ function longestJump(points) {
       const dropped = routed.dropped;
       const near = nearestOn(points);
       const linked = new Set(v.paragens.map((p) => p.paragemId));
-      // The relations' stops on the new path, as stops in the database
+      // As paragens das relações no novo percurso, como paragens da base de dados
       const add = new Map();
       for (const r of relationsOf(v.codigo)) {
         for (const m of r.members) {
@@ -168,7 +170,7 @@ function longestJump(points) {
       changes.push({ v, rel, points, dropped, add: [...add.values()], far, before: lengthM(current) / 1000, after: lengthM(points) / 1000 });
     }
 
-    // Stops far from the path, on the routes named by --unlink-far
+    // Paragens longe do percurso, nas rotas indicadas em --unlink-far
     const unlinks = [];
     for (const codigo of UNLINK) {
       const v = vias.find((x) => x.codigo === codigo);
@@ -179,7 +181,7 @@ function longestJump(points) {
       const change = changes.find((c) => c.v.id === v.id);
       const near = nearestOn(change?.points ?? parsePath(v.geoLocationPath));
       const linked = new Set(v.paragens.map((p) => p.paragemId));
-      // Which OSM relations have a stop within 35 m of it: tells what a far stop was on
+      // Que relações OSM têm uma paragem a menos de 35 m dela: diz em que estava uma paragem longe
       const onRelation = (p) =>
         relationsOf(codigo)
           .filter((r) => r.members.some((m) => m.type === 'node' && /stop|platform/.test(m.role) && nodes.has(m.ref) && meters(nodes.get(m.ref), p.point) <= SAME_STOP_M))
@@ -237,7 +239,7 @@ function longestJump(points) {
         if (row) created.push({ id: row.id, via: c.v.codigo, paragem: p.codigo });
       }
     }
-    // Unlink only from a path that was written (or was already there)
+    // Desligar só de um percurso que foi escrito (ou que já lá estava)
     for (const u of unlinks) {
       if (notWritten.has(u.v.id) || !u.far.length) continue;
       const rows = links.filter((l) => l.viaId === u.v.id && u.far.some((p) => p.id === l.paragemId));

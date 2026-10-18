@@ -74,11 +74,11 @@ export default function EditarProvincia() {
       showCompass: true
     }), 'top-right');
 
-    // Click on map to set location
+    // Clicar no mapa para escolher o local
     map.on('click', (e) => {
       const { lat, lng } = e.lngLat;
       
-      // Update center point
+      // Actualizar o ponto central
       const centerSource = map.getSource('center-point') as maplibregl.GeoJSONSource;
       if (centerSource) {
         centerSource.setData({
@@ -157,7 +157,7 @@ export default function EditarProvincia() {
         }
       });
 
-      // Add circle source and layer
+      // Juntar a fonte e a camada do círculo
       map.addSource(circleLayerId, {
         type: 'geojson',
         data: createCircle(lat, lng, radius)
@@ -192,14 +192,14 @@ export default function EditarProvincia() {
     };
   }, [loading]);
 
-  // Update circle when radius changes
+  // Actualizar o círculo quando o raio muda
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const [lat, lng] = formData.geoLocation.split(',').map(Number);
     updateCircle(mapInstanceRef.current, lat, lng, radius);
   }, [radius]);
 
-  // Create circle GeoJSON
+  // Criar o GeoJSON do círculo
   const createCircle = (lat: number, lng: number, radiusKm: number) => {
     const points = 64;
     const coords = [];
@@ -224,7 +224,7 @@ export default function EditarProvincia() {
     } as any;
   };
 
-  // Update circle on map
+  // Actualizar o círculo no mapa
   const updateCircle = (map: maplibregl.Map, lat: number, lng: number, radiusKm: number) => {
     const source = map.getSource(circleLayerId) as maplibregl.GeoJSONSource;
     if (source) {
@@ -232,7 +232,7 @@ export default function EditarProvincia() {
     }
   };
 
-  // Fetch data
+  // Pedir os dados
   useEffect(() => {
     const fetchData = async () => {
       try {

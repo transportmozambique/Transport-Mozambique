@@ -40,7 +40,7 @@ body {
   animation: scale-in 0.2s ease-out;
 }
 
-/* Indeterminate circular loader (stroke travels in a loop) */
+/* Indicador circular de carregamento (o traço anda em círculo) */
 @keyframes loading-loop-dash {
   to {
     stroke-dashoffset: -113.1;
@@ -61,8 +61,8 @@ body {
   }
 }
 
-/* Scroll bars in the app's colours: thin, with a rounded thumb on a clear track. Firefox and
-   current Chrome/Edge use the standard properties; Safari only knows the ::-webkit ones. */
+/* Barras de deslocamento nas cores da aplicação: finas, com o cursor arredondado sobre uma calha
+   clara. O Firefox e o Chrome/Edge actuais usam as propriedades normais; o Safari só conhece as ::-webkit. */
 * {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
@@ -88,7 +88,7 @@ body {
   background-color: #94a3b8;
 }
 
-/* On the dark sidebar */
+/* Na barra lateral escura */
 .scroll-dark {
   scrollbar-color: #475569 transparent;
 }

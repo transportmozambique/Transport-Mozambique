@@ -43,7 +43,7 @@ interface Posicao {
   minutosAteProxima: number | null;
 }
 
-// The vehicle's service day by its timetable (GET /api/transportes/[id]/operacao)
+// O dia de serviço do veículo pelo horário (GET /api/transportes/[id]/operacao)
 interface Operacao {
   comprimentoKm: number;
   minutosPorSentido: number;
@@ -59,7 +59,7 @@ interface Operacao {
   volta: string;
 }
 
-// "HH:MM" in Maputo, with "amanhã" when it is not today
+// "HH:MM" em Maputo, com "amanhã" quando não é hoje
 function horaMaputo(iso: string): string {
   const at = new Date(iso);
   const day = (d: Date) => d.toLocaleDateString('pt-PT', { timeZone: 'Africa/Maputo' });
@@ -67,7 +67,7 @@ function horaMaputo(iso: string): string {
   return day(at) === day(new Date()) ? clock : `amanhã ${clock}`;
 }
 
-// Short waits in minutes; long ones (at night the first bus is at 05:00) as the Maputo clock time
+// Esperas curtas em minutos; as longas (de noite o primeiro autocarro é às 05:00) como a hora de Maputo
 function formatMinutos(minutos: number): string {
   if (minutos < 60) return `${minutos} min`;
   const at = new Date(Date.now() + minutos * 60000);
@@ -108,7 +108,7 @@ export default function TransporteDetalhes() {
   const mapInstanceRef = useRef<maplibregl.Map | null>(null);
   
   const [transporte, setTransporte] = useState<Transporte | null>(null);
-  // Live position (real GPS or timetable), refreshed while the page is open
+  // Posição ao vivo (GPS real ou horário), actualizada enquanto a página está aberta
   const [posicao, setPosicao] = useState<Posicao | null>(null);
   const busMarkerRef = useRef<maplibregl.Marker | null>(null);
   const [loading, setLoading] = useState(true);
@@ -128,7 +128,7 @@ export default function TransporteDetalhes() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Kilometres, trips and stop times of the day (timetable), refreshed every minute
+  // Quilómetros, viagens e horas nas paragens do dia (horário), actualizados a cada minuto
   const [operacao, setOperacao] = useState<Operacao | null>(null);
   useEffect(() => {
     if (!params.id) return;
@@ -225,15 +225,15 @@ export default function TransporteDetalhes() {
         labelLayerId
       );
 
-      // Route line from the database: the route's stored path already follows the roads
+      // Linha da via vinda da base de dados: o percurso guardado já segue as estradas
       if (transporte.routeCoords && transporte.routeCoords.length > 0) {
         drawRoute(transporte.routeCoords);
       } else {
-        // If no route data, just show the bus marker
+        // Sem dados da via, mostrar só o marcador do autocarro
         addBusMarker();
       }
 
-      // Function to draw route
+      // Desenhar a via
       function drawRoute(coordinates: [number, number][]) {
         // Add route line
         map.addSource('route', {
@@ -279,17 +279,17 @@ export default function TransporteDetalhes() {
           }
         }, 'route');
 
-        // Add stops if available
+        // Juntar as paragens, se houver
         if (transporte && transporte.stops && transporte.stops.length > 0) {
           transporte.stops.forEach((stop) => {
-            // Determine marker style based on stop type
+            // Estilo do marcador pelo tipo de paragem
             let markerColor = "#6b7280"; // Default gray
             let markerSize = "14px";
             let borderColor = "white";
             let markerIcon = "";
 
             if (stop.isTerminal) {
-              markerColor = "#1e293b"; // Black for terminals
+              markerColor = "#1e293b"; // preto para os terminais
               markerSize = "18px";
               borderColor = "#ffffff";
               markerIcon = "T";
@@ -333,13 +333,13 @@ export default function TransporteDetalhes() {
         // Add bus marker
         addBusMarker();
 
-        // Fit map to show entire route
+        // Enquadrar o mapa na via inteira
         const bounds = new maplibregl.LngLatBounds();
         coordinates.forEach((coord) => bounds.extend(coord));
         map.fitBounds(bounds, { padding: 50 });
       }
 
-      // Function to add bus marker
+      // Juntar o marcador do autocarro
       function addBusMarker() {
         if (transporte && transporte.latitude && transporte.longitude) {
           const el = document.createElement('div');
@@ -404,7 +404,7 @@ export default function TransporteDetalhes() {
       const response = await fetch('/api/motoristas?limit=1000');
       const data = await response.json();
       const motoristas = data.data || [];
-      // Filter only available motoristas (active and without transport)
+      // Só os motoristas livres (activos e sem transporte)
       const disponiveis = motoristas.filter((m: any) => 
         m.status === 'ativo' && !m.transporte
       );
@@ -487,7 +487,7 @@ export default function TransporteDetalhes() {
       } else {
         const error = await response.json();
         
-        // Check if error is about motorista or proprietarios association
+        // O erro é sobre a ligação a um motorista ou a proprietários?
         if (error.error && (error.error.includes('motorista') || error.error.includes('proprietários'))) {
           setDeleteError(error.details || error.error);
           setHasAssociations(true);
@@ -522,7 +522,7 @@ export default function TransporteDetalhes() {
         }
       }
 
-      // Then remove all proprietario associations
+      // Depois tirar todas as ligações a proprietários
       if (transporte?.proprietarios && transporte.proprietarios.length > 0) {
         for (const prop of transporte.proprietarios) {
           const removeProprietarioResponse = await fetch(`/api/transportes/${params.id}/atribuir-proprietario`, {
@@ -539,7 +539,7 @@ export default function TransporteDetalhes() {
         }
       }
 
-      // Finally delete the transporte
+      // Por fim, apagar o transporte
       const deleteResponse = await fetch(`/api/transportes/${params.id}`, {
         method: 'DELETE',
       });
@@ -661,7 +661,7 @@ export default function TransporteDetalhes() {
           </div>
         </div>
 
-        {/* Delete Confirmation Modal */}
+        {/* Diálogo de confirmação do apagar */}
         {showDeleteModal && transporte && (
           <div 
             className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm min-h-screen" 
@@ -775,7 +775,7 @@ export default function TransporteDetalhes() {
           </div>
         )}
 
-        {/* Statistics Cards: the day by the vehicle's timetable */}
+        {/* Cartões de estatísticas: o dia pelo horário do veículo */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-testid="operacao-cards">
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center justify-between">
@@ -1082,7 +1082,7 @@ export default function TransporteDetalhes() {
           </div>
         </div>
 
-        {/* Charts: the day by the vehicle's timetable */}
+        {/* Gráficos: o dia pelo horário do veículo */}
         {operacao && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
@@ -1131,7 +1131,7 @@ export default function TransporteDetalhes() {
           </div>
         )}
 
-        {/* Next pass at each stop, both directions */}
+        {/* Próxima passagem em cada paragem, nos dois sentidos */}
         {operacao && operacao.passagens.length > 0 && (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6" data-testid="passagens">
             <div className="mb-6">

@@ -3,32 +3,34 @@ import { createHash } from 'crypto';
 import { prisma } from '@/lib/prisma';
 
 /**
- * Real GPS positions from vehicles.
+ * Posições GPS reais dos veículos.
  *
- * Each vehicle has a device code, generated in the admin (Transporte → Rastreador GPS); only
- * its SHA-256 is stored. Two ways to send a position:
+ * Cada veículo tem um código de dispositivo, gerado no painel (Transporte → Rastreador GPS); só o
+ * seu SHA-256 fica guardado (um código lido da base de dados não serve para enviar posições).
+ * Duas formas de enviar uma posição:
  *
- * 1. OsmAnd protocol, used by the free Traccar Client phone app and by Traccar's forwarding:
- *      GET or POST /api/gps?id=<device code>&lat=-25.96&lon=32.58&timestamp=1760000000&speed=10&bearing=90
- *    (speed in knots, timestamp in seconds or milliseconds; the fields may also be form fields)
+ * 1. Protocolo OsmAnd, usado pela aplicação gratuita Traccar Client e pelo reencaminhamento do Traccar:
+ *      GET ou POST /api/gps?id=<código>&lat=-25.96&lon=32.58&timestamp=1760000000&speed=10&bearing=90
+ *    (velocidade em nós, timestamp em segundos ou milissegundos; os campos também podem vir num formulário)
+ *    Porquê este protocolo: qualquer telemóvel Android ou rastreador compatível com Traccar envia-o sem programação.
  *
- * 2. JSON with the code as a bearer token:
- *      POST /api/gps   Authorization: Bearer <device code>
+ * 2. JSON com o código como token "Bearer":
+ *      POST /api/gps   Authorization: Bearer <código>
  *      {"latitude": -25.96, "longitude": 32.58, "timestamp": "2026-10-16T10:00:00Z", "speed": 18.5, "heading": 90}
- *    (speed in km/h; timestamp optional, ISO 8601 or epoch)
+ *    (velocidade em km/h; timestamp opcional, ISO 8601 ou epoch)
  *
- * Answers 200 when the position was stored (or was older than the last one), 400 for bad
- * coordinates, 401 for an unknown device code.
+ * Responde 200 quando a posição foi guardada (ou era mais antiga do que a última), 400 para
+ * coordenadas inválidas, 401 para um código desconhecido.
  */
 
-// The driver portal (another domain) sends positions from the browser
+// O portal do motorista (outro domínio) envia posições a partir do navegador
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-const MAX_ACCURACY_M = 200; // fixes less precise than this are ignored
+const MAX_ACCURACY_M = 200; // posições menos precisas do que isto são ignoradas
 const MAX_FUTURE_MS = 2 * 60 * 1000;
 
 type Fields = Record<string, string | number | null | undefined>;
@@ -42,7 +44,7 @@ function num(v: unknown): number | null {
 function parseTimestamp(v: unknown): Date | null {
   if (v === null || v === undefined || v === '') return null;
   const n = Number(v);
-  if (Number.isFinite(n)) return new Date(n < 1e12 ? n * 1000 : n); // seconds or milliseconds
+  if (Number.isFinite(n)) return new Date(n < 1e12 ? n * 1000 : n); // segundos ou milissegundos
   const d = new Date(String(v));
   return Number.isNaN(d.getTime()) ? null : d;
 }
@@ -92,7 +94,7 @@ async function handle(request: NextRequest) {
   const now = Date.now();
   let at = parseTimestamp(fields.timestamp ?? fields.time) ?? new Date(now);
   if (at.getTime() > now + MAX_FUTURE_MS) at = new Date(now);
-  // Phones resend queued fixes after losing signal: keep only the newest one
+  // Os telemóveis reenviam as posições em fila depois de perder o sinal: fica só a mais recente
   if (vehicle.gpsAtualizadoEm && at <= vehicle.gpsAtualizadoEm) {
     return NextResponse.json({ ok: true, ignored: 'posição mais antiga do que a última' });
   }
@@ -104,7 +106,7 @@ async function handle(request: NextRequest) {
     data: {
       currGeoLocation: `${lat.toFixed(6)},${lng.toFixed(6)}`,
       gpsAtualizadoEm: at,
-      // OsmAnd sends knots, the JSON format km/h
+      // O OsmAnd envia nós, o formato JSON km/h
       gpsVelocidade: speed === null ? null : Math.round((json ? speed : speed * 1.852) * 10) / 10,
       gpsDirecao: heading === null ? null : ((heading % 360) + 360) % 360,
     },

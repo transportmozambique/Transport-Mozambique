@@ -12,20 +12,20 @@ import { loadNetwork, pathBetween, ref, towards, type NetRoute, type Network, ty
 import { distanceMeters, walkMinutes } from './places';
 
 /**
- * Following a journey the passenger chose: the same buses, leg after leg, timed again with the
- * buses' positions now (GPS when fresh, else the timetable). The page says which leg the
- * passenger is on (`active`) and whether they are on that leg's bus (`onBoard`); the walks
- * before it are measured from where they are now.
+ * Acompanhar a viagem que o passageiro escolheu: os mesmos autocarros, etapa a etapa, com as
+ * horas recalculadas pelas posições de agora (GPS quando recente, senão o horário). A página diz
+ * em que etapa o passageiro está (`active`) e se já está no autocarro dessa etapa (`onBoard`); as
+ * caminhadas anteriores medem-se a partir de onde ele está agora.
  */
 
-/** One bus of the journey: the vehicle, where the passenger gets on and where they get off. */
+/** Um autocarro da viagem: o veículo, onde o passageiro entra e onde sai. */
 export interface LegSpec {
   busId: string;
   from: string;
   to: string;
 }
 
-/** Done, the step the passenger is on now, or still to come */
+/** Feito, o passo em que o passageiro está agora, ou ainda por vir */
 export type StepState = 'feito' | 'agora' | 'depois';
 
 export interface LiveBus {
@@ -34,11 +34,11 @@ export interface LiveBus {
   heading: number | null;
   fonte: 'gps' | 'horario';
   /**
-   * Where the bus is on this leg: before the boarding stop (still coming), between the two
-   * stops going the passenger's way, or past the alighting stop
+   * Onde está o autocarro nesta etapa: antes da paragem de embarque (ainda a caminho), entre as
+   * duas paragens no sentido do passageiro, ou depois da paragem de saída
    */
   trecho: 'antes' | 'entre' | 'depois';
-  /** Minutes and metres until it reaches the boarding stop (null once the passenger is on board) */
+  /** Minutos e metros até chegar à paragem de embarque (null quando o passageiro já vai a bordo) */
   minutosAteEmbarque: number | null;
   metrosAteEmbarque: number | null;
 }
@@ -60,15 +60,15 @@ export interface FollowBus {
   sentido: string;
   de: StopRef;
   para: StopRef;
-  /** When the passenger gets on (null once on board or done) */
+  /** Quando o passageiro entra (null quando já está a bordo ou a etapa acabou) */
   embarque: string | null;
-  /** When the passenger gets off (null when done) */
+  /** Quando o passageiro sai (null quando a etapa acabou) */
   chegada: string | null;
-  /** The bus passes the boarding stop before the passenger can be there: they will catch it on its next pass */
+  /** O autocarro passa na paragem de embarque antes de o passageiro lá chegar: apanha-o na passagem seguinte */
   perde: boolean;
   viagemMin: number;
   metros: number;
-  /** Stops after the boarding one, up to the alighting one */
+  /** Paragens depois da de embarque, até à de saída */
   paragens: StopRef[];
   tarifa: number;
   percurso: [number, number][];
@@ -83,16 +83,16 @@ export interface FollowedJourney {
   atualizadoEm: string;
 }
 
-/** A bus followed on its own (from the map), with the next stops it reaches */
+/** Um autocarro seguido sozinho (a partir do mapa), com as próximas paragens a que chega */
 export interface FollowedBus {
   transporte: { id: string; matricula: string };
   via: { id: string; codigo: string; nome: string; cor: string };
   sentido: string;
   autocarro: Omit<LiveBus, 'trecho' | 'minutosAteEmbarque' | 'metrosAteEmbarque'>;
   percurso: [number, number][];
-  /** The stops ahead in the direction it is going, with the minutes until it passes each */
+  /** As paragens à frente no sentido em que vai, com os minutos até passar em cada uma */
   proximas: { paragem: StopRef; minutos: number }[];
-  /** The passenger's stop when one was given: the bus's next pass there, either way */
+  /** A paragem do passageiro, quando foi indicada: a próxima passagem do autocarro por lá, num sentido ou noutro */
   paragem: { paragem: StopRef; minutos: number; sentido: string } | null;
   atualizadoEm: string;
 }
@@ -130,7 +130,7 @@ function live(position: VehiclePosition | null, fallback: LatLng) {
   };
 }
 
-/** The journey `legs`, timed now. `position` is the passenger's, when the browser gives it. */
+/** A viagem `legs`, com as horas de agora. `position` é a do passageiro, quando o navegador a dá. */
 export async function followJourney(args: {
   legs: LegSpec[];
   position: LatLng | null;
@@ -168,7 +168,7 @@ export async function followJourney(args: {
     const para = stopRef(net, leg.to);
     const estado: StepState = i < active ? 'feito' : i === active ? 'agora' : 'depois';
 
-    // The walk to this bus: from where the passenger is now while it is the next thing to do
+    // A caminhada até este autocarro: a partir de onde o passageiro está agora, enquanto for o passo seguinte
     const previous = i === 0 ? (startId && net.stops.has(startId) ? stopRef(net, startId) : null) : stopRef(net, legs[i - 1].to);
     if (i === active && !onBoard && position) walk('agora', here(position), de);
     else if (previous) walk(i < active || (i === active && onBoard) ? 'feito' : i === active ? 'agora' : 'depois', previous, de);
@@ -180,8 +180,8 @@ export async function followJourney(args: {
     const busNow = vehiclePosition(vehicle!, route.g, now, rule);
     const fromNow = estimateBusTrip({ vehicle: vehicle!, path, stops, origemId: leg.from, destinoId: leg.to, rule, now });
     const p = busNow?.progress ?? null;
-    // Going the other way, a bus the passenger is on has passed the alighting stop and turned
-    // at the terminal; one they wait for still has to turn and come
+    // No sentido contrário, um autocarro em que o passageiro vai já passou a paragem de saída e deu a
+    // volta no terminal; um que ele espera ainda tem de dar a volta e vir
     const ridingNow = estado === 'agora' && onBoard;
     const along = p === null ? null : travel === 1 ? p : -p;
     const [from, to] = travel === 1 ? [a, b] : [-a, -b];
@@ -203,7 +203,7 @@ export async function followJourney(args: {
       if (trip) {
         embarque = t + trip.tempoChegada * 60000;
         chegada = embarque + trip.tempoViagem * 60000;
-        // Comes sooner than the passenger can be at the stop: the time shown is its next pass
+        // Chega antes de o passageiro poder estar na paragem: a hora mostrada é a passagem seguinte
         perde = estado === 'agora' && fromNow !== null && now.getTime() + fromNow.tempoChegada * 60000 < t;
       }
     }
@@ -238,7 +238,7 @@ export async function followJourney(args: {
     });
   });
 
-  // The walk from the last bus to the destination (or straight there, when every bus is done)
+  // A caminhada do último autocarro até ao destino (ou directamente, quando todos os autocarros acabaram)
   if (endId && net.stops.has(endId) && legs.length) {
     const last = stopRef(net, legs[legs.length - 1].to);
     const end = stopRef(net, endId);
@@ -255,7 +255,7 @@ export async function followJourney(args: {
   };
 }
 
-/** One bus on its own: where it is, the stops ahead, and its next pass at `stopId` if given. */
+/** Um autocarro sozinho: onde está, as paragens à frente e a próxima passagem em `stopId`, se indicado. */
 export async function followBus(busId: string, stopId: string | null, now = new Date()): Promise<FollowedBus> {
   const [net, rule, vehicles] = await Promise.all([loadNetwork(), getFareRule(), vehiclesById([busId])]);
   const vehicle = vehicles.get(busId);

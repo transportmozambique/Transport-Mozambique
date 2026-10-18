@@ -86,7 +86,7 @@ export default function UtenteDetalhes() {
       } else {
         const error = await response.json();
         
-        // Check if error is about missoes associations
+        // O erro é sobre ligações a alertas?
         if (error.error && error.error.includes('missões')) {
           setDeleteError(error.details || error.error);
           setHasAssociations(true);
@@ -183,7 +183,7 @@ export default function UtenteDetalhes() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Diálogo de confirmação do apagar */}
       {showDeleteModal && (
         <div 
           className="fixed inset-0 z-50 backdrop-blur-sm min-h-screen" 

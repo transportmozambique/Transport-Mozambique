@@ -568,7 +568,7 @@ export default function NovoMotorista() {
                     />
                   </div>
 
-                  {/* Drivers sign in with a PIN generated on their page, never with a typed password */}
+                  {/* Os motoristas entram com um PIN gerado na sua página, nunca com uma palavra-passe escrita */}
                   <div>
                     <p className="block text-sm font-semibold text-slate-900 mb-2">Acesso ao Portal</p>
                     <p className="text-sm text-slate-600">

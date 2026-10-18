@@ -68,7 +68,7 @@ export async function PUT(
       );
     }
 
-    // Check if proprietario exists
+    // O proprietário existe?
     const existingProprietario = await prisma.proprietario.findUnique({
       where: { id: params.id },
     });
@@ -80,7 +80,7 @@ export async function PUT(
       );
     }
 
-    // Check if BI is already used by another proprietario
+    // O BI já é usado por outro proprietário?
     if (bi !== existingProprietario.bi) {
       const biExists = await prisma.proprietario.findUnique({
         where: { bi },
@@ -94,7 +94,7 @@ export async function PUT(
       }
     }
 
-    // Update proprietario
+    // Guardar o proprietário
     const updatedProprietario = await prisma.proprietario.update({
       where: { id: params.id },
       data: {
@@ -128,7 +128,7 @@ export async function DELETE(
     const { searchParams } = new URL(request.url);
     const force = searchParams.get('force') === 'true';
     
-    // Check if proprietario has transportes
+    // O proprietário tem transportes?
     const proprietario = await prisma.proprietario.findUnique({
       where: { id: params.id },
       include: {
@@ -158,9 +158,9 @@ export async function DELETE(
       );
     }
 
-    // If force=true, remove associations first
+    // Com force=true, tirar primeiro as ligações
     if (force && proprietario._count.transportes > 0) {
-      // Remove all transporte associations
+      // Tirar todas as ligações a transportes
       await prisma.transporteProprietario.deleteMany({
         where: { proprietarioId: params.id },
       });

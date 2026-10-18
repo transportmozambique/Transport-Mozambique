@@ -1,11 +1,13 @@
 /**
- * Shared by the data scripts that put route paths on the roads (snap-paths, redraw-from-osm,
- * import-osm): geometry on [lat, lng] points, the stored path format, and the public OSRM
- * routers, whose answers are kept in osm-data/road-cache.json.
+ * Partilhado pelos scripts de dados que põem os percursos das rotas nas estradas (snap-paths,
+ * redraw-from-osm, import-osm): geometria em pontos [lat, lng], o formato guardado dos percursos e
+ * os routers OSRM públicos, cujas respostas ficam em osm-data/road-cache.json.
  *
- * The routers allow light use only, one request a second each: car requests alternate between
- * the FOSSGIS router and the OSRM demo router, foot requests go to the FOSSGIS foot router.
- * Road data © OpenStreetMap contributors (ODbL), routing by OSRM / FOSSGIS.
+ * Os routers só permitem uso leve, um pedido por segundo cada: os pedidos de carro alternam entre o
+ * router da FOSSGIS e o router de demonstração do OSRM, os pedidos a pé vão para o router a pé da
+ * FOSSGIS. Porquê guardar as respostas: uma segunda corrida (a produção depois de uma corrida local)
+ * não pergunta nada outra vez. Dados das estradas © contribuidores do OpenStreetMap (ODbL),
+ * caminhos por OSRM / FOSSGIS.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -22,7 +24,7 @@ export function meters(a, b) {
 }
 export const lengthM = (points) => points.slice(1).reduce((s, p, i) => s + meters(points[i], p), 0);
 const xy = ([lat, lng]) => [rad(lng) * R * Math.cos(rad(-25.9)), rad(lat) * R];
-/** Distance in metres from p to the segment a–b */
+/** Distância em metros de p ao segmento a–b */
 export function toSegment(p, a, b) {
   const [px, py] = xy(p);
   const [ax, ay] = xy(a);
@@ -33,9 +35,9 @@ export function toSegment(p, a, b) {
   const t = len ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len)) : 0;
   return Math.hypot(px - ax - t * dx, py - ay - t * dy);
 }
-/** How far a road's points stray from the straight line a–b, in metres */
+/** Quanto os pontos de uma estrada se afastam da linha recta a–b, em metros */
 export const strayM = (road, a, b) => Math.max(...road.points.map((p) => toSegment(p, a, b)));
-/** Douglas–Peucker in metres */
+/** Douglas–Peucker em metros */
 export function simplify(points, tol = 4) {
   if (points.length < 3) return points;
   const keep = new Uint8Array(points.length);
@@ -59,7 +61,7 @@ export function simplify(points, tol = 4) {
   }
   return points.filter((_, i) => keep[i]);
 }
-/** A stored path, "lng,lat;lng,lat;…", as [lat, lng] points */
+/** Um percurso guardado, "lng,lat;lng,lat;…", como pontos [lat, lng] */
 export const parsePath = (text) =>
   (text ?? '')
     .split(';')
@@ -69,9 +71,9 @@ export const parsePath = (text) =>
 export const formatPath = (points) => points.map(([lat, lng]) => `${lng.toFixed(6)},${lat.toFixed(6)}`).join(';');
 
 /**
- * The path as straight stretches [i, j]: the points from i to j lie within inLineM of the line
- * i–j. The first routes' straight lines are cut into points a few tens of metres apart; this
- * reads each of them as one stretch.
+ * O percurso como troços rectos [i, j]: os pontos de i a j ficam a menos de inLineM da linha
+ * i–j. As linhas rectas das primeiras rotas estão cortadas em pontos a poucas dezenas de metros
+ * uns dos outros; isto lê cada uma delas como um só troço.
  */
 export function stretches(points, inLineM = 3) {
   const out = [];
@@ -98,12 +100,12 @@ const ROUTERS = {
   foot: ['https://routing.openstreetmap.de/routed-foot/route/v1/foot'],
 };
 const GAP_MS = 1100;
-/** Waypoints per request; longer lists are split, sharing their end points */
+/** Pontos de passagem por pedido; listas mais longas são divididas, partilhando as pontas */
 export const MAX_WAYPOINTS = 25;
 
 let cacheFile = null;
 let cache = {};
-/** Reads the answers kept from earlier runs in <dataDir>/road-cache.json */
+/** Lê as respostas guardadas de corridas anteriores em <dataDir>/road-cache.json */
 export function openCache(dataDir) {
   cacheFile = path.join(dataDir, 'road-cache.json');
   cache = fs.existsSync(cacheFile) ? JSON.parse(fs.readFileSync(cacheFile, 'utf8')) : {};
@@ -113,12 +115,12 @@ function saveCache() {
   fs.writeFileSync(cacheFile, JSON.stringify(cache));
 }
 const pointKey = (p) => `${p[0].toFixed(6)},${p[1].toFixed(6)}`;
-/** Car answers between two points keep the key of the first runs ("lat,lng;lat,lng") */
+/** As respostas de carro entre dois pontos mantêm a chave das primeiras corridas ("lat,lng;lat,lng") */
 const keyOf = (profile, points) => `${profile === 'car' ? '' : `${profile}:`}${points.map(pointKey).join(';')}`;
 
 /**
- * The cached answer for this request: { m, points, legs } (legs: metres between consecutive
- * waypoints), null when the router found no road, undefined when not asked yet.
+ * A resposta guardada para este pedido: { m, points, legs } (legs: metros entre pontos de
+ * passagem seguidos), null quando o router não encontrou estrada, undefined quando ainda não se perguntou.
  */
 export const cached = (profile, points) => cache[keyOf(profile, points)];
 
@@ -138,8 +140,8 @@ async function ask(base, points) {
 }
 
 /**
- * Asks the routers every request ({ profile: 'car' | 'foot', points }) not in the cache, one
- * request a second per router, and keeps the answers.
+ * Pergunta aos routers todos os pedidos ({ profile: 'car' | 'foot', points }) que não estão na
+ * cache, um pedido por segundo por router, e guarda as respostas.
  */
 export async function fetchRoutes(requests, label = 'roads') {
   const seen = new Set();
@@ -180,9 +182,9 @@ export async function fetchRoutes(requests, label = 'roads') {
 
 // ─── Straight stretches ──────────────────────────────────────────────────────
 
-/** A road within this of the straight line is the same road */
+/** Uma estrada a menos disto da linha recta é a mesma estrada */
 export const STRAIGHT_ROAD_M = 50;
-/** The same for the foot road, which may keep to one side of a wide dual carriageway */
+/** O mesmo para o caminho a pé, que pode ficar de um lado de uma estrada larga com separador */
 const FOOT_ALONG_M = 80;
 const CORRIDOR_SHARE = 0.25;
 const CORRIDOR_MIN_M = 300;
@@ -190,13 +192,13 @@ const MAX_DETOUR = 3;
 const MAX_DETOUR_EXTRA_M = 500;
 
 /**
- * What a straight stretch a–b of m metres is, from the cached answers:
- * - 'straight': a road runs along it (the car road, or the foot road where one-way streets,
- *   dual carriageways or tracks send cars around);
- * - 'road': the car road stays close (a quarter of the length, at least 300 m) and replaces it;
- * - 'stray': the car road is another way altogether, and nothing walkable follows the line;
- * - 'ask-foot': the car road strays, and the foot router has not been asked yet;
- * - 'unknown': the car router has not been asked yet.
+ * O que é um troço recto a–b de m metros, segundo as respostas guardadas:
+ * - 'straight': há uma estrada ao longo dele (a de carro, ou a pé onde ruas de sentido único,
+ *   estradas com separador ou caminhos de terra mandam os carros dar a volta);
+ * - 'road': a estrada de carro fica perto (um quarto do comprimento, pelo menos 300 m) e substitui-o;
+ * - 'stray': a estrada de carro vai por outro lado, e nada que se possa andar segue a linha;
+ * - 'ask-foot': a estrada de carro afasta-se, e ainda não se perguntou ao router a pé;
+ * - 'unknown': ainda não se perguntou ao router de carro.
  */
 export function classify(a, b) {
   const m = meters(a, b);
@@ -213,7 +215,7 @@ export function classify(a, b) {
 
 // ─── Routing through stops ───────────────────────────────────────────────────
 
-/** A leg this much longer than the straight line goes round a block: a stop on the far side */
+/** Uma etapa tão mais longa do que a linha recta dá a volta a um quarteirão: uma paragem do outro lado */
 const LOOP_FACTOR = 2;
 const LOOP_EXTRA_M = 400;
 
@@ -224,10 +226,10 @@ const chunks = (stops) => {
 };
 
 /**
- * The road path through stops, in order, by car. A stop the router can only reach by going round
- * a block (it lies on the other side of a dual carriageway or one-way street) is passed by
- * instead. Returns { points, dropped } or null when the routers have not answered yet; points is
- * null when there is no road.
+ * O caminho pela estrada através das paragens, por ordem, de carro. Uma paragem a que o router só
+ * chega dando a volta a um quarteirão (fica do outro lado de uma estrada com separador ou de uma
+ * rua de sentido único) é saltada. Devolve { points, dropped }, ou null quando os routers ainda
+ * não responderam; points é null quando não há estrada.
  */
 export async function routeThrough(stops) {
   let list = stops.filter((p, i) => i === 0 || meters(stops[i - 1], p) > 15);
@@ -239,7 +241,7 @@ export async function routeThrough(stops) {
     const answers = parts.map((points) => cached('car', points));
     if (answers.some((a) => a === undefined)) return null;
     if (answers.some((a) => a === null)) return { points: null, dropped };
-    // Stops reached by going round a block
+    // Paragens alcançadas só dando a volta a um quarteirão
     const loops = new Set();
     answers.forEach((a, c) => {
       const legs = a.legs ?? [a.m];
