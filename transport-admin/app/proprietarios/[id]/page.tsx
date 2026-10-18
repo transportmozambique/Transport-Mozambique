@@ -264,10 +264,10 @@ export default function ProprietarioDetalhes() {
       <div className="bg-white min-h-screen">
         <div className="max-w-[1600px] mx-auto p-6">
           <div className="text-center py-12">
-            <p className="text-gray-900 text-lg">Proprietário não encontrado</p>
+            <p className="text-slate-900 text-lg">Proprietário não encontrado</p>
             <button 
               onClick={() => router.push('/proprietarios')} 
-              className="mt-4 px-6 py-3 bg-gray-900 text-white rounded-lg font-medium"
+              className="mt-4 px-6 py-3 bg-slate-900 text-white rounded-xl font-medium"
             >
               Voltar para lista
             </button>
@@ -285,7 +285,7 @@ export default function ProprietarioDetalhes() {
       {/* Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
-          <div className={`rounded-lg shadow-lg p-4 min-w-[300px] ${
+          <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
             notification.type === 'success' ? 'bg-green-50 border border-green-200' :
             notification.type === 'error' ? 'bg-red-50 border border-red-200' :
             'bg-blue-50 border border-blue-200'
@@ -322,7 +322,7 @@ export default function ProprietarioDetalhes() {
         >
           <div className="flex items-center justify-center min-h-screen p-4">
             <div 
-              className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-gray-200 my-8"
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-slate-200 my-8"
               onClick={(e) => e.stopPropagation()}
             >
               <div className={`flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4 ${
@@ -337,16 +337,16 @@ export default function ProprietarioDetalhes() {
                 </svg>
               </div>
               
-              <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+              <h3 className="text-xl font-bold text-slate-900 text-center mb-2">
                 {hasAssociations ? 'Remover Associações' : 'Eliminar Proprietário'}
               </h3>
               
               {hasAssociations ? (
                 <div className="space-y-4">
-                  <p className="text-gray-600 text-center">
+                  <p className="text-slate-600 text-center">
                     {deleteError}
                   </p>
-                  <div className="bg-white rounded-lg p-4">
+                  <div className="bg-white rounded-xl p-4">
                     <p className="text-sm text-red-600 text-center font-medium">
                       Clique em <strong>"Remover e Eliminar"</strong> para remover as associações e eliminar o proprietário.
                     </p>
@@ -359,14 +359,14 @@ export default function ProprietarioDetalhes() {
                         setHasAssociations(false);
                       }}
                       disabled={deleting}
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={handleRemoveAssociationsAndDelete}
                       disabled={deleting}
-                      className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {deleting ? (
                         <>
@@ -386,8 +386,8 @@ export default function ProprietarioDetalhes() {
                 </div>
               ) : (
                 <>
-                  <p className="text-gray-600 text-center mb-6">
-                    Tem certeza que deseja eliminar o proprietário <strong className="text-gray-900">"{proprietario?.nome}"</strong>?
+                  <p className="text-slate-600 text-center mb-6">
+                    Tem certeza que deseja eliminar o proprietário <strong className="text-slate-900">"{proprietario?.nome}"</strong>?
                     <br />
                     <span className="text-sm text-red-600 font-medium">Esta ação não pode ser desfeita.</span>
                   </p>
@@ -396,14 +396,14 @@ export default function ProprietarioDetalhes() {
                     <button
                       onClick={() => setShowDeleteModal(false)}
                       disabled={deleting}
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={handleDelete}
                       disabled={deleting}
-                      className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {deleting ? (
                         <>
@@ -439,17 +439,17 @@ export default function ProprietarioDetalhes() {
         >
           <div className="flex items-center justify-center min-h-screen p-4">
             <div 
-              className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in border border-gray-200 max-h-[80vh] flex flex-col my-8"
+              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in border border-slate-200 max-h-[80vh] flex flex-col my-8"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900">Associar Transportes</h3>
+                <h3 className="text-xl font-bold text-slate-900">Associar Transportes</h3>
                 <button
                   onClick={() => {
                     setShowAssociarModal(false);
                     setSelectedTransportesIds([]);
                   }}
-                  className="p-2 hover:bg-gray-100 rounded-lg"
+                  className="p-2 hover:bg-slate-100 rounded-xl"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -457,12 +457,12 @@ export default function ProprietarioDetalhes() {
                 </button>
               </div>
 
-              <p className="text-sm text-gray-600 mb-2">
+              <p className="text-sm text-slate-600 mb-2">
                 Selecione um ou mais transportes disponíveis (sem proprietário)
               </p>
               
               {selectedTransportesIds.length > 0 && (
-                <p className="text-sm font-medium text-gray-900 mb-4">
+                <p className="text-sm font-medium text-slate-900 mb-4">
                   {selectedTransportesIds.length} transporte(s) selecionado(s)
                 </p>
               )}
@@ -470,7 +470,7 @@ export default function ProprietarioDetalhes() {
               <div className="flex-1 overflow-y-auto mb-4">
                 {loadingAvailable ? (
                   <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
                   </div>
                 ) : availableTransportes.length > 0 ? (
                   <div className="space-y-2">
@@ -486,10 +486,10 @@ export default function ProprietarioDetalhes() {
                                 : [...prev, transporte.id]
                             );
                           }}
-                          className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                          className={`p-4 border rounded-xl cursor-pointer transition-all ${
                             isSelected
-                              ? 'border-gray-900 bg-gray-50'
-                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                              ? 'border-slate-900 bg-slate-50'
+                              : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                           }`}
                         >
                           <div className="flex items-center justify-between">
@@ -498,16 +498,16 @@ export default function ProprietarioDetalhes() {
                                 type="checkbox"
                                 checked={isSelected}
                                 onChange={() => {}}
-                                className="w-5 h-5 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
+                                className="w-5 h-5 text-slate-900 border-slate-300 rounded-lg focus:ring-slate-900"
                               />
                               <div>
-                                <p className="font-bold text-gray-900">{transporte.matricula}</p>
-                                <p className="text-sm text-gray-600">
+                                <p className="font-bold text-slate-900">{transporte.matricula}</p>
+                                <p className="text-sm text-slate-600">
                                   {transporte.modelo} - {transporte.marca}
                                 </p>
                               </div>
                             </div>
-                            <span className="px-2 py-1 bg-gray-100 text-gray-900 rounded text-xs font-mono">
+                            <span className="px-2 py-1 bg-slate-100 text-slate-900 rounded-lg text-xs font-mono">
                               #{transporte.codigo}
                             </span>
                           </div>
@@ -516,8 +516,8 @@ export default function ProprietarioDetalhes() {
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-600">
-                    <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="text-center py-8 text-slate-600">
+                    <svg className="w-12 h-12 mx-auto mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                     </svg>
                     <p className="font-medium">Nenhum transporte disponível</p>
@@ -532,14 +532,14 @@ export default function ProprietarioDetalhes() {
                     setShowAssociarModal(false);
                     setSelectedTransportesIds([]);
                   }}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50"
+                  className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleAssociarTransportes}
                   disabled={selectedTransportesIds.length === 0 || associating}
-                  className="flex-1 px-4 py-3 bg-gray-900 hover:bg-black text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  className="flex-1 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                 >
                   {associating ? (
                     <>
@@ -558,25 +558,25 @@ export default function ProprietarioDetalhes() {
 
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/proprietarios')}
-              className="p-2 rounded-lg hover:bg-gray-100"
+              className="p-2 rounded-xl hover:bg-slate-100"
             >
-              <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">{proprietario.nome}</h2>
-              <p className="text-gray-600 mt-1">Detalhes do proprietário</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{proprietario.nome}</h2>
+              <p className="text-slate-600 mt-1">Detalhes do proprietário</p>
             </div>
           </div>
           <div className="flex items-center space-x-3">
             <button
               onClick={() => router.push(`/proprietarios/${params.id}/editar`)}
-              className="px-4 py-2 bg-gray-900 hover:bg-black text-white rounded-lg font-medium flex items-center space-x-2"
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium flex items-center space-x-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -585,7 +585,7 @@ export default function ProprietarioDetalhes() {
             </button>
             <button 
               onClick={() => setShowDeleteModal(true)}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center space-x-2"
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center space-x-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -600,51 +600,51 @@ export default function ProprietarioDetalhes() {
           {/* Foto e Info Rápida - Coluna Esquerda (1/4) */}
           <div className="lg:col-span-1 space-y-6">
             {/* Foto */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
               <div className="flex flex-col items-center">
-                <div className="w-40 h-40 bg-gray-100 rounded-full flex items-center justify-center mb-4 overflow-hidden">
+                <div className="w-40 h-40 bg-slate-100 rounded-full flex items-center justify-center mb-4 overflow-hidden">
                   {proprietario.foto ? (
                     <img src={proprietario.foto} alt={proprietario.nome} className="w-full h-full object-cover" />
                   ) : isEmpresa ? (
-                    <svg className="w-20 h-20 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-20 h-20 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                   ) : (
-                    <svg className="w-20 h-20 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-20 h-20 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   )}
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">{proprietario.nome}</h3>
-                <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-900 mb-4">
+                <h3 className="text-xl font-bold text-slate-900 text-center mb-2">{proprietario.nome}</h3>
+                <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-900 mb-4">
                   {proprietario.tipoProprietario || 'Empresa'}
                 </span>
                 <div className="w-full space-y-2 text-sm">
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-900 font-medium">Transportes</span>
-                    <span className="text-gray-900 font-bold">{totalTransportes}</span>
+                  <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                    <span className="text-slate-900 font-medium">Transportes</span>
+                    <span className="text-slate-900 font-bold">{totalTransportes}</span>
                   </div>
                   <div className="flex items-center justify-between py-2">
-                    <span className="text-gray-900 font-medium">Nacionalidade</span>
-                    <span className="text-gray-600">{proprietario.nacionalidade || 'N/A'}</span>
+                    <span className="text-slate-900 font-medium">Nacionalidade</span>
+                    <span className="text-slate-600">{proprietario.nacionalidade || 'N/A'}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Status Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 pb-3 border-b border-gray-200">Status</h3>
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-4 pb-3 border-b border-slate-200">Status</h3>
               <div className="space-y-3 text-sm">
                 <div>
-                  <label className="block text-gray-900 font-semibold mb-1">Tipo</label>
-                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-900">
+                  <label className="block text-slate-900 font-semibold mb-1">Tipo</label>
+                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-900">
                     {proprietario.tipoProprietario || 'Empresa'}
                   </span>
                 </div>
                 <div>
-                  <label className="block text-gray-900 font-semibold mb-1">Registado em</label>
-                  <p className="text-gray-600">
+                  <label className="block text-slate-900 font-semibold mb-1">Registado em</label>
+                  <p className="text-slate-600">
                     {proprietario.createdAt ? new Date(proprietario.createdAt).toLocaleDateString('pt-PT') : 'N/A'}
                   </p>
                 </div>
@@ -655,47 +655,47 @@ export default function ProprietarioDetalhes() {
           {/* Informações Detalhadas - Colunas Direita (3/4) */}
           <div className="lg:col-span-3 space-y-6">
             {/* Informações Pessoais */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Informações Pessoais</h3>
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Informações Pessoais</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-1">Nome Completo</label>
-                  <p className="text-gray-600">{proprietario.nome || 'N/A'}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Nome Completo</label>
+                  <p className="text-slate-600">{proprietario.nome || 'N/A'}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-1">Data de Nascimento/Fundação</label>
-                  <p className="text-gray-600">
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Data de Nascimento/Fundação</label>
+                  <p className="text-slate-600">
                     {proprietario.birthDate ? new Date(proprietario.birthDate).toLocaleDateString('pt-PT') : 'N/A'}
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-1">Nacionalidade</label>
-                  <p className="text-gray-600">{proprietario.nacionalidade || 'N/A'}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Nacionalidade</label>
+                  <p className="text-slate-600">{proprietario.nacionalidade || 'N/A'}</p>
                 </div>
 
                 <div className="md:col-span-3">
-                  <label className="block text-sm font-semibold text-gray-900 mb-1">Endereço</label>
-                  <p className="text-gray-600">{proprietario.endereco || 'N/A'}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Endereço</label>
+                  <p className="text-slate-600">{proprietario.endereco || 'N/A'}</p>
                 </div>
               </div>
             </div>
 
             {/* Documentos */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Documentos</h3>
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Documentos</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-1">NUIT</label>
-                  <p className="text-gray-600">{proprietario.bi || 'N/A'}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">NUIT</label>
+                  <p className="text-slate-600">{proprietario.bi || 'N/A'}</p>
                 </div>
 
                 {proprietario.certificado && proprietario.certificado !== 'http://example.com' && (
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">Certificado de Autenticidade</label>
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">Certificado de Autenticidade</label>
                     <button
                       onClick={() => {
                         // Check if it's a base64 string
@@ -718,7 +718,7 @@ export default function ProprietarioDetalhes() {
                           window.open(proprietario.certificado, '_blank');
                         }
                       }}
-                      className="inline-flex items-center space-x-2 px-4 py-2 bg-gray-900 hover:bg-black text-white rounded-lg font-medium"
+                      className="inline-flex items-center space-x-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -731,28 +731,28 @@ export default function ProprietarioDetalhes() {
             </div>
 
             {/* Contacto */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Contacto</h3>
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Contacto</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-1">Telefone</label>
-                  <p className="text-gray-600">{proprietario.contacto1 ? `+258 ${proprietario.contacto1}` : 'N/A'}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Telefone</label>
+                  <p className="text-slate-600">{proprietario.contacto1 ? `+258 ${proprietario.contacto1}` : 'N/A'}</p>
                 </div>
 
                 {proprietario.contacto2 && (
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-1">Telefone Secundário</label>
-                    <p className="text-gray-600">+258 {proprietario.contacto2}</p>
+                    <label className="block text-sm font-semibold text-slate-900 mb-1">Telefone Secundário</label>
+                    <p className="text-slate-600">+258 {proprietario.contacto2}</p>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Transportes Atribuídos com Paginação */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-6 pb-3 border-b border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900">
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+              <div className="flex items-center justify-between mb-6 pb-3 border-b border-slate-200">
+                <h3 className="text-lg font-bold text-slate-900">
                   Transportes Atribuídos ({totalTransportes})
                 </h3>
                 <button
@@ -760,7 +760,7 @@ export default function ProprietarioDetalhes() {
                     setShowAssociarModal(true);
                     fetchAvailableTransportes();
                   }}
-                  className="px-4 py-2 bg-gray-900 hover:bg-black text-white rounded-lg font-medium flex items-center space-x-2"
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium flex items-center space-x-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -781,18 +781,18 @@ export default function ProprietarioDetalhes() {
                         setSearchTerm(e.target.value);
                         setCurrentPage(1);
                       }}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                      className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                     />
                   </div>
                   <div className="flex items-center space-x-2">
-                    <label className="text-sm text-gray-600 whitespace-nowrap">Mostrar:</label>
+                    <label className="text-sm text-slate-600 whitespace-nowrap">Mostrar:</label>
                     <select
                       value={itemsPerPage}
                       onChange={(e) => {
                         setItemsPerPage(Number(e.target.value));
                         setCurrentPage(1);
                       }}
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                      className="px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                     >
                       <option value={10}>10</option>
                       <option value={25}>25</option>
@@ -807,37 +807,37 @@ export default function ProprietarioDetalhes() {
                 <>
                   <div className="space-y-3">
                     {filteredTransportes.map((tp) => (
-                      <div key={tp.transporte.id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
+                      <div key={tp.transporte.id} className="border border-slate-200 rounded-xl p-4 hover:border-slate-300 transition-colors">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3 flex-1">
-                            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                              <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                               </svg>
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center space-x-2">
-                                <h4 className="font-bold text-gray-900">{tp.transporte.matricula}</h4>
-                                <span className="px-2 py-0.5 bg-gray-100 text-gray-900 rounded text-xs font-mono">
+                                <h4 className="font-bold text-slate-900">{tp.transporte.matricula}</h4>
+                                <span className="px-2 py-0.5 bg-slate-100 text-slate-900 rounded-lg text-xs font-mono">
                                   #{tp.transporte.codigo}
                                 </span>
                               </div>
-                              <p className="text-sm text-gray-600">{tp.transporte.modelo} - {tp.transporte.marca}</p>
+                              <p className="text-sm text-slate-600">{tp.transporte.modelo} - {tp.transporte.marca}</p>
                               {tp.transporte.via && (
-                                <p className="text-xs text-gray-500">Via: {tp.transporte.via.nome} ({tp.transporte.via.codigo})</p>
+                                <p className="text-xs text-slate-500">Via: {tp.transporte.via.nome} ({tp.transporte.via.codigo})</p>
                               )}
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={() => router.push(`/transportes/${tp.transporte.id}`)}
-                              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-lg font-medium"
+                              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-xl font-medium"
                             >
                               Ver
                             </button>
                             <button
                               onClick={() => handleDesassociarTransporte(tp.transporte.id)}
-                              className="p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg"
+                              className="p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-xl"
                               title="Desassociar transporte"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -852,22 +852,22 @@ export default function ProprietarioDetalhes() {
 
                   {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
-                      <div className="text-sm text-gray-600">
+                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200">
+                      <div className="text-sm text-slate-600">
                         Página {currentPage} de {totalPages}
                       </div>
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                           disabled={currentPage === 1}
-                          className="px-3 py-1 border border-gray-300 rounded-lg text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-3 py-1 border border-slate-300 rounded-xl text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Anterior
                         </button>
                         <button
                           onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                           disabled={currentPage === totalPages}
-                          className="px-3 py-1 border border-gray-300 rounded-lg text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-3 py-1 border border-slate-300 rounded-xl text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Próxima
                         </button>
@@ -876,12 +876,12 @@ export default function ProprietarioDetalhes() {
                   )}
                 </>
               ) : totalTransportes > 0 ? (
-                <div className="text-center py-6 text-gray-600 border border-gray-200 rounded-lg bg-gray-50">
+                <div className="text-center py-6 text-slate-600 border border-slate-200 rounded-xl bg-slate-50">
                   <p className="text-sm font-medium">Nenhum transporte encontrado com "{searchTerm}"</p>
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-600 border border-gray-200 rounded-lg bg-gray-50">
-                  <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="text-center py-8 text-slate-600 border border-slate-200 rounded-xl bg-slate-50">
+                  <svg className="w-12 h-12 mx-auto mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
                   <p className="font-medium">Nenhum transporte atribuído</p>

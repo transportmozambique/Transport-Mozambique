@@ -727,28 +727,28 @@ export default function EditarVia() {
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/vias')}
-              className="p-2 rounded-lg hover:bg-gray-100"
+              className="p-2 rounded-xl hover:bg-slate-100"
             >
-              <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">Via Não Encontrada</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Via Não Encontrada</h2>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-12">
+          <div className="bg-white rounded-2xl border border-slate-200 p-12">
             <div className="text-center">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Erro ao Carregar Via</h3>
-              <p className="text-gray-600 mb-6">{error || 'Via não encontrada'}</p>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Erro ao Carregar Via</h3>
+              <p className="text-slate-600 mb-6">{error || 'Via não encontrada'}</p>
               <button
                 onClick={() => router.push('/vias')}
-                className="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-lg font-medium"
+                className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium"
               >
                 Voltar para Vias
               </button>
@@ -766,7 +766,7 @@ export default function EditarVia() {
       {/* Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
-          <div className={`rounded-lg shadow-lg p-4 min-w-[300px] ${
+          <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
             notification.type === 'success' ? 'bg-green-50 border border-green-200' :
             notification.type === 'error' ? 'bg-red-50 border border-red-200' :
             'bg-blue-50 border border-blue-200'
@@ -811,17 +811,17 @@ export default function EditarVia() {
         >
           <div className="flex items-center justify-center min-h-screen p-4">
             <div 
-              className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in border border-gray-200 max-h-[80vh] flex flex-col my-8"
+              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in border border-slate-200 max-h-[80vh] flex flex-col my-8"
               onClick={(e) => e.stopPropagation()}
             >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900">Atribuir Transportes</h3>
+              <h3 className="text-xl font-bold text-slate-900">Atribuir Transportes</h3>
               <button
                 onClick={() => {
                   setShowTransporteModal(false);
                   setSelectedTransportesIds([]);
                 }}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-slate-100 rounded-xl"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -829,12 +829,12 @@ export default function EditarVia() {
               </button>
             </div>
 
-            <p className="text-sm text-gray-600 mb-2">
+            <p className="text-sm text-slate-600 mb-2">
               Selecione um ou mais transportes disponíveis (sem via ou com via próxima)
             </p>
             
             {selectedTransportesIds.length > 0 && (
-              <p className="text-sm font-medium text-gray-900 mb-4">
+              <p className="text-sm font-medium text-slate-900 mb-4">
                 {selectedTransportesIds.length} transporte(s) selecionado(s)
               </p>
             )}
@@ -854,10 +854,10 @@ export default function EditarVia() {
                               : [...prev, transporte.id]
                           );
                         }}
-                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                        className={`p-4 border rounded-xl cursor-pointer transition-all ${
                           isSelected
-                            ? 'border-gray-900 bg-gray-50'
-                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            ? 'border-slate-900 bg-slate-50'
+                            : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -866,26 +866,26 @@ export default function EditarVia() {
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => {}}
-                              className="w-5 h-5 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
+                              className="w-5 h-5 text-slate-900 border-slate-300 rounded-lg focus:ring-slate-900"
                             />
                             <div>
-                              <p className="font-bold text-gray-900">{transporte.matricula}</p>
-                              <p className="text-sm text-gray-600">
+                              <p className="font-bold text-slate-900">{transporte.matricula}</p>
+                              <p className="text-sm text-slate-600">
                                 {transporte.modelo} - {transporte.marca}
                               </p>
                               {transporte.motorista && (
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-slate-500">
                                   Motorista: {transporte.motorista.nome}
                                 </p>
                               )}
                             </div>
                           </div>
                           <div className="text-right">
-                            <span className="px-2 py-1 bg-gray-100 text-gray-900 rounded text-xs font-mono">
+                            <span className="px-2 py-1 bg-slate-100 text-slate-900 rounded-lg text-xs font-mono">
                               #{transporte.codigo}
                             </span>
                             {transporte.via && (
-                              <p className="text-xs text-gray-500 mt-1">
+                              <p className="text-xs text-slate-500 mt-1">
                                 Via: {transporte.via.nome}
                               </p>
                             )}
@@ -896,8 +896,8 @@ export default function EditarVia() {
                   })}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-600">
-                  <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="text-center py-8 text-slate-600">
+                  <svg className="w-12 h-12 mx-auto mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
                   <p className="font-medium">Nenhum transporte disponível</p>
@@ -912,14 +912,14 @@ export default function EditarVia() {
                   setShowTransporteModal(false);
                   setSelectedTransportesIds([]);
                 }}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50"
+                className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleAssignTransporte}
                 disabled={selectedTransportesIds.length === 0 || assigningTransporte}
-                className="flex-1 px-4 py-3 bg-gray-900 hover:bg-black text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                className="flex-1 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
               >
                 {assigningTransporte ? (
                   <>
@@ -946,7 +946,7 @@ export default function EditarVia() {
           >
             <div className="flex items-center justify-center min-h-screen p-4">
               <div 
-                className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-gray-200 my-8"
+                className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-slate-200 my-8"
                 onClick={(e) => e.stopPropagation()}
               >
               <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mx-auto mb-4">
@@ -955,12 +955,12 @@ export default function EditarVia() {
                 </svg>
               </div>
               
-              <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+              <h3 className="text-xl font-bold text-slate-900 text-center mb-2">
                 Eliminar Via
               </h3>
               
-              <p className="text-gray-600 text-center mb-6">
-                Tem certeza que deseja eliminar a via <strong className="text-gray-900">"{via?.nome}"</strong>?
+              <p className="text-slate-600 text-center mb-6">
+                Tem certeza que deseja eliminar a via <strong className="text-slate-900">"{via?.nome}"</strong>?
                 <br />
                 <span className="text-sm text-red-600 font-medium">Esta ação não pode ser desfeita.</span>
               </p>
@@ -969,14 +969,14 @@ export default function EditarVia() {
                 <button
                   onClick={() => setShowDeleteModal(false)}
                   disabled={deleting}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {deleting ? (
                     <>
@@ -998,33 +998,33 @@ export default function EditarVia() {
           </div>
         )}
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/vias')}
-              className="p-2 rounded-lg hover:bg-slate-100"
+              className="p-2 rounded-xl hover:bg-slate-100"
               style={{ transition: 'none' }}
             >
-              <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-black">{via.nome}</h2>
-              <p className="text-black mt-1">{via.codigo}{via.municipio ? ` - ${via.municipio.nome}` : ''}</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{via.nome}</h2>
+              <p className="text-slate-900 mt-1">{via.codigo}{via.municipio ? ` - ${via.municipio.nome}` : ''}</p>
             </div>
           </div>
           <div className="flex items-center space-x-3">
             <button
               onClick={() => router.push(`/vias/${params.id}`)}
-              className="px-4 py-2 bg-slate-200 text-black rounded-lg font-medium"
+              className="px-4 py-2 bg-slate-200 text-slate-900 rounded-xl font-medium"
               style={{ transition: 'none' }}
             >
               Cancelar
             </button>
             <button
               onClick={handleSave}
-              className="px-4 py-2 bg-slate-900 text-white rounded-lg font-medium flex items-center space-x-2"
+              className="px-4 py-2 bg-slate-900 text-white rounded-xl font-medium flex items-center space-x-2"
               style={{ transition: 'none' }}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1036,25 +1036,25 @@ export default function EditarVia() {
         </div>
 
         {/* Via Information */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h3 className="text-lg font-bold text-black mb-4">Informações da Via</h3>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Informações da Via</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-black mb-2">Nome da Via</label>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Nome da Via</label>
               <input
                 type="text"
                 value={formData.nome}
                 onChange={(e) => setFormData({...formData, nome: e.target.value})}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-black mb-2">Município</label>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Município</label>
               <select
                 value={formData.municipioId}
                 onChange={(e) => setFormData({...formData, municipioId: e.target.value})}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black bg-white"
+                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 bg-white"
               >
                 <option value="">Selecione um município</option>
                 {municipios.length > 0 ? (
@@ -1068,53 +1068,53 @@ export default function EditarVia() {
                 )}
               </select>
               {municipios.length === 0 && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   {municipios.length} municípios carregados
                 </p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-semibold text-black mb-2">Cor da Via</label>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Cor da Via</label>
               <div className="flex items-center space-x-3">
                 <input
                   type="color"
                   value={formData.cor}
                   onChange={(e) => setFormData({...formData, cor: e.target.value})}
-                  className="w-16 h-10 rounded border border-slate-300"
+                  className="w-16 h-10 rounded-lg border border-slate-300"
                 />
                 <input
                   type="text"
                   value={formData.cor}
                   onChange={(e) => setFormData({...formData, cor: e.target.value})}
-                  className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black font-mono"
+                  className="flex-1 px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 font-mono"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-black mb-2">Código</label>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Código</label>
               <input
                 type="text"
                 value={via?.codigo || ''}
                 disabled
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-100 text-slate-600 cursor-not-allowed"
+                className="w-full px-4 py-2 border border-slate-300 rounded-xl bg-slate-100 text-slate-600 cursor-not-allowed"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-black mb-2">Terminal de Partida</label>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Terminal de Partida</label>
               <input
                 type="text"
                 value={formData.terminalPartida}
                 onChange={(e) => setFormData({...formData, terminalPartida: e.target.value})}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-black mb-2">Terminal de Chegada</label>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Terminal de Chegada</label>
               <input
                 type="text"
                 value={formData.terminalChegada}
                 onChange={(e) => setFormData({...formData, terminalChegada: e.target.value})}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-black"
+                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
               />
             </div>
           </div>
@@ -1124,9 +1124,9 @@ export default function EditarVia() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Paragens List - Left Side */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-[600px] flex flex-col">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 h-[600px] flex flex-col">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-black">
+                <h3 className="text-lg font-bold text-slate-900">
                   Paragens ({selectedParagensIds.length})
                 </h3>
                 {nearbyParagens.length > 0 && (
@@ -1139,7 +1139,7 @@ export default function EditarVia() {
                         setSelectedParagensIds(nearbyParagens.map(p => p.id));
                       }
                     }}
-                    className="text-xs font-medium text-gray-900 hover:text-gray-700 px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="text-xs font-medium text-slate-900 hover:text-slate-700 px-3 py-1 border border-slate-300 rounded-xl hover:bg-slate-50"
                   >
                     {selectedParagensIds.length === nearbyParagens.length ? 'Desmarcar Todas' : 'Selecionar Todas'}
                   </button>
@@ -1154,9 +1154,9 @@ export default function EditarVia() {
                         <div
                           key={paragem.id}
                           onClick={() => toggleParagemSelection(paragem.id)}
-                          className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all ${
+                          className={`flex items-center justify-between p-3 border rounded-xl cursor-pointer transition-all ${
                             isChecked
-                              ? 'border-gray-900 bg-gray-50'
+                              ? 'border-slate-900 bg-slate-50'
                               : 'border-slate-200 hover:bg-slate-50 hover:border-slate-300'
                           }`}
                         >
@@ -1165,13 +1165,13 @@ export default function EditarVia() {
                               type="checkbox"
                               checked={isChecked}
                               onChange={() => {}}
-                              className="w-5 h-5 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
+                              className="w-5 h-5 text-slate-900 border-slate-300 rounded-lg focus:ring-slate-900"
                             />
                             <div>
-                              <p className={`font-medium ${isChecked ? 'text-gray-900' : 'text-black'}`}>
+                              <p className={`font-medium ${isChecked ? 'text-slate-900' : 'text-slate-900'}`}>
                                 {paragem.nome}
                               </p>
-                              <p className={`text-xs font-mono ${isChecked ? 'text-gray-700' : 'text-black'}`}>
+                              <p className={`text-xs font-mono ${isChecked ? 'text-slate-700' : 'text-slate-900'}`}>
                                 {paragem.codigo}
                               </p>
                             </div>
@@ -1181,9 +1181,9 @@ export default function EditarVia() {
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-black flex-1 flex flex-col items-center justify-center">
+                  <div className="text-center py-8 text-slate-900 flex-1 flex flex-col items-center justify-center">
                     <p className="font-medium">Nenhuma paragem próxima da rota</p>
-                    <p className="text-sm text-gray-600 mt-1">Paragens devem estar a menos de 50m da rota</p>
+                    <p className="text-sm text-slate-600 mt-1">Paragens devem estar a menos de 50m da rota</p>
                   </div>
                 )
               }
@@ -1192,10 +1192,10 @@ export default function EditarVia() {
 
           {/* Map - Right Side */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-[600px]">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-[600px]">
               <div className="p-4 border-b border-slate-200">
-                <h3 className="text-lg font-bold text-black">Mapa da Rota</h3>
-                <p className="text-sm text-black">Visualização da rota com todas as paragens</p>
+                <h3 className="text-lg font-bold text-slate-900">Mapa da Rota</h3>
+                <p className="text-sm text-slate-900">Visualização da rota com todas as paragens</p>
               </div>
               <div ref={mapRef} className="h-[calc(600px-73px)]" />
             </div>
@@ -1203,15 +1203,15 @@ export default function EditarVia() {
         </div>
 
         {/* Transportes */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-black">Transportes Atribuídos ({via._count?.transportes || 0})</h3>
+            <h3 className="text-lg font-bold text-slate-900">Transportes Atribuídos ({via._count?.transportes || 0})</h3>
             <button 
               onClick={() => {
                 setShowTransporteModal(true);
                 fetchAvailableTransportes();
               }}
-              className="px-4 py-2 bg-slate-900 text-white rounded-lg font-medium text-sm hover:bg-black"
+              className="px-4 py-2 bg-slate-900 text-white rounded-xl font-medium text-sm hover:bg-slate-800"
             >
               Atribuir Transporte
             </button>
@@ -1222,23 +1222,23 @@ export default function EditarVia() {
               {via.transportes.map((transporte) => (
                 <div
                   key={transporte.id}
-                  className="border border-slate-200 rounded-lg p-4 hover:shadow-md relative"
+                  className="border border-slate-200 rounded-xl p-4 hover:shadow-md relative"
                   style={{ transition: 'none' }}
                 >
                   <div>
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 pr-2">
-                        <h4 className="font-bold text-black text-lg">{transporte.matricula}</h4>
-                        <p className="text-sm text-black">{transporte.modelo} - {transporte.marca}</p>
+                        <h4 className="font-bold text-slate-900 text-lg">{transporte.matricula}</h4>
+                        <p className="text-sm text-slate-900">{transporte.modelo} - {transporte.marca}</p>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <span className="px-2 py-1 bg-slate-100 text-black rounded text-xs font-mono whitespace-nowrap">
+                        <span className="px-2 py-1 bg-slate-100 text-slate-900 rounded-lg text-xs font-mono whitespace-nowrap">
                           #{transporte.codigo}
                         </span>
                       </div>
                     </div>
                     {transporte.motorista && (
-                      <div className="flex items-center text-sm text-black">
+                      <div className="flex items-center text-sm text-slate-900">
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
@@ -1250,12 +1250,12 @@ export default function EditarVia() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-black">
+            <div className="text-center py-8 text-slate-900">
               <svg className="w-12 h-12 mx-auto mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
               </svg>
               <p className="font-medium">Nenhum transporte atribuído</p>
-              <p className="text-sm text-black mt-1">Atribua transportes para esta via</p>
+              <p className="text-sm text-slate-900 mt-1">Atribua transportes para esta via</p>
             </div>
           )}
         </div>

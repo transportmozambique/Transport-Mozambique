@@ -211,7 +211,7 @@ export default function Paragens() {
       {/* Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
-          <div className={`rounded-lg shadow-lg p-4 min-w-[300px] ${
+          <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
             notification.type === 'success' ? 'bg-green-50 border border-green-200' :
             notification.type === 'error' ? 'bg-red-50 border border-red-200' :
             'bg-blue-50 border border-blue-200'
@@ -247,7 +247,7 @@ export default function Paragens() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && paragemToDelete && (
         <div 
-          className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm min-h-screen" 
+          className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm min-h-screen" 
           style={{ minHeight: '100vh', height: '100%' }}
           onClick={() => {
             setShowDeleteModal(false);
@@ -256,7 +256,7 @@ export default function Paragens() {
         >
           <div className="flex items-center justify-center min-h-screen p-4">
             <div 
-              className="relative z-[101] bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-gray-200 my-8"
+              className="relative z-[101] bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-slate-200 my-8"
               onClick={(e) => e.stopPropagation()}
             >
             {deleteError ? (
@@ -267,11 +267,11 @@ export default function Paragens() {
                   </svg>
                 </div>
                 
-                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                <h3 className="text-xl font-bold text-slate-900 text-center mb-2">
                   Não é Possível Eliminar
                 </h3>
                 
-                <p className="text-gray-600 text-center mb-4">
+                <p className="text-slate-600 text-center mb-4">
                   {deleteError.details || deleteError.message}
                 </p>
 
@@ -280,7 +280,7 @@ export default function Paragens() {
                     <button
                       onClick={() => paragemToDelete && handleRemoveAssignments(paragemToDelete.id)}
                       disabled={deleting}
-                      className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {deleting ? (
                         <>
@@ -299,7 +299,7 @@ export default function Paragens() {
                       setDeleteError(null);
                     }}
                     disabled={deleting}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancelar
                   </button>
@@ -313,12 +313,12 @@ export default function Paragens() {
                   </svg>
                 </div>
                 
-                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                <h3 className="text-xl font-bold text-slate-900 text-center mb-2">
                   Eliminar Paragem
                 </h3>
                 
-                <p className="text-gray-600 text-center mb-6">
-                  Tem certeza que deseja eliminar a paragem <strong className="text-gray-900">"{paragemToDelete.nome}"</strong>?
+                <p className="text-slate-600 text-center mb-6">
+                  Tem certeza que deseja eliminar a paragem <strong className="text-slate-900">"{paragemToDelete.nome}"</strong>?
                   <br />
                   <span className="text-sm text-red-600 font-medium">Esta ação não pode ser desfeita.</span>
                 </p>
@@ -330,14 +330,14 @@ export default function Paragens() {
                       setParagemToDelete(null);
                     }}
                     disabled={deleting}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={() => paragemToDelete && handleDelete(paragemToDelete.id)}
                     disabled={deleting}
-                    className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {deleting ? (
                       <>
@@ -363,27 +363,27 @@ export default function Paragens() {
 
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
         {/* Header - 2 Columns Layout */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Left - Title and Description */}
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/dashboard')}
-              className="p-2 rounded-lg hover:bg-gray-100 flex-shrink-0"
+              className="p-2 rounded-xl hover:bg-slate-100 flex-shrink-0"
             >
-              <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">Paragens</h2>
-              <p className="hidden lg:block text-gray-600 mt-1">Gestão de todas as paragens e terminais do sistema</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Paragens</h2>
+              <p className="hidden lg:block text-slate-600 mt-1">Gestão de todas as paragens e terminais do sistema</p>
             </div>
           </div>
 
           {/* Right - Action Button */}
           <button 
             onClick={handleCreate}
-            className="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 whitespace-nowrap"
+            className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 whitespace-nowrap"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -401,18 +401,18 @@ export default function Paragens() {
               window.location.href = '/paragens';
             }}
             type="button"
-            className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-900 hover:shadow-md transition-all text-left cursor-pointer"
+            className="bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-900 hover:shadow-md transition-all text-left cursor-pointer"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Total Paragens</p>
-                <p className="text-2xl font-bold text-gray-900">{totalCount}</p>
+                <p className="text-xs text-slate-600 font-medium">Total Paragens</p>
+                <p className="text-2xl font-bold text-slate-900">{totalCount}</p>
               </div>
             </div>
           </button>
@@ -424,17 +424,17 @@ export default function Paragens() {
               window.location.href = '/paragens';
             }}
             type="button"
-            className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-900 hover:shadow-md transition-all text-left cursor-pointer"
+            className="bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-900 hover:shadow-md transition-all text-left cursor-pointer"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Terminais</p>
-                <p className="text-2xl font-bold text-gray-900">{terminais}</p>
+                <p className="text-xs text-slate-600 font-medium">Terminais</p>
+                <p className="text-2xl font-bold text-slate-900">{terminais}</p>
               </div>
             </div>
           </button>
@@ -446,17 +446,17 @@ export default function Paragens() {
               window.location.href = '/paragens';
             }}
             type="button"
-            className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-900 hover:shadow-md transition-all text-left cursor-pointer"
+            className="bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-900 hover:shadow-md transition-all text-left cursor-pointer"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Paragens Regulares</p>
-                <p className="text-2xl font-bold text-gray-900">{paragensRegulares}</p>
+                <p className="text-xs text-slate-600 font-medium">Paragens Regulares</p>
+                <p className="text-2xl font-bold text-slate-900">{paragensRegulares}</p>
               </div>
             </div>
           </button>
@@ -468,17 +468,17 @@ export default function Paragens() {
               window.location.href = '/vias';
             }}
             type="button"
-            className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-900 hover:shadow-md transition-all text-left cursor-pointer"
+            className="bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-900 hover:shadow-md transition-all text-left cursor-pointer"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Média Vias/Paragem</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-xs text-slate-600 font-medium">Média Vias/Paragem</p>
+                <p className="text-2xl font-bold text-slate-900">
                   {totalCount > 0 && paragens.length > 0 ? Math.round(paragens.reduce((sum, p) => sum + p.vias.length, 0) / paragens.length) : 0}
                 </p>
               </div>
@@ -487,11 +487,11 @@ export default function Paragens() {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
+          <div className="p-6 border-b border-slate-200">
             <div className="flex items-center space-x-4">
               <div className="flex-1 relative">
-                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input
@@ -499,7 +499,7 @@ export default function Paragens() {
                   placeholder="Pesquisar por nome ou código..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900"
+                  className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-slate-900"
                 />
               </div>
             </div>
@@ -508,35 +508,35 @@ export default function Paragens() {
           <div className="overflow-x-auto">
             {listLoading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
               </div>
             ) : (
               <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  <th className="px-4 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                     Paragem
                   </th>
-                  <th className="hidden md:table-cell px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-4 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                     Vias
                   </th>
-                  <th className="px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  <th className="hidden sm:table-cell px-4 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                     Tipo
                   </th>
-                  <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  <th className="hidden lg:table-cell px-4 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                     Coordenadas
                   </th>
-                  <th className="px-4 lg:px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  <th className="px-4 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                     Acções
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-slate-200">
                 {paragens.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center">
-                      <div className="flex flex-col items-center justify-center text-gray-500">
-                        <svg className="w-12 h-12 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="flex flex-col items-center justify-center text-slate-500">
+                        <svg className="w-12 h-12 mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
@@ -554,58 +554,58 @@ export default function Paragens() {
                       <tr 
                         key={paragem.id} 
                         onClick={() => handleView(paragem.id)}
-                        className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                        className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
                       >
-                        <td className="px-4 lg:px-6 py-4">
+                        <td className="px-4 py-4">
                           <div className="flex items-center">
-                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
-                              <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center mr-3">
+                              <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                               </svg>
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{paragem.nome}</div>
-                              <div className="text-xs text-gray-500">Código: {paragem.codigo}</div>
+                              <div className="text-sm font-medium text-slate-900">{paragem.nome}</div>
+                              <div className="text-xs text-slate-500">Código: {paragem.codigo}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="hidden md:table-cell px-6 py-4">
+                        <td className="hidden md:table-cell px-4 py-4">
                           <div className="flex flex-wrap gap-1">
                             {paragem.vias.slice(0, 2).map((v, idx) => (
-                              <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md font-medium">
+                              <span key={idx} className="px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded-lg font-medium">
                                 {v.via.nome}
                               </span>
                             ))}
                             {paragem.vias.length > 2 && (
-                              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md font-medium">
+                              <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-lg font-medium">
                                 +{paragem.vias.length - 2}
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <td className="hidden sm:table-cell px-4 py-4 whitespace-nowrap">
                           <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                             isTerminal
-                              ? "bg-gray-900 text-white"
-                              : "bg-gray-100 text-gray-800"
+                              ? "bg-slate-900 text-white"
+                              : "bg-slate-100 text-slate-800"
                           }`}>
                             {isTerminal ? "Terminal" : "Paragem"}
                           </span>
                         </td>
-                        <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-600 font-mono">
+                        <td className="hidden lg:table-cell px-4 py-4 whitespace-nowrap">
+                          <div className="text-sm text-slate-600 font-mono">
                             {coords[0]?.trim()}, {coords[1]?.trim()}
                           </div>
                         </td>
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2 lg:space-x-3">
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleView(paragem.id);
                               }}
-                              className="text-gray-600 hover:text-gray-900"
+                              className="text-slate-600 hover:text-slate-900"
                               title="Ver detalhes"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -618,7 +618,7 @@ export default function Paragens() {
                                 e.stopPropagation();
                                 handleEdit(paragem.id);
                               }}
-                              className="hidden lg:inline-block text-gray-600 hover:text-gray-900"
+                              className="hidden lg:inline-block text-slate-600 hover:text-slate-900"
                               title="Editar"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -630,7 +630,7 @@ export default function Paragens() {
                                 e.stopPropagation();
                                 confirmDelete(paragem.id, paragem.nome);
                               }}
-                              className="hidden lg:inline-block text-gray-600 hover:text-gray-900"
+                              className="hidden lg:inline-block text-slate-600 hover:text-slate-900"
                               title="Eliminar"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -649,17 +649,17 @@ export default function Paragens() {
           </div>
 
           {/* Pagination */}
-          <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-slate-600">
                 Mostrando <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> a <span className="font-medium">{Math.min(currentPage * itemsPerPage, totalCount)}</span> de <span className="font-medium">{totalCount}</span> paragens
               </div>
               <div className="hidden lg:flex items-center space-x-2">
-                <label className="text-sm text-gray-900 font-medium">Itens por página:</label>
+                <label className="text-sm text-slate-900 font-medium">Itens por página:</label>
                 <select
                   value={itemsPerPage}
                   onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  className="px-3 py-1.5 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 >
                   <option value={10}>10</option>
                   <option value={25}>25</option>
@@ -673,9 +673,9 @@ export default function Paragens() {
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                className="px-3 py-2 border border-slate-300 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
               >
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
@@ -698,10 +698,10 @@ export default function Paragens() {
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`px-4 py-2 rounded-lg font-medium ${
+                      className={`px-4 py-2 rounded-xl font-medium ${
                         currentPage === pageNum
-                          ? 'bg-gray-900 text-white'
-                          : 'border border-gray-300 hover:bg-gray-50 text-gray-700'
+                          ? 'bg-slate-900 text-white'
+                          : 'border border-slate-300 hover:bg-slate-50 text-slate-700'
                       }`}
                     >
                       {pageNum}
@@ -713,9 +713,9 @@ export default function Paragens() {
               <button 
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                className="px-3 py-2 border border-slate-300 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
               >
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>

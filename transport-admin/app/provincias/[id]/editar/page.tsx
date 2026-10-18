@@ -297,7 +297,7 @@ export default function EditarProvincia() {
       {/* Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
-          <div className={`rounded-lg shadow-lg p-4 min-w-[300px] ${
+          <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
             notification.type === 'success' ? 'bg-green-50 border border-green-200' :
             notification.type === 'error' ? 'bg-red-50 border border-red-200' :
             'bg-blue-50 border border-blue-200'
@@ -330,34 +330,34 @@ export default function EditarProvincia() {
         <div className="flex items-center space-x-4 mb-6">
           <button
             onClick={() => router.push(`/provincias/${id}`)}
-            className="p-2 rounded-lg hover:bg-gray-100"
+            className="p-2 rounded-xl hover:bg-slate-100"
           >
-            <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <div>
-            <h2 className="text-3xl font-bold text-gray-900">Editar Província</h2>
-            <p className="text-gray-600 mt-1">Atualize as informações da província</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Editar Província</h2>
+            <p className="text-slate-600 mt-1">Atualize as informações da província</p>
           </div>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Info */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
-            <h3 className="text-lg font-bold text-gray-900">Informações Básicas</h3>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
+            <h3 className="text-lg font-bold text-slate-900">Informações Básicas</h3>
             
             {/* Nome */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-slate-900 mb-2">
                 Nome da Província *
               </label>
               <input
                 type="text"
                 value={formData.nome}
                 onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-slate-900"
                 placeholder="Ex: Maputo"
                 required
               />
@@ -365,29 +365,29 @@ export default function EditarProvincia() {
 
             {/* Código */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-slate-900 mb-2">
                 Código *
               </label>
               <input
                 type="text"
                 value={formData.codigo}
                 onChange={(e) => setFormData({ ...formData, codigo: e.target.value.toUpperCase() })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900 uppercase"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-slate-900 uppercase"
                 placeholder="Ex: MPT"
                 maxLength={3}
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">Código único de 2-3 letras maiúsculas</p>
+              <p className="text-xs text-slate-500 mt-1">Código único de 2-3 letras maiúsculas</p>
             </div>
           </div>
 
           {/* Map Location */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
-            <h3 className="text-lg font-bold text-gray-900">Localização e Área de Cobertura</h3>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+            <h3 className="text-lg font-bold text-slate-900">Localização e Área de Cobertura</h3>
             
             {/* GeoLocation Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-slate-900 mb-2">
                 Coordenadas do Centro (Latitude,Longitude)
               </label>
               <input
@@ -412,15 +412,15 @@ export default function EditarProvincia() {
                     updateCircle(mapInstanceRef.current, lat, lng, radius);
                   }
                 }}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-gray-900"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-slate-900"
                 placeholder="-25.9655,32.5892"
               />
-              <p className="text-xs text-gray-500 mt-1">Clique no mapa para selecionar ou digite manualmente</p>
+              <p className="text-xs text-slate-500 mt-1">Clique no mapa para selecionar ou digite manualmente</p>
             </div>
 
             {/* Radius Slider */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-slate-900 mb-2">
                 Raio de Cobertura: {radius} km
               </label>
               <input
@@ -430,17 +430,17 @@ export default function EditarProvincia() {
                 step="5"
                 value={radius}
                 onChange={(e) => setRadius(Number(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                className="w-full h-2 bg-slate-200 rounded-xl appearance-none cursor-pointer"
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <div className="flex justify-between text-xs text-slate-500 mt-1">
                 <span>10 km</span>
                 <span>200 km</span>
               </div>
             </div>
 
             {/* Map */}
-            <div ref={mapRef} className="w-full h-96 rounded-lg border border-gray-300" />
-            <p className="text-xs text-gray-500">
+            <div ref={mapRef} className="w-full h-96 rounded-xl border border-slate-300" />
+            <p className="text-xs text-slate-500">
               💡 Dica: Use os controles no canto superior direito para inclinar e rotar o mapa. Zoom in para ver edifícios em 3D.
             </p>
           </div>
@@ -450,7 +450,7 @@ export default function EditarProvincia() {
             <button
               type="button"
               onClick={() => router.push(`/provincias/${id}`)}
-              className="flex-1 px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50"
+              className="flex-1 px-6 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50"
               disabled={saving}
             >
               Cancelar
@@ -458,7 +458,7 @@ export default function EditarProvincia() {
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 px-6 py-3 bg-gray-900 hover:bg-black text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? (
                 <>

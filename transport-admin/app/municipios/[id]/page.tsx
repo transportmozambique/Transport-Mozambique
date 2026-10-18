@@ -433,7 +433,7 @@ export default function MunicipioDetails() {
       <div className="bg-white min-h-screen">
         {notification && (
           <div className="fixed top-4 right-4 z-50 animate-slide-in">
-            <div className="rounded-lg shadow-lg p-4 min-w-[300px] bg-red-50 border border-red-200">
+            <div className="rounded-xl shadow-lg p-4 min-w-[300px] bg-red-50 border border-red-200">
               <div className="flex items-center space-x-3">
                 <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -445,14 +445,14 @@ export default function MunicipioDetails() {
         )}
         <div className="max-w-[1600px] mx-auto p-6 space-y-6">
           <div className="flex items-center space-x-4">
-            <button onClick={() => router.push('/municipios')} className="p-2 rounded-lg hover:bg-gray-100">
-              <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button onClick={() => router.push('/municipios')} className="p-2 rounded-xl hover:bg-slate-100">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">Município Não Encontrado</h2>
-              <p className="text-gray-600 mt-1">O município solicitado não existe no sistema</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Município Não Encontrado</h2>
+              <p className="text-slate-600 mt-1">O município solicitado não existe no sistema</p>
             </div>
           </div>
         </div>
@@ -491,7 +491,7 @@ export default function MunicipioDetails() {
       {/* Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
-          <div className={`rounded-lg shadow-lg p-4 min-w-[300px] ${
+          <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
             notification.type === 'success' ? 'bg-green-50 border border-green-200' :
             notification.type === 'error' ? 'bg-red-50 border border-red-200' :
             'bg-blue-50 border border-blue-200'
@@ -527,13 +527,13 @@ export default function MunicipioDetails() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && municipio && (
         <div 
-          className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm min-h-screen" 
+          className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm min-h-screen" 
           style={{ minHeight: '100vh', height: '100%' }}
           onClick={() => !deleting && setShowDeleteModal(false)}
         >
           <div className="flex items-center justify-center min-h-screen p-4">
             <div 
-              className="relative z-[101] bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-gray-200 my-8"
+              className="relative z-[101] bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-slate-200 my-8"
               onClick={(e) => e.stopPropagation()}
             >
               <div className={`flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4 ${
@@ -548,16 +548,16 @@ export default function MunicipioDetails() {
                 </svg>
               </div>
               
-              <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+              <h3 className="text-xl font-bold text-slate-900 text-center mb-2">
                 {hasAssociations ? 'Remover Associações' : 'Eliminar Município'}
               </h3>
               
               {hasAssociations ? (
                 <div className="space-y-4">
-                  <p className="text-gray-600 text-center">
+                  <p className="text-slate-600 text-center">
                     {deleteError}
                   </p>
-                  <div className="bg-white rounded-lg p-4">
+                  <div className="bg-white rounded-xl p-4">
                     <p className="text-sm text-red-600 text-center font-medium">
                       Clique em <strong>"Remover e Eliminar"</strong> para remover as associações e eliminar o município.
                     </p>
@@ -570,14 +570,14 @@ export default function MunicipioDetails() {
                         setHasAssociations(false);
                       }}
                       disabled={deleting}
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={handleRemoveAssociationsAndDelete}
                       disabled={deleting}
-                      className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {deleting ? (
                         <>
@@ -597,8 +597,8 @@ export default function MunicipioDetails() {
                 </div>
               ) : (
                 <>
-                  <p className="text-gray-600 text-center mb-6">
-                    Tem certeza que deseja eliminar o município <strong className="text-gray-900">"{municipio.nome}"</strong>?
+                  <p className="text-slate-600 text-center mb-6">
+                    Tem certeza que deseja eliminar o município <strong className="text-slate-900">"{municipio.nome}"</strong>?
                     <br />
                     <span className="text-sm text-red-600 font-medium">Esta ação não pode ser desfeita.</span>
                   </p>
@@ -607,14 +607,14 @@ export default function MunicipioDetails() {
                     <button
                       onClick={() => setShowDeleteModal(false)}
                       disabled={deleting}
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={handleDelete}
                       disabled={deleting}
-                      className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {deleting ? (
                         <>
@@ -640,16 +640,16 @@ export default function MunicipioDetails() {
       
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center flex-wrap gap-3">
           <div className="flex items-center space-x-4">
-            <button onClick={() => router.push('/municipios')} className="p-2 rounded-lg hover:bg-gray-100">
-              <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button onClick={() => router.push('/municipios')} className="p-2 rounded-xl hover:bg-slate-100">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">{municipio.nome}</h2>
-              <p className="text-gray-600 mt-1">
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{municipio.nome}</h2>
+              <p className="text-slate-600 mt-1">
                 Código: {municipio.codigo}
                 {municipio.provincia && ` • Província: ${municipio.provincia.nome}`}
               </p>
@@ -658,7 +658,7 @@ export default function MunicipioDetails() {
           <div className="flex items-center space-x-3">
             <button 
               onClick={() => router.push(`/municipios/${id}/editar`)}
-              className="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2"
+              className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -667,7 +667,7 @@ export default function MunicipioDetails() {
             </button>
             <button 
               onClick={() => setShowDeleteModal(true)}
-              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2"
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -681,18 +681,18 @@ export default function MunicipioDetails() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button
             onClick={() => router.push('/vias')}
-            className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-gray-900 transition-all cursor-pointer text-left group"
+            className="bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-lg hover:border-slate-900 transition-all cursor-pointer text-left group"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 font-medium mb-1">Vias</p>
-                <p className="text-3xl font-bold text-gray-900">{totalViasInCircle}</p>
+                <p className="text-sm text-slate-600 font-medium mb-1">Vias</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900">{totalViasInCircle}</p>
                 {totalViasInCircle !== totalVias && (
-                  <p className="text-xs text-gray-500 mt-1">{totalVias} total, {totalViasInCircle} no raio</p>
+                  <p className="text-xs text-slate-500 mt-1">{totalVias} total, {totalViasInCircle} no raio</p>
                 )}
               </div>
-              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-gray-900 transition-colors">
-                <svg className="w-6 h-6 text-gray-700 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center group-hover:bg-slate-800 transition-colors">
+                <svg className="w-6 h-6 text-slate-700 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
               </div>
@@ -701,15 +701,15 @@ export default function MunicipioDetails() {
 
           <button
             onClick={() => router.push('/paragens')}
-            className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-gray-900 transition-all cursor-pointer text-left group"
+            className="bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-lg hover:border-slate-900 transition-all cursor-pointer text-left group"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 font-medium mb-1">Paragens</p>
-                <p className="text-3xl font-bold text-gray-900">{totalParagens}</p>
+                <p className="text-sm text-slate-600 font-medium mb-1">Paragens</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900">{totalParagens}</p>
               </div>
-              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-gray-900 transition-colors">
-                <svg className="w-6 h-6 text-gray-700 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center group-hover:bg-slate-800 transition-colors">
+                <svg className="w-6 h-6 text-slate-700 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
@@ -722,33 +722,33 @@ export default function MunicipioDetails() {
         {(municipio.endereco || municipio.contacto1) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {municipio.endereco && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="bg-white rounded-2xl border border-slate-200 p-6">
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Endereço</p>
-                    <p className="text-lg font-medium text-gray-900">{municipio.endereco}</p>
+                    <p className="text-sm text-slate-600">Endereço</p>
+                    <p className="text-lg font-medium text-slate-900">{municipio.endereco}</p>
                   </div>
                 </div>
               </div>
             )}
 
             {municipio.contacto1 && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="bg-white rounded-2xl border border-slate-200 p-6">
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Contacto</p>
-                    <p className="text-lg font-medium text-gray-900">{municipio.contacto1}</p>
+                    <p className="text-sm text-slate-600">Contacto</p>
+                    <p className="text-lg font-medium text-slate-900">{municipio.contacto1}</p>
                   </div>
                 </div>
               </div>
@@ -757,24 +757,24 @@ export default function MunicipioDetails() {
         )}
 
         {/* Map Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Localização do Município</h3>
-          <div ref={mapRef} className="w-full h-96 rounded-lg border border-gray-300" />
-          <p className="text-xs text-gray-500 mt-3 text-center">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Localização do Município</h3>
+          <div ref={mapRef} className="w-full h-96 rounded-xl border border-slate-300" />
+          <p className="text-xs text-slate-500 mt-3 text-center">
             💡 Use os controles para inclinar e rotar o mapa • Zoom in para ver edifícios em 3D
           </p>
         </div>
 
         {/* Vias List */}
-        <div id="vias-section" className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-bold text-gray-900">Vias ({totalVias})</h3>
+        <div id="vias-section" className="bg-white rounded-2xl shadow-sm border border-slate-200">
+          <div className="p-6 border-b border-slate-200">
+            <h3 className="text-lg font-bold text-slate-900">Vias ({totalVias})</h3>
           </div>
           <div className="overflow-x-auto">
             {totalVias === 0 ? (
               <div className="p-12 text-center">
-                <div className="flex flex-col items-center justify-center text-gray-500">
-                  <svg className="w-12 h-12 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex flex-col items-center justify-center text-slate-500">
+                  <svg className="w-12 h-12 mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                   </svg>
                   <p className="text-lg font-medium">Nenhuma via encontrada</p>
@@ -784,39 +784,39 @@ export default function MunicipioDetails() {
             ) : (
               <>
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-4 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                         Código
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-4 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                         Nome
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-4 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                         Acções
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white divide-y divide-slate-200">
                     {currentVias.map((via) => (
                       <tr 
                         key={via.id}
                         onClick={() => router.push(`/vias/${via.id}`)}
-                        className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                        className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
                       >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-bold text-gray-900">{via.codigo}</div>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="text-sm font-bold text-slate-900">{via.codigo}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{via.nome}</div>
+                        <td className="px-4 py-4">
+                          <div className="text-sm font-medium text-slate-900">{via.nome}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
                               router.push(`/vias/${via.id}`);
                             }}
-                            className="text-gray-600 hover:text-gray-900"
+                            className="text-slate-600 hover:text-slate-900"
                             title="Ver detalhes"
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -832,16 +832,16 @@ export default function MunicipioDetails() {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                  <div className="px-6 py-4 border-t border-slate-200 bg-slate-50">
                     <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-slate-600">
                         Mostrando {startIndex + 1} a {Math.min(endIndex, totalVias)} de {totalVias} vias
                       </div>
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => handlePageChange(currentPage - 1)}
                           disabled={currentPage === 1}
-                          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className="px-3 py-1.5 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                           Anterior
                         </button>
@@ -860,7 +860,7 @@ export default function MunicipioDetails() {
 
                             if (showEllipsis) {
                               return (
-                                <span key={page} className="px-2 text-gray-500">
+                                <span key={page} className="px-2 text-slate-500">
                                   ...
                                 </span>
                               );
@@ -872,10 +872,10 @@ export default function MunicipioDetails() {
                               <button
                                 key={page}
                                 onClick={() => handlePageChange(page)}
-                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-colors ${
                                   currentPage === page
-                                    ? 'bg-gray-900 text-white'
-                                    : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+                                    ? 'bg-slate-900 text-white'
+                                    : 'border border-slate-300 text-slate-700 hover:bg-slate-100'
                                 }`}
                               >
                                 {page}
@@ -887,7 +887,7 @@ export default function MunicipioDetails() {
                         <button
                           onClick={() => handlePageChange(currentPage + 1)}
                           disabled={currentPage === totalPages}
-                          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className="px-3 py-1.5 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                           Próxima
                         </button>

@@ -38,9 +38,9 @@ export default function DriverPinCard({ motoristaId }: { motoristaId: string }) 
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-testid="pin-card">
-      <h3 className="text-lg font-bold text-black mb-4 pb-3 border-b border-slate-200">PIN de Acesso</h3>
-      <p className="text-sm text-black mb-3">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6" data-testid="pin-card">
+      <h3 className="text-lg font-bold text-slate-900 mb-4 pb-3 border-b border-slate-200">PIN de Acesso</h3>
+      <p className="text-sm text-slate-900 mb-3">
         Para entrar no portal do motorista e no menu USSD de motorista.
       </p>
       <p className="text-sm mb-4">
@@ -50,9 +50,9 @@ export default function DriverPinCard({ motoristaId }: { motoristaId: string }) 
       </p>
 
       {pin && (
-        <div className="mb-4 p-3 rounded-lg bg-slate-50 border border-slate-200">
+        <div className="mb-4 p-3 rounded-xl bg-slate-50 border border-slate-200">
           <p className="text-xs text-slate-600 mb-1">Novo PIN (só é mostrado agora):</p>
-          <p className="text-2xl font-mono font-bold tracking-widest text-black" data-testid="driver-pin">{pin}</p>
+          <p className="text-2xl font-mono font-bold tracking-widest text-slate-900" data-testid="driver-pin">{pin}</p>
           <p className="text-xs text-slate-600 mt-1">Entregue-o ao motorista. O PIN anterior deixou de funcionar.</p>
         </div>
       )}
@@ -62,7 +62,7 @@ export default function DriverPinCard({ motoristaId }: { motoristaId: string }) 
         type="button"
         onClick={gerar}
         disabled={busy}
-        className="w-full px-4 py-2 bg-gray-900 hover:bg-black text-white rounded-lg text-sm font-medium disabled:opacity-50"
+        className="w-full px-4 py-2 bg-slate-900 hover:bg-slate-900 text-white rounded-xl text-sm font-medium disabled:opacity-50"
       >
         {busy ? "A gerar…" : definido ? "Gerar novo PIN" : "Gerar PIN"}
       </button>

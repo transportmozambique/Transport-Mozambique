@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext";
+import { useSidebar } from "../contexts/SidebarContext";
 
 interface SearchHit {
   href: string;
@@ -44,6 +45,7 @@ const joinParts = (...parts: (string | null | undefined)[]) => parts.filter(Bool
 export default function Header() {
   const router = useRouter();
   const { admin, logout } = useAuth();
+  const { setMobileOpen } = useSidebar();
   const [showProfile, setShowProfile] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
@@ -127,13 +129,23 @@ export default function Header() {
   };
 
   return (
-    <header className="z-10 shrink-0 border-b border-gray-800 bg-black px-6 py-4 shadow-sm">
-      <div className="flex justify-between items-center">
+    <header className="z-30 shrink-0 border-b border-slate-200 bg-white/90 px-3 py-3 backdrop-blur sm:px-6">
+      <div className="flex items-center justify-between gap-3">
+        {/* The menu, on a phone */}
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 md:hidden"
+          aria-label="Abrir o menu"
+        >
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeWidth={2} d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </button>
         {/* Search Bar */}
-        <div className="flex-1 max-w-xl">
+        <div className="min-w-0 flex-1 max-w-xl">
           <div className="relative" ref={searchRef}>
             <svg
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+              className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -160,27 +172,27 @@ export default function Header() {
               }}
               placeholder="Pesquisar transportes, vias, motoristas..."
               aria-label="Pesquisar transportes, vias e motoristas"
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent text-sm text-white placeholder-gray-400"
+              className="w-full rounded-full border border-transparent bg-slate-100 py-2.5 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-500 focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
 
             {showResults && term.length >= 2 && (
-              <div className="absolute left-0 right-0 mt-2 max-h-[70vh] overflow-y-auto bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-20">
+              <div className="absolute left-0 right-0 mt-2 max-h-[70vh] overflow-y-auto bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-20">
                 {!currentGroups ? (
-                  <p className="px-4 py-3 text-sm text-gray-500">A pesquisar…</p>
+                  <p className="px-4 py-3 text-sm text-slate-500">A pesquisar…</p>
                 ) : currentGroups.length === 0 ? (
-                  <p className="px-4 py-3 text-sm text-gray-500">Sem resultados para &quot;{term}&quot;</p>
+                  <p className="px-4 py-3 text-sm text-slate-500">Sem resultados para &quot;{term}&quot;</p>
                 ) : (
                   currentGroups.map((group) => (
                     <div key={group.label} role="group" aria-label={group.label} className="py-1">
-                      <p className="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">{group.label}</p>
+                      <p className="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{group.label}</p>
                       {group.hits.map((hit) => (
                         <button
                           key={hit.href}
                           onClick={() => openResult(hit.href)}
-                          className="w-full px-4 py-2 text-left hover:bg-gray-50"
+                          className="w-full px-4 py-2 text-left hover:bg-slate-50"
                         >
-                          <p className="text-sm font-medium text-gray-900 truncate">{hit.title}</p>
-                          {hit.subtitle && <p className="text-xs text-gray-500 truncate">{hit.subtitle}</p>}
+                          <p className="text-sm font-medium text-slate-900 truncate">{hit.title}</p>
+                          {hit.subtitle && <p className="text-xs text-slate-500 truncate">{hit.subtitle}</p>}
                         </button>
                       ))}
                     </div>
@@ -192,23 +204,23 @@ export default function Header() {
         </div>
 
         {/* Right Section */}
-        <div className="flex items-center space-x-4 ml-6">
+        <div className="flex shrink-0 items-center">
           {/* Profile */}
           {admin && (
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowProfile(!showProfile)}
-                className="flex items-center hover:bg-gray-900 rounded-lg p-2 transition-colors space-x-3"
+                className="flex items-center gap-3 rounded-full p-1.5 pr-2 transition-colors hover:bg-slate-100 sm:pr-3"
               >
-                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-black font-bold shadow-lg">
+                <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center text-white font-bold">
                   {getInitials(admin.nome)}
                 </div>
                 <div className="hidden sm:block text-left">
-                  <p className="text-sm font-semibold text-white">{admin.nome}</p>
-                  <p className="text-xs text-gray-400 capitalize">{admin.role}</p>
+                  <p className="text-sm font-semibold text-slate-900">{admin.nome}</p>
+                  <p className="text-xs text-slate-500 capitalize">{admin.role}</p>
                 </div>
                 <svg
-                  className={`w-4 h-4 text-gray-400 transition-transform ${
+                  className={`hidden sm:block w-4 h-4 text-slate-400 transition-transform ${
                     showProfile ? "rotate-180" : ""
                   }`}
                   fill="none"
@@ -226,16 +238,16 @@ export default function Header() {
 
               {/* Profile Dropdown */}
               {showProfile && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2">
-                  <div className="px-4 py-3 border-b border-gray-200">
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 py-2">
+                  <div className="px-4 py-3 border-b border-slate-200">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-white font-bold">
+                      <div className="w-12 h-12 bg-slate-900 rounded-full flex items-center justify-center text-white font-bold">
                         {getInitials(admin.nome)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-black truncate">{admin.nome}</p>
-                        <p className="text-xs text-gray-600 truncate">{admin.email}</p>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-black text-white mt-1 capitalize">
+                        <p className="text-sm font-bold text-slate-900 truncate">{admin.nome}</p>
+                        <p className="text-xs text-slate-600 truncate">{admin.email}</p>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-900 text-white mt-1 capitalize">
                           {admin.role}
                         </span>
                       </div>
@@ -245,9 +257,9 @@ export default function Header() {
                   <div className="py-2">
                     <button 
                       onClick={() => handleNavigate("/perfil")}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3"
+                      className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center space-x-3"
                     >
-                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -259,7 +271,7 @@ export default function Header() {
                     </button>
                   </div>
 
-                  <div className="border-t border-gray-200 pt-2">
+                  <div className="border-t border-slate-200 pt-2">
                     <button
                       onClick={logout}
                       className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-3 font-medium"

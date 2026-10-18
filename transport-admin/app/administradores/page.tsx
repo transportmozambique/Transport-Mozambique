@@ -87,7 +87,7 @@ export default function AdministradoresPage() {
 
   const getRoleBadge = () => {
     return (
-      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-lg text-xs font-semibold">
         Admin
       </span>
     );
@@ -102,7 +102,7 @@ export default function AdministradoresPage() {
       {/* Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
-          <div className={`rounded-lg shadow-lg p-4 min-w-[300px] ${
+          <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
             notification.type === 'success' ? 'bg-green-50 border border-green-200' :
             notification.type === 'error' ? 'bg-red-50 border border-red-200' :
             'bg-blue-50 border border-blue-200'
@@ -132,26 +132,26 @@ export default function AdministradoresPage() {
 
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/dashboard')}
-              className="p-2 rounded-lg hover:bg-gray-100"
+              className="p-2 rounded-xl hover:bg-slate-100"
             >
-              <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Administradores</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Administradores</h1>
+              <p className="text-slate-600 mt-1">
                 {totalCount} {totalCount === 1 ? 'administrador registado' : 'administradores registados'}
               </p>
             </div>
           </div>
           <button
             onClick={() => router.push('/administradores/criar')}
-            className="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2"
+            className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -161,7 +161,7 @@ export default function AdministradoresPage() {
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <input
@@ -172,18 +172,18 @@ export default function AdministradoresPage() {
                   setSearchTerm(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
               />
             </div>
             <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-600 whitespace-nowrap">Mostrar:</label>
+              <label className="text-sm text-slate-600 whitespace-nowrap">Mostrar:</label>
               <select
                 value={itemsPerPage}
                 onChange={(e) => {
                   setItemsPerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                className="px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
               >
                 <option value={10}>10</option>
                 <option value={25}>25</option>
@@ -195,71 +195,71 @@ export default function AdministradoresPage() {
         </div>
 
         {/* Administradores Table */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
             </div>
           ) : administradores.length > 0 ? (
             <>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                      <th className="px-4 py-4 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">
                         Administrador
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                      <th className="hidden sm:table-cell px-4 py-4 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">
                         Email
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                      <th className="hidden lg:table-cell px-4 py-4 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">
                         Registado
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                      <th className="hidden xl:table-cell px-4 py-4 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">
                         Última Atualização
                       </th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                      <th className="px-4 py-4 text-right text-xs font-semibold text-slate-900 uppercase tracking-wider">
                         Ações
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-slate-200">
                     {administradores.map((admin) => (
                       <tr 
                         key={admin.id} 
                         onClick={() => router.push(`/administradores/${admin.id}`)}
-                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                        className="hover:bg-slate-50 transition-colors cursor-pointer"
                       >
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4">
                           <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0">
+                            <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center flex-shrink-0">
                               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
                             </div>
                             <div>
-                              <p className="font-semibold text-gray-900">{admin.nome}</p>
+                              <p className="font-semibold text-slate-900">{admin.nome}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm text-gray-900">{admin.email}</p>
+                        <td className="hidden sm:table-cell px-4 py-4">
+                          <p className="text-sm text-slate-900">{admin.email}</p>
                         </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm text-gray-600">
+                        <td className="hidden lg:table-cell px-4 py-4">
+                          <p className="text-sm text-slate-600">
                             {new Date(admin.createdAt).toLocaleDateString('pt-PT')}
                           </p>
                         </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm text-gray-600">
+                        <td className="hidden xl:table-cell px-4 py-4">
+                          <p className="text-sm text-slate-600">
                             {new Date(admin.updatedAt).toLocaleDateString('pt-PT')}
                           </p>
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-4 py-4 text-right">
                           <div className="flex items-center justify-end space-x-2">
                             <button
                               onClick={() => router.push(`/administradores/${admin.id}`)}
-                              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                              className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors"
                               title="Ver detalhes"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -269,7 +269,7 @@ export default function AdministradoresPage() {
                             </button>
                             <button
                               onClick={() => router.push(`/administradores/${admin.id}/editar`)}
-                              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                              className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors"
                               title="Editar"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -298,7 +298,7 @@ export default function AdministradoresPage() {
                                   },
                                 });
                               }}
-                              className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-colors"
                               title="Eliminar"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -315,22 +315,22 @@ export default function AdministradoresPage() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
-                  <div className="text-sm text-gray-600">
+                <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
+                  <div className="text-sm text-slate-600">
                     Página {currentPage} de {totalPages} • Total: {totalCount} {totalCount === 1 ? 'administrador' : 'administradores'}
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                      className="px-4 py-2 border border-slate-300 rounded-xl text-slate-900 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                     >
                       Anterior
                     </button>
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                      className="px-4 py-2 border border-slate-300 rounded-xl text-slate-900 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                     >
                       Próxima
                     </button>
@@ -340,17 +340,17 @@ export default function AdministradoresPage() {
             </>
           ) : (
             <div className="text-center py-12">
-              <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-16 h-16 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhum administrador encontrado</h3>
-              <p className="text-gray-600 mb-4">
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">Nenhum administrador encontrado</h3>
+              <p className="text-slate-600 mb-4">
                 {searchTerm ? 'Tente ajustar os termos de pesquisa' : 'Comece criando um novo administrador'}
               </p>
               {!searchTerm && (
                 <button
                   onClick={() => router.push('/administradores/criar')}
-                  className="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-lg font-medium inline-flex items-center space-x-2"
+                  className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium inline-flex items-center space-x-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -368,29 +368,29 @@ export default function AdministradoresPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* Backdrop */}
           <div 
-            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm"
             onClick={() => setModal({ show: false, title: '', message: '' })}
           />
           
           {/* Modal Content */}
           <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold text-gray-900 mb-3">
+            <h3 className="text-xl font-bold text-slate-900 mb-3">
               {modal.title}
             </h3>
-            <p className="text-gray-700 mb-6">
+            <p className="text-slate-700 mb-6">
               {modal.message}
             </p>
             
             <div className="flex space-x-3">
               <button
                 onClick={() => setModal({ show: false, title: '', message: '' })}
-                className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-2 border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => modal.onConfirm?.()}
-                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-colors"
               >
                 Eliminar
               </button>

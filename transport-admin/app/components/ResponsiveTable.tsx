@@ -62,13 +62,13 @@ export default function ResponsiveTable({
             {columns.map((column, index) => (
               <th
                 key={index}
-                className="px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider"
+                className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider"
               >
                 {column.header}
               </th>
             ))}
             {actions && (
-              <th className="px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                 Acções
               </th>
             )}
@@ -101,23 +101,23 @@ export default function ResponsiveTable({
       </table>
 
       {/* Mobile Card View - Simplified */}
-      <div className="lg:hidden divide-y divide-gray-200">
+      <div className="lg:hidden divide-y divide-slate-200">
         {data.map((row, rowIndex) => (
           <div
             key={rowIndex}
             onClick={() => onRowClick?.(row)}
-            className={`p-4 ${onRowClick ? 'hover:bg-gray-50 cursor-pointer' : ''}`}
+            className={`p-4 ${onRowClick ? 'hover:bg-slate-50 cursor-pointer' : ''}`}
           >
             {/* Title and Subtitle */}
             {(mobileCardTitle || mobileCardSubtitle) && (
               <div className="mb-3">
                 {mobileCardTitle && (
-                  <div className="text-base font-bold text-black mb-1">
+                  <div className="text-base font-bold text-slate-900 mb-1">
                     {mobileCardTitle(row)}
                   </div>
                 )}
                 {mobileCardSubtitle && (
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-slate-600">
                     {mobileCardSubtitle(row)}
                   </div>
                 )}
@@ -129,10 +129,10 @@ export default function ResponsiveTable({
               <div className="grid grid-cols-2 gap-2 mb-3">
                 {mobileColumns.slice(0, 4).map((column, colIndex) => (
                   <div key={colIndex}>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-slate-500">
                       {column.mobileLabel || column.header}
                     </div>
-                    <div className="text-sm text-black font-medium">
+                    <div className="text-sm text-slate-900 font-medium">
                       {column.render
                         ? column.render(row[column.accessor], row)
                         : row[column.accessor]}
@@ -144,7 +144,7 @@ export default function ResponsiveTable({
 
             {actions && (
               <div
-                className="flex items-center justify-end space-x-2 pt-2 border-t border-gray-200"
+                className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-200"
                 onClick={(e) => e.stopPropagation()}
               >
                 {actions(row)}

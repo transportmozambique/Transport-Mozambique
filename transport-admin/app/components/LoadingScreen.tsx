@@ -65,11 +65,11 @@ export default function LoadingScreen({
 
   const shellLight =
     layout === "admin"
-      ? "absolute inset-0 z-10 flex items-center justify-center bg-gray-50"
-      : "flex min-h-screen items-center justify-center bg-gray-50";
+      ? "absolute inset-0 z-10 flex items-center justify-center bg-slate-50"
+      : "flex min-h-screen items-center justify-center bg-slate-50";
 
   const shellDark =
-    "flex min-h-screen items-center justify-center bg-gradient-to-br from-black via-gray-900 to-gray-800";
+    "flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800";
 
   const shell = tone === "dark" ? shellDark : shellLight;
 

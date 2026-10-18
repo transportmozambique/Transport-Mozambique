@@ -45,19 +45,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-gray-800">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800">
+      <div className="overflow-hidden bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4">
         {/* Header */}
-        <div className="bg-gradient-to-br from-black to-gray-900 rounded-t-2xl p-8 text-center">
-          <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-10 h-10 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-center">
+          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-10 h-10 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-white mb-1">
-            TransportMZ Admin
+            Transportes Moçambique
           </h1>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-slate-400">
             Painel de Administração
           </p>
         </div>
@@ -65,7 +65,7 @@ export default function LoginPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           {error && (
-            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start space-x-3">
+            <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start space-x-3">
               <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -74,7 +74,7 @@ export default function LoginPage() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-bold text-gray-900 mb-2">
+            <label htmlFor="email" className="block text-sm font-bold text-slate-900 mb-2">
               Email
             </label>
             <input
@@ -83,14 +83,14 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-black focus:outline-none transition-colors text-gray-900"
+              className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-slate-900 focus:outline-none transition-colors text-slate-900"
               placeholder="admin@transportmz.com"
               disabled={loading}
             />
           </div>
 
           <div>
-            <label htmlFor="senha" className="block text-sm font-bold text-gray-900 mb-2">
+            <label htmlFor="senha" className="block text-sm font-bold text-slate-900 mb-2">
               Senha
             </label>
             <input
@@ -99,7 +99,7 @@ export default function LoginPage() {
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               required
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-black focus:outline-none transition-colors text-gray-900"
+              className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-slate-900 focus:outline-none transition-colors text-slate-900"
               placeholder="••••••••"
               disabled={loading}
             />
@@ -108,7 +108,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-black hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-4 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
           >
             {loading ? (
               <>
@@ -131,11 +131,11 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div className="px-8 pb-8">
-          <div className="border-t-2 border-gray-100 pt-6 text-center">
-            <p className="text-xs text-gray-500">
+          <div className="border-t-2 border-slate-100 pt-6 text-center">
+            <p className="text-xs text-slate-500">
               Sistema de Gestão de Transportes Públicos
             </p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-slate-400 mt-1">
               Moçambique © 2026
             </p>
           </div>

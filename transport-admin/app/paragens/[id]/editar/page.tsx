@@ -424,17 +424,17 @@ export default function EditarParagem() {
     return (
       <div className="min-h-screen bg-white">
         <div className="max-w-[1600px] mx-auto p-6">
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Paragem Não Encontrada</h3>
-            <p className="text-gray-600 mb-6">A paragem que procura não existe.</p>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Paragem Não Encontrada</h3>
+            <p className="text-slate-600 mb-6">A paragem que procura não existe.</p>
             <button
               onClick={() => router.push('/paragens')}
-              className="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-lg font-medium"
+              className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium"
             >
               Voltar para Paragens
             </button>
@@ -449,7 +449,7 @@ export default function EditarParagem() {
       {/* Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
-          <div className={`rounded-lg shadow-lg p-4 min-w-[300px] ${
+          <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
             notification.type === 'success' ? 'bg-green-50 border border-green-200' :
             notification.type === 'error' ? 'bg-red-50 border border-red-200' :
             'bg-blue-50 border border-blue-200'
@@ -487,15 +487,15 @@ export default function EditarParagem() {
         <div className="flex items-center space-x-4">
           <button
             onClick={() => router.push(`/paragens/${params.id}`)}
-            className="p-2 rounded-lg hover:bg-gray-100"
+            className="p-2 rounded-xl hover:bg-slate-100"
           >
-            <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <div className="flex-1">
-            <h2 className="text-3xl font-bold text-gray-900">Editar Paragem</h2>
-            <p className="text-gray-600 mt-1">Atualizar informações da paragem</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Editar Paragem</h2>
+            <p className="text-slate-600 mt-1">Atualizar informações da paragem</p>
           </div>
         </div>
 
@@ -504,32 +504,32 @@ export default function EditarParagem() {
             {/* Form Fields - Left Side */}
             <div className="space-y-6">
               {/* Basic Information */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Informações Básicas</h3>
+              <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-4">Informações Básicas</h3>
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Nome da Paragem *
                     </label>
                     <input
                       type="text"
                       value={formData.nome}
                       onChange={(e) => setFormData({...formData, nome: e.target.value})}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900"
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
                       Código *
                     </label>
                     <input
                       type="text"
                       value={formData.codigo}
                       onChange={(e) => setFormData({...formData, codigo: e.target.value})}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 font-mono"
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 font-mono"
                       required
                     />
                   </div>
@@ -537,11 +537,11 @@ export default function EditarParagem() {
               </div>
 
               {/* Location */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Localização</h3>
+              <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-4">Localização</h3>
                 
                 <div className="space-y-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                     <p className="text-sm text-blue-800">
                       Clique no mapa para atualizar a localização da paragem
                     </p>
@@ -549,26 +549,26 @@ export default function EditarParagem() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Latitude
                       </label>
                       <input
                         type="text"
                         value={formData.latitude}
                         readOnly
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 font-mono"
+                        className="w-full px-4 py-2.5 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 font-mono"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      <label className="block text-sm font-semibold text-slate-900 mb-2">
                         Longitude
                       </label>
                       <input
                         type="text"
                         value={formData.longitude}
                         readOnly
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 font-mono"
+                        className="w-full px-4 py-2.5 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 font-mono"
                       />
                     </div>
                   </div>
@@ -576,9 +576,9 @@ export default function EditarParagem() {
               </div>
 
               {/* Vias */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="bg-white rounded-2xl border border-slate-200 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-gray-900">Vias Associadas *</h3>
+                  <h3 className="text-lg font-bold text-slate-900">Vias Associadas *</h3>
                   {nearbyVias.length > 0 && (
                     <button
                       type="button"
@@ -589,7 +589,7 @@ export default function EditarParagem() {
                           setFormData(prev => ({ ...prev, viaIds: nearbyVias.map(v => v.id) }));
                         }
                       }}
-                      className="text-xs font-medium text-gray-900 hover:text-gray-700 px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50"
+                      className="text-xs font-medium text-slate-900 hover:text-slate-700 px-3 py-1 border border-slate-300 rounded-xl hover:bg-slate-50"
                     >
                       {formData.viaIds.length === nearbyVias.length ? 'Desmarcar Todas' : 'Selecionar Todas'}
                     </button>
@@ -598,7 +598,7 @@ export default function EditarParagem() {
                 
                 {nearbyVias.length > 0 ? (
                   <>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
                       <p className="text-xs text-blue-800">
                         Mostrando {nearbyVias.length} via{nearbyVias.length !== 1 ? 's' : ''} próxima{nearbyVias.length !== 1 ? 's' : ''} (raio de 100m)
                       </p>
@@ -609,10 +609,10 @@ export default function EditarParagem() {
                         <div
                           key={via.id}
                           onClick={() => handleViaToggle(via.id)}
-                          className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all ${
+                          className={`flex items-center justify-between p-3 border rounded-xl cursor-pointer transition-all ${
                             formData.viaIds.includes(via.id)
-                              ? 'border-gray-900 bg-gray-50'
-                              : 'border-gray-200 hover:border-gray-300'
+                              ? 'border-slate-900 bg-slate-50'
+                              : 'border-slate-200 hover:border-slate-300'
                           }`}
                         >
                           <div className="flex items-center space-x-3">
@@ -620,11 +620,11 @@ export default function EditarParagem() {
                               type="checkbox"
                               checked={formData.viaIds.includes(via.id)}
                               onChange={() => {}}
-                              className="w-5 h-5 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
+                              className="w-5 h-5 text-slate-900 border-slate-300 rounded-lg focus:ring-slate-900"
                             />
                             <div>
-                              <p className="font-medium text-gray-900">{via.nome}</p>
-                              <p className="text-xs text-gray-600 font-mono">{via.codigo}</p>
+                              <p className="font-medium text-slate-900">{via.nome}</p>
+                              <p className="text-xs text-slate-600 font-mono">{via.codigo}</p>
                             </div>
                           </div>
                         </div>
@@ -632,13 +632,13 @@ export default function EditarParagem() {
                     </div>
                     
                     {formData.viaIds.length > 0 && (
-                      <p className="text-sm text-gray-600 mt-3">
+                      <p className="text-sm text-slate-600 mt-3">
                         {formData.viaIds.length} via{formData.viaIds.length !== 1 ? 's' : ''} selecionada{formData.viaIds.length !== 1 ? 's' : ''}
                       </p>
                     )}
                   </>
                 ) : (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
                     <div className="flex items-start space-x-3">
                       <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -657,10 +657,10 @@ export default function EditarParagem() {
 
             {/* Map - Right Side */}
             <div className="lg:sticky lg:top-6 h-fit">
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <div className="p-4 border-b border-gray-200">
-                  <h3 className="text-lg font-bold text-gray-900">Localização no Mapa</h3>
-                  <p className="text-sm text-gray-600">Clique para atualizar a posição</p>
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="p-4 border-b border-slate-200">
+                  <h3 className="text-lg font-bold text-slate-900">Localização no Mapa</h3>
+                  <p className="text-sm text-slate-600">Clique para atualizar a posição</p>
                 </div>
                 <div 
                   ref={mapRef}
@@ -672,18 +672,18 @@ export default function EditarParagem() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+          <div className="flex items-center justify-end space-x-4 pt-6 border-t border-slate-200">
             <button
               type="button"
               onClick={() => router.push(`/paragens/${params.id}`)}
-              className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50"
+              className="px-6 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-3 bg-gray-900 hover:bg-black text-white rounded-lg font-medium flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? (
                 <>

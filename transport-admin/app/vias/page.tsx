@@ -222,7 +222,7 @@ export default function Vias() {
       {/* Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
-          <div className={`rounded-lg shadow-lg p-4 min-w-[300px] ${
+          <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
             notification.type === 'success' ? 'bg-green-50 border border-green-200' :
             notification.type === 'error' ? 'bg-red-50 border border-red-200' :
             'bg-blue-50 border border-blue-200'
@@ -253,7 +253,7 @@ export default function Vias() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && viaToDelete && (
         <div 
-          className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm min-h-screen" 
+          className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm min-h-screen" 
           style={{ minHeight: '100vh', height: '100%' }}
           onClick={() => {
             setShowDeleteModal(false);
@@ -262,7 +262,7 @@ export default function Vias() {
         >
           <div className="flex items-center justify-center min-h-screen p-4">
             <div 
-              className="relative z-[101] bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-gray-200 my-8"
+              className="relative z-[101] bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-slate-200 my-8"
               onClick={(e) => e.stopPropagation()}
             >
             {deleteError ? (
@@ -273,11 +273,11 @@ export default function Vias() {
                   </svg>
                 </div>
                 
-                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                <h3 className="text-xl font-bold text-slate-900 text-center mb-2">
                   Não é Possível Eliminar
                 </h3>
                 
-                <p className="text-gray-600 text-center mb-4">
+                <p className="text-slate-600 text-center mb-4">
                   {deleteError.details || deleteError.message}
                 </p>
 
@@ -286,7 +286,7 @@ export default function Vias() {
                     <button
                       onClick={() => viaToDelete && handleRemoveAssignments(viaToDelete.id)}
                       disabled={deleting}
-                      className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {deleting ? (
                         <>
@@ -305,7 +305,7 @@ export default function Vias() {
                       setDeleteError(null);
                     }}
                     disabled={deleting}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancelar
                   </button>
@@ -319,12 +319,12 @@ export default function Vias() {
                   </svg>
                 </div>
                 
-                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                <h3 className="text-xl font-bold text-slate-900 text-center mb-2">
                   Eliminar Via
                 </h3>
                 
-                <p className="text-gray-600 text-center mb-6">
-                  Tem certeza que deseja eliminar a via <strong className="text-gray-900">"{viaToDelete.nome}"</strong>?
+                <p className="text-slate-600 text-center mb-6">
+                  Tem certeza que deseja eliminar a via <strong className="text-slate-900">"{viaToDelete.nome}"</strong>?
                   <br />
                   <span className="text-sm text-red-600 font-medium">Esta ação não pode ser desfeita.</span>
                 </p>
@@ -336,14 +336,14 @@ export default function Vias() {
                       setViaToDelete(null);
                     }}
                     disabled={deleting}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={handleDelete}
                     disabled={deleting}
-                    className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {deleting ? (
                       <>
@@ -369,27 +369,27 @@ export default function Vias() {
 
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
         {/* Header - 2 Columns Layout */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Left - Title and Description */}
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/dashboard')}
-              className="p-2 rounded-lg hover:bg-gray-100 flex-shrink-0"
+              className="p-2 rounded-xl hover:bg-slate-100 flex-shrink-0"
             >
-              <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">Vias</h2>
-              <p className="hidden lg:block text-gray-600 mt-1">Gestão de todas as vias do sistema</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Vias</h2>
+              <p className="hidden lg:block text-slate-600 mt-1">Gestão de todas as vias do sistema</p>
             </div>
           </div>
 
           {/* Right - Action Button */}
           <button 
             onClick={() => router.push('/vias/novo')}
-            className="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 whitespace-nowrap"
+            className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 whitespace-nowrap"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -402,73 +402,73 @@ export default function Vias() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <button 
             onClick={() => router.push('/vias')}
-            className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-900 hover:shadow-md transition-all text-left"
+            className="bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-900 hover:shadow-md transition-all text-left"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Total</p>
-                <p className="text-2xl font-bold text-gray-900">{totalCount}</p>
+                <p className="text-xs text-slate-600 font-medium">Total</p>
+                <p className="text-2xl font-bold text-slate-900">{totalCount}</p>
               </div>
             </div>
           </button>
           <button 
             onClick={() => router.push('/paragens')}
-            className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-900 hover:shadow-md transition-all text-left"
+            className="bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-900 hover:shadow-md transition-all text-left"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Paragens</p>
-                <p className="text-2xl font-bold text-gray-900">{uniqueParagensCount}</p>
+                <p className="text-xs text-slate-600 font-medium">Paragens</p>
+                <p className="text-2xl font-bold text-slate-900">{uniqueParagensCount}</p>
               </div>
             </div>
           </button>
           <button 
             onClick={() => router.push('/transportes')}
-            className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-900 hover:shadow-md transition-all text-left"
+            className="bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-900 hover:shadow-md transition-all text-left"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Transportes</p>
-                <p className="text-2xl font-bold text-gray-900">{totals.transportes}</p>
+                <p className="text-xs text-slate-600 font-medium">Transportes</p>
+                <p className="text-2xl font-bold text-slate-900">{totals.transportes}</p>
               </div>
             </div>
           </button>
           <button 
             onClick={() => router.push('/vias')}
-            className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-900 hover:shadow-md transition-all text-left"
+            className="bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-900 hover:shadow-md transition-all text-left"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Média Paragens</p>
-                <p className="text-2xl font-bold text-gray-900">{totalCount > 0 ? Math.round(totals.paragens / totalCount) : 0}</p>
+                <p className="text-xs text-slate-600 font-medium">Média Paragens</p>
+                <p className="text-2xl font-bold text-slate-900">{totalCount > 0 ? Math.round(totals.paragens / totalCount) : 0}</p>
               </div>
             </div>
           </button>
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
           <div className="p-6 border-b border-slate-200">
             <div className="flex items-center space-x-4">
               <div className="flex-1 relative">
@@ -480,7 +480,7 @@ export default function Vias() {
                   placeholder="Pesquisar por nome, código ou município..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-black"
+                  className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-slate-900"
                   style={{ transition: 'none' }}
                 />
               </div>
@@ -490,34 +490,34 @@ export default function Vias() {
           <div className="overflow-x-auto">
             {listLoading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
               </div>
             ) : (
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+                  <th className="px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Código
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+                  <th className="px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Nome da Via
                   </th>
-                  <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+                  <th className="hidden xl:table-cell px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Município
                   </th>
-                  <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+                  <th className="hidden xl:table-cell px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Rota
                   </th>
-                  <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+                  <th className="hidden xl:table-cell px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Cor
                   </th>
-                  <th className="hidden md:table-cell px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Paragens
                   </th>
-                  <th className="hidden md:table-cell px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Transportes
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+                  <th className="px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Acções
                   </th>
                 </tr>
@@ -543,45 +543,45 @@ export default function Vias() {
                       className="border-b border-slate-100 cursor-pointer hover:bg-slate-50"
                       style={{ transition: 'none' }}
                     >
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center mr-3">
-                            <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center mr-3">
+                            <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                             </svg>
                           </div>
                           <div>
-                            <div className="text-sm font-bold text-black">{via.codigo}</div>
+                            <div className="text-sm font-bold text-slate-900">{via.codigo}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 lg:px-6 py-4">
-                        <div className="text-sm font-medium text-black">{via.nome}</div>
+                      <td className="px-4 py-4">
+                        <div className="text-sm font-medium text-slate-900">{via.nome}</div>
                       </td>
-                      <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">{via.municipio?.nome || 'N/A'}</div>
+                      <td className="hidden xl:table-cell px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-slate-900">{via.municipio?.nome || 'N/A'}</div>
                       </td>
-                      <td className="hidden lg:table-cell px-6 py-4">
-                        <div className="text-sm text-black">
+                      <td className="hidden xl:table-cell px-4 py-4">
+                        <div className="text-sm text-slate-900">
                           {via.terminalPartida} → {via.terminalChegada}
                         </div>
                       </td>
-                      <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
+                      <td className="hidden xl:table-cell px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div
                             className="w-6 h-6 rounded-full mr-2 border-2 border-white shadow-sm"
                             style={{ backgroundColor: via.cor || '#3B82F6' }}
                           ></div>
-                          <span className="text-sm text-black font-mono">{via.cor}</span>
+                          <span className="text-sm text-slate-900 font-mono">{via.cor}</span>
                         </div>
                       </td>
-                      <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black font-medium">{via._count?.paragens || 0}</div>
+                      <td className="hidden md:table-cell px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-slate-900 font-medium">{via._count?.paragens || 0}</div>
                       </td>
-                      <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black font-medium">{via._count?.transportes || 0}</div>
+                      <td className="hidden md:table-cell px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-slate-900 font-medium">{via._count?.transportes || 0}</div>
                       </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2 lg:space-x-3">
                           <button 
                             onClick={(e) => {
@@ -631,17 +631,17 @@ export default function Vias() {
           </div>
 
           {/* Pagination */}
-          <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-slate-600">
                 Mostrando <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> a <span className="font-medium">{Math.min(currentPage * itemsPerPage, totalCount)}</span> de <span className="font-medium">{totalCount}</span> vias
               </div>
               <div className="hidden lg:flex items-center space-x-2">
-                <label className="text-sm text-gray-900 font-medium">Itens por página:</label>
+                <label className="text-sm text-slate-900 font-medium">Itens por página:</label>
                 <select
                   value={itemsPerPage}
                   onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  className="px-3 py-1.5 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                 >
                   <option value={10}>10</option>
                   <option value={25}>25</option>
@@ -655,9 +655,9 @@ export default function Vias() {
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                className="px-3 py-2 border border-slate-300 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
               >
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
@@ -680,10 +680,10 @@ export default function Vias() {
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`px-4 py-2 rounded-lg font-medium ${
+                      className={`px-4 py-2 rounded-xl font-medium ${
                         currentPage === pageNum
-                          ? 'bg-gray-900 text-white'
-                          : 'border border-gray-300 hover:bg-gray-50 text-gray-700'
+                          ? 'bg-slate-900 text-white'
+                          : 'border border-slate-300 hover:bg-slate-50 text-slate-700'
                       }`}
                     >
                       {pageNum}
@@ -695,9 +695,9 @@ export default function Vias() {
               <button 
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                className="px-3 py-2 border border-slate-300 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
               >
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>

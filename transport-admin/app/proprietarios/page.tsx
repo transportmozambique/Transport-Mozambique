@@ -155,7 +155,7 @@ export default function Proprietarios() {
       {/* Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
-          <div className={`rounded-lg shadow-lg p-4 min-w-[300px] ${
+          <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
             notification.type === 'success' ? 'bg-green-50 border border-green-200' :
             notification.type === 'error' ? 'bg-red-50 border border-red-200' :
             'bg-blue-50 border border-blue-200'
@@ -186,7 +186,7 @@ export default function Proprietarios() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && proprietarioToDelete && (
         <div 
-          className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm min-h-screen" 
+          className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm min-h-screen" 
           style={{ minHeight: '100vh', height: '100%' }}
           onClick={() => {
             setShowDeleteModal(false);
@@ -195,7 +195,7 @@ export default function Proprietarios() {
         >
           <div className="flex items-center justify-center min-h-screen p-4">
             <div 
-              className="relative z-[101] bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-gray-200 my-8"
+              className="relative z-[101] bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-slate-200 my-8"
               onClick={(e) => e.stopPropagation()}
             >
             {deleteError ? (
@@ -206,11 +206,11 @@ export default function Proprietarios() {
                   </svg>
                 </div>
                 
-                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                <h3 className="text-xl font-bold text-slate-900 text-center mb-2">
                   Não é Possível Eliminar
                 </h3>
                 
-                <p className="text-gray-600 text-center mb-4">
+                <p className="text-slate-600 text-center mb-4">
                   {deleteError.details || deleteError.message}
                 </p>
 
@@ -219,7 +219,7 @@ export default function Proprietarios() {
                     <button
                       onClick={() => proprietarioToDelete && handleRemoveAssignments(proprietarioToDelete.id)}
                       disabled={deleting}
-                      className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {deleting ? (
                         <>
@@ -238,7 +238,7 @@ export default function Proprietarios() {
                       setDeleteError(null);
                     }}
                     disabled={deleting}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {deleteError.canRemove ? 'Cancelar' : 'Fechar'}
                   </button>
@@ -252,12 +252,12 @@ export default function Proprietarios() {
                   </svg>
                 </div>
                 
-                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                <h3 className="text-xl font-bold text-slate-900 text-center mb-2">
                   Eliminar Proprietário
                 </h3>
                 
-                <p className="text-gray-600 text-center mb-6">
-                  Tem certeza que deseja eliminar o proprietário <strong className="text-gray-900">"{proprietarioToDelete.nome}"</strong>?
+                <p className="text-slate-600 text-center mb-6">
+                  Tem certeza que deseja eliminar o proprietário <strong className="text-slate-900">"{proprietarioToDelete.nome}"</strong>?
                   <br />
                   <span className="text-sm text-red-600 font-medium">Esta ação não pode ser desfeita.</span>
                 </p>
@@ -269,14 +269,14 @@ export default function Proprietarios() {
                       setProprietarioToDelete(null);
                     }}
                     disabled={deleting}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={() => proprietarioToDelete && handleDelete(proprietarioToDelete.id)}
                     disabled={deleting}
-                    className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {deleting ? (
                       <>
@@ -302,27 +302,27 @@ export default function Proprietarios() {
 
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
         {/* Header - 2 Columns Layout */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Left - Title and Description */}
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/dashboard')}
-              className="p-2 rounded-lg hover:bg-gray-100 flex-shrink-0"
+              className="p-2 rounded-xl hover:bg-slate-100 flex-shrink-0"
             >
-              <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">Proprietários</h2>
-              <p className="hidden lg:block text-gray-600 mt-1">Gestão de todos os proprietários do sistema</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Proprietários</h2>
+              <p className="hidden lg:block text-slate-600 mt-1">Gestão de todos os proprietários do sistema</p>
             </div>
           </div>
 
           {/* Right - Action Button */}
           <button 
             onClick={() => router.push('/proprietarios/novo')}
-            className="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 whitespace-nowrap"
+            className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 whitespace-nowrap"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -335,72 +335,72 @@ export default function Proprietarios() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <button 
             onClick={() => router.push('/proprietarios')}
-            className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-900 hover:shadow-md transition-all text-left cursor-pointer"
+            className="bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-900 hover:shadow-md transition-all text-left cursor-pointer"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Total</p>
-                <p className="text-2xl font-bold text-gray-900">{proprietarios.length}</p>
+                <p className="text-xs text-slate-600 font-medium">Total</p>
+                <p className="text-2xl font-bold text-slate-900">{proprietarios.length}</p>
               </div>
             </div>
           </button>
           <button 
             onClick={() => router.push('/proprietarios')}
-            className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-900 hover:shadow-md transition-all text-left cursor-pointer"
+            className="bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-900 hover:shadow-md transition-all text-left cursor-pointer"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Empresas</p>
-                <p className="text-2xl font-bold text-gray-900">{empresas}</p>
+                <p className="text-xs text-slate-600 font-medium">Empresas</p>
+                <p className="text-2xl font-bold text-slate-900">{empresas}</p>
               </div>
             </div>
           </button>
           <button 
             onClick={() => router.push('/proprietarios')}
-            className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-900 hover:shadow-md transition-all text-left cursor-pointer"
+            className="bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-900 hover:shadow-md transition-all text-left cursor-pointer"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Indivíduos</p>
-                <p className="text-2xl font-bold text-gray-900">{individuos}</p>
+                <p className="text-xs text-slate-600 font-medium">Indivíduos</p>
+                <p className="text-2xl font-bold text-slate-900">{individuos}</p>
               </div>
             </div>
           </button>
           <button 
             onClick={() => router.push('/transportes')}
-            className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-900 hover:shadow-md transition-all text-left cursor-pointer"
+            className="bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-900 hover:shadow-md transition-all text-left cursor-pointer"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                 </svg>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-medium">Transportes</p>
-                <p className="text-2xl font-bold text-gray-900">{totalTransportes}</p>
+                <p className="text-xs text-slate-600 font-medium">Transportes</p>
+                <p className="text-2xl font-bold text-slate-900">{totalTransportes}</p>
               </div>
             </div>
           </button>
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
           <div className="p-6 border-b border-slate-200">
             <div className="flex items-center space-x-4">
               <div className="flex-1 relative">
@@ -412,7 +412,7 @@ export default function Proprietarios() {
                   placeholder="Pesquisar por nome, BI ou nacionalidade..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-black"
+                  className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent text-slate-900"
                   style={{ transition: 'none' }}
                 />
               </div>
@@ -422,31 +422,31 @@ export default function Proprietarios() {
           <div className="overflow-x-auto">
             {listLoading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
               </div>
             ) : (
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-black uppercase tracking-wider">
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">
                     Nome
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-black uppercase tracking-wider">
+                  <th className="hidden sm:table-cell px-4 py-4 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">
                     Tipo
                   </th>
-                  <th className="hidden md:table-cell px-6 py-4 text-left text-xs font-semibold text-black uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-4 py-4 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">
                     BI/NUIT
                   </th>
-                  <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-semibold text-black uppercase tracking-wider">
+                  <th className="hidden xl:table-cell px-4 py-4 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">
                     Contacto
                   </th>
-                  <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-semibold text-black uppercase tracking-wider">
+                  <th className="hidden min-[1400px]:table-cell px-4 py-4 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">
                     Nacionalidade
                   </th>
-                  <th className="hidden md:table-cell px-6 py-4 text-left text-xs font-semibold text-black uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-4 py-4 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">
                     Transportes
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-black uppercase tracking-wider">
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">
                     Acções
                   </th>
                 </tr>
@@ -459,8 +459,8 @@ export default function Proprietarios() {
                         <svg className="w-12 h-12 text-slate-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                         </svg>
-                        <p className="text-black font-medium">Nenhum proprietário encontrado</p>
-                        <p className="text-sm text-black mt-1">Tente ajustar os filtros de pesquisa</p>
+                        <p className="text-slate-900 font-medium">Nenhum proprietário encontrado</p>
+                        <p className="text-sm text-slate-900 mt-1">Tente ajustar os filtros de pesquisa</p>
                       </div>
                     </td>
                   </tr>
@@ -472,9 +472,9 @@ export default function Proprietarios() {
                       className="hover:bg-slate-50 cursor-pointer transition-colors"
                       style={{ transition: 'none' }}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center mr-3">
+                          <div className="hidden xl:flex w-10 h-10 bg-slate-100 rounded-full items-center justify-center mr-3">
                             {prop.tipoProprietario?.toLowerCase() === 'empresa' ? (
                               <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -486,36 +486,36 @@ export default function Proprietarios() {
                             )}
                           </div>
                           <div>
-                            <div className="text-sm font-semibold text-black">{prop.nome}</div>
-                            <div className="text-xs text-black">{prop.endereco}</div>
+                            <div className="text-sm font-semibold text-slate-900">{prop.nome}</div>
+                            <div className="max-w-[220px] truncate text-xs text-slate-900">{prop.endereco}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-black">
+                      <td className="hidden sm:table-cell px-4 py-4 whitespace-nowrap">
+                        <span className="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-900">
                           {prop.tipoProprietario || 'N/A'}
                         </span>
                       </td>
-                      <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black font-mono">{prop.bi}</div>
+                      <td className="hidden md:table-cell px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-slate-900 font-mono">{prop.bi}</div>
                       </td>
-                      <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">+258 {prop.contacto1}</div>
+                      <td className="hidden xl:table-cell px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-slate-900">+258 {prop.contacto1}</div>
                       </td>
-                      <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">{prop.nacionalidade}</div>
+                      <td className="hidden min-[1400px]:table-cell px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-slate-900">{prop.nacionalidade}</div>
                       </td>
-                      <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-black">{prop.transportes?.length || 0}</div>
+                      <td className="hidden md:table-cell px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm font-semibold text-slate-900">{prop.transportes?.length || 0}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-3">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               router.push(`/proprietarios/${prop.id}`);
                             }}
-                            className="text-gray-600 hover:text-gray-900"
+                            className="text-slate-600 hover:text-slate-900"
                             style={{ transition: 'none' }}
                             title="Ver detalhes"
                           >
@@ -529,7 +529,7 @@ export default function Proprietarios() {
                               e.stopPropagation();
                               router.push(`/proprietarios/${prop.id}/editar`);
                             }}
-                            className="hidden lg:inline-block text-gray-600 hover:text-gray-900"
+                            className="hidden lg:inline-block text-slate-600 hover:text-slate-900"
                             style={{ transition: 'none' }}
                             title="Editar"
                           >
@@ -542,7 +542,7 @@ export default function Proprietarios() {
                               e.stopPropagation();
                               confirmDelete(prop.id, prop.nome);
                             }}
-                            className="hidden lg:inline-block text-gray-600 hover:text-gray-900"
+                            className="hidden lg:inline-block text-slate-600 hover:text-slate-900"
                             style={{ transition: 'none' }}
                             title="Eliminar"
                           >

@@ -731,28 +731,28 @@ export default function ViaDetalhes() {
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/vias')}
-              className="p-2 rounded-lg hover:bg-gray-100"
+              className="p-2 rounded-xl hover:bg-slate-100"
             >
-              <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">Via Não Encontrada</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Via Não Encontrada</h2>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-12">
+          <div className="bg-white rounded-2xl border border-slate-200 p-12">
             <div className="text-center">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Erro ao Carregar Via</h3>
-              <p className="text-gray-600 mb-6">{error || 'Via não encontrada'}</p>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Erro ao Carregar Via</h3>
+              <p className="text-slate-600 mb-6">{error || 'Via não encontrada'}</p>
               <button
                 onClick={() => router.push('/vias')}
-                className="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-lg font-medium"
+                className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-medium"
               >
                 Voltar para Vias
               </button>
@@ -770,7 +770,7 @@ export default function ViaDetalhes() {
       {/* Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
-          <div className={`rounded-lg shadow-lg p-4 min-w-[300px] ${
+          <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
             notification.type === 'success' ? 'bg-green-50 border border-green-200' :
             notification.type === 'error' ? 'bg-red-50 border border-red-200' :
             'bg-blue-50 border border-blue-200'
@@ -815,17 +815,17 @@ export default function ViaDetalhes() {
         >
           <div className="flex items-center justify-center min-h-screen p-4">
             <div 
-              className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in border border-gray-200 max-h-[80vh] flex flex-col my-8"
+              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in border border-slate-200 max-h-[80vh] flex flex-col my-8"
               onClick={(e) => e.stopPropagation()}
             >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900">Atribuir Transportes</h3>
+              <h3 className="text-xl font-bold text-slate-900">Atribuir Transportes</h3>
               <button
                 onClick={() => {
                   setShowTransporteModal(false);
                   setSelectedTransportesIds([]);
                 }}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-slate-100 rounded-xl"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -833,12 +833,12 @@ export default function ViaDetalhes() {
               </button>
             </div>
 
-            <p className="text-sm text-gray-600 mb-2">
+            <p className="text-sm text-slate-600 mb-2">
               Selecione um ou mais transportes disponíveis (sem via ou com via próxima)
             </p>
             
             {selectedTransportesIds.length > 0 && (
-              <p className="text-sm font-medium text-gray-900 mb-4">
+              <p className="text-sm font-medium text-slate-900 mb-4">
                 {selectedTransportesIds.length} transporte(s) selecionado(s)
               </p>
             )}
@@ -858,10 +858,10 @@ export default function ViaDetalhes() {
                               : [...prev, transporte.id]
                           );
                         }}
-                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                        className={`p-4 border rounded-xl cursor-pointer transition-all ${
                           isSelected
-                            ? 'border-gray-900 bg-gray-50'
-                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            ? 'border-slate-900 bg-slate-50'
+                            : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -870,26 +870,26 @@ export default function ViaDetalhes() {
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => {}}
-                              className="w-5 h-5 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
+                              className="w-5 h-5 text-slate-900 border-slate-300 rounded-lg focus:ring-slate-900"
                             />
                             <div>
-                              <p className="font-bold text-gray-900">{transporte.matricula}</p>
-                              <p className="text-sm text-gray-600">
+                              <p className="font-bold text-slate-900">{transporte.matricula}</p>
+                              <p className="text-sm text-slate-600">
                                 {transporte.modelo} - {transporte.marca}
                               </p>
                               {transporte.motorista && (
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-slate-500">
                                   Motorista: {transporte.motorista.nome}
                                 </p>
                               )}
                             </div>
                           </div>
                           <div className="text-right">
-                            <span className="px-2 py-1 bg-gray-100 text-gray-900 rounded text-xs font-mono">
+                            <span className="px-2 py-1 bg-slate-100 text-slate-900 rounded-lg text-xs font-mono">
                               #{transporte.codigo}
                             </span>
                             {transporte.via && (
-                              <p className="text-xs text-gray-500 mt-1">
+                              <p className="text-xs text-slate-500 mt-1">
                                 Via: {transporte.via.nome}
                               </p>
                             )}
@@ -900,8 +900,8 @@ export default function ViaDetalhes() {
                   })}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-600">
-                  <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="text-center py-8 text-slate-600">
+                  <svg className="w-12 h-12 mx-auto mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
                   <p className="font-medium">Nenhum transporte disponível</p>
@@ -916,14 +916,14 @@ export default function ViaDetalhes() {
                   setShowTransporteModal(false);
                   setSelectedTransportesIds([]);
                 }}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50"
+                className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleAssignTransporte}
                 disabled={selectedTransportesIds.length === 0 || assigningTransporte}
-                className="flex-1 px-4 py-3 bg-gray-900 hover:bg-black text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                className="flex-1 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
               >
                 {assigningTransporte ? (
                   <>
@@ -950,7 +950,7 @@ export default function ViaDetalhes() {
           >
             <div className="flex items-center justify-center min-h-screen p-4">
               <div 
-                className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-gray-200 my-8"
+                className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-slate-200 my-8"
                 onClick={(e) => e.stopPropagation()}
               >
               <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mx-auto mb-4">
@@ -959,12 +959,12 @@ export default function ViaDetalhes() {
                 </svg>
               </div>
               
-              <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+              <h3 className="text-xl font-bold text-slate-900 text-center mb-2">
                 Eliminar Via
               </h3>
               
-              <p className="text-gray-600 text-center mb-6">
-                Tem certeza que deseja eliminar a via <strong className="text-gray-900">"{via?.nome}"</strong>?
+              <p className="text-slate-600 text-center mb-6">
+                Tem certeza que deseja eliminar a via <strong className="text-slate-900">"{via?.nome}"</strong>?
                 <br />
                 <span className="text-sm text-red-600 font-medium">Esta ação não pode ser desfeita.</span>
               </p>
@@ -973,14 +973,14 @@ export default function ViaDetalhes() {
                 <button
                   onClick={() => setShowDeleteModal(false)}
                   disabled={deleting}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {deleting ? (
                     <>
@@ -1002,20 +1002,20 @@ export default function ViaDetalhes() {
           </div>
         )}
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/vias')}
-              className="p-2 rounded-lg hover:bg-slate-100"
+              className="p-2 rounded-xl hover:bg-slate-100"
               style={{ transition: 'none' }}
             >
-              <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-black">{via.nome}</h2>
-              <p className="text-black mt-1">{via.codigo}{via.municipio ? ` - ${via.municipio.nome}` : ''}</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{via.nome}</h2>
+              <p className="text-slate-900 mt-1">{via.codigo}{via.municipio ? ` - ${via.municipio.nome}` : ''}</p>
             </div>
           </div>
           <div className="flex items-center space-x-3" style={{ position: 'relative', zIndex: 10 }}>
@@ -1027,7 +1027,7 @@ export default function ViaDetalhes() {
                   console.log('Editar button clicked, navigating to:', `/vias/${params.id}/editar`);
                   router.push(`/vias/${params.id}/editar`);
                 }}
-                className="px-4 py-2 bg-slate-900 text-white rounded-lg font-medium flex items-center space-x-2"
+                className="px-4 py-2 bg-slate-900 text-white rounded-xl font-medium flex items-center space-x-2"
                 style={{ transition: 'none', cursor: 'pointer', pointerEvents: 'auto' }}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1037,7 +1037,7 @@ export default function ViaDetalhes() {
               </button>
               <button
                 onClick={() => setShowDeleteModal(true)}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center space-x-2"
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center space-x-2"
                 style={{ transition: 'none' }}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1052,28 +1052,28 @@ export default function ViaDetalhes() {
         {/* Statistics Cards */}
         {/* Statistics Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-black font-medium mb-1">Comprimento</p>
-                <p className="text-3xl font-bold text-black">{routeLength} km</p>
+                <p className="text-sm text-slate-900 font-medium mb-1">Comprimento</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900">{routeLength} km</p>
               </div>
-              <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-black font-medium mb-1">Paragens</p>
-                <p className="text-3xl font-bold text-black">{via._count?.paragens || 0}</p>
+                <p className="text-sm text-slate-900 font-medium mb-1">Paragens</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900">{via._count?.paragens || 0}</p>
               </div>
-              <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
@@ -1081,29 +1081,29 @@ export default function ViaDetalhes() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-black font-medium mb-1">Transportes</p>
-                <p className="text-3xl font-bold text-black">{via._count?.transportes || 0}</p>
+                <p className="text-sm text-slate-900 font-medium mb-1">Transportes</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900">{via._count?.transportes || 0}</p>
               </div>
-              <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                 </svg>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-black font-medium mb-1">Tempo Médio</p>
-                <p className="text-3xl font-bold text-black">{calculateAverageTime()} min</p>
-                <p className="text-xs text-gray-600 mt-1">por sentido, a {via.velocidadeViagemKmh || 30} km/h</p>
+                <p className="text-sm text-slate-900 font-medium mb-1">Tempo Médio</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900">{calculateAverageTime()} min</p>
+                <p className="text-xs text-slate-600 mt-1">por sentido, a {via.velocidadeViagemKmh || 30} km/h</p>
               </div>
-              <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
@@ -1112,34 +1112,34 @@ export default function ViaDetalhes() {
         </div>
 
         {/* Via Information */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h3 className="text-lg font-bold text-black mb-4">Informações da Via</h3>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Informações da Via</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <p className="text-sm text-black font-medium mb-1">Código</p>
-                <p className="text-lg text-black font-mono">{via.codigo}</p>
+                <p className="text-sm text-slate-900 font-medium mb-1">Código</p>
+                <p className="text-lg text-slate-900 font-mono">{via.codigo}</p>
               </div>
               <div>
-                <p className="text-sm text-black font-medium mb-1">Município</p>
-                <p className="text-lg text-black">{via.municipio?.nome || 'N/A'}</p>
+                <p className="text-sm text-slate-900 font-medium mb-1">Município</p>
+                <p className="text-lg text-slate-900">{via.municipio?.nome || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-sm text-black font-medium mb-1">Terminal de Partida</p>
-                <p className="text-lg text-black">{via.terminalPartida || 'N/A'}</p>
+                <p className="text-sm text-slate-900 font-medium mb-1">Terminal de Partida</p>
+                <p className="text-lg text-slate-900">{via.terminalPartida || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-sm text-black font-medium mb-1">Terminal de Chegada</p>
-                <p className="text-lg text-black">{via.terminalChegada || 'N/A'}</p>
+                <p className="text-sm text-slate-900 font-medium mb-1">Terminal de Chegada</p>
+                <p className="text-lg text-slate-900">{via.terminalChegada || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-sm text-black font-medium mb-1">Cor da Via</p>
+                <p className="text-sm text-slate-900 font-medium mb-1">Cor da Via</p>
                 <div className="flex items-center space-x-3">
                   <div
-                    className="w-8 h-8 rounded border-2 border-white shadow-sm"
+                    className="w-8 h-8 rounded-lg border-2 border-white shadow-sm"
                     style={{ backgroundColor: getValidColor(via.cor) }}
                   ></div>
-                  <span className="text-lg text-black font-mono">{via.cor}</span>
+                  <span className="text-lg text-slate-900 font-mono">{via.cor}</span>
                 </div>
               </div>
             </div>
@@ -1149,9 +1149,9 @@ export default function ViaDetalhes() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Paragens List - Left Side */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-[600px] flex flex-col">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 h-[600px] flex flex-col">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-black">
+                <h3 className="text-lg font-bold text-slate-900">
                   Paragens ({via._count?.paragens || 0})
                 </h3>
               </div>
@@ -1164,7 +1164,7 @@ export default function ViaDetalhes() {
                         <div
                           key={viaParagem.paragem.id}
                           onClick={() => handleParagemClick(viaParagem.paragem.id)}
-                          className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all ${
+                          className={`flex items-center justify-between p-3 border rounded-xl cursor-pointer transition-all ${
                             isSelected 
                               ? 'border-red-500 bg-red-50 shadow-md' 
                               : 'border-slate-200 hover:bg-slate-50 hover:border-slate-300'
@@ -1172,21 +1172,21 @@ export default function ViaDetalhes() {
                         >
                           <div className="flex items-center space-x-3">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                              isSelected ? 'bg-red-500 text-white' : 'bg-slate-100 text-black'
+                              isSelected ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-900'
                             }`}>
                               {index + 1}
                             </div>
                             <div>
-                              <p className={`font-medium ${isSelected ? 'text-red-900' : 'text-black'}`}>
+                              <p className={`font-medium ${isSelected ? 'text-red-900' : 'text-slate-900'}`}>
                                 {viaParagem.paragem.nome}
                               </p>
-                              <p className={`text-xs font-mono ${isSelected ? 'text-red-700' : 'text-black'}`}>
+                              <p className={`text-xs font-mono ${isSelected ? 'text-red-700' : 'text-slate-900'}`}>
                                 {viaParagem.paragem.codigo}
                               </p>
                             </div>
                           </div>
                           {viaParagem.terminalBoolean && (
-                            <span className="px-2 py-1 bg-slate-900 text-white rounded text-xs font-semibold">
+                            <span className="px-2 py-1 bg-slate-900 text-white rounded-lg text-xs font-semibold">
                               Terminal
                             </span>
                           )}
@@ -1195,7 +1195,7 @@ export default function ViaDetalhes() {
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-black flex-1 flex flex-col items-center justify-center">
+                  <div className="text-center py-8 text-slate-900 flex-1 flex flex-col items-center justify-center">
                     <svg className="w-12 h-12 mx-auto mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -1209,10 +1209,10 @@ export default function ViaDetalhes() {
 
           {/* Map - Right Side */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-[600px]">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-[600px]">
               <div className="p-4 border-b border-slate-200">
-                <h3 className="text-lg font-bold text-black">Mapa da Rota</h3>
-                <p className="text-sm text-black">Visualização da rota com todas as paragens</p>
+                <h3 className="text-lg font-bold text-slate-900">Mapa da Rota</h3>
+                <p className="text-sm text-slate-900">Visualização da rota com todas as paragens</p>
               </div>
               <div ref={mapRef} className="h-[calc(600px-73px)]" />
             </div>
@@ -1220,9 +1220,9 @@ export default function ViaDetalhes() {
         </div>
 
         {/* Transportes */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-black">Transportes Atribuídos ({via._count?.transportes || 0})</h3>
+            <h3 className="text-lg font-bold text-slate-900">Transportes Atribuídos ({via._count?.transportes || 0})</h3>
           </div>
           
           {via.transportes && via.transportes.length > 0 ? (
@@ -1231,22 +1231,22 @@ export default function ViaDetalhes() {
                 <div
                   key={transporte.id}
                   onClick={() => router.push(`/transportes/${transporte.id}`)}
-                  className="border border-slate-200 rounded-lg p-4 hover:shadow-md cursor-pointer"
+                  className="border border-slate-200 rounded-xl p-4 hover:shadow-md cursor-pointer"
                   style={{ transition: 'none' }}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 pr-2">
-                      <h4 className="font-bold text-black text-lg">{transporte.matricula}</h4>
-                      <p className="text-sm text-black">{transporte.modelo} - {transporte.marca}</p>
+                      <h4 className="font-bold text-slate-900 text-lg">{transporte.matricula}</h4>
+                      <p className="text-sm text-slate-900">{transporte.modelo} - {transporte.marca}</p>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className="px-2 py-1 bg-slate-100 text-black rounded text-xs font-mono whitespace-nowrap">
+                      <span className="px-2 py-1 bg-slate-100 text-slate-900 rounded-lg text-xs font-mono whitespace-nowrap">
                         #{transporte.codigo}
                       </span>
                     </div>
                   </div>
                   {transporte.motorista && (
-                    <div className="flex items-center text-sm text-black">
+                    <div className="flex items-center text-sm text-slate-900">
                       <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
@@ -1257,12 +1257,12 @@ export default function ViaDetalhes() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-black">
+            <div className="text-center py-8 text-slate-900">
               <svg className="w-12 h-12 mx-auto mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
               </svg>
               <p className="font-medium">Nenhum transporte atribuído</p>
-              <p className="text-sm text-black mt-1">Edite a via para atribuir transportes</p>
+              <p className="text-sm text-slate-900 mt-1">Edite a via para atribuir transportes</p>
             </div>
           )}
         </div>

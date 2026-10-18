@@ -99,10 +99,10 @@ export default function AdministradorDetalhes() {
       <div className="bg-white min-h-screen">
         <div className="max-w-[1600px] mx-auto p-6">
           <div className="text-center py-12">
-            <p className="text-gray-900 text-lg">Administrador não encontrado</p>
+            <p className="text-slate-900 text-lg">Administrador não encontrado</p>
             <button 
               onClick={() => router.push('/administradores')} 
-              className="mt-4 px-6 py-3 bg-gray-900 text-white rounded-lg font-medium"
+              className="mt-4 px-6 py-3 bg-slate-900 text-white rounded-xl font-medium"
             >
               Voltar para lista
             </button>
@@ -117,7 +117,7 @@ export default function AdministradorDetalhes() {
       {/* Notification Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in">
-          <div className={`rounded-lg shadow-lg p-4 min-w-[300px] ${
+          <div className={`rounded-xl shadow-lg p-4 min-w-[300px] ${
             notification.type === 'success' ? 'bg-green-50 border border-green-200' :
             notification.type === 'error' ? 'bg-red-50 border border-red-200' :
             'bg-blue-50 border border-blue-200'
@@ -154,7 +154,7 @@ export default function AdministradorDetalhes() {
         >
           <div className="flex items-center justify-center min-h-screen p-4">
             <div 
-              className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-gray-200 my-8"
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-slate-200 my-8"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mx-auto mb-4">
@@ -163,12 +163,12 @@ export default function AdministradorDetalhes() {
                 </svg>
               </div>
               
-              <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+              <h3 className="text-xl font-bold text-slate-900 text-center mb-2">
                 Eliminar Administrador
               </h3>
               
-              <p className="text-gray-600 text-center mb-6">
-                Tem certeza que deseja eliminar o administrador <strong className="text-gray-900">"{administrador?.nome}"</strong>?
+              <p className="text-slate-600 text-center mb-6">
+                Tem certeza que deseja eliminar o administrador <strong className="text-slate-900">"{administrador?.nome}"</strong>?
                 <br />
                 <span className="text-sm text-red-600 font-medium">Esta ação não pode ser desfeita.</span>
               </p>
@@ -177,14 +177,14 @@ export default function AdministradorDetalhes() {
                 <button
                   onClick={() => setShowDeleteModal(false)}
                   disabled={deleting}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {deleting ? (
                     <>
@@ -208,25 +208,25 @@ export default function AdministradorDetalhes() {
 
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/administradores')}
-              className="p-2 rounded-lg hover:bg-gray-100"
+              className="p-2 rounded-xl hover:bg-slate-100"
             >
-              <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">{administrador.nome}</h2>
-              <p className="text-gray-600 mt-1">Detalhes do administrador</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{administrador.nome}</h2>
+              <p className="text-slate-600 mt-1">Detalhes do administrador</p>
             </div>
           </div>
           <div className="flex items-center space-x-3">
             <button
               onClick={() => router.push(`/administradores/${params.id}/editar`)}
-              className="px-4 py-2 bg-gray-900 hover:bg-black text-white rounded-lg font-medium flex items-center space-x-2"
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium flex items-center space-x-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -235,7 +235,7 @@ export default function AdministradorDetalhes() {
             </button>
             <button 
               onClick={() => setShowDeleteModal(true)}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center space-x-2"
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center space-x-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -249,33 +249,33 @@ export default function AdministradorDetalhes() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Profile Card */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
               <div className="flex flex-col items-center">
-                <div className="w-32 h-32 bg-gray-900 rounded-full flex items-center justify-center mb-4">
+                <div className="w-32 h-32 bg-slate-900 rounded-full flex items-center justify-center mb-4">
                   <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">{administrador.nome}</h3>
+                <h3 className="text-xl font-bold text-slate-900 text-center mb-2">{administrador.nome}</h3>
                 <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 mb-4">
                   Administrador
                 </span>
                 <div className="w-full space-y-2 text-sm mt-4">
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-600">Províncias</span>
-                    <span className="text-gray-900 font-bold">{administrador._count.provincias}</span>
+                  <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                    <span className="text-slate-600">Províncias</span>
+                    <span className="text-slate-900 font-bold">{administrador._count.provincias}</span>
                   </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-600">Municípios</span>
-                    <span className="text-gray-900 font-bold">{administrador._count.municipios}</span>
+                  <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                    <span className="text-slate-600">Municípios</span>
+                    <span className="text-slate-900 font-bold">{administrador._count.municipios}</span>
                   </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-600">Vias</span>
-                    <span className="text-gray-900 font-bold">{administrador._count.vias}</span>
+                  <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                    <span className="text-slate-600">Vias</span>
+                    <span className="text-slate-900 font-bold">{administrador._count.vias}</span>
                   </div>
                   <div className="flex items-center justify-between py-2">
-                    <span className="text-gray-600">Paragens</span>
-                    <span className="text-gray-900 font-bold">{administrador._count.paragens}</span>
+                    <span className="text-slate-600">Paragens</span>
+                    <span className="text-slate-900 font-bold">{administrador._count.paragens}</span>
                   </div>
                 </div>
               </div>
@@ -285,23 +285,23 @@ export default function AdministradorDetalhes() {
           {/* Details */}
           <div className="lg:col-span-2 space-y-6">
             {/* Personal Information */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Informações Pessoais</h3>
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Informações Pessoais</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-1">Nome Completo</label>
-                  <p className="text-gray-600">{administrador.nome}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Nome Completo</label>
+                  <p className="text-slate-600">{administrador.nome}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-1">Email</label>
-                  <p className="text-gray-600">{administrador.email}</p>
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Email</label>
+                  <p className="text-slate-600">{administrador.email}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-1">Registado em</label>
-                  <p className="text-gray-600">
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Registado em</label>
+                  <p className="text-slate-600">
                     {new Date(administrador.createdAt).toLocaleDateString('pt-PT', {
                       year: 'numeric',
                       month: 'long',
@@ -313,8 +313,8 @@ export default function AdministradorDetalhes() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-1">Última Atualização</label>
-                  <p className="text-gray-600">
+                  <label className="block text-sm font-semibold text-slate-900 mb-1">Última Atualização</label>
+                  <p className="text-slate-600">
                     {new Date(administrador.updatedAt).toLocaleDateString('pt-PT', {
                       year: 'numeric',
                       month: 'long',
@@ -328,25 +328,25 @@ export default function AdministradorDetalhes() {
             </div>
 
             {/* Activity Summary */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Resumo de Atividade</h3>
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Resumo de Atividade</h3>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-gray-50 rounded-lg p-4 text-center">
-                  <div className="text-3xl font-bold text-gray-900 mb-1">{administrador._count.provincias}</div>
-                  <div className="text-sm text-gray-600">Províncias</div>
+                <div className="bg-slate-50 rounded-xl p-4 text-center">
+                  <div className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">{administrador._count.provincias}</div>
+                  <div className="text-sm text-slate-600">Províncias</div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4 text-center">
-                  <div className="text-3xl font-bold text-gray-900 mb-1">{administrador._count.municipios}</div>
-                  <div className="text-sm text-gray-600">Municípios</div>
+                <div className="bg-slate-50 rounded-xl p-4 text-center">
+                  <div className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">{administrador._count.municipios}</div>
+                  <div className="text-sm text-slate-600">Municípios</div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4 text-center">
-                  <div className="text-3xl font-bold text-gray-900 mb-1">{administrador._count.vias}</div>
-                  <div className="text-sm text-gray-600">Vias</div>
+                <div className="bg-slate-50 rounded-xl p-4 text-center">
+                  <div className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">{administrador._count.vias}</div>
+                  <div className="text-sm text-slate-600">Vias</div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4 text-center">
-                  <div className="text-3xl font-bold text-gray-900 mb-1">{administrador._count.paragens}</div>
-                  <div className="text-sm text-gray-600">Paragens</div>
+                <div className="bg-slate-50 rounded-xl p-4 text-center">
+                  <div className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">{administrador._count.paragens}</div>
+                  <div className="text-sm text-slate-600">Paragens</div>
                 </div>
               </div>
             </div>

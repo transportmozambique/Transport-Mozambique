@@ -139,13 +139,13 @@ export default function PerfilPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <button
             onClick={() => router.push("/dashboard")}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+            className="flex items-center space-x-2 text-slate-600 hover:text-slate-900"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -159,18 +159,18 @@ export default function PerfilPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden sticky top-8">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden sticky top-8">
               {/* User Avatar */}
-              <div className="bg-gradient-to-r from-black to-gray-900 px-6 py-8">
+              <div className="bg-gradient-to-r from-slate-900 to-slate-900 px-6 py-8">
                 <div className="flex flex-col items-center">
                   <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-3">
-                    <span className="text-black font-bold text-2xl">
+                    <span className="text-slate-900 font-bold text-2xl">
                       {getInitials(admin.nome)}
                     </span>
                   </div>
                   <h2 className="text-lg font-bold text-white text-center">{admin.nome}</h2>
-                  <p className="text-sm text-gray-300 text-center mt-1">{admin.email}</p>
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white text-black mt-3 capitalize">
+                  <p className="text-sm text-slate-300 text-center mt-1">{admin.email}</p>
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white text-slate-900 mt-3 capitalize">
                     {admin.role}
                   </span>
                 </div>
@@ -180,10 +180,10 @@ export default function PerfilPage() {
               <nav className="p-2">
                 <button
                   onClick={() => setActiveTab("profile")}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
                     activeTab === "profile"
-                      ? "bg-black text-white"
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-slate-900 text-white"
+                      : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,10 +194,10 @@ export default function PerfilPage() {
 
                 <button
                   onClick={() => setActiveTab("security")}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
                     activeTab === "security"
-                      ? "bg-black text-white"
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-slate-900 text-white"
+                      : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,10 +208,10 @@ export default function PerfilPage() {
 
                 <button
                   onClick={() => setActiveTab("settings")}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
                     activeTab === "settings"
-                      ? "bg-black text-white"
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-slate-900 text-white"
+                      : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,14 +226,14 @@ export default function PerfilPage() {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
               {/* Profile Tab */}
               {activeTab === "profile" && (
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900 mb-6">Informações do Perfil</h1>
+                  <h1 className="text-2xl font-bold text-slate-900 mb-6">Informações do Perfil</h1>
 
                   {success && (
-                    <div className="mb-6 bg-green-50 border-2 border-green-200 rounded-lg p-4 flex items-start space-x-3">
+                    <div className="mb-6 bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-start space-x-3">
                       <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -242,7 +242,7 @@ export default function PerfilPage() {
                   )}
 
                   {error && (
-                    <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start space-x-3">
+                    <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start space-x-3">
                       <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -254,13 +254,13 @@ export default function PerfilPage() {
                     {/* Nome */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <label className="block text-sm font-semibold text-gray-700">
+                        <label className="block text-sm font-semibold text-slate-700">
                           Nome Completo
                         </label>
                         {!editingNome && (
                           <button
                             onClick={() => setEditingNome(true)}
-                            className="text-sm text-black hover:text-gray-700 font-medium flex items-center space-x-1"
+                            className="text-sm text-slate-900 hover:text-slate-700 font-medium flex items-center space-x-1"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -275,13 +275,13 @@ export default function PerfilPage() {
                             type="text"
                             value={nome}
                             onChange={(e) => setNome(e.target.value)}
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-black focus:outline-none transition-colors text-gray-900"
+                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-slate-900 focus:outline-none transition-colors text-slate-900"
                           />
                           <div className="flex space-x-3">
                             <button
                               onClick={handleUpdateNome}
                               disabled={loading}
-                              className="flex-1 bg-black hover:bg-gray-900 text-white font-semibold py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2 px-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {loading ? "A guardar..." : "Guardar"}
                             </button>
@@ -292,42 +292,42 @@ export default function PerfilPage() {
                                 setError("");
                               }}
                               disabled={loading}
-                              className="px-4 py-2 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="px-4 py-2 border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               Cancelar
                             </button>
                           </div>
                         </div>
                       ) : (
-                        <p className="text-lg text-gray-900">{admin.nome}</p>
+                        <p className="text-lg text-slate-900">{admin.nome}</p>
                       )}
                     </div>
 
                     {/* Email (read-only) */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Email
                       </label>
-                      <p className="text-lg text-gray-900">{admin.email}</p>
-                      <p className="text-xs text-gray-500 mt-1">O email não pode ser alterado</p>
+                      <p className="text-lg text-slate-900">{admin.email}</p>
+                      <p className="text-xs text-slate-500 mt-1">O email não pode ser alterado</p>
                     </div>
 
                     {/* Role (read-only) */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Função
                       </label>
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-black text-white capitalize">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-slate-900 text-white capitalize">
                         {admin.role}
                       </span>
                     </div>
 
                     {/* ID (read-only) */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
                         ID do Administrador
                       </label>
-                      <p className="text-sm text-gray-900 font-mono bg-gray-50 px-3 py-2 rounded-lg">{admin.id}</p>
+                      <p className="text-sm text-slate-900 font-mono bg-slate-50 px-3 py-2 rounded-xl">{admin.id}</p>
                     </div>
                   </div>
                 </div>
@@ -336,10 +336,10 @@ export default function PerfilPage() {
               {/* Security Tab */}
               {activeTab === "security" && (
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900 mb-6">Segurança</h1>
+                  <h1 className="text-2xl font-bold text-slate-900 mb-6">Segurança</h1>
 
                   {passwordSuccess && (
-                    <div className="mb-6 bg-green-50 border-2 border-green-200 rounded-lg p-4 flex items-start space-x-3">
+                    <div className="mb-6 bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-start space-x-3">
                       <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -348,7 +348,7 @@ export default function PerfilPage() {
                   )}
 
                   {passwordError && (
-                    <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start space-x-3">
+                    <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start space-x-3">
                       <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -358,47 +358,47 @@ export default function PerfilPage() {
 
                   <div className="space-y-6">
                     <div>
-                      <h2 className="text-lg font-bold text-gray-900 mb-2">Alterar Senha</h2>
-                      <p className="text-sm text-gray-600 mb-6">
+                      <h2 className="text-lg font-bold text-slate-900 mb-2">Alterar Senha</h2>
+                      <p className="text-sm text-slate-600 mb-6">
                         Para sua segurança, escolha uma senha forte com pelo menos 6 caracteres.
                       </p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Senha Atual
                       </label>
                       <input
                         type="password"
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-black focus:outline-none transition-colors text-gray-900"
+                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-slate-900 focus:outline-none transition-colors text-slate-900"
                         placeholder="Digite sua senha atual"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Nova Senha
                       </label>
                       <input
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-black focus:outline-none transition-colors text-gray-900"
+                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-slate-900 focus:outline-none transition-colors text-slate-900"
                         placeholder="Digite sua nova senha"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Confirmar Nova Senha
                       </label>
                       <input
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-black focus:outline-none transition-colors text-gray-900"
+                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-slate-900 focus:outline-none transition-colors text-slate-900"
                         placeholder="Confirme sua nova senha"
                       />
                     </div>
@@ -406,7 +406,7 @@ export default function PerfilPage() {
                     <button
                       onClick={handleChangePassword}
                       disabled={changingPassword}
-                      className="w-full bg-black hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {changingPassword ? "A alterar..." : "Alterar Senha"}
                     </button>
@@ -417,19 +417,19 @@ export default function PerfilPage() {
               {/* Settings Tab */}
               {activeTab === "settings" && (
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900 mb-6">Configurações</h1>
+                  <h1 className="text-2xl font-bold text-slate-900 mb-6">Configurações</h1>
 
                   <div className="space-y-6">
                     {/* System Settings */}
                     <div>
-                      <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                      <h2 className="text-lg font-bold text-slate-900 mb-4 pb-2 border-b border-slate-200">
                         Sistema
                       </h2>
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
                           <div>
-                            <h3 className="font-semibold text-gray-900">Versão do Sistema</h3>
-                            <p className="text-sm text-gray-600">TransportMZ Admin v1.0.0</p>
+                            <h3 className="font-semibold text-slate-900">Versão do Sistema</h3>
+                            <p className="text-sm text-slate-600">TransportMZ Admin v1.0.0</p>
                           </div>
                           <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
                             Atualizado
@@ -440,16 +440,16 @@ export default function PerfilPage() {
 
                     {/* Appearance */}
                     <div>
-                      <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                      <h2 className="text-lg font-bold text-slate-900 mb-4 pb-2 border-b border-slate-200">
                         Aparência
                       </h2>
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
                           <div>
-                            <h3 className="font-semibold text-gray-900">Tema</h3>
-                            <p className="text-sm text-gray-600">Tema escuro (preto/cinza/branco)</p>
+                            <h3 className="font-semibold text-slate-900">Tema</h3>
+                            <p className="text-sm text-slate-600">Tema escuro (preto/cinza/branco)</p>
                           </div>
-                          <button className="px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-900 transition-colors">
+                          <button className="px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-xl hover:bg-slate-800 transition-colors">
                             Padrão
                           </button>
                         </div>
@@ -458,18 +458,18 @@ export default function PerfilPage() {
 
                     {/* Notifications */}
                     <div>
-                      <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                      <h2 className="text-lg font-bold text-slate-900 mb-4 pb-2 border-b border-slate-200">
                         Notificações
                       </h2>
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
                           <div>
-                            <h3 className="font-semibold text-gray-900">Notificações por Email</h3>
-                            <p className="text-sm text-gray-600">Receber alertas importantes por email</p>
+                            <h3 className="font-semibold text-slate-900">Notificações por Email</h3>
+                            <p className="text-sm text-slate-600">Receber alertas importantes por email</p>
                           </div>
                           <label className="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" className="sr-only peer" defaultChecked />
-                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-black/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-black"></div>
+                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-slate-900/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
                           </label>
                         </div>
                       </div>

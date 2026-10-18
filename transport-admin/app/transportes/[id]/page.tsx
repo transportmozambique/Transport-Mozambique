@@ -609,8 +609,8 @@ export default function TransporteDetalhes() {
   if (!transporte) {
     return (
       <div className="text-center py-12">
-        <p className="text-black">Transporte não encontrado</p>
-        <button onClick={() => router.push('/transportes')} className="mt-4 text-black" style={{ transition: 'none' }}>
+        <p className="text-slate-900">Transporte não encontrado</p>
+        <button onClick={() => router.push('/transportes')} className="mt-4 text-slate-900" style={{ transition: 'none' }}>
           Voltar para lista
         </button>
       </div>
@@ -621,26 +621,26 @@ export default function TransporteDetalhes() {
     <div className="min-h-screen bg-white">
       <div className="max-w-[1600px] mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/transportes')}
-              className="p-2 rounded-lg"
+              className="p-2 rounded-xl"
               style={{ transition: 'none' }}
             >
-              <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-black">{transporte.matricula}</h2>
-              <p className="text-black mt-1">{transporte.modelo} - {transporte.marca}</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{transporte.matricula}</h2>
+              <p className="text-slate-900 mt-1">{transporte.modelo} - {transporte.marca}</p>
             </div>
           </div>
           <div className="flex items-center space-x-3">
             <button
               onClick={() => router.push(`/transportes/${transporte.id}/editar`)}
-              className="px-4 py-2 bg-slate-900 text-white rounded-lg font-medium flex items-center space-x-2"
+              className="px-4 py-2 bg-slate-900 text-white rounded-xl font-medium flex items-center space-x-2"
               style={{ transition: 'none' }}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -650,7 +650,7 @@ export default function TransporteDetalhes() {
             </button>
             <button
               onClick={() => setShowDeleteModal(true)}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center space-x-2"
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center space-x-2"
               style={{ transition: 'none' }}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -664,13 +664,13 @@ export default function TransporteDetalhes() {
         {/* Delete Confirmation Modal */}
         {showDeleteModal && transporte && (
           <div 
-            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm min-h-screen" 
+            className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm min-h-screen" 
             style={{ minHeight: '100vh', height: '100%' }}
             onClick={() => !deleting && setShowDeleteModal(false)}
           >
             <div className="flex items-center justify-center min-h-screen p-4">
               <div 
-                className="relative z-[101] bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-gray-200 my-8"
+                className="relative z-[101] bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-slate-200 my-8"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className={`flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4 ${
@@ -685,16 +685,16 @@ export default function TransporteDetalhes() {
                   </svg>
                 </div>
                 
-                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                <h3 className="text-xl font-bold text-slate-900 text-center mb-2">
                   {hasAssociations ? 'Remover Associações' : 'Eliminar Transporte'}
                 </h3>
                 
                 {hasAssociations ? (
                   <div className="space-y-4">
-                    <p className="text-gray-600 text-center">
+                    <p className="text-slate-600 text-center">
                       {deleteError}
                     </p>
-                    <div className="bg-white rounded-lg p-4">
+                    <div className="bg-white rounded-xl p-4">
                       <p className="text-sm text-red-600 text-center font-medium">
                         Clique em <strong>"Remover e Eliminar"</strong> para remover as associações e eliminar o transporte.
                       </p>
@@ -707,14 +707,14 @@ export default function TransporteDetalhes() {
                           setHasAssociations(false);
                         }}
                         disabled={deleting}
-                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Cancelar
                       </button>
                       <button
                         onClick={handleRemoveAssociationsAndDelete}
                         disabled={deleting}
-                        className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {deleting ? (
                           <>
@@ -734,8 +734,8 @@ export default function TransporteDetalhes() {
                   </div>
                 ) : (
                   <>
-                    <p className="text-gray-600 text-center mb-6">
-                      Tem certeza que deseja eliminar o transporte <strong className="text-gray-900">"{transporte.matricula}"</strong>?
+                    <p className="text-slate-600 text-center mb-6">
+                      Tem certeza que deseja eliminar o transporte <strong className="text-slate-900">"{transporte.matricula}"</strong>?
                       <br />
                       <span className="text-sm text-red-600 font-medium">Esta ação não pode ser desfeita.</span>
                     </p>
@@ -744,14 +744,14 @@ export default function TransporteDetalhes() {
                       <button
                         onClick={() => setShowDeleteModal(false)}
                         disabled={deleting}
-                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Cancelar
                       </button>
                       <button
                         onClick={handleDelete}
                         disabled={deleting}
-                        className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {deleting ? (
                           <>
@@ -777,57 +777,57 @@ export default function TransporteDetalhes() {
 
         {/* Statistics Cards: the day by the vehicle's timetable */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-testid="operacao-cards">
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-black font-medium mb-1">Quilómetros Hoje</p>
-                <p className="text-3xl font-bold text-black">{operacao ? `${operacao.kmHoje} km` : '—'}</p>
-                <p className="mt-2 text-xs text-gray-600">{operacao ? `de ${operacao.kmPlaneado} km no dia (horário)` : 'Sem rota atribuída'}</p>
+                <p className="text-sm text-slate-900 font-medium mb-1">Quilómetros Hoje</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900">{operacao ? `${operacao.kmHoje} km` : '—'}</p>
+                <p className="mt-2 text-xs text-slate-600">{operacao ? `de ${operacao.kmPlaneado} km no dia (horário)` : 'Sem rota atribuída'}</p>
               </div>
-              <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-black font-medium mb-1">Tempo de Operação</p>
-                <p className="text-3xl font-bold text-black">{operacao ? `${operacao.horasHoje.toLocaleString('pt-PT')} h` : '—'}</p>
-                <p className="mt-2 text-xs text-gray-600">Serviço das 05:00 às 21:00</p>
+                <p className="text-sm text-slate-900 font-medium mb-1">Tempo de Operação</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900">{operacao ? `${operacao.horasHoje.toLocaleString('pt-PT')} h` : '—'}</p>
+                <p className="mt-2 text-xs text-slate-600">Serviço das 05:00 às 21:00</p>
               </div>
-              <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-black font-medium mb-1">Viagens Hoje</p>
-                <p className="text-3xl font-bold text-black">{operacao ? operacao.viagensHoje : '—'}</p>
-                <p className="mt-2 text-xs text-gray-600">{operacao ? `de ${operacao.viagensPlaneadas} no dia · ${operacao.minutosPorSentido} min por sentido` : 'Sem rota atribuída'}</p>
+                <p className="text-sm text-slate-900 font-medium mb-1">Viagens Hoje</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900">{operacao ? operacao.viagensHoje : '—'}</p>
+                <p className="mt-2 text-xs text-slate-600">{operacao ? `de ${operacao.viagensPlaneadas} no dia · ${operacao.minutosPorSentido} min por sentido` : 'Sem rota atribuída'}</p>
               </div>
-              <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                 </svg>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-black font-medium mb-1">Rota</p>
-                <p className="text-3xl font-bold text-black">{operacao ? `${operacao.comprimentoKm.toLocaleString('pt-PT')} km` : '—'}</p>
-                <p className="mt-2 text-xs text-gray-600">{operacao ? `${operacao.paragens} paragens` : 'Sem rota atribuída'}</p>
+                <p className="text-sm text-slate-900 font-medium mb-1">Rota</p>
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900">{operacao ? `${operacao.comprimentoKm.toLocaleString('pt-PT')} km` : '—'}</p>
+                <p className="mt-2 text-xs text-slate-600">{operacao ? `${operacao.paragens} paragens` : 'Sem rota atribuída'}</p>
               </div>
-              <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
               </div>
@@ -836,15 +836,15 @@ export default function TransporteDetalhes() {
         </div>
 
         {/* Map - Full Width */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-4 border-b border-slate-200 bg-slate-50">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-bold text-black">Localização e Rota</h3>
-                <p className="text-sm text-black">Posição em tempo real com visualização 3D</p>
+                <h3 className="text-lg font-bold text-slate-900">Localização e Rota</h3>
+                <p className="text-sm text-slate-900">Posição em tempo real com visualização 3D</p>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="px-3 py-1 bg-slate-100 text-black rounded-full text-xs font-semibold flex items-center" data-testid="position-status">
+                <span className="px-3 py-1 bg-slate-100 text-slate-900 rounded-full text-xs font-semibold flex items-center" data-testid="position-status">
                   <span className={`w-2 h-2 rounded-full mr-2 ${posicao?.emMovimento ? 'bg-green-600 animate-pulse' : 'bg-slate-500'}`}></span>
                   {!posicao
                     ? 'Sem localização'
@@ -862,16 +862,16 @@ export default function TransporteDetalhes() {
           <div className="p-4 bg-slate-50 border-t border-slate-200">
             <div className="grid grid-cols-3 gap-4 text-center" data-testid="position-footer">
               <div>
-                <p className="text-xs text-black mb-1 font-medium">Velocidade Atual</p>
-                <p className="text-lg font-bold text-black">{posicao ? `${Math.round(posicao.velocidadeKmh)} km/h` : '—'}</p>
+                <p className="text-xs text-slate-900 mb-1 font-medium">Velocidade Atual</p>
+                <p className="text-lg font-bold text-slate-900">{posicao ? `${Math.round(posicao.velocidadeKmh)} km/h` : '—'}</p>
               </div>
               <div>
-                <p className="text-xs text-black mb-1 font-medium">Próxima Paragem</p>
-                <p className="text-lg font-bold text-black">{posicao?.proximaParagem ?? '—'}</p>
+                <p className="text-xs text-slate-900 mb-1 font-medium">Próxima Paragem</p>
+                <p className="text-lg font-bold text-slate-900">{posicao?.proximaParagem ?? '—'}</p>
               </div>
               <div>
-                <p className="text-xs text-black mb-1 font-medium">Tempo Estimado</p>
-                <p className="text-lg font-bold text-black">{posicao?.minutosAteProxima != null ? formatMinutos(posicao.minutosAteProxima) : '—'}</p>
+                <p className="text-xs text-slate-900 mb-1 font-medium">Tempo Estimado</p>
+                <p className="text-lg font-bold text-slate-900">{posicao?.minutosAteProxima != null ? formatMinutos(posicao.minutosAteProxima) : '—'}</p>
               </div>
             </div>
           </div>
@@ -880,21 +880,21 @@ export default function TransporteDetalhes() {
         <GpsTrackerCard transporteId={transporte.id} />
 
         {/* Pessoas Associadas - Motorista e Proprietário lado a lado */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" style={{ transition: 'none' }}>
-          <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Pessoas Associadas</h3>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6" style={{ transition: 'none' }}>
+          <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Pessoas Associadas</h3>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" style={{ transition: 'none' }}>
             {/* Motorista */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h4 className="text-base font-semibold text-black">Motorista</h4>
+                <h4 className="text-base font-semibold text-slate-900">Motorista</h4>
                 {!transporte.motorista && (
                   <button 
                     onClick={() => {
                       setShowMotoristaModal(true);
                       fetchMotoristasDisponiveis();
                     }}
-                    className="px-3 py-1.5 bg-black text-white rounded-lg text-xs font-medium"
+                    className="px-3 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-medium"
                   >
                     + Atribuir
                   </button>
@@ -903,19 +903,19 @@ export default function TransporteDetalhes() {
               {transporte.motorista ? (
                 <div 
                   onClick={() => router.push(`/motoristas/${transporte.motorista!.id}`)}
-                  className="border border-slate-200 rounded-lg p-4 cursor-pointer hover:border-slate-400 hover:shadow-md transition-all"
+                  className="border border-slate-200 rounded-xl p-4 cursor-pointer hover:border-slate-400 hover:shadow-md transition-all"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-start space-x-3 flex-1 min-w-0">
                       <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h5 className="font-bold text-black text-base mb-1.5">{transporte.motorista.nome}</h5>
+                        <h5 className="font-bold text-slate-900 text-base mb-1.5">{transporte.motorista.nome}</h5>
                         <span className={`inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full ${
-                          (transporte.motorista as any).status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          (transporte.motorista as any).status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'
                         }`}>
                           {(transporte.motorista as any).status || 'ativo'}
                         </span>
@@ -934,15 +934,15 @@ export default function TransporteDetalhes() {
                       </svg>
                     </button>
                   </div>
-                  <div className="space-y-2.5 text-sm text-black pl-15">
+                  <div className="space-y-2.5 text-sm text-slate-900 pl-15">
                     <p className="flex items-center">
-                      <svg className="w-4 h-4 mr-2 flex-shrink-0 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 mr-2 flex-shrink-0 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                       </svg>
                       <span className="truncate">{transporte.motorista.telefone}</span>
                     </p>
                     <p className="flex items-center">
-                      <svg className="w-4 h-4 mr-2 flex-shrink-0 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 mr-2 flex-shrink-0 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                       <span className="truncate">{transporte.motorista.email}</span>
@@ -950,7 +950,7 @@ export default function TransporteDetalhes() {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-6 text-black border border-slate-200 rounded-lg bg-slate-50">
+                <div className="text-center py-6 text-slate-900 border border-slate-200 rounded-xl bg-slate-50">
                   <svg className="w-10 h-10 mx-auto mb-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
@@ -962,14 +962,14 @@ export default function TransporteDetalhes() {
             {/* Proprietário */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h4 className="text-base font-semibold text-black">Proprietário</h4>
+                <h4 className="text-base font-semibold text-slate-900">Proprietário</h4>
                 {(!transporte.proprietarios || transporte.proprietarios.length === 0) && (
                   <button 
                     onClick={() => {
                       setShowProprietarioModal(true);
                       fetchProprietariosDisponiveis();
                     }}
-                    className="px-3 py-1.5 bg-black text-white rounded-lg text-xs font-medium"
+                    className="px-3 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-medium"
                   >
                     + Atribuir
                   </button>
@@ -978,17 +978,17 @@ export default function TransporteDetalhes() {
               {transporte.proprietarios && transporte.proprietarios.length > 0 ? (
                 <div 
                   onClick={() => router.push(`/proprietarios/${transporte.proprietarios[0].proprietario.id}`)}
-                  className="border border-slate-200 rounded-lg p-4 cursor-pointer hover:border-slate-400 hover:shadow-md transition-all"
+                  className="border border-slate-200 rounded-xl p-4 cursor-pointer hover:border-slate-400 hover:shadow-md transition-all"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-start space-x-3 flex-1 min-w-0">
                       <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h5 className="font-bold text-black text-base">{transporte.proprietarios[0].proprietario.nome}</h5>
+                        <h5 className="font-bold text-slate-900 text-base">{transporte.proprietarios[0].proprietario.nome}</h5>
                       </div>
                     </div>
                     <button
@@ -1004,15 +1004,15 @@ export default function TransporteDetalhes() {
                       </svg>
                     </button>
                   </div>
-                  <div className="space-y-2.5 text-sm text-black pl-15">
+                  <div className="space-y-2.5 text-sm text-slate-900 pl-15">
                     <p className="flex items-center">
-                      <svg className="w-4 h-4 mr-2 flex-shrink-0 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 mr-2 flex-shrink-0 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                       </svg>
                       <span className="truncate">+258 {(transporte.proprietarios[0].proprietario as any).contacto1}</span>
                     </p>
                     <p className="flex items-center">
-                      <svg className="w-4 h-4 mr-2 flex-shrink-0 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 mr-2 flex-shrink-0 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       </svg>
                       <span className="truncate">{(transporte.proprietarios[0].proprietario as any).endereco}</span>
@@ -1020,7 +1020,7 @@ export default function TransporteDetalhes() {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-6 text-black border border-slate-200 rounded-lg bg-slate-50">
+                <div className="text-center py-6 text-slate-900 border border-slate-200 rounded-xl bg-slate-50">
                   <svg className="w-10 h-10 mx-auto mb-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
@@ -1032,43 +1032,43 @@ export default function TransporteDetalhes() {
         </div>
 
         {/* Informações do Transporte - Full Width */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h3 className="text-lg font-bold text-black mb-6 pb-3 border-b border-slate-200">Informações do Transporte</h3>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <h3 className="text-lg font-bold text-slate-900 mb-6 pb-3 border-b border-slate-200">Informações do Transporte</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
             <div>
-              <p className="text-xs text-black uppercase tracking-wide font-medium mb-2">Matrícula</p>
-              <p className="text-sm font-bold text-black">{transporte.matricula}</p>
+              <p className="text-xs text-slate-900 uppercase tracking-wide font-medium mb-2">Matrícula</p>
+              <p className="text-sm font-bold text-slate-900">{transporte.matricula}</p>
             </div>
             <div>
-              <p className="text-xs text-black uppercase tracking-wide font-medium mb-2">Código</p>
-              <p className="text-sm font-semibold text-black">{transporte.codigo}</p>
+              <p className="text-xs text-slate-900 uppercase tracking-wide font-medium mb-2">Código</p>
+              <p className="text-sm font-semibold text-slate-900">{transporte.codigo}</p>
             </div>
             <div>
-              <p className="text-xs text-black uppercase tracking-wide font-medium mb-2">Modelo</p>
-              <p className="text-sm font-semibold text-black">{transporte.modelo}</p>
+              <p className="text-xs text-slate-900 uppercase tracking-wide font-medium mb-2">Modelo</p>
+              <p className="text-sm font-semibold text-slate-900">{transporte.modelo}</p>
             </div>
             <div>
-              <p className="text-xs text-black uppercase tracking-wide font-medium mb-2">Marca</p>
-              <p className="text-sm font-semibold text-black">{transporte.marca}</p>
+              <p className="text-xs text-slate-900 uppercase tracking-wide font-medium mb-2">Marca</p>
+              <p className="text-sm font-semibold text-slate-900">{transporte.marca}</p>
             </div>
             <div>
-              <p className="text-xs text-black uppercase tracking-wide font-medium mb-2">Cor</p>
-              <p className="text-sm font-semibold text-black">{transporte.cor}</p>
+              <p className="text-xs text-slate-900 uppercase tracking-wide font-medium mb-2">Cor</p>
+              <p className="text-sm font-semibold text-slate-900">{transporte.cor}</p>
             </div>
             <div>
-              <p className="text-xs text-black uppercase tracking-wide font-medium mb-2">Lotação</p>
-              <p className="text-sm font-semibold text-black">{transporte.lotacao} lugares</p>
+              <p className="text-xs text-slate-900 uppercase tracking-wide font-medium mb-2">Lotação</p>
+              <p className="text-sm font-semibold text-slate-900">{transporte.lotacao} lugares</p>
             </div>
             <div>
-              <p className="text-xs text-black uppercase tracking-wide font-medium mb-2">Via</p>
-              <p className="text-sm font-semibold text-black">{transporte.via?.nome || 'Não atribuída'}</p>
+              <p className="text-xs text-slate-900 uppercase tracking-wide font-medium mb-2">Via</p>
+              <p className="text-sm font-semibold text-slate-900">{transporte.via?.nome || 'Não atribuída'}</p>
             </div>
             <div>
-              <p className="text-xs text-black uppercase tracking-wide font-medium mb-2">Código Via</p>
-              <p className="text-sm font-semibold text-black">{transporte.via?.codigo || 'N/A'}</p>
+              <p className="text-xs text-slate-900 uppercase tracking-wide font-medium mb-2">Código Via</p>
+              <p className="text-sm font-semibold text-slate-900">{transporte.via?.codigo || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-xs text-black uppercase tracking-wide font-medium mb-2">Estado</p>
+              <p className="text-xs text-slate-900 uppercase tracking-wide font-medium mb-2">Estado</p>
               <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold inline-block ${
                 !transporte.via ? 'bg-amber-100 text-amber-800' : posicao?.foraDeServico ? 'bg-slate-100 text-slate-800' : 'bg-green-100 text-green-800'
               }`}>
@@ -1076,8 +1076,8 @@ export default function TransporteDetalhes() {
               </span>
             </div>
             <div>
-              <p className="text-xs text-black uppercase tracking-wide font-medium mb-2">Registado em</p>
-              <p className="text-sm font-semibold text-black">{new Date(transporte.createdAt).toLocaleDateString('pt-PT')}</p>
+              <p className="text-xs text-slate-900 uppercase tracking-wide font-medium mb-2">Registado em</p>
+              <p className="text-sm font-semibold text-slate-900">{new Date(transporte.createdAt).toLocaleDateString('pt-PT')}</p>
             </div>
           </div>
         </div>
@@ -1085,13 +1085,13 @@ export default function TransporteDetalhes() {
         {/* Charts: the day by the vehicle's timetable */}
         {operacao && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-bold text-black">Quilómetros ao Longo do Dia</h3>
-                  <p className="text-sm text-black">Acumulado por hora, pelo horário da rota</p>
+                  <h3 className="text-lg font-bold text-slate-900">Quilómetros ao Longo do Dia</h3>
+                  <p className="text-sm text-slate-900">Acumulado por hora, pelo horário da rota</p>
                 </div>
-                <div className="px-3 py-1 bg-slate-100 text-black rounded-lg text-xs font-semibold">Hoje</div>
+                <div className="px-3 py-1 bg-slate-100 text-slate-900 rounded-xl text-xs font-semibold">Hoje</div>
               </div>
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={operacao.porHora}>
@@ -1107,13 +1107,13 @@ export default function TransporteDetalhes() {
               </ResponsiveContainer>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-bold text-black">Viagens por Hora</h3>
-                  <p className="text-sm text-black">Chegadas a um terminal, pelo horário da rota</p>
+                  <h3 className="text-lg font-bold text-slate-900">Viagens por Hora</h3>
+                  <p className="text-sm text-slate-900">Chegadas a um terminal, pelo horário da rota</p>
                 </div>
-                <div className="px-3 py-1 bg-slate-100 text-black rounded-lg text-xs font-semibold">Hoje</div>
+                <div className="px-3 py-1 bg-slate-100 text-slate-900 rounded-xl text-xs font-semibold">Hoje</div>
               </div>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={operacao.porHora}>
@@ -1133,18 +1133,18 @@ export default function TransporteDetalhes() {
 
         {/* Next pass at each stop, both directions */}
         {operacao && operacao.passagens.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-testid="passagens">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6" data-testid="passagens">
             <div className="mb-6">
-              <h3 className="text-lg font-bold text-black">Próximas Passagens nas Paragens</h3>
-              <p className="text-sm text-black">Pelo horário da rota; com GPS ativo o autocarro pode estar adiantado ou atrasado</p>
+              <h3 className="text-lg font-bold text-slate-900">Próximas Passagens nas Paragens</h3>
+              <p className="text-sm text-slate-900">Pelo horário da rota; com GPS ativo o autocarro pode estar adiantado ou atrasado</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-wide text-slate-600 border-b border-slate-200">
-                    <th className="py-2 pr-4 font-medium">#</th>
+                    <th className="hidden py-2 pr-4 font-medium sm:table-cell">#</th>
                     <th className="py-2 pr-4 font-medium">Paragem</th>
-                    <th className="py-2 pr-4 font-medium">Km</th>
+                    <th className="hidden py-2 pr-4 font-medium sm:table-cell">Km</th>
                     <th className="py-2 pr-4 font-medium">Sentido {operacao.ida}</th>
                     <th className="py-2 font-medium">Sentido {operacao.volta}</th>
                   </tr>
@@ -1152,11 +1152,11 @@ export default function TransporteDetalhes() {
                 <tbody>
                   {operacao.passagens.map((p, i) => (
                     <tr key={`${p.nome}-${i}`} className="border-b border-slate-100 last:border-0">
-                      <td className="py-2 pr-4 text-slate-500">{i + 1}</td>
-                      <td className="py-2 pr-4 font-medium text-black">{p.nome}</td>
-                      <td className="py-2 pr-4 text-slate-600">{p.km.toLocaleString('pt-PT')}</td>
-                      <td className="py-2 pr-4 text-black">{horaMaputo(p.ida)}</td>
-                      <td className="py-2 text-black">{horaMaputo(p.volta)}</td>
+                      <td className="hidden py-2 pr-4 text-slate-500 sm:table-cell">{i + 1}</td>
+                      <td className="py-2 pr-4 font-medium text-slate-900">{p.nome}</td>
+                      <td className="hidden py-2 pr-4 text-slate-600 sm:table-cell">{p.km.toLocaleString('pt-PT')}</td>
+                      <td className="py-2 pr-4 text-slate-900">{horaMaputo(p.ida)}</td>
+                      <td className="py-2 text-slate-900">{horaMaputo(p.volta)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1170,7 +1170,7 @@ export default function TransporteDetalhes() {
       {/* Toast Notification */}
       {notification && (
         <div className="fixed bottom-6 right-6 z-50 animate-fade-in">
-          <div className={`px-6 py-4 rounded-lg shadow-lg border-2 ${
+          <div className={`px-6 py-4 rounded-xl shadow-lg border-2 ${
             notification.type === 'success' ? 'bg-green-50 border-green-500 text-green-900' :
             notification.type === 'error' ? 'bg-red-50 border-red-500 text-red-900' :
             'bg-blue-50 border-blue-500 text-blue-900'
@@ -1206,12 +1206,12 @@ export default function TransporteDetalhes() {
         >
           <div className="flex items-center justify-center min-h-screen p-4">
             <div 
-              className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto my-8"
+              className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto my-8"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6 border-b border-slate-200">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-black">Atribuir Motorista</h3>
+                  <h3 className="text-xl font-bold text-slate-900">Atribuir Motorista</h3>
                   <button
                     onClick={() => setShowMotoristaModal(false)}
                     className="text-slate-400"
@@ -1229,21 +1229,21 @@ export default function TransporteDetalhes() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
                   </div>
                 ) : motoristasDisponiveis.length === 0 ? (
-                  <p className="text-center text-black py-8">Nenhum motorista disponível</p>
+                  <p className="text-center text-slate-900 py-8">Nenhum motorista disponível</p>
                 ) : (
                   motoristasDisponiveis.map((motorista) => (
                     <div
                       key={motorista.id}
-                      className="border border-slate-200 rounded-lg p-4 flex items-center justify-between hover:border-slate-400 transition-colors"
+                      className="border border-slate-200 rounded-xl p-4 flex items-center justify-between hover:border-slate-400 transition-colors"
                     >
                       <div>
-                        <h4 className="font-bold text-black">{motorista.nome}</h4>
-                        <p className="text-sm text-black">{motorista.telefone}</p>
-                        <p className="text-sm text-black">{motorista.email}</p>
+                        <h4 className="font-bold text-slate-900">{motorista.nome}</h4>
+                        <p className="text-sm text-slate-900">{motorista.telefone}</p>
+                        <p className="text-sm text-slate-900">{motorista.email}</p>
                       </div>
                       <button
                         onClick={() => handleAtribuirMotorista(motorista.id)}
-                        className="px-4 py-2 bg-black text-white rounded-lg font-medium"
+                        className="px-4 py-2 bg-slate-900 text-white rounded-xl font-medium"
                         style={{ transition: 'none' }}
                       >
                         Atribuir
@@ -1266,12 +1266,12 @@ export default function TransporteDetalhes() {
         >
           <div className="flex items-center justify-center min-h-screen p-4">
             <div 
-              className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto my-8"
+              className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto my-8"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6 border-b border-slate-200">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-black">Atribuir Proprietário</h3>
+                  <h3 className="text-xl font-bold text-slate-900">Atribuir Proprietário</h3>
                   <button
                     onClick={() => setShowProprietarioModal(false)}
                     className="text-slate-400"
@@ -1289,21 +1289,21 @@ export default function TransporteDetalhes() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
                   </div>
                 ) : proprietariosDisponiveis.length === 0 ? (
-                  <p className="text-center text-black py-8">Nenhum proprietário disponível</p>
+                  <p className="text-center text-slate-900 py-8">Nenhum proprietário disponível</p>
                 ) : (
                   proprietariosDisponiveis.map((proprietario) => (
                     <div
                       key={proprietario.id}
-                      className="border border-slate-200 rounded-lg p-4 flex items-center justify-between hover:border-slate-400 transition-colors"
+                      className="border border-slate-200 rounded-xl p-4 flex items-center justify-between hover:border-slate-400 transition-colors"
                     >
                       <div>
-                        <h4 className="font-bold text-black">{proprietario.nome}</h4>
-                        <p className="text-sm text-black">{proprietario.telefone}</p>
-                        <p className="text-sm text-black">{proprietario.email}</p>
+                        <h4 className="font-bold text-slate-900">{proprietario.nome}</h4>
+                        <p className="text-sm text-slate-900">{proprietario.telefone}</p>
+                        <p className="text-sm text-slate-900">{proprietario.email}</p>
                       </div>
                       <button
                         onClick={() => handleAtribuirProprietario(proprietario.id)}
-                        className="px-4 py-2 bg-black text-white rounded-lg font-medium"
+                        className="px-4 py-2 bg-slate-900 text-white rounded-xl font-medium"
                         style={{ transition: 'none' }}
                       >
                         Atribuir
