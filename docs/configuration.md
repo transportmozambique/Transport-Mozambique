@@ -130,4 +130,4 @@ These values are fixed in code. Change them with a code change and a deploy.
 
 ---
 
-[← Viewing the data in Neon](neon-guide.md) · [Documentation index](README.md) · Next: [Passenger web app →](passenger-web.md)
+[← Vercel, step by step](vercel-guide.md) · [Documentation index](README.md) · Next: [API reference →](api-reference.md)

@@ -66,7 +66,7 @@ Set **`USSD_CALLBACK_KEY`** on `transport-mz` to a random value and register the
 https://transport-mz.vercel.app/api/ussd?key=<USSD_CALLBACK_KEY>
 ```
 
-Requests without the right key then get `403 Forbidden`. Without the variable, the endpoint answers everyone (the behaviour until 2026-10-17). Set the variable and change the callback URL in Africa's Talking together, then redeploy ([Africa's Talking → USSD channel](africas-talking.md#ussd-channel)). `/api/ussd-telerivet` has the same kind of check with `TELERIVET_SECRET`.
+Requests without the right key then get `403 Forbidden` (logged as "USSD pedido recusado"). The key is part of the URL, so Vercel's request details show it to anyone who can read `transport-mz`'s logs ([Vercel guide → Logs](vercel-guide.md#logs)). Without the variable, the endpoint answers everyone (the behaviour until 2026-10-17). Set the variable and change the callback URL in Africa's Talking together, then redeploy ([Africa's Talking → USSD channel](africas-talking.md#5-create-the-ussd-channel)). `/api/ussd-telerivet` has the same kind of check with `TELERIVET_SECRET`.
 
 ## Public endpoints
 
@@ -118,7 +118,8 @@ Revoke the API keys of accounts that are no longer used (for example, an earlier
 | No limit on sign-in attempts (admin, passengers, drivers) | A 6-digit PIN has a million values; an attacker who knows a driver's phone can try them through `/api/driver/login` | Count failures per account and lock for a while after a few (needs a table), or put the sign-in routes behind a rate limiter |
 | Phone numbers are not verified | Account takeover of USSD-only passengers; registration with someone else's number | One-time SMS code at registration |
 | Sessions cannot be revoked one by one | A leaked token works until it expires (up to 90 days for passengers) | Store a per-account session version and check it |
-| `/api/ussd` open until `USSD_CALLBACK_KEY` is set | SMS to arbitrary numbers once SMS are live; PIN guessing over USSD | Set the key ([above](#ussd-callback)) |
+| The USSD callback key travels in the URL (set since 2026-10-17) | Anyone who can read `transport-mz`'s request logs can see it, and then drive the menus with any phone number | Keep log access to people who may know it; rotate it with the callback URL if it leaks ([above](#ussd-callback)) |
+| `USER_SESSION_SECRET` and `DRIVER_SESSION_SECRET` are Config variables on Vercel | Project members can read them and forge passenger or driver sessions | Store them again as Secrets with new values ([Vercel guide](vercel-guide.md#environment-variables)); everyone signs in again once |
 | No roles in the admin | Every administrator can manage administrators | Roles on `Administrador` |
 | `/api/simulation` `POST` is public | Anyone can trigger the arrival check (it only sends SMS that are due) | Require a secret, or remove the action |
 

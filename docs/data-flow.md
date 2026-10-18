@@ -272,4 +272,4 @@ A new PIN or code replaces the old one at once.
 
 ---
 
-[← Architecture](architecture.md) · [Documentation index](README.md) · Next: [Database →](database.md)
+[← Project status](project-status.md) · [Documentation index](README.md) · Next: [Database →](database.md)

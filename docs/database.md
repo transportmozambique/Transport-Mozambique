@@ -666,4 +666,4 @@ Production on 2026-10-18, after the OpenStreetMap import:
 
 ---
 
-[← Data flow](data-flow.md) · [Documentation index](README.md) · Next: [Viewing the data in Neon →](neon-guide.md)
+[← Data flow](data-flow.md) · [Documentation index](README.md) · Next: [GPS tracking →](gps-tracking.md)

@@ -263,7 +263,7 @@ ORDER BY alertas DESC;
 **Watch it change:**
 - In the passenger app, sign in, plan a journey and tap "Avisar-me por SMS quando o autocarro estiver perto…". The stop's row appears here, with `alertas` 1 and `sms_enviados` 0.
 - When a bus is under 1 km away and the arrival check runs, `sms_enviados` becomes 1.
-- The same through USSD option 1 in the [Africa's Talking simulator](africas-talking.md#try-it-in-the-simulator) also adds a USSD passenger in 7.4. Use a test number, and see [Database → Passengers created by USSD](database.md#passengers-created-by-ussd-no-password-yet) to find and remove them.
+- The same through USSD option 1 in the [Africa's Talking simulator](africas-talking.md#use-the-menu-in-the-simulator) also adds a USSD passenger in 7.4. Use a test number, and see [Database → Passengers created by USSD](database.md#passengers-created-by-ussd-no-password-yet) to find and remove them.
 
 ## More queries
 
@@ -271,4 +271,4 @@ ORDER BY alertas DESC;
 
 ---
 
-[← Database](database.md) · [Documentation index](README.md) · Next: [Configuration →](configuration.md)
+[← Africa's Talking](africas-talking.md) · [Documentation index](README.md) · Next: [Vercel, step by step →](vercel-guide.md)

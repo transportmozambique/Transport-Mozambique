@@ -591,6 +591,19 @@ The vehicle's day by the timetable:
 
 `GET` lists vehicles without a driver and active drivers without a vehicle; `POST {"motoristaId", "transporteId"}` pairs them; `DELETE` undoes a pairing.
 
+### Administrators
+
+#### `POST /api/administradores/{id}/change-password`
+
+`{"currentPassword", "newPassword"}` changes the administrator's password (the "Perfil" page). The new one needs at least 6 characters and is stored as a bcrypt hash.
+
+| Answer | When |
+|---|---|
+| 200 `{"success": true, "message": "Senha alterada com sucesso"}` | changed |
+| 400 | a field is missing, or the new password is shorter than 6 characters |
+| 401 `{"error": "Senha atual incorreta"}` | the current password is wrong |
+| 404 | no administrator with that id |
+
 ### Statistics
 
 | Endpoint | Content |
@@ -600,4 +613,4 @@ The vehicle's day by the timetable:
 
 ---
 
-[← Africa's Talking](africas-talking.md) · [Documentation index](README.md) · Next: [Deployment →](deployment.md)
+[← Configuration](configuration.md) · [Documentation index](README.md) · Next: [Deployment →](deployment.md)
