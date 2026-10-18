@@ -9,6 +9,8 @@ import { formatEta } from "@/lib/eta";
 import { distanceMeters, formatDistance, groupPlaces, searchPlaces, walkMinutes, type Place, type Point } from "@/lib/places";
 import UserAvatar from "./UserAvatar";
 import Plate from "./Plate";
+import Sheet, { type SheetSnap } from "./Sheet";
+import { useWalkPaths, type Walk } from "./walkPaths";
 import {
   BUS_SVG,
   EMPTY,
@@ -20,6 +22,7 @@ import {
   popupContent,
   soon,
   textOn,
+  WALK_ATTRIBUTION,
 } from "./mapKit";
 
 /**
@@ -85,6 +88,8 @@ function mapPadding(sheetOpen: boolean) {
 }
 
 
+const NO_WALKS: Walk[] = [];
+
 /** Runs of stops with the same name (both sides of a street, one avenue) shown once. */
 function distinctNames<T extends { nome: string }>(list: T[]): T[] {
   return list.filter((s, i) => i === 0 || s.nome.trim().toLowerCase() !== list[i - 1].nome.trim().toLowerCase());
@@ -115,7 +120,11 @@ export default function TripPlanner() {
   const [start, setStart] = useState<(PlacePick & { point: Point }) | null>(null);
   // Every destination from the start, with the stop where the first bus is taken (B)
   const [destinos, setDestinos] = useState<{ key: string; list: Destino[] | null }>({ key: "", list: null });
-  const [expanded, setExpanded] = useState(true);
+  const [snap, setSnap] = useState<SheetSnap>("half");
+  const expanded = snap !== "peek";
+  // Shows the panel when something is picked, without lowering it from the whole screen
+  const raise = useCallback(() => setSnap((s) => (s === "peek" ? "half" : s)), []);
+  const [shownWalks, setShownWalks] = useState<Walk[]>([]);
   // Signed in when the passenger app stored a session (read after hydration, false on the server)
   const signedIn = useSyncExternalStore(
     (onChange) => {
@@ -194,7 +203,7 @@ export default function TripPlanner() {
       center: [MAPUTO[1], MAPUTO[0]],
       zoom: 12,
       pitch: 30,
-      attributionControl: { compact: true },
+      attributionControl: { compact: true, customAttribution: WALK_ATTRIBUTION },
     });
     map.current = m;
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
@@ -220,14 +229,14 @@ export default function TripPlanner() {
         firstSymbol,
       );
 
-      for (const id of ["bus-route", "journey", "idle-stops", "stops", "nearby", "selected"]) m.addSource(id, { type: "geojson", data: EMPTY });
+      for (const id of ["bus-route", "journey", "journey-walk", "idle-stops", "stops", "nearby", "selected"]) m.addSource(id, { type: "geojson", data: EMPTY });
       m.addLayer({ id: "bus-route", type: "line", source: "bus-route", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#ef4444", "line-width": 4, "line-opacity": 0.8 } });
       m.addLayer({
         id: "journey-walk",
         type: "line",
-        source: "journey",
-        filter: ["==", ["get", "kind"], "walk"],
-        paint: { "line-color": "#334155", "line-width": 3, "line-dasharray": [1, 1.5] },
+        source: "journey-walk",
+        layout: { "line-join": "round", "line-cap": "round" },
+        paint: { "line-color": "#334155", "line-width": 4, "line-dasharray": [0.6, 1.6] },
       });
       // Dark outline: some route colours are very light
       m.addLayer({
@@ -425,7 +434,7 @@ export default function TripPlanner() {
   const pickStart = useCallback(
     (p: PlacePick | "me") => {
       setView({ kind: "nearby" });
-      setExpanded(true);
+      raise();
       if (p === "me") {
         setStart(null);
         if (me && map.current) map.current.flyTo({ center: [me[1], me[0]], zoom: 15 });
@@ -437,7 +446,7 @@ export default function TripPlanner() {
       setStart({ ...p, point: first.point });
       map.current?.flyTo({ center: [first.lng, first.lat], zoom: 15 });
     },
-    [me, stopById, locate],
+    [me, stopById, locate, raise],
   );
   const nearby = useMemo(() => {
     const all = stops.map((s) => ({ stop: s, m: distanceMeters(anchor, s.point) })).sort((a, b) => a.m - b.m);
@@ -460,11 +469,11 @@ export default function TripPlanner() {
   const openStop = useCallback(
     (id: string) => {
       setView({ kind: "stop", stopId: id });
-      setExpanded(true);
+      raise();
       const s = stopById.get(id);
       if (s && map.current) map.current.easeTo({ center: [s.lng, s.lat], zoom: Math.max(map.current.getZoom(), 15) });
     },
-    [stopById],
+    [stopById, raise],
   );
   // The map's click handlers are attached once, when it loads; they call the latest openStop
   useEffect(() => {
@@ -482,26 +491,31 @@ export default function TripPlanner() {
 
   const planTo = (place: { ids: string[]; label: string }, from: JourneysState["from"], fromLabel: string) => {
     setView({ kind: "journeys", from, fromLabel, to: place.ids, toLabel: place.label, back: view });
-    setExpanded(true);
+    setShownWalks([]);
+    raise();
   };
+
+  // No journey on the map: all the buses again
+  const hideJourney = useCallback(() => {
+    if (!mapReady) return;
+    for (const marker of busMarkers.current.values()) marker.getElement().style.display = "";
+    source("journey")?.setData(EMPTY);
+  }, [mapReady]);
 
   const showJourney = useCallback(
     (journey: Journey | null) => {
       if (!mapReady || !map.current) return;
+      if (!journey) return hideJourney();
       // While a journey is shown, only its buses stay on the map
-      const used = new Set(journey?.etapas.flatMap((e) => (e.tipo === "autocarro" ? [e.transporte.id] : [])));
-      for (const [id, marker] of busMarkers.current) marker.getElement().style.display = !journey || used.has(id) ? "" : "none";
-      if (!journey) {
-        source("journey")?.setData(EMPTY);
-        return;
-      }
+      const used = new Set(journey.etapas.flatMap((e) => (e.tipo === "autocarro" ? [e.transporte.id] : [])));
+      for (const [id, marker] of busMarkers.current) marker.getElement().style.display = used.has(id) ? "" : "none";
       const features: GeoJSON.Feature[] = [];
+      const walks: Walk[] = [];
       const bounds = new maplibregl.LngLatBounds();
       for (const leg of journey.etapas) {
         if (leg.tipo === "pe") {
-          const line: [number, number][] = [[leg.de.lng, leg.de.lat], [leg.para.lng, leg.para.lat]];
-          features.push({ type: "Feature", properties: { kind: "walk" }, geometry: { type: "LineString", coordinates: line } });
-          line.forEach((p) => bounds.extend(p));
+          walks.push({ from: [leg.de.lat, leg.de.lng], to: [leg.para.lat, leg.para.lng] });
+          bounds.extend([leg.de.lng, leg.de.lat]).extend([leg.para.lng, leg.para.lat]);
         } else {
           const line = leg.percurso.length > 1 ? leg.percurso : [[leg.de.lng, leg.de.lat], [leg.para.lng, leg.para.lat]];
           features.push({ type: "Feature", properties: { kind: "bus", color: leg.via.cor || "#2563eb" }, geometry: { type: "LineString", coordinates: line } });
@@ -512,15 +526,26 @@ export default function TripPlanner() {
         }
       }
       source("journey")?.setData({ type: "FeatureCollection", features });
+      setShownWalks(walks);
       source("bus-route")?.setData(EMPTY);
       if (!bounds.isEmpty()) map.current.fitBounds(bounds, { padding: 40, maxZoom: 16, duration: 800 });
     },
-    [mapReady],
+    [mapReady, hideJourney],
   );
 
   useEffect(() => {
-    if (view.kind !== "journeys") showJourney(null);
-  }, [view.kind, showJourney]);
+    if (view.kind !== "journeys") hideJourney();
+  }, [view.kind, hideJourney]);
+
+  // The walks of the journey shown, along the streets once their paths arrive
+  const walkLines = useWalkPaths(view.kind === "journeys" ? shownWalks : NO_WALKS);
+  useEffect(() => {
+    if (!mapReady) return;
+    source("journey-walk")?.setData({
+      type: "FeatureCollection",
+      features: walkLines.map((coordinates) => ({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates } })),
+    });
+  }, [mapReady, walkLines]);
 
   const titleBar = (
     <>
@@ -553,7 +578,7 @@ export default function TripPlanner() {
           0% { transform: scale(0.6); opacity: 0.5; }
           100% { transform: scale(2); opacity: 0; }
         }
-        .maplibregl-popup-content { border-radius: 8px; padding: 10px 14px; font-size: 14px; line-height: 1.5; }
+        .maplibregl-popup-content { border-radius: 14px; padding: 10px 14px; font-size: 14px; line-height: 1.5; }
         .maplibregl-ctrl-top-right { top: 76px; }
         @media (min-width: 768px) { .maplibregl-ctrl-top-right { top: 0; } }
       `}</style>
@@ -565,7 +590,7 @@ export default function TripPlanner() {
       </div>
 
       {/* Title and account: a bar at the top on phones, the top of the panel on larger screens */}
-      <div className="md:hidden absolute top-3 left-3 right-3 z-40 flex items-center justify-between gap-3 bg-white/95 backdrop-blur rounded-xl px-4 py-2.5 shadow-lg">
+      <div className="md:hidden absolute top-3 left-3 right-3 z-40 flex items-center justify-between gap-3 bg-white/95 backdrop-blur rounded-2xl px-4 py-2.5 shadow-lg">
         {titleBar}
       </div>
 
@@ -575,9 +600,9 @@ export default function TripPlanner() {
           if (me && map.current) map.current.flyTo({ center: [me[1], me[0]], zoom: 15 });
           else locate();
           setView({ kind: "nearby" });
-          setExpanded(true);
+          raise();
         }}
-        className={`absolute z-20 right-3 ${expanded ? "bottom-[calc(50vh+12px)]" : "bottom-[76px]"} md:bottom-8 w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-slate-50`}
+        className={`absolute z-20 right-3 ${expanded ? "bottom-[calc(50dvh+12px)]" : "bottom-[76px]"} md:bottom-8 w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-slate-50`}
         aria-label="Mostrar a minha localização"
         title="A minha localização"
       >
@@ -587,65 +612,50 @@ export default function TripPlanner() {
         </svg>
       </button>
 
-      {/* Panel: bottom sheet on phones, side panel on larger screens */}
-      <section
-        className={`absolute z-30 bg-white shadow-2xl flex flex-col left-0 right-0 bottom-0 rounded-t-2xl md:rounded-2xl md:left-3 md:right-auto md:top-3 md:bottom-3 md:w-[400px] ${
-          expanded ? "max-h-[50vh] md:max-h-none" : "max-h-[64px] md:max-h-none"
-        }`}
-        aria-label="Planear viagem"
-      >
-        <button
-          className="md:hidden w-full pt-2 pb-1 flex justify-center"
-          onClick={() => setExpanded((e) => !e)}
-          aria-label={expanded ? "Recolher painel" : "Abrir painel"}
-        >
-          <span className="w-10 h-1.5 rounded-full bg-slate-300" />
-        </button>
-        <div className="hidden md:flex items-center justify-between gap-3 px-4 pt-3 pb-3 border-b border-slate-100">{titleBar}</div>
-        <div className="overflow-y-auto px-4 pb-4 md:pt-4 flex-1">
-          {netError ? (
-            <p className="text-sm text-red-700 py-4">Não foi possível carregar as paragens. Recarregue a página.</p>
-          ) : view.kind === "nearby" ? (
-            <NearbyView
-              nearby={nearby}
-              vias={vias}
-              places={places}
-              locState={locState}
-              meInArea={meInArea}
-              loading={!stops.length}
-              onStop={openStop}
-              onRetry={locate}
-              origin={start ? start.label : fromMe ? "A sua localização" : "Escolha o ponto de partida"}
-              originIsMe={fromMe}
-              hasStart={Boolean(start) || fromMe}
-              anchor={anchor}
-              destinos={destinos.key === destinosKey ? destinos.list : null}
-              onOrigin={pickStart}
-              onDestination={(p) =>
-                start
-                  ? planTo(p, { stopIds: start.ids }, start.label)
-                  : me && meInArea
-                    ? planTo(p, { me }, "A sua localização")
-                    : nearby[0] && planTo(p, { stopIds: [nearby[0].stop.id] }, nearby[0].stop.nome)
-              }
-            />
-          ) : view.kind === "stop" ? (
-            <StopView
-              key={view.stopId}
-              stop={stopById.get(view.stopId) ?? null}
-              stopId={view.stopId}
-              vias={vias}
-              places={places}
-              me={me}
-              onBack={() => setView({ kind: "nearby" })}
-              onOrigin={pickStart}
-              onDestination={(p) => planTo(p, { stopIds: [view.stopId] }, stopById.get(view.stopId)?.nome ?? "Paragem")}
-            />
-          ) : (
-            <JourneysView key={`${JSON.stringify(view.from)}>${view.to.join(",")}`} view={view} onBack={() => setView(view.back)} onShow={showJourney} />
-          )}
-        </div>
-      </section>
+      {/* Panel: bottom sheet on phones (dragged up to the whole screen), side panel on larger screens */}
+      <Sheet snap={snap} onSnap={setSnap} peek={64} header={titleBar} label="Planear viagem">
+        {netError ? (
+          <p className="text-sm text-red-700 py-4">Não foi possível carregar as paragens. Recarregue a página.</p>
+        ) : view.kind === "nearby" ? (
+          <NearbyView
+            nearby={nearby}
+            vias={vias}
+            places={places}
+            locState={locState}
+            meInArea={meInArea}
+            loading={!stops.length}
+            onStop={openStop}
+            onRetry={locate}
+            origin={start ? start.label : fromMe ? "A sua localização" : "Escolha o ponto de partida"}
+            originIsMe={fromMe}
+            hasStart={Boolean(start) || fromMe}
+            anchor={anchor}
+            destinos={destinos.key === destinosKey ? destinos.list : null}
+            onOrigin={pickStart}
+            onDestination={(p) =>
+              start
+                ? planTo(p, { stopIds: start.ids }, start.label)
+                : me && meInArea
+                  ? planTo(p, { me }, "A sua localização")
+                  : nearby[0] && planTo(p, { stopIds: [nearby[0].stop.id] }, nearby[0].stop.nome)
+            }
+          />
+        ) : view.kind === "stop" ? (
+          <StopView
+            key={view.stopId}
+            stop={stopById.get(view.stopId) ?? null}
+            stopId={view.stopId}
+            vias={vias}
+            places={places}
+            me={me}
+            onBack={() => setView({ kind: "nearby" })}
+            onOrigin={pickStart}
+            onDestination={(p) => planTo(p, { stopIds: [view.stopId] }, stopById.get(view.stopId)?.nome ?? "Paragem")}
+          />
+        ) : (
+          <JourneysView key={`${JSON.stringify(view.from)}>${view.to.join(",")}`} view={view} onBack={() => setView(view.back)} onShow={showJourney} />
+        )}
+      </Sheet>
     </div>
   );
 }
@@ -660,7 +670,7 @@ function RouteDots() {
     <div className="flex flex-col items-center py-5 pl-1" aria-hidden>
       <span className="w-3 h-3 rounded-full bg-blue-600 ring-4 ring-blue-100" />
       <span className="w-0.5 flex-1 bg-slate-300 my-1.5" />
-      <span className="w-3 h-3 bg-slate-900" />
+      <span className="w-3 h-3 rounded-full bg-slate-900 ring-4 ring-slate-200" />
     </div>
   );
 }
@@ -931,7 +941,7 @@ function NearbyView({
             <ul className="divide-y divide-slate-100">
               {nearby.map(({ stop, m }) => (
                 <li key={stop.id}>
-                  <button className="w-full text-left py-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-lg px-1" onClick={() => onStop(stop.id)}>
+                  <button className="w-full text-left py-2.5 flex items-center gap-3 hover:bg-slate-50 rounded-xl px-1" onClick={() => onStop(stop.id)}>
                     <span className="shrink-0 w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center" aria-hidden>
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z" />
@@ -1100,7 +1110,7 @@ function StopView({
                                 aria-hidden
                               />
                               <button
-                                className="w-full ml-2 flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-slate-100"
+                                className="w-full ml-2 flex items-center justify-between gap-2 rounded-xl px-2 py-1.5 text-left hover:bg-slate-100"
                                 onClick={() => onDestination({ ids: [p.id], label: p.nome })}
                               >
                                 <span className="min-w-0 truncate text-sm text-slate-800">{p.nome}</span>
@@ -1177,7 +1187,7 @@ function AllDestinations({
                   {d.vias.map((v, i) => (
                     <span
                       key={i}
-                      className="text-[11px] font-semibold px-1.5 py-0.5 rounded"
+                      className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                       style={{ background: v.cor, color: textOn(v.cor) }}
                       title={v.nome}
                     >
@@ -1293,7 +1303,7 @@ function JourneysView({
               </div>
             </button>
             {i === chosen && at(j.chegada).startsWith("amanhã") && !at(j.partida).startsWith("amanhã") && (
-              <p className="mx-3 mb-2 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg p-2">
+              <p className="mx-3 mb-2 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-xl p-2">
                 Parte da viagem só é possível amanhã: os autocarros circulam das 05:00 às 21:00.
               </p>
             )}

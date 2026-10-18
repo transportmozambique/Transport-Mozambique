@@ -6,12 +6,16 @@ import { formatEta, maputoClock } from "@/lib/eta";
 const GLIDE_MS = 1500;
 
 export const BUS_SVG = `<svg width="30" height="36" viewBox="0 0 32 38" style="display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));cursor:pointer">
-<rect x="6" y="10" width="20" height="22" rx="1.5" fill="#2563eb" stroke="#0a1f5c" stroke-width="1"/>
-<rect x="8" y="8" width="16" height="3" rx=".5" fill="#1e3a8a"/><rect x="8" y="12" width="16" height="5" rx=".5" fill="#e0f2fe" opacity=".8"/>
-<rect x="7" y="18" width="4" height="4" rx=".3" fill="#dbeafe" opacity=".7"/><rect x="21" y="18" width="4" height="4" rx=".3" fill="#dbeafe" opacity=".7"/>
-<rect x="7" y="24" width="4" height="4" rx=".3" fill="#dbeafe" opacity=".7"/><rect x="21" y="24" width="4" height="4" rx=".3" fill="#dbeafe" opacity=".7"/>
+<rect x="6" y="10" width="20" height="22" rx="4" fill="#2563eb" stroke="#0a1f5c" stroke-width="1"/>
+<rect x="8" y="8" width="16" height="3" rx="1.5" fill="#1e3a8a"/><rect x="8" y="12" width="16" height="5" rx="1.5" fill="#e0f2fe" opacity=".8"/>
+<rect x="7" y="18" width="4" height="4" rx="1" fill="#dbeafe" opacity=".7"/><rect x="21" y="18" width="4" height="4" rx="1" fill="#dbeafe" opacity=".7"/>
+<rect x="7" y="24" width="4" height="4" rx="1" fill="#dbeafe" opacity=".7"/><rect x="21" y="24" width="4" height="4" rx="1" fill="#dbeafe" opacity=".7"/>
 <circle cx="11" cy="7" r="2" fill="#fef08a" stroke="#fff"/><circle cx="21" cy="7" r="2" fill="#fef08a" stroke="#fff"/>
 <circle cx="10" cy="33" r="2.5" fill="#1f2937"/><circle cx="22" cy="33" r="2.5" fill="#1f2937"/></svg>`;
+
+/** Credit the FOSSGIS router asks for (walks along the streets), with OpenStreetMap's "fix the map" */
+export const WALK_ATTRIBUTION =
+  'Percursos a pé: <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener">OSRM / FOSSGIS</a> · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">Corrigir o mapa</a>';
 
 export const EMPTY: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: [] };
 

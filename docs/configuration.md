@@ -19,6 +19,7 @@ This page lists everything you can configure: environment variables per app, Ver
 | `AFRICASTALKING_USERNAME` | with the key | Africa's Talking app username. `sandbox` for the sandbox. | Defaults to `sandbox`. |
 | `AFRICASTALKING_SHORTCODE` | no | Sender ID or short code used as `from` on outgoing SMS (live accounts only). | Africa's Talking's default sender. |
 | `USSD_CALLBACK_KEY` | recommended | Key that `/api/ussd` requires as `?key=` in the callback URL, so only Africa's Talking can call it ([Security → USSD callback](security.md#ussd-callback)). | Anyone can call `/api/ussd`. |
+| `WALK_ROUTER_URL` | no | OSRM route service used for walks along the streets, up to the profile (`…/route/v1/foot`). For a router of our own. | The FOSSGIS foot router, `https://routing.openstreetmap.de/routed-foot/route/v1/foot`. |
 | `TELERIVET_SECRET` | no (legacy) | Shared secret checked by `/api/ussd-telerivet`, the unused Telerivet gateway endpoint. | That endpoint skips the check. |
 
 ### `transport-admin` (back office)
@@ -121,6 +122,7 @@ These values are fixed in code. Change them with a code change and a deploy.
 | Waiting-passenger window | 3 h | `transport-client/app/api/driver/seguidores/route.ts` | Alerts counted on the driver portal. |
 | `USSD_MAX`, `PAGE_SIZE` | 182 characters, 6 items | `transport-client/app/api/ussd/route.ts` | USSD screen length and list page size. |
 | Fare rule cache | 60 s | `transport-client/lib/fares.ts` | |
+| Walk paths | 2,000 kept in memory per instance; one router request a second per instance, skipped after a 2.5 s wait; 4 s timeout; CDN 7 days | `transport-client/lib/walkRoute.ts`, `app/api/walk/route.ts` | Walks along the streets on the maps. |
 | Route path cache | 5 min | `transport-client/lib/vehiclePosition.ts` (`routePaths`) | Live map position polling. |
 | Dashboard stats cache | 5 min | `transport-admin/app/api/dashboard/stats/route.ts` | |
 | Session lifetimes | passenger 90 days, driver 30 days, admin 12 h | `lib/userSession.ts`, `lib/driverSession.ts`, `transport-admin/lib/adminSession.ts` | |

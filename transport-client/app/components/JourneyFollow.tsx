@@ -10,7 +10,9 @@ import { maputoClock } from "@/lib/eta";
 import { distanceMeters, formatDistance, type Point } from "@/lib/places";
 import Plate from "./Plate";
 import UserAvatar from "./UserAvatar";
-import { BUS_SVG, EMPTY, at, duration, glideMarker, mePin, paintFace, soon, textOn } from "./mapKit";
+import Sheet, { type SheetSnap } from "./Sheet";
+import { useWalkPaths, type Walk } from "./walkPaths";
+import { BUS_SVG, EMPTY, at, duration, glideMarker, mePin, paintFace, soon, textOn, WALK_ATTRIBUTION } from "./mapKit";
 
 /**
  * Following a journey (/viagem): every bus of it, the walks and the passenger on one map, with
@@ -48,7 +50,7 @@ function busMarker(matricula: string, cor: string) {
   icon.innerHTML = BUS_SVG;
   const tag = document.createElement("div");
   tag.textContent = matricula;
-  tag.style.cssText = `margin-top:-2px;padding:1px 6px;border-radius:6px;background:${cor};color:${textOn(cor)};font:700 11px ui-monospace,monospace;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3)`;
+  tag.style.cssText = `margin-top:-2px;padding:1px 6px;border-radius:999px;background:${cor};color:${textOn(cor)};font:700 11px ui-monospace,monospace;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3)`;
   el.append(icon, tag);
   return el;
 }
@@ -84,7 +86,7 @@ export default function JourneyFollow() {
   const [bus, setBus] = useState<FollowedBus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [me, setMe] = useState<Point | null>(null);
-  const [expanded, setExpanded] = useState(true);
+  const [snap, setSnap] = useState<SheetSnap>("half");
 
   const meRef = useRef<Point | null>(null);
   const phaseRef = useRef(phase);
@@ -188,19 +190,19 @@ export default function JourneyFollow() {
       style: "https://tiles.openfreemap.org/styles/liberty",
       center: [32.5892, -25.9655],
       zoom: 12,
-      attributionControl: { compact: true },
+      attributionControl: { compact: true, customAttribution: WALK_ATTRIBUTION },
     });
     map.current = m;
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
     m.on("load", () => {
       m.addSource("legs", { type: "geojson", data: EMPTY });
+      m.addSource("walks", { type: "geojson", data: EMPTY });
       m.addSource("points", { type: "geojson", data: EMPTY });
       m.addLayer({
         id: "walk",
         type: "line",
-        source: "legs",
-        filter: ["==", ["get", "kind"], "walk"],
-        layout: { "line-cap": "round" },
+        source: "walks",
+        layout: { "line-cap": "round", "line-join": "round" },
         paint: { "line-color": "#334155", "line-width": 4, "line-dasharray": [0.6, 1.6], "line-opacity": ["case", ["get", "feito"], 0.35, 1] },
       });
       m.addLayer({
@@ -278,7 +280,7 @@ export default function JourneyFollow() {
       journey.etapas.forEach((e, i) => {
         const feito = e.estado === "feito";
         if (e.tipo === "pe") {
-          lines.push({ type: "Feature", geometry: { type: "LineString", coordinates: [[e.de.lng, e.de.lat], [e.para.lng, e.para.lat]] }, properties: { kind: "walk", feito } });
+          lines.push({ type: "Feature", geometry: { type: "LineString", coordinates: [[e.de.lng, e.de.lat], [e.para.lng, e.para.lat]] }, properties: { kind: "walk-ends" } });
           if (i === journey.etapas.length - 1) points.push(point(e.para, "end"));
         } else {
           lines.push({ type: "Feature", geometry: { type: "LineString", coordinates: e.percurso }, properties: { kind: "bus", cor: e.via.cor, feito } });
@@ -308,6 +310,22 @@ export default function JourneyFollow() {
       m.fitBounds(bounds, { padding: padding(), maxZoom: 16, duration: 0 });
     }
   }, [mapReady, journey, bus]);
+
+  // The walks, along the streets once their paths arrive
+  const walkLegs = useMemo(() => (journey?.etapas ?? []).filter((e): e is FollowWalk => e.tipo === "pe"), [journey]);
+  const walks = useMemo<Walk[]>(() => walkLegs.map((e) => ({ from: [e.de.lat, e.de.lng], to: [e.para.lat, e.para.lng] })), [walkLegs]);
+  const walkLines = useWalkPaths(walks);
+  useEffect(() => {
+    if (!mapReady) return;
+    (map.current?.getSource("walks") as GeoJSONSource | undefined)?.setData({
+      type: "FeatureCollection",
+      features: walkLines.map((coordinates, i) => ({
+        type: "Feature",
+        geometry: { type: "LineString", coordinates },
+        properties: { feito: walkLegs[i]?.estado === "feito" },
+      })),
+    });
+  }, [mapReady, walkLines, walkLegs]);
 
   // The journey's buses, moving
   useEffect(() => {
@@ -399,7 +417,7 @@ export default function JourneyFollow() {
       </div>
 
       {/* Map buttons: the whole journey, and the passenger */}
-      <div className="absolute z-30 right-3 flex flex-col gap-2 bottom-[calc(50vh+12px)] md:bottom-6">
+      <div className={`absolute z-30 right-3 flex flex-col gap-2 ${snap === "peek" ? "bottom-[108px]" : "bottom-[calc(50dvh+12px)]"} md:bottom-6`}>
         <button onClick={showAll} className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-slate-900 shadow-lg hover:bg-slate-50">
           Ver a viagem toda
         </button>
@@ -422,22 +440,24 @@ export default function JourneyFollow() {
         <UserAvatar />
       </div>
 
-      {/* Panel: a card on the left on a computer, a bottom sheet on a phone */}
-      <section
-        className={`absolute z-30 left-0 right-0 bottom-0 md:left-3 md:top-3 md:bottom-3 md:right-auto md:w-[420px] bg-white rounded-t-3xl md:rounded-2xl shadow-2xl flex flex-col transition-[max-height] duration-300 ${expanded ? "max-h-[50vh]" : "max-h-[96px]"} md:max-h-none`}
+      {/* Panel: a card on the left on a computer, a bottom sheet on a phone (dragged up to the whole screen) */}
+      <Sheet
+        snap={snap}
+        onSnap={setSnap}
+        peek={96}
+        label={busOnly ? "Acompanhar autocarro" : "A sua viagem"}
+        header={
+          <>
+            <button onClick={back} className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-800 hover:bg-slate-200">
+              ← Voltar
+            </button>
+            <span className="text-sm font-bold text-slate-900">{busOnly ? "Acompanhar autocarro" : "A sua viagem"}</span>
+            <UserAvatar />
+          </>
+        }
       >
-        <button className="md:hidden flex justify-center pt-2 pb-1" onClick={() => setExpanded((x) => !x)} aria-label={expanded ? "Baixar o painel" : "Subir o painel"}>
-          <span className="h-1.5 w-10 rounded-full bg-slate-300" />
-        </button>
-        <header className="hidden md:flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
-          <button onClick={back} className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-800 hover:bg-slate-200">
-            ← Voltar
-          </button>
-          <span className="text-sm font-bold text-slate-900">{busOnly ? "Acompanhar autocarro" : "A sua viagem"}</span>
-          <UserAvatar />
-        </header>
-        <div className="overflow-y-auto px-4 pb-4 pt-2 md:pt-4">{body}</div>
-      </section>
+        <div className="pt-2 md:pt-0">{body}</div>
+      </Sheet>
     </div>
   );
 }
@@ -564,7 +584,7 @@ function NowCard({
   const atStop = !walk || walk.metros <= AT_STOP_M || (me !== null && distanceMeters(me, [current.de.lat, current.de.lng]) <= AT_STOP_M);
   const busLabel = (
     <span className="inline-flex items-center gap-2">
-      <span className="rounded-md px-1.5 py-0.5 text-xs font-bold" style={{ background: current.via.cor, color: textOn(current.via.cor) }}>
+      <span className="rounded-lg px-1.5 py-0.5 text-xs font-bold" style={{ background: current.via.cor, color: textOn(current.via.cor) }}>
         {current.via.codigo}
       </span>
       <span className="font-mono text-sm font-bold">{current.transporte.matricula}</span>
@@ -665,7 +685,7 @@ function Step({ e, last }: { e: FollowWalk | FollowBus; last: boolean }) {
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-semibold text-slate-900 truncate">
-                  <span className="mr-1.5 rounded px-1.5 py-0.5 text-[11px] font-bold" style={{ background: e.via.cor, color: textOn(e.via.cor) }}>
+                  <span className="mr-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: e.via.cor, color: textOn(e.via.cor) }}>
                     {e.via.codigo}
                   </span>
                   {e.via.nome}
@@ -699,7 +719,7 @@ function BusPanel({ bus }: { bus: FollowedBus }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-bold text-slate-900">
-            <span className="mr-1.5 rounded px-1.5 py-0.5 text-xs font-bold" style={{ background: bus.via.cor, color: textOn(bus.via.cor) }}>
+            <span className="mr-1.5 rounded-full px-2 py-0.5 text-xs font-bold" style={{ background: bus.via.cor, color: textOn(bus.via.cor) }}>
               {bus.via.codigo}
             </span>
             {bus.via.nome}
