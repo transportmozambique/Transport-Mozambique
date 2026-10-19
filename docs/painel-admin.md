@@ -1,13 +1,14 @@
 # Painel de administração
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 4. Usar as aplicações › **Painel de administração** (página 16 de 23)
+[Documentação](README.md) › 4. Usar as aplicações › **Painel de administração** (página 18 de 25)
 
 Anterior: [Portal do motorista](portal-motorista.md) · [Índice](README.md) · Seguinte: [Publicação](publicacao.md)
 
 <details>
 <summary>Todas as páginas</summary>
 
+- 0. Começar do zero: [Conceitos básicos](conceitos.md) · [Preparar o computador](preparar-o-computador.md)
 - 1. Conhecer o projecto: [Visão geral](visao-geral.md) · [Glossário](glossario.md) · [Fontes de dados](fontes-de-dados.md) · [Estado do projecto](estado-do-projecto.md)
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
 - 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · [Localização e GPS](localizacao-gps.md) · [Serviço USSD](ussd.md) · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
@@ -18,13 +19,15 @@ Anterior: [Portal do motorista](portal-motorista.md) · [Índice](README.md) · 
 </details>
 <!-- /navegação -->
 
+> **Em palavras simples:** O painel é o site de gestão: nele criam-se as rotas, as paragens, os veículos e os motoristas, dá-se um PIN a cada motorista e mudam-se os preços. Esta página ensina as tarefas mais comuns, passo a passo, e depois cada página do painel.
+
 | | |
 |---|---|
 | Ao vivo | https://transport-mz-admin.vercel.app |
 | Localmente | http://localhost:3002 ([Primeiros passos](primeiros-passos.md#7-correr-as-aplicações)) |
-| Código | [`transport-admin/app`](../transport-admin/app) (páginas) e [`transport-admin/app/api`](../transport-admin/app/api) (API) |
+| Código | [`transport-admin/app`](../transport-admin/app) (páginas) e [`transport-admin/app/api`](../transport-admin/app/api) ([API](conceitos.md#api "Uma API é a lista de pedidos que um servidor aceita de outros programas; cada um desses pedidos, com o seu endereço, é um endpoint.")) |
 
-O escritório da plataforma. Os administradores gerem a rede (províncias, municípios, rotas e paragens), a frota (veículos, motoristas, proprietários), os passageiros e os outros administradores. Também acompanham cada veículo ao vivo, ligam rastreadores GPS, dão os PIN aos motoristas e imprimem relatórios. O painel tem a sua própria API sobre a mesma base de dados da aplicação dos passageiros, e nunca chama a aplicação dos passageiros ([Visão geral → Como as partes se ligam](visao-geral.md#como-as-partes-se-ligam)). Porquê uma aplicação separada: um erro no painel não derruba o que os passageiros usam, e o painel pode exigir sessão em toda a API sem excepções.
+O escritório da plataforma. Os administradores gerem a rede (províncias, municípios, rotas e paragens), a frota (veículos, motoristas, proprietários), os passageiros e os outros administradores. Também acompanham cada veículo ao vivo, ligam [rastreadores GPS](conceitos.md#rastreador "Um aparelho (ou um telemóvel com uma aplicação) que envia a posição de um veículo pela internet; o código do dispositivo é a sua 'palavra-passe'."), dão os PIN aos motoristas e imprimem relatórios. O painel tem a sua própria API sobre a mesma [base de dados](conceitos.md#base-de-dados "O sítio organizado onde a plataforma guarda tudo o que tem de durar: rotas, paragens, veículos, contas.") da aplicação dos passageiros, e nunca chama a aplicação dos passageiros ([Visão geral → Como as partes se ligam](visao-geral.md#como-as-partes-se-ligam)). Porquê uma aplicação separada: um erro no painel não derruba o que os passageiros usam, e o painel pode exigir [sessão](conceitos.md#sessao "Depois de entrar, o servidor dá uma prova de quem se é (um token), e o navegador mostra-a a cada pedido para não ter de pedir a palavra-passe outra vez.") em toda a API sem excepções.
 
 As capturas desta página foram feitas numa cópia local dos dados de produção, com os números de telefone e de BI desfocados.
 
@@ -36,21 +39,21 @@ As capturas desta página foram feitas numa cópia local dos dados de produção
 
 <img src="images/admin-login.png" alt="Página de entrada do painel: email, palavra-passe, Entrar" width="560">
 
-`/login` pede email e palavra-passe. `POST /api/auth/admin/login` confirma o hash bcrypt em `Administrador.senha` e põe o cookie `admin_session`: `HttpOnly`, válido 12 horas, assinado com `ADMIN_SESSION_SECRET` ([`lib/adminSession.ts`](../transport-admin/lib/adminSession.ts)).
+`/login` pede email e palavra-passe. `POST /api/auth/admin/login` confirma o [hash](conceitos.md#hash "Uma 'impressão digital' de um texto, que se calcula num sentido e não se consegue desfazer.") bcrypt em `Administrador.senha` e põe o cookie `admin_session`: `HttpOnly`, válido 12 horas, assinado com `ADMIN_SESSION_SECRET` ([`lib/adminSession.ts`](../transport-admin/lib/adminSession.ts)).
 
-- [`proxy.ts`](../transport-admin/proxy.ts) responde **401** a qualquer pedido `/api/*` sem um cookie válido, menos a entrada e a saída. A aplicação do navegador trata qualquer 401 da API do painel como sessão expirada: sai da conta e abre `/login` ([`AuthContext.tsx`](../transport-admin/app/contexts/AuthContext.tsx)).
-- Sem `ADMIN_SESSION_SECRET` em produção, a entrada responde 500 "Servidor sem configuração de sessão" e nenhuma sessão é aceite ([Configuração](configuracao.md#transport-admin-painel-de-administração)).
+- [`proxy.ts`](../transport-admin/proxy.ts) responde **[401](conceitos.md#codigos-de-resposta "O número de três algarismos com que o servidor diz como correu o pedido.")** a qualquer pedido `/api/*` sem um cookie válido, menos a entrada e a saída. A aplicação do [navegador](conceitos.md#navegador "O programa com que se abrem sites: Chrome, Firefox, Edge, Safari.") trata qualquer 401 da API do painel como sessão expirada: sai da conta e abre `/login` ([`AuthContext.tsx`](../transport-admin/app/contexts/AuthContext.tsx)).
+- Sem `ADMIN_SESSION_SECRET` em produção, a entrada responde 500 "[Servidor](conceitos.md#servidor "Um computador sempre ligado que recebe pedidos e responde a eles.") sem configuração de sessão" e nenhuma sessão é aceite ([Configuração](configuracao.md#transport-admin-painel-de-administração)).
 - `localStorage['admin']` só guarda o perfil mostrado no cabeçalho. Não dá acesso a nada.
 
-Porquê um cookie `HttpOnly` aqui (e não um token no `localStorage`, como nas outras aplicações): o painel e a sua API estão no mesmo domínio, e um cookie que o JavaScript não lê não pode ser roubado por um script injectado na página.
+Porquê um cookie `HttpOnly` aqui (e não um token no `localStorage`, como nas outras aplicações): o painel e a sua API estão no mesmo domínio, e um cookie que o [JavaScript](conceitos.md#typescript "As linguagens em que o código deste projecto está escrito; TypeScript é JavaScript com verificações extra.") não lê não pode ser roubado por um [script](conceitos.md#script "Um pequeno programa que se corre à mão, uma vez, para uma tarefa: importar dados, corrigir percursos, mostrar listas.") injectado na página.
 
-**O primeiro administrador** cria-se num terminal, em `transport-admin`:
+**O primeiro administrador** cria-se num [terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar."), em `transport-admin`:
 
 ```bash
 node create-admin.js   # pede nome, email e palavra-passe (pelo menos 10 caracteres, sem a mostrar)
 ```
 
-Escreve na base de dados de `DATABASE_URL` (ambiente ou `.env`). Corrido outra vez com um email que já existe, define uma palavra-passe nova. Depois disso, os administradores gerem-se no painel ([abaixo](#administradores-e-perfil)). Todos os administradores têm os mesmos direitos.
+Escreve na base de dados de `DATABASE_URL` (ambiente ou [`.env`](conceitos.md#variavel-de-ambiente "Uma definição que se dá a um programa de fora do código, como o endereço da base de dados ou uma palavra-passe.")). Corrido outra vez com um email que já existe, define uma palavra-passe nova. Depois disso, os administradores gerem-se no painel ([abaixo](#administradores-e-perfil)). Todos os administradores têm os mesmos direitos.
 
 ## Tarefas comuns, passo a passo
 
@@ -62,7 +65,7 @@ Cada tarefa é o caminho mais curto pelos ecrãs. As secções seguintes descrev
 2. Escrever o nome (por exemplo "Baixa - Museu"), um código que nenhuma outra rota use (`V120`) e escolher o município.
 3. Clicar no mapa no primeiro terminal, depois em cada curva que o autocarro faz, até ao último terminal. A linha segue as estradas depois de cada clique. Arrastar um ponto move-o; clicar nele apaga-o.
 4. Confirmar a lista "Paragens da Rota": as paragens a menos de 50 m da linha estão marcadas. Desmarcar as que o autocarro não serve.
-5. Carregar em **Criar Via**. Se recusar com "Não foi possível calcular o percurso pelas estradas…", os routers não responderam: mover um ponto para tentar outra vez ([detalhes](#rotas-vias)).
+5. Carregar em **Criar Via**. Se recusar com "Não foi possível calcular o percurso pelas estradas…", os [routers](conceitos.md#router "Um serviço que, dados dois ou mais pontos, responde com o caminho pelas ruas entre eles e a distância.") não responderam: mover um ponto para tentar outra vez ([detalhes](#rotas-vias)).
 
 <a id="tarefa-redesenhar"></a>**Redesenhar o percurso de uma rota** (uma linha que corta quarteirões)
 
@@ -89,7 +92,7 @@ Cada tarefa é o caminho mais curto pelos ecrãs. As secções seguintes descrev
 1. **Motoristas** → **Novo Motorista**. Preencher os dados pessoais, de documentos e de contacto e carregar em **Criar Motorista**.
 2. Dar-lhe um veículo: **Motoristas** → **Atribuir Motoristas**. Escolher o veículo à esquerda e o motorista à direita, depois **Atribuir Motorista**. (Ou, na página do veículo, "Atribuir Motorista".)
 3. Abrir a página do motorista e carregar em **Gerar PIN** no cartão "PIN de Acesso". Apontar os 6 algarismos: só se mostram uma vez.
-4. Dar ao motorista o PIN e o endereço do portal, https://transport-mz-driver.vercel.app. Ele entra com o número de telefone e o PIN ([Portal do motorista](portal-motorista.md#o-dia-de-um-motorista-passo-a-passo)). O mesmo PIN funciona na opção 6 do USSD.
+4. Dar ao motorista o PIN e o endereço do portal, https://transport-mz-driver.vercel.app. Ele entra com o número de telefone e o PIN ([Portal do motorista](portal-motorista.md#o-dia-de-um-motorista-passo-a-passo)). O mesmo PIN funciona na opção 6 do [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.").
 
 <a id="tarefa-pin"></a>**Dar um PIN a um motorista, ou repor um PIN esquecido**
 
@@ -103,7 +106,7 @@ Na página do veículo antigo, carregar no × ao lado do motorista; depois atrib
 
 1. **Transportes** → abrir o veículo → cartão **Rastreador GPS** → **Gerar código do dispositivo**.
 2. Copiar o código de 20 caracteres (só aparece uma vez) e a configuração por baixo.
-3. Pôr o código num rastreador GPS ou na aplicação Traccar Client de um telemóvel que vai no veículo ([Localização e GPS](localizacao-gps.md#1-criar-o-código-do-dispositivo)). Ou o motorista cola-o no perfil do portal do motorista ("Código GPS do veículo").
+3. Pôr o código num rastreador GPS ou na aplicação [Traccar Client](conceitos.md#traccar "Uma aplicação gratuita para telemóvel que envia a posição do telemóvel pelo protocolo OsmAnd.") de um telemóvel que vai no veículo ([Localização e GPS](localizacao-gps.md#1-criar-o-código-do-dispositivo)). Ou o motorista cola-o no perfil do portal do motorista ("Código [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") do veículo").
 4. Quando as posições chegam, o cartão diz **GPS ativo** e os passageiros vêem a posição real em vez da do horário.
 
 <a id="tarefa-tarifa"></a>**Mudar as tarifas ou as velocidades**
@@ -167,7 +170,7 @@ Tudo menos "Agora" vem de um só pedido, `GET /api/dashboard/stats`, **guardado 
 | Bloco | O que conta |
 |---|---|
 | Transportes / Motoristas / Vias / Paragens | As linhas de cada tabela. Em Transportes: quantos não têm motorista ("todos com motorista" quando nenhum). Em Motoristas: "activos" = motoristas com estado `ativo` **e** um veículo. Em Vias: rotas com pelo menos um veículo. Cada cartão abre a sua lista. |
-| Mapa de vias | O percurso guardado de cada rota, na cor da rota, no mapa de ruas da OpenFreeMap. Uma rota tocada na lista "Vias" aparece sozinha; tocar outra vez mostra todas. |
+| Mapa de vias | O percurso guardado de cada rota, na cor da rota, no mapa de ruas da [OpenFreeMap](conceitos.md#mosaicos "As imagens das ruas por baixo dos autocarros e das paragens, que o mapa descarrega aos bocados (mosaicos) conforme se mexe."). Uma rota tocada na lista "Vias" aparece sozinha; tocar outra vez mostra todas. |
 | Agora | O que cada veículo está a fazer agora, de `GET /api/transportes/estado` (GPS, ou o horário sem GPS), a cada 30 segundos: Em circulação, Parados (num terminal ou fora de serviço), Com GPS activo, Sem rota (sem percurso onde o pôr). Sem cache. |
 | Vias | Todas as rotas com os terminais e o número de veículos, as com mais veículos primeiro. |
 | Vias por município | Rotas por município. |
@@ -237,7 +240,7 @@ Como preparar o telemóvel ou o rastreador está em [Localização e GPS](locali
 
 - **Comprimento:** o comprimento do percurso guardado.
 - **Tempo Médio:** o tempo de um sentido à velocidade de viagem da regra de tarifa ("por sentido, a 30 km/h").
-- **Paragens:** todas as paragens pela **ordem de viagem** (projectadas no percurso, porque `ViaParagem` não tem coluna de ordem), com os terminais marcados.
+- **Paragens:** todas as paragens pela **ordem de viagem** (projectadas no percurso, porque [`ViaParagem`](glossario.md#a-rede-e-as-pessoas "A ligação de uma paragem a uma rota") não tem coluna de ordem), com os terminais marcados.
 - **Mapa da Rota:** o percurso guardado e as paragens.
 - **Transportes Atribuídos:** os veículos da rota, com o motorista.
 
@@ -267,7 +270,7 @@ Num telemóvel o mapa vem primeiro, por cima das listas de paragens.
 
 ## Paragens (`/paragens`)
 
-**Lista.** Nome, código, coordenadas e rotas; a pesquisa coincide com o nome ou o código, sem contar as maiúsculas. Os contadores mostram o total, os terminais, as paragens normais e a média de rotas por paragem.
+**Lista.** Nome, código, [coordenadas](conceitos.md#coordenadas "Dois números que dizem onde está um ponto na Terra.") e rotas; a pesquisa coincide com o nome ou o código, sem contar as maiúsculas. Os contadores mostram o total, os terminais, as paragens normais e a média de rotas por paragem.
 
 ![Lista de paragens: totais, terminais, paragens normais, e cada paragem com as rotas, o tipo e as coordenadas](images/admin-paragens.png)
 
@@ -275,7 +278,7 @@ Num telemóvel o mapa vem primeiro, por cima das listas de paragens.
 
 ![Página de uma paragem: coordenadas, mapa e as rotas que lá passam](images/admin-paragem-detail.png)
 
-Tipo (paragem ou terminal), número de rotas, código, coordenadas num mapa do OpenStreetMap, e as rotas que passam na paragem.
+Tipo (paragem ou terminal), número de rotas, código, coordenadas num mapa do [OpenStreetMap](conceitos.md#openstreetmap "Um mapa do mundo inteiro feito por voluntários, como uma Wikipédia dos mapas, que qualquer pessoa pode usar e corrigir."), e as rotas que passam na paragem.
 
 **Nova e editar.** Nome, código, e um clique no mapa para a posição (os campos de latitude e longitude são só de leitura). Aparecem as rotas que passam a menos de **100 m** do clique; marcar as rotas a que a paragem pertence. Um clique sem rotas a menos de 100 m responde "Nenhuma via encontrada (raio de 100m)" com a mais próxima. **"Esta paragem é um terminal"** guarda-se em cada ligação a uma rota (`ViaParagem.terminalBoolean`), não na paragem. Porquê na ligação: uma paragem pode ser o terminal de uma rota e uma paragem a meio de outra.
 
@@ -304,7 +307,7 @@ Dados pessoais, documentos de BI e carta, contactos e contacto de emergência, e
 | "Sem PIN: não pode entrar" | Sem PIN: o motorista não consegue entrar em lado nenhum. |
 | "PIN definido" | Há um PIN. Não se pode mostrar outra vez. |
 
-"Gerar PIN" / "Gerar novo PIN" (`POST /api/motoristas/{id}/pin`) tira um PIN aleatório de 6 algarismos, guarda o seu hash bcrypt em `Motorista.password` e mostra o PIN uma vez ("Novo PIN (só é mostrado agora)"). O PIN anterior deixa logo de funcionar, que é também como se repõe um PIN esquecido. Nenhuma API devolve o hash: o cliente Prisma do painel omite `Motorista.password` em todas as consultas ([Segurança → Motoristas](seguranca.md#motoristas)).
+"Gerar PIN" / "Gerar novo PIN" (`POST /api/motoristas/{id}/pin`) tira um PIN aleatório de 6 algarismos, guarda o seu hash bcrypt em `Motorista.password` e mostra o PIN uma vez ("Novo PIN (só é mostrado agora)"). O PIN anterior deixa logo de funcionar, que é também como se repõe um PIN esquecido. Nenhuma API devolve o hash: o cliente [Prisma](conceitos.md#prisma "A ferramenta com que o código fala com a base de dados sem escrever SQL à mão.") do painel omite `Motorista.password` em todas as consultas ([Segurança → Motoristas](seguranca.md#motoristas)).
 
 **Novo e editar.** Todos os campos pessoais e de documentos são obrigatórios, menos deficiência e notas. Não há campo de palavra-passe: depois de criar o motorista, abre-se a sua página e carrega-se em "Gerar PIN". O número de BI, o número da carta e o email têm de ser únicos.
 
@@ -332,7 +335,7 @@ A lista de municípios conta as suas rotas e as paragens distintas nessas rotas.
 
 ![Lista de passageiros](images/admin-utentes.png)
 
-**Lista.** Nome e email, telefone, código `MISSION` (`Utente.mISSION`, uma referência única), subscrição, número de alertas de chegada e data de registo.
+**Lista.** Nome e email, telefone, código [`MISSION`](glossario.md#a-rede-e-as-pessoas "Um alerta de chegada: um SMS quando um autocarro estiver perto de uma paragem") (`Utente.mISSION`, uma referência única), subscrição, número de alertas de chegada e data de registo.
 
 Os passageiros que só usaram o USSD aparecem com um email provisório (`+258…@temp.com`), um código `USSD-…`, "Não subscrito" e sem palavra-passe. Completam a conta ao registar-se na web com o mesmo telefone ([Aplicação dos passageiros → Conta e entrada](app-passageiros.md#conta-e-entrada)).
 

@@ -1,13 +1,14 @@
 # Serviço USSD
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 3. Perceber como funciona › **Serviço USSD** (página 10 de 23)
+[Documentação](README.md) › 3. Perceber como funciona › **Serviço USSD** (página 12 de 25)
 
 Anterior: [Localização e GPS](localizacao-gps.md) · [Índice](README.md) · Seguinte: [Segurança](seguranca.md)
 
 <details>
 <summary>Todas as páginas</summary>
 
+- 0. Começar do zero: [Conceitos básicos](conceitos.md) · [Preparar o computador](preparar-o-computador.md)
 - 1. Conhecer o projecto: [Visão geral](visao-geral.md) · [Glossário](glossario.md) · [Fontes de dados](fontes-de-dados.md) · [Estado do projecto](estado-do-projecto.md)
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
 - 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · [Localização e GPS](localizacao-gps.md) · **Serviço USSD** · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
@@ -18,12 +19,14 @@ Anterior: [Localização e GPS](localizacao-gps.md) · [Índice](README.md) · S
 </details>
 <!-- /navegação -->
 
-O USSD leva a plataforma a qualquer telemóvel, sem dados nem aplicação. O passageiro marca um código curto, e o gateway do operador (Africa's Talking) passa cada tecla para `POST /api/ussd` da aplicação dos passageiros, que responde com o ecrã seguinte. O serviço está em português sem acentos (GSM-7), e cada ecrã cabe em 182 caracteres. Esta página explica o caminho de um pedido, **como se lê cada tecla**, como a pesquisa aceita nomes mal escritos, e mostra todos os ecrãs.
+> **Em palavras simples:** O [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.") é o menu que aparece num telemóvel simples quando se marca um código como `*384*848080#`, como o do saldo. Com ele, qualquer pessoa procura autocarros sem [internet](conceitos.md#internet "A rede que liga milhões de computadores e telemóveis, por onde passam os pedidos e as respostas."). Esta página mostra todos os ecrãs do menu, e explica o que acontece entre a tecla carregada e o ecrã seguinte.
+
+O USSD leva a plataforma a qualquer telemóvel, sem dados nem aplicação. O passageiro marca um código curto, e o [gateway](conceitos.md#gateway "A empresa que faz a ponte entre as redes dos telemóveis (Vodacom, Movitel, Tmcel) e a internet.") do operador ([Africa's Talking](conceitos.md#africas-talking "O gateway de USSD e SMS usado por este projecto.")) passa cada tecla para `POST /api/ussd` da aplicação dos passageiros, que responde com o ecrã seguinte. O serviço está em português sem acentos ([GSM-7](conceitos.md#gsm-7 "O conjunto de letras que todos os telemóveis mostram nos SMS e no USSD; não tem a maior parte das letras acentuadas.")), e cada ecrã cabe em 182 caracteres. Esta página explica o caminho de um pedido, **como se lê cada tecla**, como a pesquisa aceita nomes mal escritos, e mostra todos os ecrãs.
 
 | | |
 |---|---|
 | Código (sandbox) | `*384*848080#`, marcado no [simulador da Africa's Talking](africas-talking.md#usar-o-menu-no-simulador) |
-| URL de resposta (callback) | `https://transport-mz.vercel.app/api/ussd?key=…` |
+| [URL](conceitos.md#url "O texto que diz ao navegador onde está uma página ou informação, como https://transport-mz.vercel.app/viagem.") de resposta ([callback](conceitos.md#callback "Um endereço que se dá a outro serviço para ele chamar sempre que algo acontece.")) | `https://transport-mz.vercel.app/api/ussd?key=…` |
 | Código | [`app/api/ussd/route.ts`](../transport-client/app/api/ussd/route.ts) (menus) e [`lib/ussdSteps.ts`](../transport-client/lib/ussdSteps.ts) (leitura das teclas) |
 | Pesquisa de nomes | [`lib/places.ts`](../transport-client/lib/places.ts) (`searchPlaces`, `matchScore`) |
 | Configuração e simulador | [Africa's Talking, passo a passo](africas-talking.md#como-foi-configurado-passo-a-passo) |
@@ -37,7 +40,7 @@ O USSD leva a plataforma a qualquer telemóvel, sem dados nem aplicação. O pas
 
 ## O caminho de um pedido
 
-O USSD não é a internet: a sessão vive na rede do operador. A Africa's Talking liga essa sessão à aplicação por HTTP, um pedido por tecla.
+O USSD não é a internet: a [sessão](conceitos.md#sessao "Depois de entrar, o servidor dá uma prova de quem se é (um token), e o navegador mostra-a a cada pedido para não ter de pedir a palavra-passe outra vez.") vive na rede do operador. A Africa's Talking liga essa sessão à aplicação por [HTTP](conceitos.md#http "A forma combinada como o navegador (ou outro programa) pede algo a um servidor, e como o servidor responde."), um pedido por tecla.
 
 ```mermaid
 sequenceDiagram
@@ -68,7 +71,7 @@ sequenceDiagram
   H--)AT: SMS (depois de responder, com waitUntil)
 ```
 
-**O pedido.** Em cada tecla, a Africa's Talking envia um `POST` com o corpo em formulário:
+**O pedido.** Em cada tecla, a Africa's Talking envia um [`POST`](conceitos.md#get-e-post "GET pede para ver uma coisa; POST envia dados para o servidor fazer algo com eles.") com o corpo em formulário:
 
 | Campo | Exemplo | Significado |
 |---|---|---|
@@ -77,14 +80,14 @@ sequenceDiagram
 | `phoneNumber` | `+258840000001` | Quem marcou |
 | `text` | `1*museu*zimpeto` | **Todas as respostas até agora**, juntas com `*`. Vazio no primeiro pedido. |
 
-Com `USSD_CALLBACK_KEY` definida, o URL tem de levar `?key=<esse valor>`, senão a resposta é `403 Forbidden` ([Segurança → Resposta USSD](seguranca.md#resposta-ussd-callback)). Porquê: a Africa's Talking não assina os pedidos, e os menus confiam em `phoneNumber` (enviam SMS para ele, e a opção 6 faz entrar um motorista por ele).
+Com `USSD_CALLBACK_KEY` definida, o URL tem de levar `?key=<esse valor>`, senão a resposta é `403 Forbidden` ([Segurança → Resposta USSD](seguranca.md#resposta-ussd-callback)). Porquê: a Africa's Talking não assina os pedidos, e os menus confiam em `phoneNumber` (enviam [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") para ele, e a opção 6 faz entrar um motorista por ele).
 
 **A resposta.** Texto simples (`text/plain`) a começar por:
 
 - `CON ` — mostrar este ecrã e esperar resposta;
 - `END ` — mostrar este ecrã e fechar a sessão.
 
-**Sem estado no servidor.** O servidor não guarda nada entre pedidos: em cada pedido parte `text` em `*` e repete o caminho desde o menu principal. Porquê: qualquer instância serverless responde a qualquer tecla, um pedido perdido não estraga nada, e não há uma tabela de sessões para escrever a cada tecla (nem para limpar). O mesmo `text` dá sempre o mesmo ecrã, o que também torna o menu fácil de testar ([Testar](#testar)).
+**Sem estado no [servidor](conceitos.md#servidor "Um computador sempre ligado que recebe pedidos e responde a eles.").** O servidor não guarda nada entre pedidos: em cada pedido parte `text` em `*` e repete o caminho desde o menu principal. Porquê: qualquer instância [serverless](conceitos.md#serverless "Um pedaço de código que a Vercel arranca só quando chega um pedido, e desliga a seguir.") responde a qualquer tecla, um pedido perdido não estraga nada, e não há uma tabela de sessões para escrever a cada tecla (nem para limpar). O mesmo `text` dá sempre o mesmo ecrã, o que também torna o menu fácil de testar ([Testar](#testar)).
 
 ## Leitura das teclas
 
@@ -203,14 +206,14 @@ flowchart TD
 1. **Confirmar quem chama** (`callbackAllowed`). Com `USSD_CALLBACK_KEY` definida, a `key` do URL tem de ser igual. A comparação demora o mesmo tempo seja qual for o valor (`timingSafeEqual`), para não se poder adivinhar a chave pelo tempo de resposta. Uma chave errada ou em falta responde `403` e regista "USSD pedido recusado: chave do callback em falta ou errada". Nada mais corre.
 2. **Ler o pedido.** Os quatro campos do formulário são lidos e registados como `USSD Request`. Na opção 6 a segunda resposta é o PIN do motorista, que fica registado como `***`.
 3. **Escolher a opção.** A primeira tecla escolhe: nada (menu principal), `0` (menu principal outra vez), `1` a `5` (um menu repetido tecla a tecla, [Leitura das teclas](#leitura-das-teclas)), `6` (o menu do motorista, que lê as suas teclas sozinho) ou `7` (ajuda).
-4. **Repetir as teclas** (`replay`). Cada menu lê da base de dados o que precisa (a rede, guardada 5 minutos por instância; a tarifa, guardada 60 s; os veículos) e devolve o ecrã para as respostas até agora. As viagens de um par de locais calculam-se uma só vez por pedido.
+4. **Repetir as teclas** (`replay`). Cada menu lê da [base de dados](conceitos.md#base-de-dados "O sítio organizado onde a plataforma guarda tudo o que tem de durar: rotas, paragens, veículos, contas.") o que precisa (a rede, guardada 5 minutos por instância; a tarifa, guardada 60 s; os veículos) e devolve o ecrã para as respostas até agora. As viagens de um par de locais calculam-se uma só vez por pedido.
 5. **Correr o efeito.** Só o ecrã final tem efeito: o ecrã de viagem da opção 1 regista o alerta de chegada; os ecrãs finais enviam o resultado por SMS.
 6. **Fazer o ecrã** (`render`). Uma lista passa por `paginateList`: os itens da página, cada um cortado para o ecrã inteiro caber em 182 caracteres, e `7. Proximo`, `8. Anterior`, `0. Voltar` quando se aplicam.
 7. **Passar a GSM-7** (`toGsm`). Tiram-se os acentos, e os ordinais e sinais tipográficos passam a letras simples (`1º`/`1⁰` → `1o`, `2ª` → `2a`, `–` → `-`). Porquê: muitos telemóveis e redes só mostram GSM-7 no USSD, e um carácter fora dele põe a mensagem em Unicode, que estraga o ecrã ou o corta a meio. A resposta fica registada como `USSD Response` e sai como `200 text/plain`.
 8. **Erros.** Uma excepção responde `END Erro ao processar pedido. Tente novamente.` com estado 200, para o telemóvel mostrar uma mensagem em vez do erro do gateway. A excepção fica registada como `Erro USSD`.
 9. **O SMS, depois da resposta.** `sendSMS` ([`lib/notifications.ts`](../transport-client/lib/notifications.ts)) põe o número como `+258…` e envia-o pelo SDK `africastalking`. Regista `SMS enviado para …` ou `Erro ao enviar SMS para …`, e nunca repete. Porquê depois: o gateway USSD dá poucos segundos para cada resposta, e o SMS pode demorar.
 
-Um pedido demora tipicamente 0,1 a 0,3 s na função, bem dentro do tempo que o gateway permite. A API de SMS do sandbox às vezes responde tarde: o registo mostra então `Erro ao enviar SMS` embora a mensagem tenha chegado ao simulador ([Africa's Talking → SMS](africas-talking.md#sms)).
+Um pedido demora tipicamente 0,1 a 0,3 s na função, bem dentro do tempo que o gateway permite. A [API](conceitos.md#api "Uma API é a lista de pedidos que um servidor aceita de outros programas; cada um desses pedidos, com o seu endereço, é um endpoint.") de SMS do sandbox às vezes responde tarde: o registo mostra então `Erro ao enviar SMS` embora a mensagem tenha chegado ao simulador ([Africa's Talking → SMS](africas-talking.md#sms)).
 
 ![Registo da Vercel de um pedido USSD: sessionId, serviceCode, phoneNumber, text, e depois a resposta](images/vercel-log-request.png)
 
@@ -272,7 +275,7 @@ CON Transportes Mocambique
 
 ## 1 Encontrar transporte
 
-Como ir de um sítio a outro: o próximo autocarro, ou os autocarros entre os quais mudar quando nenhum vai directo. Os dois sítios escrevem-se, por isso qualquer paragem pode ser a origem ou o destino (o USSD não sabe onde está o telemóvel). Usa o mesmo planeador da aplicação web ([Fluxos de dados → Planear uma viagem](fluxos-de-dados.md#planear-uma-viagem)).
+Como ir de um sítio a outro: o próximo autocarro, ou os autocarros entre os quais mudar quando nenhum vai directo. Os dois sítios escrevem-se, por isso qualquer paragem pode ser a origem ou o destino (o USSD não sabe onde está o telemóvel). Usa o mesmo planeador da [aplicação web](conceitos.md#aplicacao-web "Um site que se usa como um programa: tem botões, mapas e contas, e muda conforme o que se faz.") ([Fluxos de dados → Planear uma viagem](fluxos-de-dados.md#planear-uma-viagem)).
 
 ```text
 text="1"                                  text="1*museu"
@@ -330,7 +333,7 @@ Saia em Zimpeto (302)                     Saia em Zimpeto (703)
 0. Voltar                                 0. Voltar
 ```
 
-  "Museu (210)" é a baia do terminal do Museu onde pára a rota 210. Uma viagem com transbordos diz onde apanhar cada autocarro, a que horas, e onde sair para o seguinte (os nomes encurtam-se para caber; "amanha" marca o dia seguinte):
+  "Museu (210)" é a baia do [terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.") do Museu onde pára a rota 210. Uma viagem com [transbordos](glossario.md#palavras-dos-ecrãs "Mudança de autocarro a meio de uma viagem") diz onde apanhar cada autocarro, a que horas, e onde sair para o seguinte (os nomes encurtam-se para caber; "amanha" marca o dia seguinte):
 
 ```text
 text="1*museu*johane"                     text="1*portao*1*johane"
@@ -347,7 +350,7 @@ CON 1 transbordo, chega 09:04             CON 2 transbordos, chega 09:16
 - `2` mostra a opção seguinte (a partir da segunda, `2` outra vez mostra a seguinte, e dá a volta); "2. Outra opcao" só aparece quando há mais de uma.
 - `1` envia por SMS a opção mostrada, com todos os passos: caminhadas ("Caminhe 150 m ate …"), a rota e a matrícula de cada autocarro, onde e quando apanhar e sair, e cada tarifa. Depois, `END Detalhes enviados por SMS.`
 - `0` volta ao destino (para escrever outro).
-- **Escreve:** cada ecrã de viagem regista um alerta de chegada (`MISSION`) na paragem onde se apanha o primeiro autocarro, para o passageiro receber um SMS quando um autocarro estiver a menos de 1 km. Se o número não tiver conta, cria primeiro um `Utente` sem palavra-passe. Uma conta da web com o mesmo número conta, seja com que espaços ou indicativo foi guardada ([`lib/phones.ts`](../transport-client/lib/phones.ts)). Um alerta da mesma paragem das últimas 24 h é reutilizado.
+- **Escreve:** cada ecrã de viagem regista um alerta de chegada ([`MISSION`](glossario.md#a-rede-e-as-pessoas "Um alerta de chegada: um SMS quando um autocarro estiver perto de uma paragem")) na paragem onde se apanha o primeiro autocarro, para o passageiro receber um SMS quando um autocarro estiver a menos de 1 km. Se o número não tiver conta, cria primeiro um [`Utente`](glossario.md#a-rede-e-as-pessoas "A tabela das contas de passageiros") sem palavra-passe. Uma conta da web com o mesmo número conta, seja com que espaços ou indicativo foi guardada ([`lib/phones.ts`](../transport-client/lib/phones.ts)). Um alerta da mesma paragem das últimas 24 h é reutilizado.
 - **Sem ligação:** `END Nao ha autocarro de … para ….` (algumas rotas formam grupos sem paragens em comum com o resto da rede).
 
 ## 2 Procurar rotas
@@ -384,7 +387,7 @@ Tarifa (percurso todo): 202 MT
 Autocarros: 2
 ```
 
-Quando o nome escrito coincide com vários locais (`2*baixa`: o Terminal de Chapas da Baixa e várias ruas da Baixa), aparece primeiro `CON Qual local?` com a lista, 4 por página. Cada rota começa pelo código, o número no autocarro: várias rotas vão do Museu a Albazine, e o código distingue-as quando o resto do nome é cortado. "De" e "Para" são os terminais da rota (`Via.terminalPartida`, `terminalChegada`). As paragens contam-se depois de juntar as seguidas com o mesmo nome (os dois lados de uma rua). A distância mede-se ao longo do percurso. O mesmo texto vai por SMS.
+Quando o nome escrito coincide com vários locais (`2*baixa`: o Terminal de [Chapas](glossario.md#transportes-em-maputo "Os minibuses que levam a maior parte dos passageiros de Maputo") da Baixa e várias ruas da Baixa), aparece primeiro `CON Qual local?` com a lista, 4 por página. Cada rota começa pelo código, o número no autocarro: várias rotas vão do Museu a Albazine, e o código distingue-as quando o resto do nome é cortado. "De" e "Para" são os terminais da rota (`Via.terminalPartida`, `terminalChegada`). As paragens contam-se depois de juntar as seguidas com o mesmo nome (os dois lados de uma rua). A distância mede-se ao longo do percurso. O mesmo texto vai por SMS.
 
 ## 3 Paragens de uma rota
 
@@ -451,7 +454,7 @@ CON Qual autocarro?                       END AUTOCARRO ACI-004M
 0. Voltar                                 0. Voltar
 ```
 
-"Perto de" é a paragem da rota mais próxima da posição actual do autocarro (GPS ou horário, [Localização e GPS](localizacao-gps.md)). Menos de 3 letras ou algarismos pede mais (`Escreva pelo menos 3 letras ou numeros da matricula`). Na lista, escrever outra matrícula faz nova pesquisa. Também por SMS.
+"Perto de" é a paragem da rota mais próxima da posição actual do autocarro ([GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") ou horário, [Localização e GPS](localizacao-gps.md)). Menos de 3 letras ou algarismos pede mais (`Escreva pelo menos 3 letras ou numeros da matricula`). Na lista, escrever outra matrícula faz nova pesquisa. Também por SMS.
 
 ## 6 Área do motorista
 
@@ -497,7 +500,7 @@ Durante uma viagem a primeira opção passa a "1. Encerrar Viagem", e confirmar 
 | motorista sem PIN | "Ainda nao tem PIN. Peca ao administrador para gerar o seu PIN." | nada |
 | número que não é de motorista | "Desculpe, o seu numero nao esta registado como motorista no sistema." | SMS a pedir para contactar o administrador |
 
-Depois de escrito o PIN, todos os pedidos seguintes da sessão o levam dentro de `text` (`6*<PIN>*…`). A aplicação esconde-o nos seus registos.
+Depois de escrito o PIN, todos os pedidos seguintes da sessão o levam dentro de `text` (`6*<PIN>*…`). A aplicação esconde-o nos seus [registos](conceitos.md#registos "As linhas de texto que um programa escreve sobre o que está a fazer, para se perceber depois o que aconteceu.").
 
 ## 7 Ajuda
 
@@ -524,7 +527,7 @@ Escreva so parte do nome
 
 ## Testar
 
-**Com o script dos ecrãs**, sem servidor nem Africa's Talking ([`scripts/ussd-ecras.ts`](../transport-client/scripts/ussd-ecras.ts)). Cada argumento é um `text`:
+**Com o [script](conceitos.md#script "Um pequeno programa que se corre à mão, uma vez, para uma tarefa: importar dados, corrigir percursos, mostrar listas.") dos ecrãs**, sem servidor nem Africa's Talking ([`scripts/ussd-ecras.ts`](../transport-client/scripts/ussd-ecras.ts)). Cada argumento é um `text`:
 
 ```bash
 cd transport-client
@@ -534,7 +537,7 @@ USSD_HORA="2026-10-19T08:30:00+02:00" npx tsx scripts/ussd-ecras.ts "4*museu*zim
 
 Usa a base de dados de `DATABASE_URL`. A opção 1 escreve (um `MISSION`, e um `Utente` para um telefone novo) e, com `AFRICASTALKING_API_KEY` definida, os ecrãs finais enviam SMS: usar contra uma cópia local.
 
-**Com `curl`**, localmente ou contra a produção (com a chave do callback). Na produção as opções 2 a 5 e 7 só lêem, mas enviam SMS; o ecrã de viagem da opção 1 escreve um alerta.
+**Com [`curl`](conceitos.md#curl "Um comando que faz pedidos HTTP a partir do terminal, como um navegador sem janela.")**, localmente ou contra a produção (com a chave do callback). Na produção as opções 2 a 5 e 7 só lêem, mas enviam SMS; o ecrã de viagem da opção 1 escreve um alerta.
 
 ```bash
 curl -s -X POST "http://localhost:3000/api/ussd" \

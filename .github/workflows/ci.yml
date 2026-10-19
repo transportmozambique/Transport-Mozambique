@@ -51,3 +51,5 @@ jobs:
         run: python3 .github/scripts/check-doc-links.py .
       - name: A navegação da documentação está actualizada
         run: python3 .github/scripts/docs-nav.py --check
+      - name: Os termos técnicos da documentação estão ligados às suas explicações
+        run: python3 .github/scripts/docs-termos.py --check

@@ -1,13 +1,14 @@
 # Aplicação dos passageiros
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 4. Usar as aplicações › **Aplicação dos passageiros** (página 14 de 23)
+[Documentação](README.md) › 4. Usar as aplicações › **Aplicação dos passageiros** (página 16 de 25)
 
 Anterior: [Mapa do código](mapa-do-codigo.md) · [Índice](README.md) · Seguinte: [Portal do motorista](portal-motorista.md)
 
 <details>
 <summary>Todas as páginas</summary>
 
+- 0. Começar do zero: [Conceitos básicos](conceitos.md) · [Preparar o computador](preparar-o-computador.md)
 - 1. Conhecer o projecto: [Visão geral](visao-geral.md) · [Glossário](glossario.md) · [Fontes de dados](fontes-de-dados.md) · [Estado do projecto](estado-do-projecto.md)
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
 - 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · [Localização e GPS](localizacao-gps.md) · [Serviço USSD](ussd.md) · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
@@ -17,6 +18,8 @@ Anterior: [Mapa do código](mapa-do-codigo.md) · [Índice](README.md) · Seguin
 
 </details>
 <!-- /navegação -->
+
+> **Em palavras simples:** O site dos passageiros: um mapa com os autocarros, onde se escolhe de onde se parte e para onde se vai, e se recebem as opções de viagem com a hora de chegada e o preço. Esta página mostra cada ecrã, passo a passo, com imagens.
 
 | | |
 |---|---|
@@ -37,9 +40,9 @@ flowchart LR
   T -- "outro autocarro" --> C["C: o destino"]
 ```
 
-Porquê assim: quem usa os chapas sabe para onde quer ir, mas muitas vezes não sabe que rota apanhar nem onde. Começar pelos destinos alcançáveis responde às duas perguntas de uma vez.
+Porquê assim: quem usa os [chapas](glossario.md#transportes-em-maputo "Os minibuses que levam a maior parte dos passageiros de Maputo") sabe para onde quer ir, mas muitas vezes não sabe que rota apanhar nem onde. Começar pelos destinos alcançáveis responde às duas perguntas de uma vez.
 
-Pode-se acompanhar o autocarro até chegar, e guardar uma paragem para receber um SMS quando um autocarro estiver perto. Ver o mapa e planear não precisam de conta; guardar alertas e a página da conta precisam. Cada ecrã abaixo é seguido dos pedidos que faz. Os formatos completos estão na [Referência da API](referencia-api.md#aplicação-dos-passageiros-transport-client).
+Pode-se acompanhar o autocarro até chegar, e guardar uma paragem para receber um [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") quando um autocarro estiver perto. Ver o mapa e planear não precisam de conta; guardar alertas e a página da conta precisam. Cada ecrã abaixo é seguido dos pedidos que faz. Os formatos completos estão na [Referência da API](referencia-api.md#aplicação-dos-passageiros-transport-client).
 
 **Nesta página:** [Passo a passo](#passo-a-passo) · [O mapa](#o-mapa--e-search) · [Partida e destinos](#partida-e-destinos) · [Paragens perto](#paragens-perto) · [Os destinos de uma paragem](#os-destinos-de-uma-paragem) · [Viagens](#viagens) · [Acompanhar uma viagem](#acompanhar-uma-viagem-viagem) · [Conta e entrada](#conta-e-entrada) · [Página da conta e alertas](#página-da-conta-e-alertas-user-info) · [O que o navegador guarda](#o-que-o-navegador-guarda)
 
@@ -47,7 +50,7 @@ Pode-se acompanhar o autocarro até chegar, e guardar uma paragem para receber u
 
 ## Passo a passo
 
-Estas capturas foram feitas a conduzir a aplicação num navegador (Playwright) contra uma cópia da base de dados, às 07:40 de um dia útil, com a posição a poucos passos da paragem Portão.
+Estas capturas foram feitas a conduzir a aplicação num [navegador](conceitos.md#navegador "O programa com que se abrem sites: Chrome, Firefox, Edge, Safari.") ([Playwright](conceitos.md#testes "Programas que experimentam as aplicações sozinhos e avisam quando algo deixou de funcionar.")) contra uma cópia da [base de dados](conceitos.md#base-de-dados "O sítio organizado onde a plataforma guarda tudo o que tem de durar: rotas, paragens, veículos, contas."), às 07:40 de um dia útil, com a posição a poucos passos da paragem Portão.
 
 **1. Abrir a aplicação.** O navegador pede a localização. O painel mostra então:
 
@@ -107,9 +110,9 @@ Num telemóvel, o painel é uma folha em baixo, por cima do mapa. Arrastar o top
 
 ![Página inicial: a posição do passageiro, as paragens perto e os autocarros ao vivo](images/passenger-home.png)
 
-`/` e `/search` são a mesma página ([`app/components/TripPlanner.tsx`](../transport-client/app/components/TripPlanner.tsx)); `/search` é para onde levam a entrada e o registo. O cartão do título mostra o número de autocarros e "Entrar", ou o avatar do passageiro com sessão.
+`/` e `/search` são a mesma página ([`app/components/TripPlanner.tsx`](../transport-client/app/components/TripPlanner.tsx)); `/search` é para onde levam a entrada e o registo. O cartão do título mostra o número de autocarros e "Entrar", ou o avatar do passageiro com [sessão](conceitos.md#sessao "Depois de entrar, o servidor dá uma prova de quem se é (um token), e o navegador mostra-a a cada pedido para não ter de pedir a palavra-passe outra vez.").
 
-- **Autocarros.** Cada autocarro na posição de agora: a posição GPS real quando é recente, senão a posição pelo horário ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)). Os marcadores deslizam para a posição nova a cada 5 segundos. Tocar num autocarro desenha a sua rota e abre um cartão com "Acompanhar".
+- **Autocarros.** Cada autocarro na posição de agora: a posição [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") real quando é recente, senão a posição pelo horário ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)). Os marcadores deslizam para a posição nova a cada 5 segundos. Tocar num autocarro desenha a sua rota e abre um cartão com "Acompanhar".
 - **A posição do passageiro.** O navegador pede a localização ao abrir a página. Com ela, o mapa centra-se no passageiro uma vez, e um pino azul segue-o: mostra as iniciais com sessão, senão um ícone de pessoa. O botão redondo em baixo à direita volta a centrar o mapa, ou pede outra vez depois de uma recusa. As posições a mais de 80 km de Maputo não centram o mapa (porquê: quem testa a partir de outro país veria um mapa vazio).
 - **Paragens.** Todas as paragens estão no mapa em todos os níveis de zoom, e tocar numa abre-a:
   - as paragens perto do passageiro são pontos verdes;
@@ -122,7 +125,7 @@ Num telemóvel, o painel é uma folha em baixo, por cima do mapa. Arrastar o top
 | A página abre | `GET /api/stops` (todas as paragens servidas, com as rotas, e as que nenhum autocarro serve agora; em cache 5 min) |
 | A página abre | `GET /api/buses?fields=map` (todos os autocarros: matrícula, nome da rota, posição, estado; cerca de 20 KB) |
 | Toca-se num autocarro | `GET /api/bus/{id}` (a linha da rota, desenhada no mapa; guardada para o toque seguinte) |
-| A cada 5 s | `GET /api/buses?fields=position` (leve: id, latitude, longitude, fonte, rumo; também faz a verificação dos SMS de chegada) |
+| A cada 5 s | `GET /api/buses?fields=position` (leve: id, [latitude](conceitos.md#coordenadas "Dois números que dizem onde está um ponto na Terra."), longitude, fonte, rumo; também faz a verificação dos SMS de chegada) |
 
 Porquê dois pedidos de autocarros: a primeira carga traz o que cada marcador mostra; depois, a cada 5 s, só as coordenadas, para gastar poucos dados numa ligação móvel.
 
@@ -131,7 +134,7 @@ Porquê dois pedidos de autocarros: a primeira carga traz o que cada marcador mo
 O topo do painel tem dois campos:
 
 - **Partida** é onde a viagem começa. É "A sua localização" quando a posição é conhecida. Tocar nela deixa escrever uma paragem ou um local; a lista diz a distância de cada resultado. "A sua localização" volta a pôr a posição, e "Cancelar" mantém a partida actual. A partida escolhida fica marcada no mapa, e o mapa vai até ela.
-- **"Para onde quer ir?"** procura todas as paragens pelo nome, sem acentos nem maiúsculas, com a mesma pesquisa tolerante do USSD ([Serviço USSD → Pesquisa tolerante](ussd.md#pesquisa-tolerante)): "av ind" encontra "Av. das Indústrias", "chipamanine" encontra "Xipamanine". As paragens com o mesmo nome a menos de 400 m contam como um local. Um número de rota entre parênteses no fim do nome não conta, por isso as 41 baias do terminal do Museu ("Museu (X39)", "Museu (109)", …) são um só "Museu"; a viagem ainda diz a baia onde entrar. Cada resultado mostra a distância à partida, e o nome da rota quando dois locais têm o mesmo nome. Código: [`lib/places.ts`](../transport-client/lib/places.ts).
+- **"Para onde quer ir?"** procura todas as paragens pelo nome, sem acentos nem maiúsculas, com a mesma pesquisa tolerante do [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.") ([Serviço USSD → Pesquisa tolerante](ussd.md#pesquisa-tolerante)): "av ind" encontra "Av. das Indústrias", "chipamanine" encontra "Xipamanine". As paragens com o mesmo nome a menos de 400 m contam como um local. Um número de rota entre parênteses no fim do nome não conta, por isso as 41 baias do [terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.") do Museu ("Museu (X39)", "Museu (109)", …) são um só "Museu"; a viagem ainda diz a baia onde entrar. Cada resultado mostra a distância à partida, e o nome da rota quando dois locais têm o mesmo nome. Código: [`lib/places.ts`](../transport-client/lib/places.ts).
 
 Por baixo, o separador **"Para onde ir"** lista todos os locais alcançáveis a partir da partida com até 4 autocarros, a chegada mais cedo primeiro. Cada linha tem:
 
@@ -161,7 +164,7 @@ Escolher um destino, da lista ou da pesquisa, planeia a viagem a partir da parti
 Tocar numa paragem (na lista ou no mapa) mostra:
 
 - o nome, o número de rotas e, com posição, a distância ao passageiro; "Apanhe o autocarro aqui" lembra que é aqui que se entra;
-- a Partida (esta paragem) e a pesquisa de destino, onde cada resultado diz **"Directo"** (um autocarro desta paragem vai lá) ou **"Com transbordo"** (precisa de uma mudança). Mudar a Partida aqui faz da nova partida a partida do painel;
+- a Partida (esta paragem) e a pesquisa de destino, onde cada resultado diz **"Directo"** (um autocarro desta paragem vai lá) ou **"Com [transbordo](glossario.md#palavras-dos-ecrãs "Mudança de autocarro a meio de uma viagem")"** (precisa de uma mudança). Mudar a Partida aqui faz da nova partida a partida do painel;
 - **"Todos os destinos"** (o primeiro separador): todos os locais alcançáveis desta paragem com até 4 autocarros, pela ordem a que se chegaria.
   - Cada linha tem a chegada ("Chega 10:17", "Chega amanhã 05:37") e o tempo a partir de agora.
   - Mostra "Directo", ou quantos autocarros leva ("3 autocarros"), e os códigos dessas rotas nas suas cores.
@@ -206,11 +209,11 @@ Cada autocarro cobra a sua tarifa, pela regra de tarifa (max(10 MT, ⌈km × 10 
 | Quando | Pedido |
 |---|---|
 | A partir de uma paragem ou de uma partida escolhida | `POST /api/journeys` `{"from": [ids], "to": [ids]}` |
-| A partir da posição do passageiro | `POST /api/journeys` `{"lat", "lng", "to": [ids]}`: a posição vai no corpo, por isso não fica nos registos dos pedidos |
+| A partir da posição do passageiro | `POST /api/journeys` `{"lat", "lng", "to": [ids]}`: a posição vai no corpo, por isso não fica nos [registos](conceitos.md#registos "As linhas de texto que um programa escreve sobre o que está a fazer, para se perceber depois o que aconteceu.") dos pedidos |
 
 ### Caminhadas pelas ruas
 
-O mapa desenha cada caminhada pelas ruas, como uma pessoa iria. A página pede a `GET /api/walk` o caminho de cada caminhada mostrada; até ele chegar, ou quando não há, a caminhada é uma linha recta a tracejado. O caminho vem do router OSRM a pé da FOSSGIS (`routing.openstreetmap.de`, dados do OpenStreetMap), através do servidor da aplicação ([Referência da API](referencia-api.md#get-apiwalk); código em [`walkPaths.ts`](../transport-client/app/components/walkPaths.ts) e [`lib/walkRoute.ts`](../transport-client/lib/walkRoute.ts)).
+O mapa desenha cada caminhada pelas ruas, como uma pessoa iria. A página pede a `GET /api/walk` o caminho de cada caminhada mostrada; até ele chegar, ou quando não há, a caminhada é uma linha recta a tracejado. O caminho vem do [router](conceitos.md#router "Um serviço que, dados dois ou mais pontos, responde com o caminho pelas ruas entre eles e a distância.") OSRM a pé da FOSSGIS (`routing.openstreetmap.de`, dados do [OpenStreetMap](conceitos.md#openstreetmap "Um mapa do mundo inteiro feito por voluntários, como uma Wikipédia dos mapas, que qualquer pessoa pode usar e corrigir.")), através do [servidor](conceitos.md#servidor "Um computador sempre ligado que recebe pedidos e responde a eles.") da aplicação ([Referência da API](referencia-api.md#get-apiwalk); código em [`walkPaths.ts`](../transport-client/app/components/walkPaths.ts) e [`lib/walkRoute.ts`](../transport-client/lib/walkRoute.ts)).
 
 - Os pontos arredondam-se a cerca de 45 m no navegador e a cerca de 11 m no servidor, e depois o caminho corta-se nas pontas exactas. Enquanto o passageiro anda, a página só pede outra vez a cada algumas dezenas de metros. Porquê arredondar: passageiros perto uns dos outros pedem o mesmo caminho, que a cache já tem, e a posição exacta não sai do navegador.
 - A distância e os minutos a pé nos cartões continuam a vir do planeador (linha recta, a 4,5 km/h mais um quarto pelas ruas), por isso a linha pode ser um pouco mais comprida do que o "Caminhe 300 m" que acompanha.
@@ -275,7 +278,7 @@ Sem posição, parte do princípio de que o passageiro apanhou o autocarro à ho
 
 - O telefone pode escrever-se com ou sem `+258`, com ou sem espaços. O registo guarda-o sem espaços, com `+258` à frente de um número móvel moçambicano (`+258840000000`), como o USSD. As contas antigas guardadas com espaços também se encontram ([`lib/phones.ts`](../transport-client/lib/phones.ts)).
 - Quem só usou o USSD já tem uma conta sem palavra-passe (criada pela opção 1). Registar-se com o mesmo telefone **completa essa conta** e mantém os alertas. Entrar antes de se registar responde "Este número ainda não tem senha. Faça o registo para criar uma."
-- A palavra-passe precisa de pelo menos 6 caracteres e guarda-se como hash bcrypt.
+- A palavra-passe precisa de pelo menos 6 caracteres e guarda-se como [hash](conceitos.md#hash "Uma 'impressão digital' de um texto, que se calcula num sentido e não se consegue desfazer.") bcrypt.
 - A entrada e o registo devolvem um **token de sessão** (assinado com HMAC, válido 90 dias). Cada pedido `/api/user/*` envia-o como `Authorization: Bearer <token>` e só pode ler ou mudar os dados desse passageiro ([Segurança → Passageiros](seguranca.md#passageiros)).
 
 | Acção | Pedido |
@@ -297,7 +300,7 @@ Três separadores, cada um com endereço directo por `?tab=` ([`app/user-info/pa
 
 ![Página da conta: perfil](images/passenger-profile.png)
 
-`/my-transports` é um endereço antigo. Redirecciona (HTTP 307) para `/user-info?tab=missoes`.
+`/my-transports` é um endereço antigo. Redirecciona ([HTTP](conceitos.md#http "A forma combinada como o navegador (ou outro programa) pede algo a um servidor, e como o servidor responde.") 307) para `/user-info?tab=missoes`.
 
 ## O que o navegador guarda
 
@@ -305,7 +308,7 @@ Três separadores, cada um com endereço directo por `?tab=` ([`app/user-info/pa
 |---|---|---|
 | `utente` | O perfil do passageiro (id, nome, email, telefone, subscrição) e o `token` da sessão | entrada e registo; actualizada pela página da conta |
 
-Sair (menu do avatar) apaga-a. Um token expirado, ou assinado com um segredo que mudou, faz `/api/user/*` responder 401. A página da conta e o botão do alerta apagam então a conta guardada, e o passageiro entra outra vez.
+Sair (menu do avatar) apaga-a. Um token expirado, ou assinado com um [segredo](conceitos.md#segredo "Um valor que só a plataforma deve saber, como uma palavra-passe: quem o tiver pode agir em nome dela.") que mudou, faz `/api/user/*` responder [401](conceitos.md#codigos-de-resposta "O número de três algarismos com que o servidor diz como correu o pedido."). A página da conta e o botão do alerta apagam então a conta guardada, e o passageiro entra outra vez.
 
 Porquê um token num cabeçalho e não um cookie: passageiros e motoristas usam o mesmo tipo de token ([`lib/signedToken.ts`](../transport-client/lib/signedToken.ts)), e o portal do motorista, que está noutro domínio, não pode usar os cookies da aplicação dos passageiros.
 

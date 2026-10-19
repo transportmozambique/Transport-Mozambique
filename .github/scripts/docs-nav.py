@@ -2,7 +2,7 @@
 anterior e a seguinte, e a lista de todas as páginas (fechada); no fim, outra vez a anterior e a
 seguinte. A ordem das páginas é a de PARTES, que é também a ordem de leitura do guia.
 
-Porquê gerada: com 23 páginas, ligações escritas à mão desactualizam-se a cada página nova ou
+Porquê gerada: com 25 páginas, ligações escritas à mão desactualizam-se a cada página nova ou
 mudança de ordem; assim muda-se só PARTES e corre-se o script.
 
     python .github/scripts/docs-nav.py           # escreve
@@ -13,6 +13,10 @@ import re
 import sys
 
 PARTES = [
+    ("0. Começar do zero", [
+        ("conceitos.md", "Conceitos básicos"),
+        ("preparar-o-computador.md", "Preparar o computador"),
+    ]),
     ("1. Conhecer o projecto", [
         ("visao-geral.md", "Visão geral"),
         ("glossario.md", "Glossário"),

@@ -1,13 +1,14 @@
 # Base de dados
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 2. Montar localmente › **Base de dados** (página 6 de 23)
+[Documentação](README.md) › 2. Montar localmente › **Base de dados** (página 8 de 25)
 
 Anterior: [Primeiros passos](primeiros-passos.md) · [Índice](README.md) · Seguinte: [Configuração](configuracao.md)
 
 <details>
 <summary>Todas as páginas</summary>
 
+- 0. Começar do zero: [Conceitos básicos](conceitos.md) · [Preparar o computador](preparar-o-computador.md)
 - 1. Conhecer o projecto: [Visão geral](visao-geral.md) · [Glossário](glossario.md) · [Fontes de dados](fontes-de-dados.md) · [Estado do projecto](estado-do-projecto.md)
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · **Base de dados** · [Configuração](configuracao.md)
 - 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · [Localização e GPS](localizacao-gps.md) · [Serviço USSD](ussd.md) · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
@@ -18,7 +19,9 @@ Anterior: [Primeiros passos](primeiros-passos.md) · [Índice](README.md) · Seg
 </details>
 <!-- /navegação -->
 
-Toda a plataforma usa uma só base de dados PostgreSQL: a Neon em produção, com PostgreSQL 18. O esquema está definido uma vez, em [`prisma/schema.prisma`](../prisma/schema.prisma), e é acedido pelo Prisma 5.22. Esta página descreve cada tabela e as convenções de armazenamento que é preciso conhecer para ler bem os dados; depois mostra como ligar, consultas de exemplo testadas numa cópia da produção, e os scripts que construíram os dados.
+> **Em palavras simples:** Tudo o que a plataforma sabe (rotas, paragens, veículos, motoristas, contas) está guardado em tabelas, como folhas de cálculo. Esta página explica cada tabela, como as ver e fazer-lhes perguntas, e os programas que trouxeram e corrigiram os dados das rotas.
+
+Toda a plataforma usa uma só [base de dados](conceitos.md#base-de-dados "O sítio organizado onde a plataforma guarda tudo o que tem de durar: rotas, paragens, veículos, contas.") [PostgreSQL](conceitos.md#postgresql "O programa de base de dados que este projecto usa; gratuito e muito usado."): a [Neon](conceitos.md#neon "A empresa que guarda a base de dados PostgreSQL da produção, na internet.") em produção, com PostgreSQL 18. O [esquema](conceitos.md#migracao "O esquema é a lista das tabelas e colunas; uma migração é uma alteração a essa lista, escrita em SQL para se poder repetir.") está definido uma vez, em [`prisma/schema.prisma`](../prisma/schema.prisma), e é acedido pelo [Prisma](conceitos.md#prisma "A ferramenta com que o código fala com a base de dados sem escrever SQL à mão.") 5.22. Esta página descreve cada tabela e as convenções de armazenamento que é preciso conhecer para ler bem os dados; depois mostra como ligar, consultas de exemplo testadas numa cópia da produção, e os [scripts](conceitos.md#script "Um pequeno programa que se corre à mão, uma vez, para uma tarefa: importar dados, corrigir percursos, mostrar listas.") que construíram os dados.
 
 **Nesta página:** [Diagrama](#diagrama-das-entidades) · [Tabelas](#tabelas) · [Convenções](#convenções-ler-antes-de-consultar) · [Ligar](#ligar-à-base-de-dados) · [Consultas de exemplo](#consultas-de-exemplo) · [Mudar dados](#mudar-dados) · [Importar do OpenStreetMap](#importar-paragens-e-rotas-do-openstreetmap) · [Percursos nas estradas](#pôr-os-percursos-das-rotas-nas-estradas) · [Redesenhar a partir do OSM](#redesenhar-rotas-a-partir-das-suas-paragens-do-openstreetmap) · [Motoristas de demonstração](#motoristas-para-os-veículos-importados) · [Alterações ao esquema](#alterações-ao-esquema-e-migrações) · [Tamanho](#tamanho)
 
@@ -104,11 +107,11 @@ erDiagram
   }
 ```
 
-`Tarifa` está sozinha: nenhuma chave estrangeira aponta para ela. O diagrama mostra só as colunas principais; todas estão listadas abaixo.
+[`Tarifa`](glossario.md#a-rede-e-as-pessoas "A regra de tarifa: preço mínimo, preço por km e velocidades") está sozinha: nenhuma [chave estrangeira](conceitos.md#chave "Cada linha tem um identificador único (id), e uma linha aponta para outra guardando o id dela.") aponta para ela. O diagrama mostra só as colunas principais; todas estão listadas abaixo.
 
 ## Tabelas
 
-O Prisma liga cada modelo a uma tabela com o mesmo nome, por isso os nomes misturam maiúsculas e minúsculas e **têm de estar entre aspas duplas no SQL** (`"Transporte"`, `"viaId"`). Cada `id` é um texto [cuid](https://github.com/paralleldrive/cuid). A maior parte das tabelas tem `createdAt` e `updatedAt`.
+O Prisma liga cada modelo a uma tabela com o mesmo nome, por isso os nomes misturam maiúsculas e minúsculas e **têm de estar entre aspas duplas no [SQL](conceitos.md#sql "A linguagem com que se fazem perguntas e alterações a uma base de dados.")** (`"Transporte"`, `"viaId"`). Cada `id` é um texto [cuid](https://github.com/paralleldrive/cuid). A maior parte das tabelas tem `createdAt` e `updatedAt`.
 
 ### Rede
 
@@ -117,26 +120,26 @@ O Prisma liga cada modelo a uma tabela com o mesmo nome, por isso os nomes mistu
 | `Provincia` | uma província | `nome`, `codigo` (único), `geoLocation` (centro `lat,lng`), `administradorId` |
 | `Cidade` | uma cidade (sem uso: sem interface, 0 linhas) | `nome`, `codigo`, `provinciaId` |
 | `Municipio` | um município (Maputo, Matola) | `nome`, `codigo` (único), `geoLocation`, `endereco`, `contacto1`, `provinciaId`, `cidadeId` |
-| `Via` | uma rota (um sentido de uma linha, ou os dois) | `codigo` (único, ex: `V063`), `nome`, `cor` (cor hexadecimal nos mapas), `terminalPartida`, `terminalChegada` (nomes das pontas), `geoLocationPath` (o percurso pelas estradas), `municipioId`, `codigoMunicipio` |
-| `Paragem` | uma paragem | `codigo` (único, ex: `PAR-0869`), `nome`, `geoLocation` |
-| `ViaParagem` | "esta paragem está nesta rota" | `viaId`, `paragemId` (únicos em conjunto; os dois apagam em cascata), `terminalBoolean`, `codigoVia`, `codigoParagem` |
+| [`Via`](glossario.md#a-rede-e-as-pessoas "A tabela das rotas de autocarro (route)") | uma rota (um sentido de uma linha, ou os dois) | `codigo` (único, ex: `V063`), `nome`, `cor` (cor hexadecimal nos mapas), `terminalPartida`, `terminalChegada` (nomes das pontas), `geoLocationPath` (o percurso pelas estradas), `municipioId`, `codigoMunicipio` |
+| [`Paragem`](glossario.md#a-rede-e-as-pessoas "A tabela das paragens (stop)") | uma paragem | `codigo` (único, ex: `PAR-0869`), `nome`, `geoLocation` |
+| [`ViaParagem`](glossario.md#a-rede-e-as-pessoas "A ligação de uma paragem a uma rota") | "esta paragem está nesta rota" | `viaId`, `paragemId` (únicos em conjunto; os dois apagam em cascata), `terminalBoolean`, `codigoVia`, `codigoParagem` |
 
 ### Frota e pessoas
 
 | Tabela | Uma linha é | Colunas principais |
 |---|---|---|
-| `Transporte` | um veículo | `matricula` (única), `codigo` (número único), `marca`, `modelo`, `cor`, `lotacao` (lugares), `viaId` + `codigoVia` (a rota), `currGeoLocation` (última posição guardada), `routePath` (desactualizado, ver abaixo), `gpsDispositivoHash`, `gpsAtualizadoEm`, `gpsVelocidade` (km/h), `gpsDirecao` (graus, 0 = norte) |
-| `Motorista` | um motorista | `nome`, `telefone`, `email` (único), `bi` (único), `cartaConducao` (única), `categoriaCarta`, `experienciaAnos`, datas da carta e do BI, contacto de emergência, `foto` (URL), `status` (`ativo`/`inativo`/`suspenso`: a conta), `password` (hash bcrypt do PIN, ou null = não pode entrar), `emViagem` + `viagemIniciadaEm` (viagem em curso), `transporteId` (único: um veículo por motorista e um motorista por veículo) |
-| `Proprietario` | um dono de veículos (pessoa ou empresa) | `nome`, `bi` (único), `nacionalidade`, `birthDate`, `endereco`, `contacto1`, `contacto2`, `tipoProprietario` (`Indivíduo`/`Empresa`) |
+| [`Transporte`](glossario.md#a-rede-e-as-pessoas "A tabela dos veículos (vehicle)") | um veículo | `matricula` (única), `codigo` (número único), `marca`, `modelo`, `cor`, `lotacao` (lugares), `viaId` + `codigoVia` (a rota), `currGeoLocation` (última posição guardada), `routePath` (desactualizado, ver abaixo), `gpsDispositivoHash`, `gpsAtualizadoEm`, `gpsVelocidade` (km/h), `gpsDirecao` (graus, 0 = norte) |
+| [`Motorista`](glossario.md#a-rede-e-as-pessoas "A tabela dos motoristas e dos seus PIN") | um motorista | `nome`, `telefone`, `email` (único), `bi` (único), `cartaConducao` (única), `categoriaCarta`, `experienciaAnos`, datas da carta e do BI, contacto de emergência, `foto` ([URL](conceitos.md#url "O texto que diz ao navegador onde está uma página ou informação, como https://transport-mz.vercel.app/viagem.")), `status` (`ativo`/`inativo`/`suspenso`: a conta), `password` ([hash](conceitos.md#hash "Uma 'impressão digital' de um texto, que se calcula num sentido e não se consegue desfazer.") bcrypt do PIN, ou null = não pode entrar), `emViagem` + `viagemIniciadaEm` (viagem em curso), `transporteId` (único: um veículo por motorista e um motorista por veículo) |
+| [`Proprietario`](glossario.md#a-rede-e-as-pessoas "A tabela dos donos dos veículos") | um dono de veículos (pessoa ou empresa) | `nome`, `bi` (único), `nacionalidade`, `birthDate`, `endereco`, `contacto1`, `contacto2`, `tipoProprietario` (`Indivíduo`/`Empresa`) |
 | `TransporteProprietario` | "este proprietário é dono deste veículo" | `transporteId`, `proprietarioId` (únicos em conjunto), `codigoTransporte`, `idProprietario` |
-| `Administrador` | uma conta do painel | `nome`, `email` (único), `senha` (bcrypt) |
+| [`Administrador`](glossario.md#a-rede-e-as-pessoas "A tabela das contas do painel de administração") | uma conta do painel | `nome`, `email` (único), `senha` (bcrypt) |
 
 ### Passageiros e operação
 
 | Tabela | Uma linha é | Colunas principais |
 |---|---|---|
-| `Utente` | um passageiro | `nome`, `email` (único), `telefone` (único), `senha` (hash bcrypt, ou `temp` nas contas criadas por USSD), `mISSION` (código de referência único), `subscrito`, `dataSubscricao` |
-| `MISSION` | um alerta de chegada: "este passageiro espera nesta paragem" | `utenteId`, `paragemId`, `createdAt` (alertas com mais de 24 h são ignorados), `notificadoEm` (último SMS de chegada), `geoLocationParagem`, `codigoParagem`, `mISSIONUtente` |
+| [`Utente`](glossario.md#a-rede-e-as-pessoas "A tabela das contas de passageiros") | um passageiro | `nome`, `email` (único), `telefone` (único), `senha` (hash bcrypt, ou `temp` nas contas criadas por [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.")), `mISSION` (código de referência único), `subscrito`, `dataSubscricao` |
+| [`MISSION`](glossario.md#a-rede-e-as-pessoas "Um alerta de chegada: um SMS quando um autocarro estiver perto de uma paragem") | um alerta de chegada: "este passageiro espera nesta paragem" | `utenteId`, `paragemId`, `createdAt` (alertas com mais de 24 h são ignorados), `notificadoEm` (último [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") de chegada), `geoLocationParagem`, `codigoParagem`, `mISSIONUtente` |
 | `Tarifa` | a regra de tarifa e velocidades | `nome` (único), `tarifaMinima` (MT), `precoPorKm` (MT/km), `fatorEstrada`, `velocidadeViagemKmh`, `velocidadeChegadaKmh`, `ativa`. Usa-se a linha activa mais recente ([Configuração](configuracao.md#regra-de-tarifa-tarifa)) |
 | `GeoLocation` | histórico antigo de posições (a actual e as 3 anteriores) | preenchida pela importação inicial; nada publicado escreve nela. As posições vivem agora em `Transporte` |
 
@@ -144,30 +147,30 @@ O Prisma liga cada modelo a uma tabela com o mesmo nome, por isso os nomes mistu
 
 Estas convenções vêm do primeiro modelo de dados e ficaram porque mudá-las obrigaria a migrar todas as aplicações ao mesmo tempo. Cada uma diz como a ler.
 
-- **Os pontos são texto `"lat,lng"`.** Exemplos: `Paragem.geoLocation`, `Transporte.currGeoLocation`, `MISSION.geoLocationParagem`, `Municipio.geoLocation` (`"-25.8388631,32.5536334"`). Separar com `split_part(col, ',', 1)::float` para a latitude e `split_part(col, ',', 2)::float` para a longitude.
+- **Os pontos são texto `"lat,lng"`.** Exemplos: `Paragem.geoLocation`, `Transporte.currGeoLocation`, `MISSION.geoLocationParagem`, `Municipio.geoLocation` (`"-25.8388631,32.5536334"`). Separar com `split_part(col, ',', 1)::float` para a [latitude](conceitos.md#coordenadas "Dois números que dizem onde está um ponto na Terra.") e `split_part(col, ',', 2)::float` para a longitude.
 - **Os percursos são texto `"lng,lat;lng,lat;…"`, na ordem inversa (a ordem do GeoJSON).** `Via.geoLocationPath` é o percurso que os autocarros da rota fazem, com um ponto a cada ~50 m (até 1 450 pontos). É a referência para posições, distâncias e tarifas. `Transporte.routePath` usa o mesmo formato mas está **desactualizado na maioria dos veículos** (foi copiado entre rotas na importação): usar o da rota.
 - **Sem PostGIS.** As coordenadas são texto, sem índice espacial. As distâncias calculam-se nas aplicações (haversine, [`lib/fares.ts`](../transport-client/lib/fares.ts)) ou em SQL ([exemplo](#paragens-a-menos-de-500-m-de-um-ponto)). Porquê: com 2 000 paragens tudo cabe em memória, e a rede é lida uma vez e guardada 5 minutos por instância ([`lib/journeys.ts`](../transport-client/lib/journeys.ts)).
 - **`ViaParagem` não tem coluna de ordem.** A ordem de inserção não é a ordem de viagem. As aplicações ordenam as paragens de uma rota pelo sítio onde cada uma se projecta em `Via.geoLocationPath` (`orderStopsAlongRoute` em [`lib/fares.ts`](../transport-client/lib/fares.ts)). Porquê assim: a ordem acompanha o percurso sozinha quando o percurso é redesenhado.
-- **As horas são UTC, guardadas sem fuso horário** (`timestamp(3) without time zone`). Começar cada sessão de SQL com `SET TIME ZONE 'UTC';`, senão as comparações com `now()` ficam desviadas pelo fuso da sessão. Para mostrar: `(col AT TIME ZONE 'UTC') AT TIME ZONE 'Africa/Maputo'`. Maputo é UTC+2 todo o ano.
+- **As horas são UTC, guardadas sem fuso horário** (`timestamp(3) without time zone`). Começar cada [sessão](conceitos.md#sessao "Depois de entrar, o servidor dá uma prova de quem se é (um token), e o navegador mostra-a a cada pedido para não ter de pedir a palavra-passe outra vez.") de SQL com `SET TIME ZONE 'UTC';`, senão as comparações com `now()` ficam desviadas pelo fuso da sessão. Para mostrar: `(col AT TIME ZONE 'UTC') AT TIME ZONE 'Africa/Maputo'`. Maputo é UTC+2 todo o ano.
 - **Os números de telefone vêm em vários formatos.** Os dos motoristas são como `+258 87 183 1581`; os passageiros registados na web, `849990777`; as contas criadas por USSD, `+258849990777`. As aplicações comparam os números depois de tirar espaços e o `+258` ([`lib/phones.ts`](../transport-client/lib/phones.ts)).
 - **As colunas de texto `codigo*` e `id*` repetem chaves estrangeiras** (`codigoVia`, `codigoParagem`, `codigoMunicipio`, `codigoTransporte`, `idProprietario`). São códigos legíveis do modelo original. As junções fazem-se pelas chaves verdadeiras (`viaId`, `paragemId`, `municipioId`, `transporteId`, `proprietarioId`).
 - **`Motorista.status` é o estado da conta; `emViagem` é a viagem.** Um motorista pode estar `ativo` e não estar em viagem.
-- **GPS recente quer dizer `gpsAtualizadoEm` nos últimos 3 minutos.** Todos os leitores ignoram posições mais antigas; nesse caso `currGeoLocation` é só o último ponto conhecido, não onde o veículo está ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)).
+- **[GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") recente quer dizer `gpsAtualizadoEm` nos últimos 3 minutos.** Todos os leitores ignoram posições mais antigas; nesse caso `currGeoLocation` é só o último ponto conhecido, não onde o veículo está ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)).
 
 ## Ligar à base de dados
 
 ### Produção (Neon)
 
-Os endereços de ligação estão nas variáveis de ambiente dos projectos da Vercel (`DATABASE_URL`) e na consola da Neon, no botão **Connect** do projecto. A Neon dá dois endereços para a mesma base de dados:
+Os endereços de ligação estão nas [variáveis de ambiente](conceitos.md#variavel-de-ambiente "Uma definição que se dá a um programa de fora do código, como o endereço da base de dados ou uma palavra-passe.") dos projectos da [Vercel](conceitos.md#vercel "A empresa cujos servidores correm as três aplicações e as publicam a cada merge.") (`DATABASE_URL`) e na consola da Neon, no botão **Connect** do projecto. A Neon dá dois endereços para a mesma base de dados:
 
 | Endereço | Parece-se com | Para quê |
 |---|---|---|
-| Pooled | `ep-…-pooler.<região>.aws.neon.tech` | as aplicações (as funções serverless abrem muitas ligações curtas, e o pooler partilha-as) |
+| Pooled | `ep-…-pooler.<região>.aws.neon.tech` | as aplicações (as funções [serverless](conceitos.md#serverless "Um pedaço de código que a Vercel arranca só quando chega um pedido, e desliga a seguir.") abrem muitas ligações curtas, e o pooler partilha-as) |
 | Directo | `ep-….<região>.aws.neon.tech` (sem `-pooler`) | sessões `psql`, `pg_dump`, alterações ao esquema (`prisma db execute`), tudo o que use estado de sessão |
 
 Quatro formas de entrar:
 
-1. **Consola da Neon → SQL Editor.** Corre SQL no navegador contra o ramo escolhido, sem instalar nada. Bom para leituras rápidas.
+1. **Consola da Neon → SQL Editor.** Corre SQL no [navegador](conceitos.md#navegador "O programa com que se abrem sites: Chrome, Firefox, Edge, Safari.") contra o [ramo](conceitos.md#ramo "Uma linha de trabalho separada, onde se fazem mudanças sem tocar na versão principal.") escolhido, sem instalar nada. Bom para leituras rápidas.
 2. **`psql "<endereço directo>"`.** A Neon exige TLS, e o endereço já tem `sslmode=require`.
 3. **Prisma Studio.** Um navegador de tabelas ligado por `DATABASE_URL` ([abaixo](#prisma-studio)).
 4. **Prisma Client num script.** Listas prontas que juntam tabelas, ou outras ([abaixo](#prisma-client-num-script)).
@@ -235,7 +238,7 @@ DATABASE_URL="<endereço>" npx tsx scripts/queries.ts drivers    # outra base de
 
 | Comando | Lista |
 |---|---|
-| `npx tsx scripts/queries.ts counts` | Linhas nas tabelas principais |
+| [`npx tsx scripts/queries.ts counts`](conceitos.md#npm "O npm descarrega e instala os pacotes (código feito por outros) de que cada aplicação precisa.") | Linhas nas tabelas principais |
 | `npx tsx scripts/queries.ts routes [município]` | Rotas com o número de paragens e de veículos; `routes matola` lista só as da Matola |
 | `npx tsx scripts/queries.ts stops <código da rota>` | As paragens de uma rota pela ordem de viagem, ordenadas como as aplicações as ordenam (`stops V034`) |
 | `npx tsx scripts/queries.ts vehicles [código da rota]` | Veículos com a rota, o motorista, o estado da viagem e do GPS (`sem dispositivo`, `ativo`, `sem sinal`) |
@@ -309,7 +312,7 @@ UNION ALL SELECT 'Tarifa', count(*) FROM "Tarifa";
  Tarifa     |     1
 ```
 
-(Antes da importação do OpenStreetMap; os números de hoje estão em [Tamanho](#tamanho).)
+(Antes da importação do [OpenStreetMap](conceitos.md#openstreetmap "Um mapa do mundo inteiro feito por voluntários, como uma Wikipédia dos mapas, que qualquer pessoa pode usar e corrigir."); os números de hoje estão em [Tamanho](#tamanho).)
 
 ### Rotas com paragens, veículos e tamanho do percurso
 
@@ -367,7 +370,7 @@ JOIN "Via" v     ON v.id = vp."viaId"
 WHERE v.codigo = 'V063';
 ```
 
-As linhas vêm sem ordem. Para a ordem de viagem usar `npx tsx scripts/queries.ts stops V063`, ou a API (`GET /api/stops/{id}` lista, para cada rota que passa numa paragem, as paragens nos dois sentidos pela ordem de viagem: [Referência da API](referencia-api.md#get-apistopsid)).
+As linhas vêm sem ordem. Para a ordem de viagem usar `npx tsx scripts/queries.ts stops V063`, ou a [API](conceitos.md#api "Uma API é a lista de pedidos que um servidor aceita de outros programas; cada um desses pedidos, com o seu endereço, é um endpoint.") (`GET /api/stops/{id}` lista, para cada rota que passa numa paragem, as paragens nos dois sentidos pela ordem de viagem: [Referência da API](referencia-api.md#get-apistopsid)).
 
 ### As paragens com mais rotas
 
@@ -482,7 +485,7 @@ GROUP BY u.id
 ORDER BY u."createdAt";
 ```
 
-Depois apaga-se numa só instrução, que devolve uma cópia em JSON das linhas apagadas. Só apanha contas criadas pelo USSD (`senha = 'temp'`, nunca registadas na web) com estes números de teste; correr duas vezes não apaga mais nada:
+Depois apaga-se numa só instrução, que devolve uma cópia em [JSON](conceitos.md#json "Uma forma de escrever dados em texto que qualquer programa lê: nomes entre aspas, valores depois de dois pontos, listas entre parênteses rectos.") das linhas apagadas. Só apanha contas criadas pelo USSD (`senha = 'temp'`, nunca registadas na web) com estes números de teste; correr duas vezes não apaga mais nada:
 
 ```sql
 WITH alvo AS (
@@ -514,12 +517,12 @@ Porquê uma só instrução: o [SQL Editor da Neon](guia-neon.md#4-várias-instr
   UPDATE "Tarifa" SET "precoPorKm" = 12, "updatedAt" = now() WHERE ativa;
   ```
 
-- **Nunca correr uma semente contra a produção.** Todas começam por apagar todas as linhas de todas as tabelas.
+- **Nunca correr uma [semente](conceitos.md#semente "Um conjunto pequeno de dados inventados que se carrega numa base de dados vazia para a experimentar.") contra a produção.** Todas começam por apagar todas as linhas de todas as tabelas.
 - Envolver alterações manuais de várias instruções em `BEGIN; … COMMIT;` e verificar os números de linhas antes do `COMMIT`.
 
 ## Importar paragens e rotas do OpenStreetMap
 
-A rede original deixava de fora boa parte do centro de Maputo: tinha, por exemplo, uma só paragem a menos de 2 km da Av. Eduardo Mondlane. O OpenStreetMap mapeia os autocarros e chapas da cidade (as redes Chapas, EMTPM, Corujas, REM e RCM), e [`transport-client/scripts/import-osm.mjs`](../transport-client/scripts/import-osm.mjs) trá-las.
+A rede original deixava de fora boa parte do centro de Maputo: tinha, por exemplo, uma só paragem a menos de 2 km da Av. Eduardo Mondlane. O OpenStreetMap mapeia os autocarros e [chapas](glossario.md#transportes-em-maputo "Os minibuses que levam a maior parte dos passageiros de Maputo") da cidade (as redes Chapas, [EMTPM](glossario.md#transportes-em-maputo "A Empresa Municipal de Transporte Público de Maputo"), Corujas, REM e RCM), e [`transport-client/scripts/import-osm.mjs`](../transport-client/scripts/import-osm.mjs) trá-las.
 
 Passo a passo:
 
@@ -531,7 +534,7 @@ DATABASE_URL=… node scripts/import-osm.mjs --apply --buses 2                 #
 DATABASE_URL=… node scripts/import-osm.mjs --apply --buses 2 --production    # 3b. uma base de dados remota
 ```
 
-Porquê o ensaio primeiro e `--production` à parte: o script escreve muito, e um engano numa base de dados remota custa caro. Sem `--production`, recusa qualquer servidor que não seja local.
+Porquê o ensaio primeiro e `--production` à parte: o script escreve muito, e um engano numa base de dados remota custa caro. Sem `--production`, recusa qualquer [servidor](conceitos.md#servidor "Um computador sempre ligado que recebe pedidos e responde a eles.") que não seja local.
 
 O que faz:
 
@@ -543,7 +546,7 @@ O que faz:
   - As paragens novas recebem o código `OSM-<id do nó>`.
   - Só se importam paragens servidas por alguma rota.
 - **Rotas.** O OSM tem uma relação por sentido, por exemplo `X12i` e `X12v`. As duas passam a uma só `Via`, com o número da rota (`X12`, `37-0`, `C8`), porque a rede trata todas as rotas como indo nos dois sentidos.
-  - O percurso passa pelas paragens do primeiro sentido, pela ordem de viagem, nas estradas: um router OSRM público de carro responde de paragem em paragem ([abaixo](#pôr-os-percursos-das-rotas-nas-estradas)). Uma paragem a que o router só chega dando a volta a um quarteirão (do outro lado de uma estrada com separador) é saltada. Uma relação com menos de duas paragens fica com as suas vias juntas por ordem.
+  - O percurso passa pelas paragens do primeiro sentido, pela ordem de viagem, nas estradas: um [router](conceitos.md#router "Um serviço que, dados dois ou mais pontos, responde com o caminho pelas ruas entre eles e a distância.") OSRM público de carro responde de paragem em paragem ([abaixo](#pôr-os-percursos-das-rotas-nas-estradas)). Uma paragem a que o router só chega dando a volta a um quarteirão (do outro lado de uma estrada com separador) é saltada. Uma relação com menos de duas paragens fica com as suas vias juntas por ordem.
   - As paragens são as das relações perto desse percurso, mais qualquer paragem a menos de 20 m dele, ordenadas ao longo do percurso.
   - O município é onde a rota começa.
 - **Sem duplicados.** Uma rota cujo percurso passa a menos de 60 m do percurso de uma rota existente (85% do comprimento num sentido, 70% no outro) não é juntada outra vez. Comparam-se o percurso pelas estradas e as vias juntas por ordem, e uma rota com o mesmo código e nome é a mesma rota, por isso uma corrida depois de corrigir os percursos não junta nada. As suas paragens ficam ligadas à rota existente, e as rotas existentes recebem também as paragens importadas a menos de 20 m do seu percurso.
@@ -562,7 +565,7 @@ Numa cópia da produção (2026-10-18), os dados do OSM tinham 1 529 paragens de
 
 Essa corrida ainda juntava as vias por ordem. Juntou 170 rotas (4 421 km) com 340 veículos, e 651 paragens a 35 rotas existentes. A rede passou de 91 para 261 rotas e de 1 004 para 1 855 paragens servidas. Uma lista de destinos a partir da Av. Eduardo Mondlane passou de nada para 1 095 locais.
 
-A mesma importação correu na produção em 2026-10-18, com o mesmo resultado: 823 paragens, 170 rotas, 13 975 ligações rota-paragem e 340 veículos (ADA-001M a ADA-340M). A cópia e a lista de linhas criadas estão em `transport-client/osm-data/` na máquina que a correu; não estão no repositório.
+A mesma importação correu na produção em 2026-10-18, com o mesmo resultado: 823 paragens, 170 rotas, 13 975 ligações rota-paragem e 340 veículos (ADA-001M a ADA-340M). A cópia e a lista de linhas criadas estão em `transport-client/osm-data/` na máquina que a correu; não estão no [repositório](conceitos.md#repositorio "A pasta do projecto com todo o seu histórico no git.").
 
 Rapidez depois da importação:
 
@@ -721,7 +724,7 @@ DATABASE_URL=… node scripts/add-drivers.mjs --apply                  # só bas
 DATABASE_URL=… node scripts/add-drivers.mjs --apply --production     # uma base de dados remota
 ```
 
-- **Os registos.** Os nomes vêm de nomes próprios e apelidos moçambicanos comuns. Cada motorista tem os mesmos campos dos primeiros:
+- **Os [registos](conceitos.md#registos "As linhas de texto que um programa escreve sobre o que está a fazer, para se perceber depois o que aconteceu.").** Os nomes vêm de nomes próprios e apelidos moçambicanos comuns. Cada motorista tem os mesmos campos dos primeiros:
   - BI `1102…` e carta `CC-<ano>-…`;
   - um email `@transport.co.mz`, um telefone e uma morada;
   - um contacto de emergência, datas de emissão e validade, e o estado `ativo`;
@@ -739,7 +742,7 @@ O histórico de migrações está em [`prisma/migrations/`](../prisma/migrations
 
 **A base de dados de produção não tem a tabela `_prisma_migrations`.** Foi criada com `db push`, antes de existir histórico de migrações, por isso `prisma migrate deploy` tentaria criar outra vez todas as tabelas. Por essa razão as migrações escrevem-se para poderem correr outra vez sem dano (`ADD COLUMN IF NOT EXISTS`, `CREATE … IF NOT EXISTS`). Para mudar o esquema de produção, passo a passo:
 
-1. Editar `prisma/schema.prisma` e copiar a alteração para `transport-client/prisma/schema.prisma` e `transport-admin/prisma/schema.prisma` (a cópia do painel mantém a linha `previewFeatures = ["omitApi"]`). O CI recusa as três diferentes.
+1. Editar `prisma/schema.prisma` e copiar a alteração para `transport-client/prisma/schema.prisma` e `transport-admin/prisma/schema.prisma` (a cópia do painel mantém a linha `previewFeatures = ["omitApi"]`). O [CI](conceitos.md#ci "Verificações que o GitHub corre sozinho a cada pull request, para nenhum erro conhecido chegar ao main.") recusa as três diferentes.
 2. Juntar uma pasta de migração `prisma/migrations/<data>_<nome>/migration.sql` escrita com `IF NOT EXISTS`.
 3. Testá-la numa base de dados local e num ramo da produção na Neon.
 4. Ver o que falta à produção, com o endereço **directo** (sem pooler):

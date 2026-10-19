@@ -1,13 +1,14 @@
 # Localização e GPS
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 3. Perceber como funciona › **Localização e GPS** (página 9 de 23)
+[Documentação](README.md) › 3. Perceber como funciona › **Localização e GPS** (página 11 de 25)
 
 Anterior: [Fluxos de dados](fluxos-de-dados.md) · [Índice](README.md) · Seguinte: [Serviço USSD](ussd.md)
 
 <details>
 <summary>Todas as páginas</summary>
 
+- 0. Começar do zero: [Conceitos básicos](conceitos.md) · [Preparar o computador](preparar-o-computador.md)
 - 1. Conhecer o projecto: [Visão geral](visao-geral.md) · [Glossário](glossario.md) · [Fontes de dados](fontes-de-dados.md) · [Estado do projecto](estado-do-projecto.md)
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
 - 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · **Localização e GPS** · [Serviço USSD](ussd.md) · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
@@ -18,7 +19,9 @@ Anterior: [Fluxos de dados](fluxos-de-dados.md) · [Índice](README.md) · Segui
 </details>
 <!-- /navegação -->
 
-Cada veículo tem sempre uma posição. Vem de um dispositivo GPS real quando um enviou posição nos últimos 3 minutos; senão vem do **horário**: uma estimativa determinística de onde o autocarro estaria se fosse e voltasse ao longo da sua rota o dia inteiro. Esta página explica como se escolhe a posição e porquê, como ligar um telemóvel ou um rastreador a um veículo, e o protocolo que a aplicação dos passageiros aceita.
+> **Em palavras simples:** Cada autocarro aparece no mapa num ponto. Se o autocarro tem um aparelho de [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas."), o ponto é a sua posição real; se não tem (hoje nenhum tem), a plataforma calcula onde ele deve estar pelo horário. Esta página explica os dois casos, e como ligar um telemóvel ou um aparelho de GPS a um autocarro.
+
+Cada veículo tem sempre uma posição. Vem de um dispositivo GPS real quando um enviou posição nos últimos 3 minutos; senão vem do **horário**: uma estimativa determinística de onde o autocarro estaria se fosse e voltasse ao longo da sua rota o dia inteiro. Esta página explica como se escolhe a posição e porquê, como ligar um telemóvel ou um [rastreador](conceitos.md#rastreador "Um aparelho (ou um telemóvel com uma aplicação) que envia a posição de um veículo pela internet; o código do dispositivo é a sua 'palavra-passe'.") a um veículo, e o protocolo que a aplicação dos passageiros aceita.
 
 **Nesta página:** [Como se escolhe uma posição](#como-se-escolhe-uma-posição) · [Onde se usam as posições](#onde-se-usam-as-posições) · [Ligar um dispositivo](#ligar-um-dispositivo) · [Protocolo](#protocolo) · [Verificar que funciona](#verificar-que-funciona) · [Revogar um dispositivo](#revogar-um-dispositivo) · [Limites](#limites)
 
@@ -51,14 +54,14 @@ flowchart TD
 | Regra | Valor |
 |---|---|
 | Horas de serviço | 05:00–21:00, hora de Maputo (UTC+2 todo o ano) |
-| Um ciclo | ida, 5 min no terminal do fim, volta, 5 min no primeiro terminal |
+| Um ciclo | ida, 5 min no [terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.") do fim, volta, 5 min no primeiro terminal |
 | Duração de cada sentido | comprimento do percurso ÷ velocidade de viagem |
 | Onde está cada autocarro no ciclo | desfasado por um número tirado do id do veículo (FNV-1a), para os autocarros da mesma rota ficarem espalhados |
 | Fora das horas de serviço | parado até às 05:00, metade dos autocarros em cada terminal (também pelo número) |
 
 O autocarro segue exactamente o percurso guardado: onde um percurso corta quarteirões, o autocarro no mapa também. Corrigir um percurso ([Base de dados → Pôr os percursos nas estradas](base-de-dados.md#pôr-os-percursos-das-rotas-nas-estradas), ou "Redesenhar percurso" no painel) muda logo as posições pelo horário e as horas de chegada.
 
-O resultado depende só da hora, do id do veículo, do percurso e da velocidade. **Porquê assim:** todos os endpoints, todas as instâncias serverless e os menus USSD calculam a mesma posição sem falarem uns com os outros, e nada corre em segundo plano (a Vercel não tem processos sempre ligados). **O que se perde:** o horário é uma estimativa, não um horário publicado; o GPS real resolve-o ([Limitações](limitacoes.md)).
+O resultado depende só da hora, do id do veículo, do percurso e da velocidade. **Porquê assim:** todos os [endpoints](conceitos.md#api "Uma API é a lista de pedidos que um servidor aceita de outros programas; cada um desses pedidos, com o seu endereço, é um endpoint."), todas as instâncias [serverless](conceitos.md#serverless "Um pedaço de código que a Vercel arranca só quando chega um pedido, e desliga a seguir.") e os menus [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.") calculam a mesma posição sem falarem uns com os outros, e nada corre em segundo plano (a [Vercel](conceitos.md#vercel "A empresa cujos servidores correm as três aplicações e as publicam a cada merge.") não tem processos sempre ligados). **O que se perde:** o horário é uma estimativa, não um horário publicado; o GPS real resolve-o ([Limitações](limitacoes.md)).
 
 **3. Sem percurso.** Uma rota sem percurso guardado não se pode seguir. O veículo aparece parado no último `currGeoLocation` guardado; sem ele, não tem posição (o painel mostra "Sem rota").
 
@@ -71,7 +74,7 @@ Uma posição GPS não muda a forma da rota nem o horário. Quando a posição p
 | Mapa ao vivo dos passageiros | `GET /api/buses?fields=map`, depois `GET /api/buses?fields=position` | posição, `fonte` (`gps` ou `horario`), rumo |
 | Resultados de pesquisa, acompanhar uma viagem | `GET /api/buses?paragemId=…`, `POST /api/viagem` | posição, sentido e sítio no percurso → hora de chegada |
 | Opções 1, 4 e 5 do USSD | `/api/ussd` | hora de chegada; paragem mais próxima do autocarro |
-| SMS de chegada | `checkAndNotifyUsers()` ([`lib/busSimulator.ts`](../transport-client/lib/busSimulator.ts)) | distância dos autocarros em movimento à paragem onde se espera |
+| [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") de chegada | `checkAndNotifyUsers()` ([`lib/busSimulator.ts`](../transport-client/lib/busSimulator.ts)) | distância dos autocarros em movimento à paragem onde se espera |
 | Lista de veículos e página do veículo no painel | `GET /api/transportes/estado`, `/posicao` | coluna "Agora", mapa ao vivo, etiqueta |
 | "Próximas Passagens" e gráficos do painel | `GET /api/transportes/{id}/operacao` | só o horário |
 
@@ -88,18 +91,18 @@ No painel, abrir **Transportes → o veículo → "Rastreador GPS"** e carregar 
 <img src="images/admin-gps-device-code.png" alt="Cartão Rastreador GPS logo depois de gerar um código, com a configuração do Traccar Client" width="640">
 
 - O código tem 20 caracteres (15 bytes aleatórios em base64url, 120 bits).
-- É mostrado **uma vez**, com o endereço do servidor e a configuração do Traccar Client. Só o seu hash SHA-256 fica guardado, em `Transporte.gpsDispositivoHash` (único). Porquê: quem ler a base de dados não consegue enviar posições falsas.
-- "Gerar novo código" substitui-o: o código antigo deixa de funcionar logo, e todos os dispositivos que o usam recebem 401 até serem configurados outra vez.
+- É mostrado **uma vez**, com o endereço do [servidor](conceitos.md#servidor "Um computador sempre ligado que recebe pedidos e responde a eles.") e a configuração do [Traccar Client](conceitos.md#traccar "Uma aplicação gratuita para telemóvel que envia a posição do telemóvel pelo protocolo OsmAnd."). Só o seu [hash](conceitos.md#hash "Uma 'impressão digital' de um texto, que se calcula num sentido e não se consegue desfazer.") SHA-256 fica guardado, em `Transporte.gpsDispositivoHash` (único). Porquê: quem ler a [base de dados](conceitos.md#base-de-dados "O sítio organizado onde a plataforma guarda tudo o que tem de durar: rotas, paragens, veículos, contas.") não consegue enviar posições falsas.
+- "Gerar novo código" substitui-o: o código antigo deixa de funcionar logo, e todos os dispositivos que o usam recebem [401](conceitos.md#codigos-de-resposta "O número de três algarismos com que o servidor diz como correu o pedido.") até serem configurados outra vez.
 
 O endereço do servidor mostrado é `GPS_SERVER_URL` do painel, por omissão `https://transport-mz.vercel.app/api/gps` ([Configuração](configuracao.md#transport-admin-painel-de-administração)).
 
 ### Traccar Client num telemóvel
 
-O [Traccar Client](https://www.traccar.org/client/) é uma aplicação gratuita (Android e iOS) que envia a posição do telemóvel em segundo plano, também com o ecrã desligado. É a forma recomendada de seguir um veículo com o telemóvel do motorista. Porquê esta: é aberta, gratuita, e fala o protocolo OsmAnd, que a plataforma aceita sem nada a mais.
+O [Traccar Client](https://www.traccar.org/client/) é uma aplicação gratuita (Android e iOS) que envia a posição do telemóvel em segundo plano, também com o ecrã desligado. É a forma recomendada de seguir um veículo com o telemóvel do motorista. Porquê esta: é aberta, gratuita, e fala o protocolo [OsmAnd](conceitos.md#osmand "Uma forma combinada de um aparelho enviar a sua posição: abre um endereço com a posição escrita nos parâmetros."), que a plataforma aceita sem nada a mais.
 
 | Configuração do Traccar Client | Valor |
 |---|---|
-| Server URL | `https://transport-mz.vercel.app/api/gps` |
+| Server [URL](conceitos.md#url "O texto que diz ao navegador onde está uma página ou informação, como https://transport-mz.vercel.app/viagem.") | `https://transport-mz.vercel.app/api/gps` |
 | Device identifier | o código do dispositivo do veículo |
 | Location accuracy | High |
 | Frequency | 15 segundos |
@@ -108,15 +111,15 @@ Depois, ligar o serviço de seguimento na aplicação. Envia cada posição com 
 
 ### O portal do motorista
 
-O portal do motorista pode usar o navegador do telemóvel como rastreador durante uma viagem: o motorista guarda o código do dispositivo no painel de informações do portal. O navegador envia no máximo uma posição a cada 15 s, e só enquanto a página está aberta e à frente ([Portal do motorista → Partilhar o GPS do telemóvel](portal-motorista.md#partilhar-o-gps-do-telemóvel)). Para seguimento contínuo, preferir o Traccar Client: os navegadores param de enviar com o ecrã desligado.
+O portal do motorista pode usar o [navegador](conceitos.md#navegador "O programa com que se abrem sites: Chrome, Firefox, Edge, Safari.") do telemóvel como rastreador durante uma viagem: o motorista guarda o código do dispositivo no painel de informações do portal. O navegador envia no máximo uma posição a cada 15 s, e só enquanto a página está aberta e à frente ([Portal do motorista → Partilhar o GPS do telemóvel](portal-motorista.md#partilhar-o-gps-do-telemóvel)). Para seguimento contínuo, preferir o Traccar Client: os navegadores param de enviar com o ecrã desligado.
 
 ### Um rastreador de hardware
 
-Os rastreadores de veículos falam normalmente protocolos binários próprios para um servidor de seguimento, não HTTP. Passam por um [servidor Traccar](https://www.traccar.org/), que reencaminha cada posição para `/api/gps` com o código do veículo como `id`, nos [parâmetros OsmAnd](#parâmetros-osmand). A configuração do reencaminhamento e os nomes dos campos dependem da versão do Traccar (ver a sua documentação de "position forwarding"). Este caminho ainda não foi testado com um rastreador real.
+Os rastreadores de veículos falam normalmente protocolos binários próprios para um servidor de seguimento, não [HTTP](conceitos.md#http "A forma combinada como o navegador (ou outro programa) pede algo a um servidor, e como o servidor responde."). Passam por um [servidor Traccar](https://www.traccar.org/), que reencaminha cada posição para `/api/gps` com o código do veículo como `id`, nos [parâmetros OsmAnd](#parâmetros-osmand). A configuração do reencaminhamento e os nomes dos campos dependem da versão do Traccar (ver a sua documentação de "position forwarding"). Este caminho ainda não foi testado com um rastreador real.
 
 ## Protocolo
 
-`/api/gps` da aplicação dos passageiros ([`transport-client/app/api/gps/route.ts`](../transport-client/app/api/gps/route.ts)) aceita `GET` e `POST`. Todas as respostas levam `Access-Control-Allow-Origin: *`, para um navegador noutro domínio (o portal do motorista) poder enviar. `OPTIONS` responde 204.
+`/api/gps` da aplicação dos passageiros ([`transport-client/app/api/gps/route.ts`](../transport-client/app/api/gps/route.ts)) aceita [`GET`](conceitos.md#get-e-post "GET pede para ver uma coisa; POST envia dados para o servidor fazer algo com eles.") e `POST`. Todas as respostas levam `Access-Control-Allow-Origin: *`, para um navegador noutro domínio (o portal do motorista) poder enviar. `OPTIONS` responde 204.
 
 ### Parâmetros OsmAnd
 
@@ -137,7 +140,7 @@ GET https://transport-mz.vercel.app/api/gps?id=<código>&lat=-25.9692&lon=32.573
 
 ### JSON com o código como "Bearer"
 
-Para integrações próprias. O código vai no cabeçalho `Authorization` e o corpo é JSON:
+Para integrações próprias. O código vai no cabeçalho `Authorization` e o corpo é [JSON](conceitos.md#json "Uma forma de escrever dados em texto que qualquer programa lê: nomes entre aspas, valores depois de dois pontos, listas entre parênteses rectos."):
 
 ```http
 POST https://transport-mz.vercel.app/api/gps
@@ -154,7 +157,7 @@ Os mesmos campos e nomes alternativos, mas `speed` em **km/h**. `timestamp` é o
 | Caso | Resposta | Guardado |
 |---|---|---|
 | Sem código (sem `Authorization: Bearer`, sem `id`) | 401 `{"error": "Código do dispositivo em falta"}` | nada |
-| Latitude ou longitude em falta, fora dos limites, ou exactamente 0,0 | 400 `{"error": "Coordenadas inválidas"}` | nada |
+| [Latitude](conceitos.md#coordenadas "Dois números que dizem onde está um ponto na Terra.") ou longitude em falta, fora dos limites, ou exactamente 0,0 | 400 `{"error": "Coordenadas inválidas"}` | nada |
 | Nenhum veículo tem este código | 401 `{"error": "Dispositivo desconhecido"}` | nada |
 | `accuracy` acima de 200 m | 200 `{"ok": true, "ignored": "precisão insuficiente"}` | nada |
 | Hora não mais recente do que a última posição guardada | 200 `{"ok": true, "ignored": "posição mais antiga do que a última"}` | nada |
@@ -175,7 +178,7 @@ Os leitores decidem se a posição é recente por `gpsAtualizadoEm`, por isso um
 
 ## Verificar que funciona
 
-**Com `curl`**, de qualquer máquina (substituir o código; localmente usar `http://localhost:3000`):
+**Com [`curl`](conceitos.md#curl "Um comando que faz pedidos HTTP a partir do terminal, como um navegador sem janela.")**, de qualquer máquina (substituir o código; localmente usar `http://localhost:3000`):
 
 ```bash
 curl -s "https://transport-mz.vercel.app/api/gps?id=<código>&lat=-25.9692&lon=32.5732&speed=10&bearing=90"
@@ -196,7 +199,7 @@ WHERE "gpsDispositivoHash" IS NOT NULL
 ORDER BY "gpsAtualizadoEm" DESC NULLS LAST;
 ```
 
-**Nos registos da Vercel** de `transport-mz`, os pedidos falhados aparecem como "Erro ao receber posição GPS". As recusas (400, 401) não ficam no registo da função; ver o estado HTTP no registo de pedidos ([Guia da Vercel → Registos](guia-vercel.md#registos)).
+**Nos [registos](conceitos.md#registos "As linhas de texto que um programa escreve sobre o que está a fazer, para se perceber depois o que aconteceu.") da Vercel** de `transport-mz`, os pedidos falhados aparecem como "Erro ao receber posição GPS". As recusas (400, 401) não ficam no registo da função; ver o estado HTTP no registo de pedidos ([Guia da Vercel → Registos](guia-vercel.md#registos)).
 
 ## Revogar um dispositivo
 
