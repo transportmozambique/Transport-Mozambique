@@ -190,19 +190,7 @@ Publicado como `transport-mz-admin`. Gere a rede, a frota e as pessoas. Uma past
 
 ## Código antigo
 
-Não publicado, e ainda em inglês. Ler antes de correr: vários scripts escrevem na base de dados de `DATABASE_URL`.
-
-| Caminho | O que é |
-|---|---|
-| `app/`, `lib/`, `package.json` e `next.config.ts` da raiz | Uma versão antiga da aplicação dos passageiros, já diferente de `transport-client` |
-| `*.js`, `*.json` e `scripts/` da raiz | Scripts e dados da primeira importação |
-| `transport-admin/*.js` e `transport-admin/scripts/` | Scripts de uso único (`check-*`, `fix-*`, `create-*`, `seed-*`) |
-| `transport-client/*.js` | Scripts de uso único da primeira versão |
-| `*.backup`, `*.old` | Cópias antigas de rotas |
-| [`transport-client/app/api/ussd-telerivet`](../transport-client/app/api/ussd-telerivet/route.ts) | O USSD para o gateway Telerivet, que não se usa |
-| `scratch/` | Scripts de trabalho de sessões anteriores |
-
-A lista do que se pode apagar, e porquê ainda não se apagou, está em [Limitações](limitacoes.md).
+Apagado em 2026-10-19: a aplicação antiga da raiz, a rota Telerivet, os scripts de uso único e as cópias `*.backup` e `*.old` ([Visão geral → Código antigo](visao-geral.md#código-antigo-apagado), que diz onde os encontrar no histórico). Os scripts de dados mantidos estão em [`transport-client/scripts`](#scripts-de-dados-scripts).
 
 <!-- navegação-fim: gerada por .github/scripts/docs-nav.py -->
 

@@ -40,7 +40,6 @@ Porquê variáveis de ambiente: segredos e endereços mudam entre o computador l
 | `AFRICASTALKING_SHORTCODE` | não | Remetente ou código curto usado como `from` nos SMS (só contas de produção). | O remetente por omissão da Africa's Talking. |
 | `USSD_CALLBACK_KEY` | recomendada | Chave que `/api/ussd` exige como `?key=` no URL de resposta, para só a Africa's Talking o poder chamar ([Segurança → Resposta USSD](seguranca.md#resposta-ussd-callback)). | Qualquer pessoa pode chamar `/api/ussd`. |
 | `WALK_ROUTER_URL` | não | Serviço OSRM usado para as caminhadas pelas ruas, até ao perfil (`…/route/v1/foot`), para um router próprio ([`lib/walkRoute.ts`](../transport-client/lib/walkRoute.ts)). | O router a pé da FOSSGIS, `https://routing.openstreetmap.de/routed-foot/route/v1/foot`. |
-| `TELERIVET_SECRET` | não (antiga) | Segredo partilhado verificado por `/api/ussd-telerivet`, o endpoint do gateway Telerivet sem uso. | Esse endpoint salta a verificação. |
 
 ### `transport-admin` (painel de administração)
 
@@ -79,7 +78,7 @@ Variáveis definidas em produção em 2026-10-17 (só os nomes):
 
 | Projecto na Vercel | Production | Preview |
 |---|---|---|
-| `transport-mz` | `DATABASE_URL`, `USER_SESSION_SECRET`, `DRIVER_SESSION_SECRET`, `AFRICASTALKING_API_KEY`, `AFRICASTALKING_USERNAME`, `USSD_CALLBACK_KEY`, `TELERIVET_SECRET` | `DATABASE_URL`, `USER_SESSION_SECRET`, `DRIVER_SESSION_SECRET` |
+| `transport-mz` | `DATABASE_URL`, `USER_SESSION_SECRET`, `DRIVER_SESSION_SECRET`, `AFRICASTALKING_API_KEY`, `AFRICASTALKING_USERNAME`, `USSD_CALLBACK_KEY` | `DATABASE_URL`, `USER_SESSION_SECRET`, `DRIVER_SESSION_SECRET` |
 | `transport-mz-admin` | `DATABASE_URL`, `ADMIN_SESSION_SECRET` | `DATABASE_URL`, `ADMIN_SESSION_SECRET` |
 | `transport-mz-driver` | `NEXT_PUBLIC_API_URL` (= `https://transport-mz.vercel.app`) | `NEXT_PUBLIC_API_URL` |
 
@@ -95,7 +94,7 @@ Um projecto da Vercel por aplicação, todos ligados a este repositório do GitH
 | `transport-mz-admin` | `transport-admin` | Next.js | `prisma generate && next build` (com 4 GB de memória) | `transport-mz-admin.vercel.app` |
 | `transport-mz-driver` | `transport-driver` | Next.js | `next build` | `transport-mz-driver.vercel.app` |
 
-Porquê o `prisma generate` antes do `next build`: o cliente Prisma é gerado a partir do esquema e não vai no git. O `vercel.json` da raiz é da aplicação antiga, que nenhum projecto compila; `transport-client/vercel.json` só declara o framework. Como se publica está em [Publicação](publicacao.md).
+Porquê o `prisma generate` antes do `next build`: o cliente Prisma é gerado a partir do esquema e não vai no git. `transport-client/vercel.json` só declara o framework. Como se publica está em [Publicação](publicacao.md).
 
 ## Base de dados na Neon
 

@@ -122,8 +122,6 @@ curl -s -o /dev/null -w "%{http_code}" -X POST https://transport-mz.vercel.app/a
 # 403
 ```
 
-A rota antiga `/api/ussd-telerivet` (de um gateway que já não se usa) tem o mesmo tipo de verificação com `TELERIVET_SECRET`.
-
 ## Endpoints públicos
 
 Endpoints que respondem sem nenhuma credencial, de propósito:
@@ -142,8 +140,6 @@ Porquê públicos: a informação de transportes é para toda a gente, e pedir c
 **A posição do passageiro.** Uma posição enviada a estes endpoints não se guarda na base de dados. A aplicação web envia-a a `/api/journeys` e `/api/viagem` no corpo de um `POST`, que a Vercel não regista. `/api/destinos` ainda a recebe no URL, arredondada pela página a 3 casas decimais (cerca de 110 m), e esse ponto arredondado aparece nos registos dos pedidos. `/api/walk` recebe os pontos arredondados a cerca de 45 m pela página e a 11 m pelo servidor, e passa-os ao router da FOSSGIS (`routing.openstreetmap.de`) a partir do servidor, de forma que a FOSSGIS vê o servidor e não o passageiro. Esses pontos também ficam nos registos, e a CDN guarda a resposta uma semana para quem pedir os mesmos pontos ([Fontes de dados](fontes-de-dados.md)).
 
 Nenhum endpoint público devolve dados pessoais de passageiros ou motoristas.
-
-A aplicação antiga da raiz do repositório (`app/`, não publicada) tem endpoints de administração sem autenticação. Nunca deve ser publicada assim ([Limitações](limitacoes.md)).
 
 ## Segredos e dados pessoais guardados
 

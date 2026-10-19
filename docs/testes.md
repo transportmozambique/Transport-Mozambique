@@ -20,7 +20,7 @@ Anterior: [Africa's Talking](africas-talking.md) · [Índice](README.md) · Segu
 
 O que se verifica automaticamente, como se corre, e como se testam à mão as partes sem testes automáticos (aplicação dos passageiros, USSD, GPS, portal do motorista). O GitHub corre as verificações de tipos, a comparação dos esquemas e a verificação da documentação em cada pull request ([CI](#ci-no-github)); os testes do painel correm-se à mão antes de abrir um. A compilação da Vercel verifica os tipos outra vez ([Publicação → Compilações](publicacao.md#compilações)).
 
-**Nesta página:** [Resumo](#resumo) · [CI no GitHub](#ci-no-github) · [Uma base de dados local de teste](#uma-base-de-dados-local-de-teste) · [Tipos e lint](#tipos-e-lint) · [Painel: Jest](#testes-da-api-e-da-base-de-dados-do-painel-jest) · [Painel: Playwright](#testes-ponta-a-ponta-do-painel-playwright) · [Passageiros e USSD à mão](#aplicação-dos-passageiros-e-ussd-à-mão) · [GPS à mão](#gps-à-mão) · [Portal do motorista à mão](#portal-do-motorista-à-mão) · [Scripts antigos](#scripts-de-teste-antigos)
+**Nesta página:** [Resumo](#resumo) · [CI no GitHub](#ci-no-github) · [Uma base de dados local de teste](#uma-base-de-dados-local-de-teste) · [Tipos e lint](#tipos-e-lint) · [Painel: Jest](#testes-da-api-e-da-base-de-dados-do-painel-jest) · [Painel: Playwright](#testes-ponta-a-ponta-do-painel-playwright) · [Passageiros e USSD à mão](#aplicação-dos-passageiros-e-ussd-à-mão) · [GPS à mão](#gps-à-mão) · [Portal do motorista à mão](#portal-do-motorista-à-mão)
 
 ---
 
@@ -178,10 +178,6 @@ Compilar o portal com `NEXT_PUBLIC_API_URL` a apontar para a aplicação dos pas
 - Com um código de dispositivo guardado no perfil e a localização permitida, uma viagem envia posições; o cartão do veículo no painel passa a "GPS ativo".
 - Atribuir o motorista a outro veículo no painel, e recarregar o portal (ou esperar 5 minutos): a matrícula e a rota novas aparecem sem entrar outra vez.
 - Um PIN errado responde "PIN incorreto"; um motorista sem PIN recebe "Ainda não tem PIN…".
-
-## Scripts de teste antigos
-
-A raiz do repositório tem 24 scripts `test-*.js` (`test-ussd-*.js`, `test-api-*.js`, …) e `transport-admin` tem mais 16 scripts `test-*.js` e `check-*.js` da primeira importação de dados. Testam versões antigas dos fluxos, alguns têm URLs ou dados fixos, e vários escrevem na base de dados de `DATABASE_URL`. Não fazem parte dos testes; lê-se um antes de o correr ([Limitações](limitacoes.md)).
 
 <!-- navegação-fim: gerada por .github/scripts/docs-nav.py -->
 

@@ -36,8 +36,6 @@ Porquê a Vercel e a Neon: as duas têm planos gratuitos que chegam para este pr
 
 Os três usam a predefinição Next.js com os comandos de origem (`npm install`, `npm run build`) e Node.js 24.x. As funções correm na região `iad1` da Vercel (Washington, D.C.), perto da base de dados da Neon em `us-east-2` (Ohio). Porquê essa região: cada pedido faz várias consultas, e a distância entre a função e a base de dados conta em cada uma; a distância ao telemóvel conta uma só vez.
 
-O `vercel.json` da raiz pertence à aplicação antiga da raiz; nenhum projecto o compila ([Visão geral → Código antigo](visao-geral.md#código-antigo-não-publicado)).
-
 **Trabalho agendado.** [`.github/workflows/arrival-check.yml`](../.github/workflows/arrival-check.yml) chama `POST https://transport-mz.vercel.app/api/simulation {"action":"check"}` a cada 5 minutos a partir do GitHub Actions, para os SMS de chegada saírem mesmo sem tráfego na web ([Fluxos de dados → Alerta de chegada](fluxos-de-dados.md#alerta-de-chegada-e-sms)). Porquê o GitHub: o plano Hobby da Vercel só permite cron jobs uma vez por dia. As execuções estão no separador Actions do repositório → "Verificação de chegadas (SMS)", onde "Run workflow" também corre uma à mão. O GitHub suspende os agendamentos depois de 60 dias sem actividade no repositório; "Enable workflow" na mesma página liga-o outra vez.
 
 ## Como uma alteração chega à produção

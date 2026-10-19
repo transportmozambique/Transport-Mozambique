@@ -20,7 +20,7 @@
 
 Esta página explica o que é a plataforma, para quem é, de que peças é feita, como as peças falam umas com as outras e **porque é que cada tecnologia foi escolhida**. É a primeira página do guia: as seguintes partem do que aqui se descreve.
 
-**Nesta página:** [O problema](#o-problema) · [Quem usa e como](#quem-usa-e-como) · [Diagrama do sistema](#diagrama-do-sistema) · [As três aplicações](#as-três-aplicações) · [Como as partes se ligam](#como-as-partes-se-ligam) · [Decisões de desenho](#decisões-de-desenho) · [Tecnologias e porquê](#tecnologias-e-porquê) · [Estrutura do repositório](#estrutura-do-repositório) · [Código antigo](#código-antigo-não-publicado)
+**Nesta página:** [O problema](#o-problema) · [Quem usa e como](#quem-usa-e-como) · [Diagrama do sistema](#diagrama-do-sistema) · [As três aplicações](#as-três-aplicações) · [Como as partes se ligam](#como-as-partes-se-ligam) · [Decisões de desenho](#decisões-de-desenho) · [Tecnologias e porquê](#tecnologias-e-porquê) · [Estrutura do repositório](#estrutura-do-repositório) · [Código antigo](#código-antigo-apagado)
 
 ---
 
@@ -167,19 +167,23 @@ Estas escolhas explicam a maior parte da forma do código. Cada uma diz o que se
 ├── docs/                esta documentação (imagens em docs/images)
 ├── .github/             CI (Verificações), Verificação de chegadas (SMS), scripts de verificação
 ├── docker-compose.yml   PostgreSQL 16 local na porta 5433
-├── start-all.bat        abre as três aplicações no Windows (portas 3000, 3001, 3002)
-└── app/, lib/, *.js     aplicação antiga e scripts de uso único: não publicados
+└── start-all.bat        abre as três aplicações no Windows (portas 3000, 3001, 3002)
 ```
 
 Cada pasta e ficheiro importante, com o que faz e onde é explicado: [Mapa do código](mapa-do-codigo.md).
 
-## Código antigo (não publicado)
+## Código antigo (apagado)
 
-- **Aplicação da raiz (`app/`, `lib/`, `package.json` e `vercel.json` da raiz).** Uma versão antiga da aplicação dos passageiros. Nenhum projecto da Vercel a compila, e já divergiu de `transport-client`: uma correcção feita numa não chega à outra.
-- **[`transport-client/app/api/ussd-telerivet`](../transport-client/app/api/ussd-telerivet/route.ts).** O USSD para o gateway Telerivet, com os menus antigos. O gateway em uso é a Africa's Talking; nenhum serviço Telerivet aponta para este endpoint.
-- **Os `*.js` e `scripts/` da raiz, e os scripts na raiz e em `scripts/` de `transport-admin`.** Scripts de uso único da primeira importação de dados (`check-*`, `fix-*`, `create-*`, `seed-*`). Vários escrevem na base de dados para onde `DATABASE_URL` apontar: ler um antes de o correr.
+Até 2026-10-19 o repositório guardava código que não se publicava:
 
-Estes ficheiros ficaram em inglês. A lista completa do que falta está em [Limitações](limitacoes.md).
+- uma versão antiga da aplicação dos passageiros na raiz (`app/`, `lib/`, `package.json`, `vercel.json`), com endpoints de administração sem autenticação;
+- a rota USSD do gateway Telerivet (`/api/ussd-telerivet`), com os menus antigos;
+- cerca de 250 scripts de uso único da primeira importação de dados (`check-*`, `fix-*`, `create-*`, `seed-*`), na raiz, em `transport-admin` e em `transport-client`;
+- cópias `*.backup` e `*.old` de rotas, a pasta `scratch/` e `docs/architecture.pdf`.
+
+Porquê se apagaram: confundiam quem chegava ao repositório, já não correspondiam ao código publicado, e vários scripts escreviam na base de dados de `DATABASE_URL` sem perguntar.
+
+Não se perderam: estão no histórico do git. O repositório como estava antes vê-se em [`bd007cf`](https://github.com/transportmozambique/Transport-Mozambique/tree/bd007cf), e um ficheiro recupera-se com `git checkout bd007cf -- <caminho>`.
 
 <!-- navegação-fim: gerada por .github/scripts/docs-nav.py -->
 

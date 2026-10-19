@@ -69,7 +69,6 @@ Coisas que se fazem nas aplicações ou nas contas, não no código:
    2. Copiar o endereço de ligação novo com **Pooled connection** ligado.
    3. Vercel → `transport-mz` → **Settings → Environment Variables** → `DATABASE_URL`: apagar as linhas antigas e juntar uma nova, de tipo **Secret**, com o endereço novo, para Production e Preview. A de Development não volta: a Vercel não aceita Secret em Development, e localmente o endereço vem do `.env`. O mesmo em `transport-mz-admin` (Production e Preview). Os `.env` locais que apontam para a produção também mudam ([Guia da Vercel → Variáveis de ambiente](guia-vercel.md#variáveis-de-ambiente)).
    4. Publicar outra vez os dois projectos (**Deployments** → a última publicação → **Redeploy**) e confirmar o mapa e uma entrada no painel ([Publicação → Confirmar uma publicação](publicacao.md#confirmar-uma-publicação)).
-2. **Apagar os passageiros de teste do USSD na produção**, criados pelos ensaios no simulador: as duas consultas de [Base de dados → Passageiros criados por USSD](base-de-dados.md#passageiros-criados-por-ussd-ainda-sem-palavra-passe), no [SQL Editor da Neon](guia-neon.md#2-abrir-o-sql-editor).
 
 ## Próximos passos
 
@@ -113,6 +112,7 @@ Os pull requests juntados na `main` de [transportmozambique/Transport-Mozambique
 | 42 | 2026-10-18 | Página da tarifa; o portal do motorista acompanha mudanças de veículo; pesquisa de telefones pelos algarismos; desenho de rotas com um segundo router; posição do passageiro fora dos registos; verificação de chegadas a cada 5 min no GitHub Actions; CI; fontes de dados, tarefas passo a passo e como contornar cada limitação |
 | 43 | 2026-10-18 | USSD: cada tecla lida pelo ecrã a que responde, pesquisa que aceita nomes mal escritos, escrever outro nome numa lista faz nova pesquisa; documentação toda em português, como guia passo a passo em seis partes, com o porquê das escolhas, mapa do código e navegação gerada; código, comentários e mensagens em português |
 | 44 | 2026-10-18 | V086 confirmada na estrada (nada a redesenhar); segredos das sessões dos passageiros e dos motoristas trocados e guardados como Secret; SQL para apagar os passageiros de teste do USSD; os passos da mudança da palavra-passe da Neon |
+| 46 | 2026-10-19 | Apagado o código que não se publicava (a aplicação antiga da raiz, a rota Telerivet, cerca de 250 scripts de uso único, cópias `*.backup` e `*.old`); os passageiros de teste do USSD apagados da produção no editor da Neon |
 
 <!-- navegação-fim: gerada por .github/scripts/docs-nav.py -->
 
