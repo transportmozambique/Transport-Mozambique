@@ -1,13 +1,14 @@
 # Guia da Neon
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 5. Pôr online › **Guia da Neon** (página 19 de 23)
+[Documentação](README.md) › 5. Pôr online › **Guia da Neon** (página 21 de 25)
 
 Anterior: [Guia da Vercel](guia-vercel.md) · [Índice](README.md) · Seguinte: [Africa's Talking](africas-talking.md)
 
 <details>
 <summary>Todas as páginas</summary>
 
+- 0. Começar do zero: [Conceitos básicos](conceitos.md) · [Preparar o computador](preparar-o-computador.md)
 - 1. Conhecer o projecto: [Visão geral](visao-geral.md) · [Glossário](glossario.md) · [Fontes de dados](fontes-de-dados.md) · [Estado do projecto](estado-do-projecto.md)
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
 - 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · [Localização e GPS](localizacao-gps.md) · [Serviço USSD](ussd.md) · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
@@ -18,7 +19,9 @@ Anterior: [Guia da Vercel](guia-vercel.md) · [Índice](README.md) · Seguinte: 
 </details>
 <!-- /navegação -->
 
-A base de dados de produção está na [Neon](https://neon.tech). Esta página é um guia passo a passo da consola da Neon no navegador:
+> **Em palavras simples:** A [Neon](conceitos.md#neon "A empresa que guarda a base de dados PostgreSQL da produção, na internet.") guarda a [base de dados](conceitos.md#base-de-dados "O sítio organizado onde a plataforma guarda tudo o que tem de durar: rotas, paragens, veículos, contas.") verdadeira na [internet](conceitos.md#internet "A rede que liga milhões de computadores e telemóveis, por onde passam os pedidos e as respostas."). Esta página mostra, com imagens, como entrar na Neon, fazer uma pergunta aos dados (em [SQL](conceitos.md#sql "A linguagem com que se fazem perguntas e alterações a uma base de dados.")) e ver a resposta, com perguntas prontas a copiar.
+
+A base de dados de produção está na [Neon](https://neon.tech). Esta página é um guia passo a passo da consola da Neon no [navegador](conceitos.md#navegador "O programa com que se abrem sites: Chrome, Firefox, Edge, Safari."):
 
 - criar o projecto e tirar o endereço de ligação (para montar a plataforma noutra conta);
 - abrir o projecto;
@@ -29,7 +32,7 @@ A base de dados de produção está na [Neon](https://neon.tech). Esta página �
 
 Todas as consultas desta página só lêem, e as capturas foram feitas na produção em 2026-10-18, por isso os números são reais.
 
-As tabelas e as suas convenções estão em [Base de dados](base-de-dados.md); os fluxos por trás delas, em [Fluxos de dados](fluxos-de-dados.md). Porquê a Neon: PostgreSQL sem servidor para gerir, com plano gratuito, editor de SQL no navegador, ramos (cópias instantâneas da base de dados para testar) e ligação directa à Vercel.
+As tabelas e as suas convenções estão em [Base de dados](base-de-dados.md); os fluxos por trás delas, em [Fluxos de dados](fluxos-de-dados.md). Porquê a Neon: [PostgreSQL](conceitos.md#postgresql "O programa de base de dados que este projecto usa; gratuito e muito usado.") sem [servidor](conceitos.md#servidor "Um computador sempre ligado que recebe pedidos e responde a eles.") para gerir, com plano gratuito, editor de SQL no navegador, [ramos](conceitos.md#ramo "Uma linha de trabalho separada, onde se fazem mudanças sem tocar na versão principal.") (cópias instantâneas da base de dados para testar) e ligação directa à [Vercel](conceitos.md#vercel "A empresa cujos servidores correm as três aplicações e as publicam a cada merge.").
 
 **Nesta página:** [Antes de começar](#antes-de-começar) · [0. Criar o projecto](#0-criar-o-projecto) · [1. Abrir o projecto](#1-abrir-o-projecto) · [2. Abrir o SQL Editor](#2-abrir-o-sql-editor) · [3. Colar uma consulta e corrê-la](#3-colar-uma-consulta-e-corrê-la) · [4. Várias instruções de uma vez](#4-várias-instruções-de-uma-vez) · [5. Descarregar, histórico e consultas guardadas](#5-descarregar-histórico-e-consultas-guardadas) · [6. Ver uma tabela sem SQL](#6-ver-uma-tabela-sem-sql) · [7. Seguir os dados pelas tabelas](#7-seguir-os-dados-pelas-tabelas) · [8. Repor a palavra-passe](#8-repor-a-palavra-passe)
 
@@ -39,10 +42,10 @@ As tabelas e as suas convenções estão em [Base de dados](base-de-dados.md); o
 
 - **`production` são os dados ao vivo.** As aplicações lêem-nos e escrevem-nos a toda a hora. Ali só se corre `SELECT` (e `SET`). Um `INSERT`, `UPDATE`, `DELETE`, `CREATE` ou `DROP` muda logo as aplicações ao vivo, sem forma de desfazer. Para experimentar algo que escreve, cria-se primeiro um ramo ([Base de dados → Consola da Neon](base-de-dados.md#consola-da-neon)).
 - **Algumas colunas são dados pessoais:**
-  - `Utente`: nome, email e telefone dos passageiros;
+  - [`Utente`](glossario.md#a-rede-e-as-pessoas "A tabela das contas de passageiros"): nome, email e telefone dos passageiros;
   - `MISSION.geoLocationUtente`: onde o passageiro estava quando pediu um alerta;
-  - `Motorista`: telefone e BI dos motoristas;
-  - `Administrador`: emails.
+  - [`Motorista`](glossario.md#a-rede-e-as-pessoas "A tabela dos motoristas e dos seus PIN"): telefone e BI dos motoristas;
+  - [`Administrador`](glossario.md#a-rede-e-as-pessoas "A tabela das contas do painel de administração"): emails.
 
   As consultas abaixo contam linhas em vez de listar pessoas. Estas colunas não se fotografam nem se partilham.
 - **É preciso acesso ao projecto da Neon.** O dono do projecto convida em **People** na consola.
@@ -56,7 +59,7 @@ Só para montar a plataforma do zero, noutra conta:
 3. Em **Connect**, copiar os dois endereços de ligação:
    - o **pooled** (o servidor tem `-pooler` no nome) vai para `DATABASE_URL` das aplicações. Porquê: as funções da Vercel abrem muitas ligações curtas, e o pooler partilha-as;
    - o **directo** (sem `-pooler`) usa-se em `pg_dump`, `prisma migrate diff` e `prisma db execute` ([Publicação → Alterações à base de dados](publicacao.md#alterações-à-base-de-dados-em-produção)).
-4. Criar as tabelas a partir do esquema e carregar os dados ([Primeiros passos](primeiros-passos.md#5-criar-o-esquema), contra o endereço directo), e pôr `DATABASE_URL` nos projectos da Vercel ([Guia da Vercel](guia-vercel.md#variáveis-de-ambiente)).
+4. Criar as tabelas a partir do [esquema](conceitos.md#migracao "O esquema é a lista das tabelas e colunas; uma migração é uma alteração a essa lista, escrita em SQL para se poder repetir.") e carregar os dados ([Primeiros passos](primeiros-passos.md#5-criar-o-esquema), contra o endereço directo), e pôr `DATABASE_URL` nos projectos da Vercel ([Guia da Vercel](guia-vercel.md#variáveis-de-ambiente)).
 
 ## 1. Abrir o projecto
 
@@ -86,7 +89,7 @@ Só para montar a plataforma do zero, noutra conta:
 
 ## 3. Colar uma consulta e corrê-la
 
-1. **Copiar a consulta.** No GitHub, o botão de copiar no canto superior direito de um bloco de código copia-o todo. Começar por esta, que conta as linhas das tabelas principais:
+1. **Copiar a consulta.** No [GitHub](conceitos.md#github "O site onde o repositório está guardado e partilhado, e onde se revêem as alterações."), o botão de copiar no canto superior direito de um bloco de código copia-o todo. Começar por esta, que conta as linhas das tabelas principais:
 
    ```sql
    -- Quantas linhas tem cada tabela (só lê)
@@ -120,7 +123,7 @@ Só para montar a plataforma do zero, noutra conta:
 
 | Erro | Causa |
 |---|---|
-| `relation "via" does not exist` | As aspas à volta do nome de uma tabela perderam-se: o PostgreSQL passou `Via` a minúsculas. |
+| `relation "via" does not exist` | As aspas à volta do nome de uma tabela perderam-se: o PostgreSQL passou [`Via`](glossario.md#a-rede-e-as-pessoas "A tabela das rotas de autocarro (route)") a minúsculas. |
 | `column "paragemid" does not exist` | O mesmo, numa coluna. |
 | `syntax error at or near …` | Parte da consulta não foi copiada, muitas vezes a primeira ou a última linha. Colar outra vez. |
 | Nada acontece durante alguns segundos | A base de dados estava a dormir e está a acordar. |
@@ -148,7 +151,7 @@ A regra de tarifa é 10 MT de mínimo, 10 MT por km, e 30 km/h de velocidade de 
 **Descarregar ou copiar um resultado.** Os ícones no canto inferior direito do resultado são:
 
 - copiar (dois quadrados), que copia as linhas;
-- descarregar (seta), que oferece **JSON**, **CSV** ou **XLSX**, este último para o Excel;
+- descarregar (seta), que oferece **[JSON](conceitos.md#json "Uma forma de escrever dados em texto que qualquer programa lê: nomes entre aspas, valores depois de dois pontos, listas entre parênteses rectos.")**, **CSV** ou **XLSX**, este último para o Excel;
 - expandir (quadrado), que mostra o resultado no ecrã inteiro.
 
 <img src="images/neon-guide-download.png" alt="Menu de descarga do resultado: JSON, CSV, XLSX" width="480">
@@ -192,7 +195,7 @@ As consultas abaixo seguem esse fluxo. Corre-se uma, faz-se na aplicação a ac�
 
 ### 7.1 A rede: municípios, rotas e paragens
 
-O painel cria a rede: municípios, depois rotas (`Via`) e paragens (`Paragem`), ligadas por `ViaParagem`.
+O painel cria a rede: municípios, depois rotas (`Via`) e paragens ([`Paragem`](glossario.md#a-rede-e-as-pessoas "A tabela das paragens (stop)")), ligadas por [`ViaParagem`](glossario.md#a-rede-e-as-pessoas "A ligação de uma paragem a uma rota").
 
 ```sql
 -- 1. Rede (escrita no painel): rotas e paragens por município
@@ -233,7 +236,7 @@ LIMIT 10;
 
 ### 7.3 Veículos, motoristas, viagens e GPS
 
-O painel atribui um motorista a cada veículo (`Motorista.transporteId`). O motorista inicia uma viagem no [portal do motorista](portal-motorista.md) ou na opção 6 do USSD (`Motorista.emViagem`). Um dispositivo GPS envia posições para `/api/gps` (`Transporte.gpsAtualizadoEm`, `currGeoLocation`); uma posição conta como ao vivo durante 3 minutos.
+O painel atribui um motorista a cada veículo (`Motorista.transporteId`). O motorista inicia uma viagem no [portal do motorista](portal-motorista.md) ou na opção 6 do [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.") (`Motorista.emViagem`). Um dispositivo [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") envia posições para `/api/gps` (`Transporte.gpsAtualizadoEm`, `currGeoLocation`); uma posição conta como ao vivo durante 3 minutos.
 
 ```sql
 -- 3. Veículos (painel), viagens (portal do motorista, USSD opção 6), GPS (/api/gps)
@@ -249,20 +252,20 @@ LEFT JOIN "Motorista" d ON d."transporteId" = t.id;
 
 Lê-se assim:
 
-- 340 veículos, os das rotas do OpenStreetMap, não tinham motorista quando a captura foi feita. Os motoristas de demonstração juntaram-se no mesmo dia, por isso os 451 têm hoje um ([Base de dados → Motoristas para os veículos importados](base-de-dados.md#motoristas-para-os-veículos-importados));
+- 340 veículos, os das rotas do [OpenStreetMap](conceitos.md#openstreetmap "Um mapa do mundo inteiro feito por voluntários, como uma Wikipédia dos mapas, que qualquer pessoa pode usar e corrigir."), não tinham motorista quando a captura foi feita. Os motoristas de demonstração juntaram-se no mesmo dia, por isso os 451 têm hoje um ([Base de dados → Motoristas para os veículos importados](base-de-dados.md#motoristas-para-os-veículos-importados));
 - nenhum motorista está em viagem;
 - nenhum veículo tem posição GPS ao vivo, por isso todos os autocarros do mapa vêm do horário ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)).
 
 **Ver a mudança:**
 
 - Um motorista toca em "Iniciar viagem": `em_viagem` sobe um.
-- Um rastreador envia uma posição ([Localização e GPS → Verificar que funciona](localizacao-gps.md#verificar-que-funciona)): `gps_ativo` sobe um, e desce 3 minutos depois da última posição.
+- Um [rastreador](conceitos.md#rastreador "Um aparelho (ou um telemóvel com uma aplicação) que envia a posição de um veículo pela internet; o código do dispositivo é a sua 'palavra-passe'.") envia uma posição ([Localização e GPS → Verificar que funciona](localizacao-gps.md#verificar-que-funciona)): `gps_ativo` sobe um, e desce 3 minutos depois da última posição.
 
 A consulta não lê `currGeoLocation`. Quando o rastreador é o telemóvel de um motorista, essa coluna é onde o motorista está.
 
 ### 7.4 Passageiros e os seus alertas de chegada
 
-Um passageiro regista-se na web, com palavra-passe, ou é criado pela opção 1 do USSD sem ela; registar-se na web com o mesmo telefone completa essa conta. Pedir para ser avisado quando um autocarro está perto de uma paragem cria um alerta (`MISSION`). A verificação de chegadas preenche `notificadoEm` quando envia o SMS ([Fluxos de dados → Alerta de chegada e SMS](fluxos-de-dados.md#alerta-de-chegada-e-sms)).
+Um passageiro regista-se na web, com palavra-passe, ou é criado pela opção 1 do USSD sem ela; registar-se na web com o mesmo telefone completa essa conta. Pedir para ser avisado quando um autocarro está perto de uma paragem cria um alerta ([`MISSION`](glossario.md#a-rede-e-as-pessoas "Um alerta de chegada: um SMS quando um autocarro estiver perto de uma paragem")). A verificação de chegadas preenche `notificadoEm` quando envia o [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") ([Fluxos de dados → Alerta de chegada e SMS](fluxos-de-dados.md#alerta-de-chegada-e-sms)).
 
 ```sql
 -- 4. Passageiros (registo na web, USSD opção 1) e os seus alertas de chegada
@@ -277,7 +280,7 @@ GROUP BY 1;
 
 ![Passageiros pelo canal de registo, com os alertas e os SMS](images/neon-flow-passengers.png)
 
-Uma palavra-passe da web guarda-se como hash bcrypt (`$2a$…`, `$2b$…`), por isso a consulta separa os dois tipos sem ler os dados de ninguém.
+Uma palavra-passe da web guarda-se como [hash](conceitos.md#hash "Uma 'impressão digital' de um texto, que se calcula num sentido e não se consegue desfazer.") bcrypt (`$2a$…`, `$2b$…`), por isso a consulta separa os dois tipos sem ler os dados de ninguém.
 
 ### 7.5 Alertas de chegada por paragem
 
@@ -302,7 +305,7 @@ ORDER BY alertas DESC;
 
 ### Mais consultas
 
-[Base de dados → Consultas de exemplo](base-de-dados.md#consultas-de-exemplo) tem mais consultas testadas: as paragens de uma rota com coordenadas, paragens perto de um ponto, veículos com o motorista, os alertas das últimas 24 horas, as viagens dos motoristas. Colam-se da mesma forma.
+[Base de dados → Consultas de exemplo](base-de-dados.md#consultas-de-exemplo) tem mais consultas testadas: as paragens de uma rota com [coordenadas](conceitos.md#coordenadas "Dois números que dizem onde está um ponto na Terra."), paragens perto de um ponto, veículos com o motorista, os alertas das últimas 24 horas, as viagens dos motoristas. Colam-se da mesma forma.
 
 ## 8. Repor a palavra-passe
 
@@ -310,7 +313,7 @@ Quando a palavra-passe da base de dados pode ter escapado (por exemplo, apareceu
 
 1. Na consola, abrir o projecto e o ramo **production**.
 2. Abrir **Roles** (na vista geral do ramo, ou em **Settings → Roles**), escolher o papel das aplicações (`neondb_owner`) e **Reset password**. A Neon mostra a palavra-passe nova uma só vez, dentro dos endereços de ligação novos.
-3. A partir deste momento, as aplicações deixam de conseguir ligar-se. Pôr logo os endereços novos em `DATABASE_URL` de `transport-mz` e `transport-mz-admin` (Production e Preview) e nos `.env` locais ([Guia da Vercel → Variáveis de ambiente](guia-vercel.md#variáveis-de-ambiente)).
+3. A partir deste momento, as aplicações deixam de conseguir ligar-se. Pôr logo os endereços novos em `DATABASE_URL` de `transport-mz` e `transport-mz-admin` (Production e Preview) e nos [`.env`](conceitos.md#variavel-de-ambiente "Uma definição que se dá a um programa de fora do código, como o endereço da base de dados ou uma palavra-passe.") locais ([Guia da Vercel → Variáveis de ambiente](guia-vercel.md#variáveis-de-ambiente)).
 4. Publicar outra vez os dois projectos, e confirmar o mapa e uma entrada no painel ([Publicação → Confirmar uma publicação](publicacao.md#confirmar-uma-publicação)).
 
 Faz-se a uma hora calma: entre os passos 2 e 4, as aplicações dão erro ([Segurança → Mudar segredos](seguranca.md#mudar-segredos)).

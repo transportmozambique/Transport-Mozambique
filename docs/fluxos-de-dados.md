@@ -1,13 +1,14 @@
 # Fluxos de dados
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 3. Perceber como funciona › **Fluxos de dados** (página 8 de 23)
+[Documentação](README.md) › 3. Perceber como funciona › **Fluxos de dados** (página 10 de 25)
 
 Anterior: [Configuração](configuracao.md) · [Índice](README.md) · Seguinte: [Localização e GPS](localizacao-gps.md)
 
 <details>
 <summary>Todas as páginas</summary>
 
+- 0. Começar do zero: [Conceitos básicos](conceitos.md) · [Preparar o computador](preparar-o-computador.md)
 - 1. Conhecer o projecto: [Visão geral](visao-geral.md) · [Glossário](glossario.md) · [Fontes de dados](fontes-de-dados.md) · [Estado do projecto](estado-do-projecto.md)
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
 - 3. Perceber como funciona: **Fluxos de dados** · [Localização e GPS](localizacao-gps.md) · [Serviço USSD](ussd.md) · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
@@ -18,7 +19,9 @@ Anterior: [Configuração](configuracao.md) · [Índice](README.md) · Seguinte:
 </details>
 <!-- /navegação -->
 
-Esta página segue os dados em cada fluxo da plataforma, do primeiro pedido às linhas que lê ou escreve. Cada fluxo diz o endpoint, o código que o trata (com ligação) e as tabelas envolvidas, e porque é que foi feito assim. O significado das tabelas e campos está em [Base de dados](base-de-dados.md).
+> **Em palavras simples:** Esta página segue cada acção do princípio ao fim: um passageiro que procura uma viagem, um motorista que inicia uma viagem, um autocarro que envia a sua posição. Para cada uma, mostra quem pede o quê a quem, e o que fica guardado.
+
+Esta página segue os dados em cada fluxo da plataforma, do primeiro pedido às linhas que lê ou escreve. Cada fluxo diz o [endpoint](conceitos.md#api "Uma API é a lista de pedidos que um servidor aceita de outros programas; cada um desses pedidos, com o seu endereço, é um endpoint."), o código que o trata (com ligação) e as tabelas envolvidas, e porque é que foi feito assim. O significado das tabelas e campos está em [Base de dados](base-de-dados.md).
 
 **Nesta página:** [Guardado ou calculado](#o-que-é-guardado-e-o-que-é-calculado) · [Quem faz o quê](#quem-faz-o-quê-e-o-que-se-lê-e-escreve) · [Planear uma viagem](#planear-uma-viagem) · [Hora de chegada](#hora-de-chegada) · [Mapa ao vivo](#mapa-ao-vivo) · [Acompanhar uma viagem](#acompanhar-uma-viagem) · [Alerta de chegada e SMS](#alerta-de-chegada-e-sms) · [Sessão USSD](#sessão-ussd) · [Motorista](#entrada-e-viagem-do-motorista) · [Posição GPS](#posição-gps) · [Alterações no painel](#alterações-no-painel) · [PIN e código GPS](#pin-do-motorista-e-código-do-dispositivo-gps) · [Quem escreve cada tabela](#quem-escreve-cada-tabela)
 
@@ -26,7 +29,7 @@ Esta página segue os dados em cada fluxo da plataforma, do primeiro pedido às 
 
 ## O que é guardado e o que é calculado
 
-Todos os pedidos passam por duas aplicações de servidor, e as duas lêem e escrevem a mesma base de dados. Nada é copiado entre elas, por isso uma alteração guardada no painel é o que a aplicação dos passageiros, o USSD e o portal do motorista lêem no pedido seguinte.
+Todos os pedidos passam por duas aplicações de [servidor](conceitos.md#servidor "Um computador sempre ligado que recebe pedidos e responde a eles."), e as duas lêem e escrevem a mesma [base de dados](conceitos.md#base-de-dados "O sítio organizado onde a plataforma guarda tudo o que tem de durar: rotas, paragens, veículos, contas."). Nada é copiado entre elas, por isso uma alteração guardada no painel é o que a aplicação dos passageiros, o [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.") e o portal do motorista lêem no pedido seguinte.
 
 ```mermaid
 flowchart LR
@@ -46,15 +49,15 @@ flowchart LR
   AD -- Prisma --> DB
 ```
 
-Alguns valores **nunca são guardados**: calculam-se a cada pedido a partir do que está guardado. Porquê: numa plataforma serverless não há um processo sempre ligado para os manter actualizados, e um valor calculado nunca fica desactualizado.
+Alguns valores **nunca são guardados**: calculam-se a cada pedido a partir do que está guardado. Porquê: numa plataforma [serverless](conceitos.md#serverless "Um pedaço de código que a Vercel arranca só quando chega um pedido, e desliga a seguir.") não há um processo sempre ligado para os manter actualizados, e um valor calculado nunca fica desactualizado.
 
 | Valor | Calculado a partir de | Código |
 |---|---|---|
-| Onde está um autocarro agora | a última posição GPS se tiver menos de 3 minutos, senão o modelo de horário: vai e volta ao longo do percurso da rota das 05:00 às 21:00 à velocidade da tarifa | [`lib/vehiclePosition.ts`](../transport-client/lib/vehiclePosition.ts) |
+| Onde está um autocarro agora | a última posição [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") se tiver menos de 3 minutos, senão o modelo de horário: vai e volta ao longo do percurso da rota das 05:00 às 21:00 à velocidade da tarifa | [`lib/vehiclePosition.ts`](../transport-client/lib/vehiclePosition.ts) |
 | Quando um autocarro chega a uma paragem, tempo de viagem | essa posição, o percurso da rota e as velocidades da tarifa | `estimateBusTrip` no mesmo ficheiro |
 | Tarifa | distância ao longo do percurso × `Tarifa.precoPorKm`, pelo menos `Tarifa.tarifaMinima` | `fareFor` em [`lib/fares.ts`](../transport-client/lib/fares.ts) |
-| Ordem das paragens de uma rota | cada paragem projectada no percurso da rota (`ViaParagem` não tem coluna de ordem) | `orderStopsAlongRoute` em [`lib/fares.ts`](../transport-client/lib/fares.ts) |
-| Viagens com transbordos | a rede de rotas e paragens, guardada 5 minutos por instância | [`lib/journeys.ts`](../transport-client/lib/journeys.ts) ([abaixo](#planear-uma-viagem)) |
+| Ordem das paragens de uma rota | cada paragem projectada no percurso da rota ([`ViaParagem`](glossario.md#a-rede-e-as-pessoas "A ligação de uma paragem a uma rota") não tem coluna de ordem) | `orderStopsAlongRoute` em [`lib/fares.ts`](../transport-client/lib/fares.ts) |
+| Viagens com [transbordos](glossario.md#palavras-dos-ecrãs "Mudança de autocarro a meio de uma viagem") | a rede de rotas e paragens, guardada 5 minutos por instância | [`lib/journeys.ts`](../transport-client/lib/journeys.ts) ([abaixo](#planear-uma-viagem)) |
 
 ## Quem faz o quê, e o que se lê e escreve
 
@@ -65,17 +68,17 @@ Cada linha resume um fluxo; a coluna "Explicado em" leva à explicação complet
 | Passageiro abre o mapa | `GET /api/stops` (todas as paragens servidas, com as rotas) e `GET /api/buses` (todos os autocarros, na posição de agora); depois as posições a cada 5 s | nada; o pedido de 5 em 5 s também dispara a verificação de chegadas | [Mapa ao vivo](#mapa-ao-vivo) |
 | Tem uma posição, ou escolhe uma partida | `GET /api/destinos?lat=…&lng=…` (ou `from=`): todos os locais a que se chega, a chegada mais cedo primeiro, cada um com a paragem onde se apanha o primeiro autocarro | nada | [Planear uma viagem](#planear-uma-viagem) |
 | Toca numa paragem | `GET /api/stops/{id}`: as rotas que passam, o próximo autocarro de cada sentido e todos os locais a que se chega dali | nada | [Planear uma viagem](#planear-uma-viagem) |
-| Escolhe um destino | `POST /api/journeys {to, lat, lng}` (ou `from`): até 3 viagens, cada autocarro com hora para o momento em que o passageiro chega à paragem. A posição vai no corpo, para ficar fora dos registos de pedidos. | nada | [Planear uma viagem](#planear-uma-viagem) |
-| Acompanha a viagem | `POST /api/viagem?b=BUS~DE~PARA,…&a=…&bordo=…` com `{lat, lng}` no corpo, a cada 10 s | um `MISSION` se guardar o alerta | [Acompanhar uma viagem](#acompanhar-uma-viagem) |
-| Usa o menu USSD | Cada tecla vai do telemóvel à Africa's Talking, que a envia num `POST /api/ussd`. O pedido traz **todas** as teclas da sessão em `text` (`1*museu*zimpeto`); o servidor refaz o caminho desde o menu principal para saber que ecrã mostrar, por isso não guarda nada entre teclas | opção 1: um `MISSION` (e um `Utente` para um telefone novo); opção 6: `Motorista.emViagem`; SMS pela Africa's Talking | [Sessão USSD](#sessão-ussd), e passo a passo com ecrãs em [Serviço USSD](ussd.md#leitura-das-teclas) |
+| Escolhe um destino | `POST /api/journeys {to, lat, lng}` (ou `from`): até 3 viagens, cada autocarro com hora para o momento em que o passageiro chega à paragem. A posição vai no corpo, para ficar fora dos [registos](conceitos.md#registos "As linhas de texto que um programa escreve sobre o que está a fazer, para se perceber depois o que aconteceu.") de pedidos. | nada | [Planear uma viagem](#planear-uma-viagem) |
+| Acompanha a viagem | `POST /api/viagem?b=BUS~DE~PARA,…&a=…&bordo=…` com `{lat, lng}` no corpo, a cada 10 s | um [`MISSION`](glossario.md#a-rede-e-as-pessoas "Um alerta de chegada: um SMS quando um autocarro estiver perto de uma paragem") se guardar o alerta | [Acompanhar uma viagem](#acompanhar-uma-viagem) |
+| Usa o menu USSD | Cada tecla vai do telemóvel à [Africa's Talking](conceitos.md#africas-talking "O gateway de USSD e SMS usado por este projecto."), que a envia num `POST /api/ussd`. O pedido traz **todas** as teclas da [sessão](conceitos.md#sessao "Depois de entrar, o servidor dá uma prova de quem se é (um token), e o navegador mostra-a a cada pedido para não ter de pedir a palavra-passe outra vez.") em `text` (`1*museu*zimpeto`); o servidor refaz o caminho desde o menu principal para saber que ecrã mostrar, por isso não guarda nada entre teclas | opção 1: um `MISSION` (e um [`Utente`](glossario.md#a-rede-e-as-pessoas "A tabela das contas de passageiros") para um telefone novo); opção 6: `Motorista.emViagem`; [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") pela Africa's Talking | [Sessão USSD](#sessão-ussd), e passo a passo com ecrãs em [Serviço USSD](ussd.md#leitura-das-teclas) |
 | Motorista entra e inicia uma viagem | `POST /api/driver/login` (telefone e PIN; token de 30 dias); `GET /api/driver/me` a cada 5 min; `GET /api/driver/seguidores` | `Motorista.emViagem`, `viagemIniciadaEm` | [Entrada e viagem do motorista](#entrada-e-viagem-do-motorista) |
-| Um dispositivo GPS envia | `POST /api/gps` com o código do dispositivo. Posições com precisão pior do que 200 m, ou mais antigas do que a guardada, são ignoradas. | `Transporte.currGeoLocation`, `gpsAtualizadoEm`, velocidade, rumo | [Posição GPS](#posição-gps) |
-| Verificação de chegadas (a cada 5 min pelo GitHub Actions, e no máximo a cada 30 s por instância enquanto a web é usada) | alertas das últimas 24 h e as posições dos autocarros | `MISSION.notificadoEm`; um SMS pela Africa's Talking | [Alerta de chegada e SMS](#alerta-de-chegada-e-sms) |
+| Um dispositivo GPS envia | `POST /api/gps` com o [código do dispositivo](conceitos.md#rastreador "Um aparelho (ou um telemóvel com uma aplicação) que envia a posição de um veículo pela internet; o código do dispositivo é a sua 'palavra-passe'."). Posições com precisão pior do que 200 m, ou mais antigas do que a guardada, são ignoradas. | `Transporte.currGeoLocation`, `gpsAtualizadoEm`, velocidade, rumo | [Posição GPS](#posição-gps) |
+| Verificação de chegadas (a cada 5 min pelo [GitHub Actions](conceitos.md#ci "Verificações que o GitHub corre sozinho a cada pull request, para nenhum erro conhecido chegar ao main."), e no máximo a cada 30 s por instância enquanto a web é usada) | alertas das últimas 24 h e as posições dos autocarros | `MISSION.notificadoEm`; um SMS pela Africa's Talking | [Alerta de chegada e SMS](#alerta-de-chegada-e-sms) |
 | Administrador cria, lê, altera ou apaga | `GET /api/{entidade}` com o cookie de sessão | a tabela da entidade, e as ligações dela | [Alterações no painel](#alterações-no-painel) |
 
 ## Planear uma viagem
 
-O mapa do passageiro (`/`, `/search`) carrega todas as paragens uma vez e encontra as paragens perto do passageiro no próprio navegador. Pede ao servidor os destinos a partir do início (a posição do passageiro ou um local escolhido), os destinos de uma paragem, e as viagens. [`lib/journeys.ts`](../transport-client/lib/journeys.ts) faz o planeamento, para a web e para as opções 1 e 4 do USSD. Porquê o mesmo código: a web e o USSD dão sempre a mesma resposta.
+O mapa do passageiro (`/`, `/search`) carrega todas as paragens uma vez e encontra as paragens perto do passageiro no próprio [navegador](conceitos.md#navegador "O programa com que se abrem sites: Chrome, Firefox, Edge, Safari."). Pede ao servidor os destinos a partir do início (a posição do passageiro ou um local escolhido), os destinos de uma paragem, e as viagens. [`lib/journeys.ts`](../transport-client/lib/journeys.ts) faz o planeamento, para a web e para as opções 1 e 4 do USSD. Porquê o mesmo código: a web e o USSD dão sempre a mesma resposta.
 
 ```mermaid
 sequenceDiagram
@@ -125,7 +128,7 @@ A rede de produção tem 1 855 paragens servidas e 261 rotas. Uma viagem ou uma 
 Os mesmos números servem as viagens, o "próximo autocarro" de uma paragem, a viagem acompanhada e o USSD. Vêm de [`lib/vehiclePosition.ts`](../transport-client/lib/vehiclePosition.ts) e [`lib/fares.ts`](../transport-client/lib/fares.ts):
 
 - **Ordem das paragens.** `ViaParagem` não tem coluna de ordem. As paragens ordenam-se pela projecção de cada uma no percurso da rota (`orderStopsAlongRoute`). As viagens podem ir num sentido ou no outro: um destino antes da origem é uma viagem no regresso.
-- **Chegada ("Chega em").** A distância que o autocarro ainda percorre até passar na origem no sentido certo, mais 5 minutos em cada terminal onde dá a volta, a dividir pela velocidade de viagem da tarifa (`velocidadeViagemKmh`, 30 km/h por omissão). Os autocarros só andam das 05:00 às 21:00 (hora de Maputo): uma passagem que seria depois das 21:00, ou uma pesquisa feita de noite, recebe a primeira passagem do autocarro na manhã seguinte. Esperas de 60 minutos ou mais mostram-se como hora ("às 11:56", "amanhã às 05:12", [`lib/eta.ts`](../transport-client/lib/eta.ts)).
+- **Chegada ("Chega em").** A distância que o autocarro ainda percorre até passar na origem no sentido certo, mais 5 minutos em cada [terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.") onde dá a volta, a dividir pela velocidade de viagem da tarifa (`velocidadeViagemKmh`, 30 km/h por omissão). Os autocarros só andam das 05:00 às 21:00 (hora de Maputo): uma passagem que seria depois das 21:00, ou uma pesquisa feita de noite, recebe a primeira passagem do autocarro na manhã seguinte. Esperas de 60 minutos ou mais mostram-se como hora ("às 11:56", "amanhã às 05:12", [`lib/eta.ts`](../transport-client/lib/eta.ts)).
 - **Distância, tempo e tarifa da viagem.** Medidos ao longo do percurso entre a origem e o destino. Tarifa = máx(`tarifaMinima`, ⌈km × `precoPorKm`⌉), 10 MT mínimo e 10 MT/km por omissão. Uma rota sem percurso usa a cadeia de paragem em paragem.
 
 ## Mapa ao vivo
@@ -207,7 +210,7 @@ sequenceDiagram
   end
 ```
 
-**O que dispara a verificação.** Um workflow do GitHub Actions ([`.github/workflows/arrival-check.yml`](../.github/workflows/arrival-check.yml), "Verificação de chegadas (SMS)") chama `POST /api/simulation {"action":"check"}` a cada 5 minutos, para quem espera por USSD receber o SMS mesmo sem ninguém com a web aberta. O GitHub pode começar uma corrida agendada uns minutos tarde, e pausa os agendamentos de um repositório sem actividade durante 60 dias (volta-se a ligar em Actions → Verificação de chegadas (SMS) → Enable workflow). Enquanto a web é usada, o pedido de posições de 5 em 5 s e os pedidos de paragens e viagens também a correm, no máximo a cada 30 s por instância. Porquê o GitHub: o plano Hobby da Vercel só permite cron jobs uma vez por dia.
+**O que dispara a verificação.** Um workflow do GitHub Actions ([`.github/workflows/arrival-check.yml`](../.github/workflows/arrival-check.yml), "Verificação de chegadas (SMS)") chama `POST /api/simulation {"action":"check"}` a cada 5 minutos, para quem espera por USSD receber o SMS mesmo sem ninguém com a web aberta. O [GitHub](conceitos.md#github "O site onde o repositório está guardado e partilhado, e onde se revêem as alterações.") pode começar uma corrida agendada uns minutos tarde, e pausa os [agendamentos](conceitos.md#agendamento "Uma tarefa que corre sozinha a uma hora marcada, ou de tantos em tantos minutos.") de um [repositório](conceitos.md#repositorio "A pasta do projecto com todo o seu histórico no git.") sem actividade durante 60 dias (volta-se a ligar em Actions → Verificação de chegadas (SMS) → Enable workflow). Enquanto a web é usada, o pedido de posições de 5 em 5 s e os pedidos de paragens e viagens também a correm, no máximo a cada 30 s por instância. Porquê o GitHub: o plano Hobby da [Vercel](conceitos.md#vercel "A empresa cujos servidores correm as três aplicações e as publicam a cada merge.") só permite cron jobs uma vez por dia.
 
 O alerta é marcado antes de o SMS sair, para um SMS falhado não ser repetido a cada 30 s. Pedir outra vez na web para a mesma paragem recomeça o alerta (novo `createdAt`, `notificadoEm` limpo). O USSD reutiliza um alerta dessa paragem das últimas 24 h, ou cria um novo. `POST /api/simulation {"action":"check"}` corre a verificação a pedido.
 
@@ -326,19 +329,19 @@ sequenceDiagram
   end
 ```
 
-1. **Página.** O formulário (`/vias/novo`) envia `POST /api/vias` com um corpo JSON. O navegador junta o cookie `admin_session` sozinho.
-2. **Verificação da sessão.** [`transport-admin/proxy.ts`](../transport-admin/proxy.ts) corre antes de cada rota `/api/*`. Verifica a assinatura HMAC e a validade do cookie (12 horas) e responde 401 `Sessão expirada. Inicie sessão novamente.` se falhar. Só a entrada e a saída passam sem ele. Porquê num só sítio: uma rota nova fica protegida sem ninguém se lembrar de o fazer.
+1. **Página.** O formulário (`/vias/novo`) envia `POST /api/vias` com um corpo [JSON](conceitos.md#json "Uma forma de escrever dados em texto que qualquer programa lê: nomes entre aspas, valores depois de dois pontos, listas entre parênteses rectos."). O navegador junta o cookie `admin_session` sozinho.
+2. **Verificação da sessão.** [`transport-admin/proxy.ts`](../transport-admin/proxy.ts) corre antes de cada rota `/api/*`. Verifica a assinatura HMAC e a validade do cookie (12 horas) e responde [401](conceitos.md#codigos-de-resposta "O número de três algarismos com que o servidor diz como correu o pedido.") `Sessão expirada. Inicie sessão novamente.` se falhar. Só a entrada e a saída passam sem ele. Porquê num só sítio: uma rota nova fica protegida sem ninguém se lembrar de o fazer.
 3. **Validação.** O handler ([`app/api/vias/route.ts`](../transport-admin/app/api/vias/route.ts)) verifica:
    - os campos obrigatórios: 400 com o que falta;
    - que os valores únicos estão livres (código da rota, matrícula, BI, email…): 400 `Já existe …`;
    - que os registos ligados existem: 404 `Município não encontrado`.
 
-   As palavras-passe e os PINs passam a hash bcrypt, e os códigos GPS a SHA-256, antes de serem guardados.
-4. **Escrita.** O Prisma transforma a chamada em SQL na Neon. Quando uma acção toca em várias tabelas, escrevem-se juntas; por exemplo, uma rota nova cria também as ligações `ViaParagem`.
+   As palavras-passe e os PINs passam a [hash](conceitos.md#hash "Uma 'impressão digital' de um texto, que se calcula num sentido e não se consegue desfazer.") bcrypt, e os códigos GPS a SHA-256, antes de serem guardados.
+4. **Escrita.** O [Prisma](conceitos.md#prisma "A ferramenta com que o código fala com a base de dados sem escrever SQL à mão.") transforma a chamada em [SQL](conceitos.md#sql "A linguagem com que se fazem perguntas e alterações a uma base de dados.") na [Neon](conceitos.md#neon "A empresa que guarda a base de dados PostgreSQL da produção, na internet."). Quando uma acção toca em várias tabelas, escrevem-se juntas; por exemplo, uma rota nova cria também as ligações `ViaParagem`.
 5. **Resposta.** `201` com o registo novo; `200` para leituras, alterações e apagamentos. Os erros são JSON `{"error", "details"}` em português. A página mostra a mensagem como notificação e volta à lista.
 6. **Os outros vêem.** A aplicação dos passageiros, o USSD e o portal do motorista lêem a base de dados directamente, por isso vêem a alteração no pedido seguinte. Algumas leituras ficam guardadas: a rede do planeador e `GET /api/stops` até 5 minutos; os números do painel 5 minutos; a tarifa 60 s.
 
-Cada entidade tem os mesmos endpoints: `GET /api/{entidade}` (uma página da lista, com `search`), `POST /api/{entidade}` (criar), e `GET`, `PUT` ou `PATCH`, e `DELETE` em `/api/{entidade}/{id}`. Também tem as mesmas quatro páginas: lista, detalhe, novo e editar. O que muda está abaixo; carregar num registo para o abrir.
+Cada entidade tem os mesmos endpoints: `GET /api/{entidade}` (uma página da lista, com `search`), `POST /api/{entidade}` (criar), e [`GET`](conceitos.md#get-e-post "GET pede para ver uma coisa; POST envia dados para o servidor fazer algo com eles."), `PUT` ou `PATCH`, e `DELETE` em `/api/{entidade}/{id}`. Também tem as mesmas quatro páginas: lista, detalhe, novo e editar. O que muda está abaixo; carregar num registo para o abrir.
 
 <details>
 <summary><b>Via</b> (rota): código, nome, cor, terminais, percurso, município</summary>
@@ -424,9 +427,9 @@ Cada entidade tem os mesmos endpoints: `GET /api/{entidade}` (uma página da lis
 |---|---|---|
 | `Provincia` | `POST` precisa de `nome` e de um `codigo` único. `PATCH`. `DELETE` recusado enquanto tiver municípios; o `?force=true` da página de detalhe desliga-os primeiro. | painel |
 | `Municipio` | `POST` precisa de `nome`, de um `codigo` único e de `provinciaId`. `PATCH`. `DELETE` recusado enquanto tiver rotas: movê-las ou apagá-las primeiro. | painel; pesquisa de rotas; portal do motorista |
-| `Administrador` | `POST` precisa de nome, email (único) e palavra-passe (bcrypt). `PATCH`. `DELETE`. Mudar a própria palavra-passe verifica a actual. | entrada no painel, `/administradores` |
-| `Tarifa` | Uma linha activa, mudada na página "Tarifa" do painel (`PUT /api/tarifa`, com os valores verificados dentro de limites) ([Configuração → Regra de tarifa](configuracao.md#regra-de-tarifa-tarifa)). Guardada 60 s. | todas as tarifas, velocidades e horas de chegada |
-| `GeoLocation` | Escrita uma vez pela importação inicial. As posições vivem agora em `Transporte`. | nada actual |
+| [`Administrador`](glossario.md#a-rede-e-as-pessoas "A tabela das contas do painel de administração") | `POST` precisa de nome, email (único) e palavra-passe (bcrypt). `PATCH`. `DELETE`. Mudar a própria palavra-passe verifica a actual. | entrada no painel, `/administradores` |
+| [`Tarifa`](glossario.md#a-rede-e-as-pessoas "A regra de tarifa: preço mínimo, preço por km e velocidades") | Uma linha activa, mudada na página "Tarifa" do painel (`PUT /api/tarifa`, com os valores verificados dentro de limites) ([Configuração → Regra de tarifa](configuracao.md#regra-de-tarifa-tarifa)). Guardada 60 s. | todas as tarifas, velocidades e horas de chegada |
+| `GeoLocation` | Escrita uma vez pela importação inicial. As posições vivem agora em [`Transporte`](glossario.md#a-rede-e-as-pessoas "A tabela dos veículos (vehicle)"). | nada actual |
 </details>
 
 ## PIN do motorista e código do dispositivo GPS
@@ -446,12 +449,12 @@ Um PIN ou código novo substitui o antigo logo. Porquê só uma vez: o servidor 
 |---|---|---|
 | `Administrador` | painel | painel |
 | `Provincia`, `Cidade`, `Municipio` | painel (`Cidade` não tem interface e está vazia) | painel; entrada do motorista (o nome do município) |
-| `Via`, `Paragem`, `ViaParagem` | painel | tudo |
+| [`Via`](glossario.md#a-rede-e-as-pessoas "A tabela das rotas de autocarro (route)"), [`Paragem`](glossario.md#a-rede-e-as-pessoas "A tabela das paragens (stop)"), `ViaParagem` | painel | tudo |
 | `Transporte` (campos da rede) | painel | tudo |
 | `Transporte` (campos GPS) | aplicação dos passageiros `/api/gps`; o painel limpa-os ao revogar | tudo |
-| `Motorista` (perfil, PIN) | painel | painel; aplicação dos passageiros (entrada, USSD) |
+| [`Motorista`](glossario.md#a-rede-e-as-pessoas "A tabela dos motoristas e dos seus PIN") (perfil, PIN) | painel | painel; aplicação dos passageiros (entrada, USSD) |
 | `Motorista.emViagem`, `viagemIniciadaEm` | aplicação dos passageiros (`/api/driver/trip`, opção 6 do USSD) | aplicação dos passageiros, painel |
-| `Proprietario`, `TransporteProprietario` | painel | painel |
+| [`Proprietario`](glossario.md#a-rede-e-as-pessoas "A tabela dos donos dos veículos"), `TransporteProprietario` | painel | painel |
 | `Utente` | aplicação dos passageiros (registo, perfil, opção 1 do USSD); painel | os dois |
 | `MISSION` | aplicação dos passageiros (alerta na web, opção 1 do USSD; `notificadoEm` pela verificação de chegadas) | aplicação dos passageiros, portal do motorista (contagem de quem espera), painel (páginas de passageiro e de paragem) |
 | `GeoLocation` | só a importação inicial | nada (as posições vêm agora de `Transporte`) |

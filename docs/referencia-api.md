@@ -1,13 +1,14 @@
 # Referência da API
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 3. Perceber como funciona › **Referência da API** (página 12 de 23)
+[Documentação](README.md) › 3. Perceber como funciona › **Referência da API** (página 14 de 25)
 
 Anterior: [Segurança](seguranca.md) · [Índice](README.md) · Seguinte: [Mapa do código](mapa-do-codigo.md)
 
 <details>
 <summary>Todas as páginas</summary>
 
+- 0. Começar do zero: [Conceitos básicos](conceitos.md) · [Preparar o computador](preparar-o-computador.md)
 - 1. Conhecer o projecto: [Visão geral](visao-geral.md) · [Glossário](glossario.md) · [Fontes de dados](fontes-de-dados.md) · [Estado do projecto](estado-do-projecto.md)
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
 - 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · [Localização e GPS](localizacao-gps.md) · [Serviço USSD](ussd.md) · [Segurança](seguranca.md) · **Referência da API** · [Mapa do código](mapa-do-codigo.md)
@@ -18,27 +19,57 @@ Anterior: [Segurança](seguranca.md) · [Índice](README.md) · Seguinte: [Mapa 
 </details>
 <!-- /navegação -->
 
-Todos os endpoints HTTP das duas aplicações que têm API. O portal do motorista não tem: chama a aplicação dos passageiros ([Visão geral → Como as partes se ligam](visao-geral.md#como-as-partes-se-ligam)).
+> **Em palavras simples:** Os ecrãs das aplicações pedem e enviam dados ao [servidor](conceitos.md#servidor "Um computador sempre ligado que recebe pedidos e responde a eles.") por endereços próprios, como `/api/buses` (os autocarros) ou `/api/gps` (uma posição). Esta página lista todos esses endereços: o que se envia a cada um e o que ele responde. É sobretudo para quem programa; [Como ler esta página](#como-ler-esta-página) explica a forma, e como experimentar um endereço no [navegador](conceitos.md#navegador "O programa com que se abrem sites: Chrome, Firefox, Edge, Safari.").
+
+Todos os [endpoints](conceitos.md#api "Uma API é a lista de pedidos que um servidor aceita de outros programas; cada um desses pedidos, com o seu endereço, é um endpoint.") [HTTP](conceitos.md#http "A forma combinada como o navegador (ou outro programa) pede algo a um servidor, e como o servidor responde.") das duas aplicações que têm API. O portal do motorista não tem: chama a aplicação dos passageiros ([Visão geral → Como as partes se ligam](visao-geral.md#como-as-partes-se-ligam)).
 
 As respostas de exemplo foram gravadas numa cópia local dos dados de produção em 2026-10-17, com as listas longas cortadas a dois itens (`"… (238 itens)"`) e os textos longos encurtados (`…`).
 
-**Nesta página:** [Convenções](#convenções) · [Aplicação dos passageiros](#aplicação-dos-passageiros-transport-client) ([mapa e viagens](#mapa-e-viagens) · [conta do passageiro](#conta-do-passageiro) · [motorista](#motorista) · [GPS](#gps) · [USSD](#ussd)) · [Painel de administração](#painel-de-administração-transport-admin) ([sessão](#sessão) · [listas e registos](#listas-e-registos) · [rotas](#rotas) · [veículos](#veículos) · [motoristas](#motoristas) · [regra de tarifa](#regra-de-tarifa) · [administradores](#administradores) · [estatísticas](#estatísticas))
+**Nesta página:** [Como ler esta página](#como-ler-esta-página) · [Convenções](#convenções) · [Aplicação dos passageiros](#aplicação-dos-passageiros-transport-client) ([mapa e viagens](#mapa-e-viagens) · [conta do passageiro](#conta-do-passageiro) · [motorista](#motorista) · [GPS](#gps) · [USSD](#ussd)) · [Painel de administração](#painel-de-administração-transport-admin) ([sessão](#sessão) · [listas e registos](#listas-e-registos) · [rotas](#rotas) · [veículos](#veículos) · [motoristas](#motoristas) · [regra de tarifa](#regra-de-tarifa) · [administradores](#administradores) · [estatísticas](#estatísticas))
 
 ---
+
+## Como ler esta página
+
+Cada endpoint aparece assim:
+
+```http
+GET /api/buses?fields=position
+```
+
+- **A primeira palavra é o método** ([GET e POST](conceitos.md#get-e-post)): `GET` lê, `POST` envia dados, `PUT` e `PATCH` alteram, `DELETE` apaga.
+- **Depois vem o caminho**, que se junta ao endereço base da aplicação (tabela abaixo): `https://transport-mz.vercel.app/api/buses?fields=position`.
+- **`{id}` no caminho** substitui-se pelo identificador de uma linha da [base de dados](conceitos.md#base-de-dados "O sítio organizado onde a plataforma guarda tudo o que tem de durar: rotas, paragens, veículos, contas."), por exemplo o `id` de uma rota que veio noutra resposta.
+- **Um corpo**, quando o pedido leva um, aparece a seguir, em [JSON](conceitos.md#json).
+- **A resposta** mostra o [código de resposta](conceitos.md#codigos-de-resposta) e o JSON que vem de volta.
+
+**Experimentar um `GET` da aplicação dos passageiros:** colar o endereço completo na barra do navegador. Por exemplo, https://transport-mz.vercel.app/api/buses?fields=position mostra as posições de todos os autocarros neste momento. O Firefox mostra o JSON arrumado; o Chrome mostra-o numa linha, com uma opção "Pretty-print" no topo.
+
+**Experimentar um `POST`:** com [`curl`](conceitos.md#curl) num [terminal](conceitos.md#terminal). Por exemplo, as viagens entre duas paragens:
+
+```bash
+curl -s -X POST https://transport-mz.vercel.app/api/journeys \
+  -H "Content-Type: application/json" \
+  -d '{"from": "<id de uma paragem>", "to": "<id de outra paragem>"}'
+```
+
+Lê-se: "envia (`-X POST`) a este endereço, avisando que o corpo é JSON (`-H`), este corpo (`-d`)". Os `id` das paragens vêm da resposta de [`GET /api/stops`](#get-apistops), que se abre no navegador.
+
+**Os endpoints do painel** só respondem a uma [sessão](conceitos.md#sessao "Depois de entrar, o servidor dá uma prova de quem se é (um token), e o navegador mostra-a a cada pedido para não ter de pedir a palavra-passe outra vez.") de administrador: experimentam-se pelo próprio painel, ou pelos testes ([Testes](testes.md)).
 
 ## Convenções
 
 | | Aplicação dos passageiros | Painel de administração |
 |---|---|---|
-| URL base | `https://transport-mz.vercel.app` (local: `http://localhost:3000`) | `https://transport-mz-admin.vercel.app` (local: `http://localhost:3002`) |
+| [URL](conceitos.md#url "O texto que diz ao navegador onde está uma página ou informação, como https://transport-mz.vercel.app/viagem.") base | `https://transport-mz.vercel.app` (local: `http://localhost:3000`) | `https://transport-mz-admin.vercel.app` (local: `http://localhost:3002`) |
 | Código | [`transport-client/app/api/**/route.ts`](../transport-client/app/api) | [`transport-admin/app/api/**/route.ts`](../transport-admin/app/api) |
 | Autenticação | Quase tudo público. Os endpoints do passageiro e do motorista pedem `Authorization: Bearer <token>` ([Segurança](seguranca.md)). | Todos os endpoints, menos a entrada, precisam do cookie `admin_session`. |
-| Outros domínios (CORS) | `Access-Control-Allow-Origin: *` só em `/api/driver/*` e `/api/gps` | nenhum (só o mesmo domínio) |
+| Outros domínios ([CORS](conceitos.md#cors "A regra dos navegadores que só deixa uma página falar com o servidor de outro site se esse servidor o permitir.")) | `Access-Control-Allow-Origin: *` só em `/api/driver/*` e `/api/gps` | nenhum (só o mesmo domínio) |
 
-- Os corpos são JSON (`Content-Type: application/json`), menos o USSD (entra em formulário, sai `text/plain`) e o GPS (também aceita parâmetros no URL e formulários).
+- Os corpos são JSON (`Content-Type: application/json`), menos o [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.") (entra em formulário, sai `text/plain`) e o [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") (também aceita [parâmetros](conceitos.md#parametros "As três formas de um pedido levar informação: no endereço, no conteúdo, ou em etiquetas à parte.") no URL e formulários).
 - Os erros são JSON `{"error": "…"}`, às vezes com `"details"`, e a mensagem está em português. Estados habituais: 400 dados inválidos, 401 sem sessão ou sessão inválida, 404 não encontrado, 500 erro do servidor ou da base de dados.
-- Os ids são `cuid`s do Prisma (`cmovfwlry0a5z14lnnytqzom2`).
-- Coordenadas: os campos `latitude`/`longitude` das respostas são números. Os textos guardados mantêm os formatos da base de dados: pontos `"lat,lng"`, percursos `"lng,lat;lng,lat;…"`. As listas `routeCoords` e `routePath` são pares `[lng, lat]` ([Base de dados → Convenções](base-de-dados.md#convenções-ler-antes-de-consultar)). Porquê `[lng, lat]`: é a ordem do GeoJSON e do Leaflet ao desenhar linhas.
+- Os ids são `cuid`s do [Prisma](conceitos.md#prisma "A ferramenta com que o código fala com a base de dados sem escrever SQL à mão.") (`cmovfwlry0a5z14lnnytqzom2`).
+- [Coordenadas](conceitos.md#coordenadas "Dois números que dizem onde está um ponto na Terra."): os campos `latitude`/`longitude` das respostas são números. Os textos guardados mantêm os formatos da base de dados: pontos `"lat,lng"`, percursos `"lng,lat;lng,lat;…"`. As listas `routeCoords` e `routePath` são pares `[lng, lat]` ([Base de dados → Convenções](base-de-dados.md#convenções-ler-antes-de-consultar)). Porquê `[lng, lat]`: é a ordem do GeoJSON e do Leaflet ao desenhar linhas.
 - As horas são ISO 8601 em UTC; Maputo está em UTC+2.
 
 ---
@@ -49,7 +80,7 @@ As respostas de exemplo foram gravadas numa cópia local dos dados de produção
 
 #### `GET /api/startup`
 
-Começa uma verificação de chegadas (SMS) em segundo plano ([Fluxos de dados → Alerta de chegada](fluxos-de-dados.md#alerta-de-chegada-e-sms)) e diz o modo das posições. Já nenhuma página o chama (a actualização das posições do mapa faz a mesma verificação). Código: [`app/api/startup/route.ts`](../transport-client/app/api/startup/route.ts).
+Começa uma verificação de chegadas ([SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.")) em segundo plano ([Fluxos de dados → Alerta de chegada](fluxos-de-dados.md#alerta-de-chegada-e-sms)) e diz o modo das posições. Já nenhuma página o chama (a actualização das posições do mapa faz a mesma verificação). Código: [`app/api/startup/route.ts`](../transport-client/app/api/startup/route.ts).
 
 ```json
 {"success": true, "status": {"mode": "gps-or-timetable", "busCount": 111, "withFreshGps": 0, "lastArrivalCheck": null}}
@@ -133,7 +164,7 @@ Uma posição sem paragens a menos de 800 m dá `{"destinos": []}`. Erros: 400 `
 
 Viagens até um destino, com mudanças de autocarro quando nenhum vai directo ([Fluxos de dados → Planear uma viagem](fluxos-de-dados.md#planear-uma-viagem)). Código: [`app/api/journeys/route.ts`](../transport-client/app/api/journeys/route.ts) e [`lib/journeys.ts`](../transport-client/lib/journeys.ts).
 
-A aplicação web envia um `POST` com um corpo JSON, para a posição do passageiro ficar fora dos registos dos pedidos. `GET` aceita os mesmos campos no URL.
+A [aplicação web](conceitos.md#aplicacao-web "Um site que se usa como um programa: tem botões, mapas e contas, e muda conforme o que se faz.") envia um `POST` com um corpo JSON, para a posição do passageiro ficar fora dos [registos](conceitos.md#registos "As linhas de texto que um programa escreve sobre o que está a fazer, para se perceber depois o que aconteceu.") dos pedidos. `GET` aceita os mesmos campos no URL.
 
 | Campo | Significado |
 |---|---|
@@ -317,11 +348,11 @@ Os dois pontos arredondam-se a 4 casas decimais (cerca de 11 m). A resposta é o
 {"percurso": [[32.58, -25.9655], [32.579738, -25.965349], "… (12 itens)"], "metros": 459}
 ```
 
-`{"percurso": null}` quando agora não há caminho pelas ruas: a caminhada tem mais de 3 km, ou o router está ocupado, falha ou não encontra caminho. A CDN guarda um caminho uma semana (`s-maxage=604800`); `null` não se guarda. Porquê pelo servidor: o router da FOSSGIS vê o servidor e não o passageiro, e a cache serve outros passageiros com os mesmos pontos ([Segurança → Endpoints públicos](seguranca.md#endpoints-públicos)). Erros: 400 `Indique de=LAT,LNG e para=LAT,LNG`.
+`{"percurso": null}` quando agora não há caminho pelas ruas: a caminhada tem mais de 3 km, ou o [router](conceitos.md#router "Um serviço que, dados dois ou mais pontos, responde com o caminho pelas ruas entre eles e a distância.") está ocupado, falha ou não encontra caminho. A CDN guarda um caminho uma semana (`s-maxage=604800`); `null` não se guarda. Porquê pelo servidor: o router da FOSSGIS vê o servidor e não o passageiro, e a cache serve outros passageiros com os mesmos pontos ([Segurança → Endpoints públicos](seguranca.md#endpoints-públicos)). Erros: 400 `Indique de=LAT,LNG e para=LAT,LNG`.
 
 #### `GET /api/bus/{id}`
 
-Um autocarro, com os números da viagem entre duas paragens quando se dá `?paragem=ORIGEM&destino=DESTINO`. A aplicação web já não o chama ([`/api/viagem`](#getpost-apiviagem) substituiu-o); fica para scripts e testes. Código: [`app/api/bus/[id]/route.ts`](../transport-client/app/api/bus/[id]/route.ts).
+Um autocarro, com os números da viagem entre duas paragens quando se dá `?paragem=ORIGEM&destino=DESTINO`. A aplicação web já não o chama ([`/api/viagem`](#getpost-apiviagem) substituiu-o); fica para [scripts](conceitos.md#script "Um pequeno programa que se corre à mão, uma vez, para uma tarefa: importar dados, corrigir percursos, mostrar listas.") e testes. Código: [`app/api/bus/[id]/route.ts`](../transport-client/app/api/bus/[id]/route.ts).
 
 ```json
 {
@@ -351,7 +382,7 @@ Erros: 404 `Autocarro não encontrado`; 400 `Este transporte não tem via atribu
  "lastArrivalCheck": {"checkedAt": "2026-10-17T09:43:52.729Z", "missions": 4, "notified": 2}}}
 ```
 
-`POST {"action": "check"}` corre já a verificação de chegadas e responde com `notified` (SMS enviados) e o estado. Outra acção responde 400. O endpoint é público, mas a verificação só envia os SMS que estão na hora. O GitHub Actions chama-o a cada 5 minutos ([Fluxos de dados → Alerta de chegada](fluxos-de-dados.md#alerta-de-chegada-e-sms)).
+`POST {"action": "check"}` corre já a verificação de chegadas e responde com `notified` (SMS enviados) e o estado. Outra acção responde 400. O endpoint é público, mas a verificação só envia os SMS que estão na hora. O [GitHub Actions](conceitos.md#ci "Verificações que o GitHub corre sozinho a cada pull request, para nenhum erro conhecido chegar ao main.") chama-o a cada 5 minutos ([Fluxos de dados → Alerta de chegada](fluxos-de-dados.md#alerta-de-chegada-e-sms)).
 
 ### Conta do passageiro
 
@@ -450,7 +481,7 @@ Os passageiros à espera ao longo da rota do motorista: alertas de chegada das �
 
 #### `GET|POST /api/gps`
 
-Posições do dispositivo de um veículo, autenticadas pelo código do dispositivo (`?id=` ou `Authorization: Bearer`). O protocolo completo, os nomes alternativos dos campos, as unidades e as regras estão em [Localização e GPS → Protocolo](localizacao-gps.md#protocolo). Código: [`app/api/gps/route.ts`](../transport-client/app/api/gps/route.ts).
+Posições do dispositivo de um veículo, autenticadas pelo [código do dispositivo](conceitos.md#rastreador "Um aparelho (ou um telemóvel com uma aplicação) que envia a posição de um veículo pela internet; o código do dispositivo é a sua 'palavra-passe'.") (`?id=` ou `Authorization: Bearer`). O protocolo completo, os nomes alternativos dos campos, as unidades e as regras estão em [Localização e GPS → Protocolo](localizacao-gps.md#protocolo). Código: [`app/api/gps/route.ts`](../transport-client/app/api/gps/route.ts).
 
 | Pedido | Resposta |
 |---|---|
@@ -462,7 +493,7 @@ Posições do dispositivo de um veículo, autenticadas pelo código do dispositi
 
 #### `POST /api/ussd`
 
-O callback da Africa's Talking. Recebe em formulário `sessionId`, `serviceCode`, `phoneNumber`, `text`; responde `text/plain`. Com `USSD_CALLBACK_KEY` definida, o URL tem de levar `?key=<valor>`, senão 403 ([Segurança → Resposta USSD](seguranca.md#resposta-ussd-callback)). O primeiro ecrã (`text` vazio):
+O [callback](conceitos.md#callback "Um endereço que se dá a outro serviço para ele chamar sempre que algo acontece.") da [Africa's Talking](conceitos.md#africas-talking "O gateway de USSD e SMS usado por este projecto."). Recebe em formulário `sessionId`, `serviceCode`, `phoneNumber`, `text`; responde `text/plain`. Com `USSD_CALLBACK_KEY` definida, o URL tem de levar `?key=<valor>`, senão 403 ([Segurança → Resposta USSD](seguranca.md#resposta-ussd-callback)). O primeiro ecrã (`text` vazio):
 
 ```text
 CON Transportes Mocambique
@@ -627,7 +658,7 @@ Código: [`app/api/motoristas/[id]/pin/route.ts`](../transport-admin/app/api/mot
 | Método | Resposta |
 |---|---|
 | `GET` | `{"definido": true}` |
-| `POST` | um PIN novo de 6 algarismos, mostrado uma só vez: `{"pin": "123456"}`. Guarda o seu hash bcrypt; o PIN anterior deixa de funcionar. |
+| `POST` | um PIN novo de 6 algarismos, mostrado uma só vez: `{"pin": "123456"}`. Guarda o seu [hash](conceitos.md#hash "Uma 'impressão digital' de um texto, que se calcula num sentido e não se consegue desfazer.") bcrypt; o PIN anterior deixa de funcionar. |
 | `DELETE` | apaga o PIN (o motorista deixa de poder entrar): `{"definido": false}` |
 
 #### `GET|POST|DELETE /api/motoristas/atribuir`
@@ -638,7 +669,7 @@ Código: [`app/api/motoristas/[id]/pin/route.ts`](../transport-admin/app/api/mot
 
 #### `GET|PUT /api/tarifa`
 
-A regra de tarifa activa (`Tarifa`), que todas as tarifas, tempos de viagem e posições pelo horário usam ([Configuração → Regra de tarifa](configuracao.md#regra-de-tarifa-tarifa)). A página "Tarifa" lê-a e grava-a ([Painel → Tarifa](painel-admin.md#tarifa)). Código: [`app/api/tarifa/route.ts`](../transport-admin/app/api/tarifa/route.ts).
+A regra de tarifa activa ([`Tarifa`](glossario.md#a-rede-e-as-pessoas "A regra de tarifa: preço mínimo, preço por km e velocidades")), que todas as tarifas, tempos de viagem e posições pelo horário usam ([Configuração → Regra de tarifa](configuracao.md#regra-de-tarifa-tarifa)). A página "Tarifa" lê-a e grava-a ([Painel → Tarifa](painel-admin.md#tarifa)). Código: [`app/api/tarifa/route.ts`](../transport-admin/app/api/tarifa/route.ts).
 
 `GET` → a regra, `{"id", "nome": "padrao", "tarifaMinima": 10, "precoPorKm": 10, "fatorEstrada": 1.3, "velocidadeViagemKmh": 30, "velocidadeChegadaKmh": 45, "ativa": true, "createdAt", "updatedAt"}`; 404 `Não há tarifa activa` quando nenhuma linha está activa.
 

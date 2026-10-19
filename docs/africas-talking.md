@@ -1,13 +1,14 @@
 # Africa's Talking
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 5. Pôr online › **Africa's Talking** (página 20 de 23)
+[Documentação](README.md) › 5. Pôr online › **Africa's Talking** (página 22 de 25)
 
 Anterior: [Guia da Neon](guia-neon.md) · [Índice](README.md) · Seguinte: [Testes](testes.md)
 
 <details>
 <summary>Todas as páginas</summary>
 
+- 0. Começar do zero: [Conceitos básicos](conceitos.md) · [Preparar o computador](preparar-o-computador.md)
 - 1. Conhecer o projecto: [Visão geral](visao-geral.md) · [Glossário](glossario.md) · [Fontes de dados](fontes-de-dados.md) · [Estado do projecto](estado-do-projecto.md)
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
 - 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · [Localização e GPS](localizacao-gps.md) · [Serviço USSD](ussd.md) · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
@@ -18,10 +19,12 @@ Anterior: [Guia da Neon](guia-neon.md) · [Índice](README.md) · Seguinte: [Tes
 </details>
 <!-- /navegação -->
 
-A [Africa's Talking](https://africastalking.com) (AT) é o gateway entre as redes de telemóvel e a plataforma. Leva duas coisas:
+> **Em palavras simples:** A [Africa's Talking](conceitos.md#africas-talking "O gateway de USSD e SMS usado por este projecto.") é a empresa que liga a plataforma às redes de telemóvel, para o menu [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.") e os [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") funcionarem. Esta página mostra como foi configurada, como experimentar o menu num telemóvel simulado no [navegador](conceitos.md#navegador "O programa com que se abrem sites: Chrome, Firefox, Edge, Safari."), e o que falta para funcionar em telemóveis verdadeiros.
+
+A [Africa's Talking](https://africastalking.com) (AT) é o [gateway](conceitos.md#gateway "A empresa que faz a ponte entre as redes dos telemóveis (Vodacom, Movitel, Tmcel) e a internet.") entre as redes de telemóvel e a plataforma. Leva duas coisas:
 
 - **USSD:** um telemóvel marca o código do serviço, e a AT passa cada tecla para `POST /api/ussd` da aplicação dos passageiros ([Serviço USSD](ussd.md)).
-- **SMS:** a aplicação dos passageiros envia os resultados do USSD, os alertas de chegada e as confirmações de viagem dos motoristas pela API de SMS da AT.
+- **SMS:** a aplicação dos passageiros envia os resultados do USSD, os alertas de chegada e as confirmações de viagem dos motoristas pela [API](conceitos.md#api "Uma API é a lista de pedidos que um servidor aceita de outros programas; cada um desses pedidos, com o seu endereço, é um endpoint.") de SMS da AT.
 
 Porquê a Africa's Talking: um só fornecedor para USSD e SMS em vários países africanos, com um ambiente de testes (sandbox) gratuito e um simulador de telemóvel no navegador, o que deixa construir e testar tudo antes de pagar um código.
 
@@ -30,7 +33,7 @@ A plataforma corre hoje no **sandbox**. O USSD e os SMS do sandbox só chegam ao
 - como a conta foi configurada, passo a passo;
 - como usar o menu USSD no simulador, ecrã a ecrã;
 - como um pedido chega ao código;
-- onde ler os registos;
+- onde ler os [registos](conceitos.md#registos "As linhas de texto que um programa escreve sobre o que está a fazer, para se perceber depois o que aconteceu.");
 - o que é preciso para passar a produção.
 
 **Nesta página:** [Configuração actual](#configuração-actual) · [Como foi configurado, passo a passo](#como-foi-configurado-passo-a-passo) · [Usar o menu no simulador](#usar-o-menu-no-simulador) · [Como um pedido é tratado](#como-um-pedido-é-tratado) · [SMS](#sms) · [Registos e sessões](#registos-e-sessões) · [Passar a produção](#passar-a-produção)
@@ -44,15 +47,15 @@ A plataforma corre hoje no **sandbox**. O USSD e os SMS do sandbox só chegam ao
 | Conta da AT | a conta `transportmozambique` |
 | Aplicação | Sandbox, nome de utilizador `sandbox` |
 | Código USSD | `*384*848080#` (o canal `848080` no código partilhado do sandbox `*384#`) |
-| URL do callback | `https://transport-mz.vercel.app/api/ussd?key=<USSD_CALLBACK_KEY>`. Os pedidos sem a chave recebem 403 (desde 2026-10-17). |
-| Projecto `transport-mz` da Vercel | `AFRICASTALKING_USERNAME=sandbox`, `AFRICASTALKING_API_KEY` (chave do sandbox), `USSD_CALLBACK_KEY` (Secret, Production) |
+| [URL](conceitos.md#url "O texto que diz ao navegador onde está uma página ou informação, como https://transport-mz.vercel.app/viagem.") do [callback](conceitos.md#callback "Um endereço que se dá a outro serviço para ele chamar sempre que algo acontece.") | `https://transport-mz.vercel.app/api/ussd?key=<USSD_CALLBACK_KEY>`. Os pedidos sem a chave recebem [403](conceitos.md#codigos-de-resposta "O número de três algarismos com que o servidor diz como correu o pedido.") (desde 2026-10-17). |
+| Projecto `transport-mz` da [Vercel](conceitos.md#vercel "A empresa cujos servidores correm as três aplicações e as publicam a cada merge.") | `AFRICASTALKING_USERNAME=sandbox`, `AFRICASTALKING_API_KEY` (chave do sandbox), `USSD_CALLBACK_KEY` (Secret, Production) |
 | Remetente dos SMS (`AFRICASTALKING_SHORTCODE`) | não definido: os SMS saem do remetente da AT por omissão (`AFRICASTKNG` no simulador) |
 | Verificado | menus USSD e SMS de ponta a ponta no simulador, 2026-10-18 |
 | Ao vivo (telemóveis reais em Moçambique) | não configurado ([Passar a produção](#passar-a-produção)) |
 
 ## Como foi configurado, passo a passo
 
-A ordem conta: a chave da API e a chave do callback vão para a Vercel antes de o canal apontar para a aplicação, para o primeiro pedido já as encontrar.
+A ordem conta: a [chave da API](conceitos.md#segredo "Um valor que só a plataforma deve saber, como uma palavra-passe: quem o tiver pode agir em nome dela.") e a chave do callback vão para a Vercel antes de o canal apontar para a aplicação, para o primeiro pedido já as encontrar.
 
 ```mermaid
 flowchart LR
@@ -126,11 +129,11 @@ A AT oferece dois tipos de código:
 - códigos **dedicados**, como `*144#`, atribuídos pelo regulador ou pelo operador;
 - códigos **partilhados**, como `*384*848080#`: um número de canal no código da AT. O sandbox só aceita estes.
 
-O URL de uma pré-visualização também serve de callback, para testar um ramo antes do merge. Depois volta-se a pôr o URL de produção.
+O URL de uma pré-visualização também serve de callback, para testar um [ramo](conceitos.md#ramo "Uma linha de trabalho separada, onde se fazem mudanças sem tocar na versão principal.") antes do [merge](conceitos.md#pull-request "Um pull request é o pedido para juntar um ramo ao main; o merge é a junção, quando o pedido é aceite."). Depois volta-se a pôr o URL de produção.
 
 ### 6. Publicar outra vez
 
-As funções da Vercel lêem as variáveis de ambiente quando são publicadas. Em **transport-mz → Deployments**, abrir o menu (**⋯**) da publicação de produção mais nova e clicar em **Redeploy** ([Guia da Vercel → Publicações](guia-vercel.md#publicações)).
+As funções da Vercel lêem as [variáveis de ambiente](conceitos.md#variavel-de-ambiente "Uma definição que se dá a um programa de fora do código, como o endereço da base de dados ou uma palavra-passe.") quando são publicadas. Em **transport-mz → Deployments**, abrir o menu (**⋯**) da [publicação](conceitos.md#publicacao "Pôr uma versão nova do código a funcionar nos servidores, ao vivo, para toda a gente.") de produção mais nova e clicar em **Redeploy** ([Guia da Vercel → Publicações](guia-vercel.md#publicações)).
 
 ### 7. Testar
 
@@ -160,7 +163,7 @@ O simulador não precisa de conta. Os ecrãs abaixo são respostas reais.
 <img src="images/at-sim-menu.png" alt="Menu principal: 1 Encontrar transporte a 7 Ajuda" width="200"> <img src="images/at-sim-answer.png" alt="A resposta 2 escrita por baixo do menu principal" width="200">
 
 5. A opção 2 pede um local ou o número de uma rota. Escrever `museu` e **SEND**: aparecem as rotas que passam no Museu, 4 por página, cada uma começada pelo código (o número no autocarro). `7` mostra a página seguinte, `8` a anterior, `0` volta atrás.
-6. Escrever `1` escolhe a primeira rota. O ecrã final (`END`) fecha a sessão: carregar em **OK**.
+6. Escrever `1` escolhe a primeira rota. O ecrã final (`END`) fecha a [sessão](conceitos.md#sessao "Depois de entrar, o servidor dá uma prova de quem se é (um token), e o navegador mostra-a a cada pedido para não ter de pedir a palavra-passe outra vez."): carregar em **OK**.
 7. Abrir as **mensagens**: o mesmo resultado chega por SMS de `AFRICASTKNG`.
 
 Os ecrãs desta sessão, como o telemóvel os mostra (os mesmos de [Serviço USSD → 2 Procurar rotas](ussd.md#2-procurar-rotas)):
@@ -177,7 +180,7 @@ da rota (ex: Baixa ou X12)                2. 18-0 Museu - Magoanine (Via Av..   
                                                                                   Autocarros: 2
 ```
 
-Quando o nome escrito coincide com vários locais (por exemplo `baixa`: o Terminal de Chapas da Baixa e várias ruas da Baixa), aparece primeiro "Qual local?" para escolher um.
+Quando o nome escrito coincide com vários locais (por exemplo `baixa`: o [Terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.") de [Chapas](glossario.md#transportes-em-maputo "Os minibuses que levam a maior parte dos passageiros de Maputo") da Baixa e várias ruas da Baixa), aparece primeiro "Qual local?" para escolher um.
 
 ![SMS recebidos no simulador (de uma versão anterior dos menus, com o mesmo remetente)](images/at-sim-sms.png)
 
@@ -187,20 +190,20 @@ Quando o nome escrito coincide com vários locais (por exemplo `baixa`: o Termin
 
 Notas:
 
-- **O número é um passageiro real na produção.** O número do telemóvel simulado é o que a aplicação recebe como `phoneNumber`. As opções 2 a 5 e 7 só lêem. O ecrã de viagem da opção 1 cria um passageiro sem palavra-passe para esse número e um alerta de chegada na base de dados de **produção**. Usa-se um número de teste como `+25884000000x`; [Base de dados → Passageiros criados por USSD](base-de-dados.md#passageiros-criados-por-ussd-ainda-sem-palavra-passe) mostra como encontrar ou apagar o que criou.
+- **O número é um passageiro real na produção.** O número do telemóvel simulado é o que a aplicação recebe como `phoneNumber`. As opções 2 a 5 e 7 só lêem. O ecrã de viagem da opção 1 cria um passageiro sem palavra-passe para esse número e um alerta de chegada na [base de dados](conceitos.md#base-de-dados "O sítio organizado onde a plataforma guarda tudo o que tem de durar: rotas, paragens, veículos, contas.") de **produção**. Usa-se um número de teste como `+25884000000x`; [Base de dados → Passageiros criados por USSD](base-de-dados.md#passageiros-criados-por-ussd-ainda-sem-palavra-passe) mostra como encontrar ou apagar o que criou.
 - **O menu do motorista.** Para testar a opção 6, liga-se com o número de telefone de um motorista e usa-se o PIN que o painel gerou para ele ([Painel → Dar um PIN a um motorista](painel-admin.md#tarefa-pin)).
 - **Todas as opções.** Todos os menus, com os seus ecrãs, estão em [Serviço USSD → Árvore dos menus](ussd.md#árvore-dos-menus).
 
 ## Como um pedido é tratado
 
-Em cada resposta, a AT envia um `POST` em formulário para o URL do callback com `sessionId`, `serviceCode`, `phoneNumber`, `networkCode` e `text`. `text` tem todas as respostas até agora, juntas com `*`. A aplicação responde `text/plain` a começar por `CON` (mostrar e esperar resposta) ou `END` (mostrar e fechar).
+Em cada resposta, a AT envia um [`POST`](conceitos.md#get-e-post "GET pede para ver uma coisa; POST envia dados para o servidor fazer algo com eles.") em formulário para o URL do callback com `sessionId`, `serviceCode`, `phoneNumber`, `networkCode` e `text`. `text` tem todas as respostas até agora, juntas com `*`. A aplicação responde `text/plain` a começar por `CON` (mostrar e esperar resposta) ou `END` (mostrar e fechar).
 
-O servidor não guarda sessão. Repete `text` a partir do menu principal em cada pedido, por isso qualquer instância responde a qualquer tecla. Os passos no código são:
+O [servidor](conceitos.md#servidor "Um computador sempre ligado que recebe pedidos e responde a eles.") não guarda sessão. Repete `text` a partir do menu principal em cada pedido, por isso qualquer instância responde a qualquer tecla. Os passos no código são:
 
 1. confirmar a chave;
 2. repetir `text`, lendo cada tecla como o ecrã a que respondeu a pede;
 3. as leituras da base de dados da opção;
-4. o ecrã cortado a 182 caracteres GSM-7;
+4. o ecrã cortado a 182 caracteres [GSM-7](conceitos.md#gsm-7 "O conjunto de letras que todos os telemóveis mostram nos SMS e no USSD; não tem a maior parte das letras acentuadas.");
 5. o SMS, depois da resposta.
 
 Cada passo está em [Serviço USSD → O caminho de um pedido](ussd.md#o-caminho-de-um-pedido) e [Dentro do handler](ussd.md#dentro-do-handler).
@@ -239,7 +242,7 @@ O que se envia:
 
 ![Registos da Vercel filtrados por /api/ussd: um POST por tecla, dois 403 de pedidos sem a chave](images/vercel-logs-ussd.png)
 
-Os detalhes de um pedido na Vercel também mostram os parâmetros do URL, por isso a chave do callback fica visível a quem puder ler os registos do projecto. O acesso aos registos dá-se só a quem pode saber a chave, e não se fazem capturas dos detalhes de um pedido.
+Os detalhes de um pedido na Vercel também mostram os [parâmetros](conceitos.md#parametros "As três formas de um pedido levar informação: no endereço, no conteúdo, ou em etiquetas à parte.") do URL, por isso a chave do callback fica visível a quem puder ler os registos do projecto. O acesso aos registos dá-se só a quem pode saber a chave, e não se fazem capturas dos detalhes de um pedido.
 
 ## Passar a produção
 

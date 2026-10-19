@@ -1,13 +1,14 @@
 # Fontes de dados
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 1. Conhecer o projecto › **Fontes de dados** (página 3 de 23)
+[Documentação](README.md) › 1. Conhecer o projecto › **Fontes de dados** (página 5 de 25)
 
 Anterior: [Glossário](glossario.md) · [Índice](README.md) · Seguinte: [Estado do projecto](estado-do-projecto.md)
 
 <details>
 <summary>Todas as páginas</summary>
 
+- 0. Começar do zero: [Conceitos básicos](conceitos.md) · [Preparar o computador](preparar-o-computador.md)
 - 1. Conhecer o projecto: [Visão geral](visao-geral.md) · [Glossário](glossario.md) · **Fontes de dados** · [Estado do projecto](estado-do-projecto.md)
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
 - 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · [Localização e GPS](localizacao-gps.md) · [Serviço USSD](ussd.md) · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
@@ -17,6 +18,8 @@ Anterior: [Glossário](glossario.md) · [Índice](README.md) · Seguinte: [Estad
 
 </details>
 <!-- /navegação -->
+
+> **Em palavras simples:** Os dados da plataforma vieram de vários sítios: as paragens e as rotas vêm sobretudo do [OpenStreetMap](conceitos.md#openstreetmap "Um mapa do mundo inteiro feito por voluntários, como uma Wikipédia dos mapas, que qualquer pessoa pode usar e corrigir."), um mapa feito por voluntários; os veículos, os motoristas e os donos são inventados, para demonstração. Esta página diz, para cada dado, de onde veio, se é real, e que regras há para o usar.
 
 De onde veio cada dado da plataforma, como foi trazido, com que licença, e o que é inventado. Ler antes de apresentar os dados como reais, ou antes de substituir uma parte deles.
 
@@ -30,26 +33,26 @@ Produção em 2026-10-18:
 
 | Dados | Linhas | Fonte | Real ou inventado | Licença |
 |---|---|---|---|---|
-| Paragens (`Paragem`) | 1 079 `PAR-…` | Uma exportação do OpenStreetMap de paragens de autocarro, com nome por geocodificação inversa (Nominatim) | Sítios reais; o nome é o da rua mais próxima | ODbL |
-| | 823 `OSM-…` | OpenStreetMap, pela API Overpass | Reais, como os contribuidores do OpenStreetMap as mapearam | ODbL |
-| Rotas (`Via`) | 91 (`V…` e `VIA-…`) | Os primeiros scripts de dados, à semelhança das rotas da EMTPM | Rotas plausíveis, não uma lista oficial | |
-| | 170 (refs do OSM como `X12`, `C5`, `503`) | Relações de rota do OpenStreetMap (redes Chapas, EMTPM, Corujas, REM, RCM) | Reais, como mapeadas | ODbL |
-| Percursos das rotas | 261 | Caminhos do OSRM nas estradas do OpenStreetMap (servidores FOSSGIS e de demonstração do OSRM) | Calculados | ODbL (as estradas) |
+| Paragens ([`Paragem`](glossario.md#a-rede-e-as-pessoas "A tabela das paragens (stop)")) | 1 079 `PAR-…` | Uma exportação do OpenStreetMap de paragens de autocarro, com nome por [geocodificação](conceitos.md#geocodificacao "Transformar coordenadas no nome de um sítio (ou o contrário).") inversa (Nominatim) | Sítios reais; o nome é o da rua mais próxima | ODbL |
+| | 823 `OSM-…` | OpenStreetMap, pela [API](conceitos.md#api "Uma API é a lista de pedidos que um servidor aceita de outros programas; cada um desses pedidos, com o seu endereço, é um endpoint.") Overpass | Reais, como os contribuidores do OpenStreetMap as mapearam | ODbL |
+| Rotas ([`Via`](glossario.md#a-rede-e-as-pessoas "A tabela das rotas de autocarro (route)")) | 91 (`V…` e `VIA-…`) | Os primeiros [scripts](conceitos.md#script "Um pequeno programa que se corre à mão, uma vez, para uma tarefa: importar dados, corrigir percursos, mostrar listas.") de dados, à semelhança das rotas da [EMTPM](glossario.md#transportes-em-maputo "A Empresa Municipal de Transporte Público de Maputo") | Rotas plausíveis, não uma lista oficial | |
+| | 170 (refs do OSM como `X12`, `C5`, `503`) | Relações de rota do OpenStreetMap (redes [Chapas](glossario.md#transportes-em-maputo "Os minibuses que levam a maior parte dos passageiros de Maputo"), EMTPM, Corujas, REM, RCM) | Reais, como mapeadas | ODbL |
+| Percursos das rotas | 261 | Caminhos do [OSRM](conceitos.md#router "Um serviço que, dados dois ou mais pontos, responde com o caminho pelas ruas entre eles e a distância.") nas estradas do OpenStreetMap ([servidores](conceitos.md#servidor "Um computador sempre ligado que recebe pedidos e responde a eles.") FOSSGIS e de demonstração do OSRM) | Calculados | ODbL (as estradas) |
 | Províncias / municípios | 11 / 2 | Escritos pelos primeiros scripts de dados | Nomes reais (as 11 províncias de Moçambique; Maputo, Matola) | |
-| Veículos (`Transporte`) | 111 | Os primeiros scripts de dados | Inventados | |
+| Veículos ([`Transporte`](glossario.md#a-rede-e-as-pessoas "A tabela dos veículos (vehicle)")) | 111 | Os primeiros scripts de dados | Inventados | |
 | | 340 `ADA-001M`–`ADA-340M` | `import-osm.mjs --buses` | Inventados | |
-| Motoristas (`Motorista`) | 111 | Os primeiros scripts de dados, com fotografias de banco de imagens (Pexels) | Inventados | Licença Pexels (fotografias) |
+| Motoristas ([`Motorista`](glossario.md#a-rede-e-as-pessoas "A tabela dos motoristas e dos seus PIN")) | 111 | Os primeiros scripts de dados, com fotografias de banco de imagens (Pexels) | Inventados | Licença Pexels (fotografias) |
 | | 340 | `add-drivers.mjs`, listas de nomes moçambicanos | Inventados | |
-| Proprietários (`Proprietario`) | 11 | Os primeiros scripts de dados | Inventados | |
-| Passageiros (`Utente`) | poucos | Pessoas que se registaram na web ou usaram o USSD durante os testes | Contas reais | dados pessoais ([Segurança](seguranca.md)) |
-| Regra de tarifa (`Tarifa`) | 1 | Escolhida pela equipa (10 MT mínimo, 10 MT/km, 30 km/h) | Uma suposição, não um tarifário oficial | |
+| Proprietários ([`Proprietario`](glossario.md#a-rede-e-as-pessoas "A tabela dos donos dos veículos")) | 11 | Os primeiros scripts de dados | Inventados | |
+| Passageiros ([`Utente`](glossario.md#a-rede-e-as-pessoas "A tabela das contas de passageiros")) | poucos | Pessoas que se registaram na web ou usaram o [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.") durante os testes | Contas reais | dados pessoais ([Segurança](seguranca.md)) |
+| Regra de tarifa ([`Tarifa`](glossario.md#a-rede-e-as-pessoas "A regra de tarifa: preço mínimo, preço por km e velocidades")) | 1 | Escolhida pela equipa (10 MT mínimo, 10 MT/km, 30 km/h) | Uma suposição, não um tarifário oficial | |
 
 ## Paragens e rotas
 
 ### Os primeiros dados (2026, antes de o código vir para este repositório)
 
-- **Paragens.** [`maputo-stops-data.json`](../maputo-stops-data.json) (1 346 linhas) e [`matola-stops-data.json`](../matola-stops-data.json) (691 linhas), na raiz do repositório, são exportações do OpenStreetMap separadas por tabulações (`@id @lat @lon name`), apesar da extensão `.json`. O script [`transport-admin/scripts/seed-with-geocoding.js`](https://github.com/transportmozambique/Transport-Mozambique/blob/bd007cf/transport-admin/scripts/seed-with-geocoding.js) (apagado em 2026-10-19 com o [código antigo](visao-geral.md#código-antigo-apagado)) leu-as, tirou os duplicados e deu nome a cada paragem pela geocodificação inversa do **Nominatim** (`nominatim.openstreetmap.org/reverse`, um pedido por segundo, como a política de uso do Nominatim exige): a paragem fica com o nome da sua rua ou do sítio. É por isso que muitas paragens partilham o nome de uma rua ([Limitações → Dados](limitacoes.md#dados)). São as 1 079 paragens com código `PAR-`.
-- **Rotas.** [`transport-admin/reorganize-vias-emtpm-routes.js`](https://github.com/transportmozambique/Transport-Mozambique/blob/bd007cf/transport-admin/reorganize-vias-emtpm-routes.js) e os outros `reorganize-vias-*.js` da raiz de `transport-admin` (apagados em 2026-10-19, no histórico do git) criaram 91 rotas à semelhança das rotas da **EMTPM** (Empresa Municipal de Transporte Público de Maputo) e dos corredores de chapas entre Maputo e a Matola, e ligaram as paragens a menos de 50 m de cada uma. 70 têm códigos `V…` e 21 códigos `VIA-…`. As suas linhas foram desenhadas de paragem em paragem e depois postas nas estradas em 2026-10 ([Percursos pelas estradas](#percursos-pelas-estradas)).
+- **Paragens.** [`maputo-stops-data.json`](../maputo-stops-data.json) (1 346 linhas) e [`matola-stops-data.json`](../matola-stops-data.json) (691 linhas), na raiz do [repositório](conceitos.md#repositorio "A pasta do projecto com todo o seu histórico no git."), são exportações do OpenStreetMap separadas por tabulações (`@id @lat @lon name`), apesar da extensão `.json`. O script [`transport-admin/scripts/seed-with-geocoding.js`](https://github.com/transportmozambique/Transport-Mozambique/blob/bd007cf/transport-admin/scripts/seed-with-geocoding.js) (apagado em 2026-10-19 com o [código antigo](visao-geral.md#código-antigo-apagado)) leu-as, tirou os duplicados e deu nome a cada paragem pela geocodificação inversa do **Nominatim** (`nominatim.openstreetmap.org/reverse`, um pedido por segundo, como a política de uso do Nominatim exige): a paragem fica com o nome da sua rua ou do sítio. É por isso que muitas paragens partilham o nome de uma rua ([Limitações → Dados](limitacoes.md#dados)). São as 1 079 paragens com código `PAR-`.
+- **Rotas.** [`transport-admin/reorganize-vias-emtpm-routes.js`](https://github.com/transportmozambique/Transport-Mozambique/blob/bd007cf/transport-admin/reorganize-vias-emtpm-routes.js) e os outros `reorganize-vias-*.js` da raiz de `transport-admin` (apagados em 2026-10-19, no histórico do [git](conceitos.md#git "O programa que guarda o histórico de todas as versões do código, e quem mudou o quê e quando.")) criaram 91 rotas à semelhança das rotas da **EMTPM** (Empresa Municipal de Transporte Público de Maputo) e dos corredores de chapas entre Maputo e a Matola, e ligaram as paragens a menos de 50 m de cada uma. 70 têm códigos `V…` e 21 códigos `VIA-…`. As suas linhas foram desenhadas de paragem em paragem e depois postas nas estradas em 2026-10 ([Percursos pelas estradas](#percursos-pelas-estradas)).
 
 ### Importação do OpenStreetMap (2026-10-18)
 
@@ -64,7 +67,7 @@ Produção em 2026-10-18:
 | Juntado | 823 paragens (códigos `OSM-`), 170 rotas (4 421 km), 13 975 ligações rota–paragem, e 651 paragens ligadas a 35 rotas existentes |
 | Descarga | `osm-data/` (fora do git), para a mesma descarga poder ser importada outra vez |
 
-**Licença.** Os dados do OpenStreetMap são © contribuidores do OpenStreetMap, sob a [Open Database License](https://www.openstreetmap.org/copyright) (ODbL). Usá-los nas aplicações é permitido com o crédito que os mapas mostram. Uma base de dados derivada e partilhada publicamente tem de ser partilhada também sob a ODbL.
+**Licença.** Os dados do OpenStreetMap são © contribuidores do OpenStreetMap, sob a [Open Database License](https://www.openstreetmap.org/copyright) (ODbL). Usá-los nas aplicações é permitido com o crédito que os mapas mostram. Uma [base de dados](conceitos.md#base-de-dados "O sítio organizado onde a plataforma guarda tudo o que tem de durar: rotas, paragens, veículos, contas.") derivada e partilhada publicamente tem de ser partilhada também sob a ODbL.
 
 ## Percursos pelas estradas
 
@@ -72,14 +75,14 @@ O `geoLocationPath` de cada rota segue as estradas. Os percursos foram calculado
 
 - **OSRM** (Open Source Routing Machine) em dois servidores públicos: o da FOSSGIS (`routing.openstreetmap.de`, perfis de carro e a pé, mantido pela associação FOSSGIS para a comunidade OpenStreetMap) e o servidor de demonstração do projecto OSRM (`router.project-osrm.org`). Os dois calculam caminhos nas estradas do OpenStreetMap e só permitem uso leve, um pedido por segundo.
 - [`transport-client/scripts/snap-paths.mjs`](../transport-client/scripts/snap-paths.mjs) pôs nas estradas os troços rectos das primeiras rotas, e [`redraw-from-osm.mjs`](../transport-client/scripts/redraw-from-osm.mjs) reconstruiu as rotas do OpenStreetMap cuja relação estava fora de ordem. As respostas ficam em `osm-data/road-cache.json` ([`roads.mjs`](../transport-client/scripts/roads.mjs); [Base de dados → Pôr os percursos nas estradas](base-de-dados.md#pôr-os-percursos-das-rotas-nas-estradas)).
-- Uma rota desenhada no painel ("Nova Via", "Redesenhar percurso") pergunta aos mesmos dois servidores, a partir do navegador do administrador ([`RouteDrawer.tsx`](../transport-admin/app/components/RouteDrawer.tsx)).
+- Uma rota desenhada no painel ("Nova Via", "Redesenhar percurso") pergunta aos mesmos dois servidores, a partir do [navegador](conceitos.md#navegador "O programa com que se abrem sites: Chrome, Firefox, Edge, Safari.") do administrador ([`RouteDrawer.tsx`](../transport-admin/app/components/RouteDrawer.tsx)).
 - As caminhadas no mapa dos passageiros desenham-se com o router a pé da FOSSGIS, pedido pelo servidor da aplicação ([`/api/walk`](../transport-client/app/api/walk/route.ts)).
 
 Porquê percursos pelas estradas e não linhas entre paragens: a distância ao longo da estrada dá a tarifa e o tempo de viagem; uma linha recta daria valores errados e desenharia autocarros a atravessar quarteirões.
 
 ## Províncias e municípios
 
-As 11 províncias de Moçambique (Maputo Cidade, Maputo, Gaza, Inhambane, Sofala, Manica, Tete, Zambézia, Nampula, Cabo Delgado, Niassa) e os municípios de Maputo e da Matola foram escritos pelos primeiros scripts de dados ([`transport-admin/scripts/seed-provincias.js`](https://github.com/transportmozambique/Transport-Mozambique/blob/bd007cf/transport-admin/scripts/seed-provincias.js), apagado em 2026-10-19, e as sementes), com um ponto central cada. Cada rota pertence a um dos dois municípios. `Cidade` está vazia.
+As 11 províncias de Moçambique (Maputo Cidade, Maputo, Gaza, Inhambane, Sofala, Manica, Tete, Zambézia, Nampula, Cabo Delgado, Niassa) e os municípios de Maputo e da Matola foram escritos pelos primeiros scripts de dados ([`transport-admin/scripts/seed-provincias.js`](https://github.com/transportmozambique/Transport-Mozambique/blob/bd007cf/transport-admin/scripts/seed-provincias.js), apagado em 2026-10-19, e as [sementes](conceitos.md#semente "Um conjunto pequeno de dados inventados que se carrega numa base de dados vazia para a experimentar.")), com um ponto central cada. Cada rota pertence a um dos dois municípios. `Cidade` está vazia.
 
 ## Veículos, motoristas e proprietários
 
@@ -93,11 +96,11 @@ As 11 províncias de Moçambique (Maputo Cidade, Maputo, Gaza, Inhambane, Sofala
 | 340 motoristas | [`transport-client/scripts/add-drivers.mjs`](../transport-client/scripts/add-drivers.mjs) | Nomes próprios e apelidos moçambicanos comuns, combinados com uma semente fixa (2026) para os mesmos dados darem sempre os mesmos motoristas; sem fotografia ([Base de dados → Motoristas para os veículos importados](base-de-dados.md#motoristas-para-os-veículos-importados)) |
 | 11 proprietários | os primeiros scripts de dados | Empresas de transporte inventadas; nenhuma ligada a um veículo ainda |
 
-Os números de telefone estão no formato moçambicano (`+258 8x …`). Alguns podem, por acaso, ser de pessoas reais: nunca enviar SMS para os números dos motoristas dos dados de demonstração.
+Os números de telefone estão no formato moçambicano (`+258 8x …`). Alguns podem, por acaso, ser de pessoas reais: nunca enviar [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") para os números dos motoristas dos dados de demonstração.
 
 ## Passageiros
 
-As linhas de `Utente` são criadas por pessoas: ao registar-se na aplicação web, ou ao usar a opção 1 do USSD, que cria uma conta sem palavra-passe para o número de telefone. As de produção foram criadas na web e por USSD durante o desenvolvimento e os testes. São dados pessoais ([Segurança](seguranca.md)).
+As linhas de `Utente` são criadas por pessoas: ao registar-se na [aplicação web](conceitos.md#aplicacao-web "Um site que se usa como um programa: tem botões, mapas e contas, e muda conforme o que se faz."), ou ao usar a opção 1 do USSD, que cria uma conta sem palavra-passe para o número de telefone. As de produção foram criadas na web e por USSD durante o desenvolvimento e os testes. São dados pessoais ([Segurança](seguranca.md)).
 
 ## Regra de tarifa
 
@@ -107,34 +110,34 @@ A única linha de `Tarifa`, `padrao`, tem valores escolhidos pela equipa, não u
 
 | Dados | Produzidos por |
 |---|---|
-| Posições dos autocarros sem GPS | Calculadas a partir do percurso da rota, da hora do dia e da velocidade da tarifa (o modelo de horário, [Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)). Não é um horário publicado. |
-| Posições GPS | Rastreadores, a aplicação Traccar Client, ou o portal do motorista num telemóvel, por `POST /api/gps`. Nenhum envia em produção ainda. |
+| Posições dos autocarros sem [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") | Calculadas a partir do percurso da rota, da hora do dia e da velocidade da tarifa (o modelo de horário, [Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)). Não é um horário publicado. |
+| Posições GPS | [Rastreadores](conceitos.md#rastreador "Um aparelho (ou um telemóvel com uma aplicação) que envia a posição de um veículo pela internet; o código do dispositivo é a sua 'palavra-passe'."), a aplicação [Traccar Client](conceitos.md#traccar "Uma aplicação gratuita para telemóvel que envia a posição do telemóvel pelo protocolo OsmAnd."), ou o portal do motorista num telemóvel, por `POST /api/gps`. Nenhum envia em produção ainda. |
 | Horas de chegada, viagens, tarifas | Calculadas a cada pedido a partir do que está acima e da regra de tarifa. |
-| Alertas de chegada (`MISSION`) | Passageiros, na web ou por USSD. |
+| Alertas de chegada ([`MISSION`](glossario.md#a-rede-e-as-pessoas "Um alerta de chegada: um SMS quando um autocarro estiver perto de uma paragem")) | Passageiros, na web ou por USSD. |
 | Estado da viagem (`emViagem`) | Motoristas, no portal ou por USSD. |
 
 ## Mapas no ecrã
 
 | Uso | Fonte | Condições |
 |---|---|---|
-| Mapa vectorial das três aplicações (MapLibre GL) | **OpenFreeMap** (`tiles.openfreemap.org`): estilos `liberty` e `positron` e mosaicos vectoriais `planet`, feitos com o esquema OpenMapTiles a partir dos dados do OpenStreetMap | Gratuito, sem chave; crédito à OpenFreeMap, OpenMapTiles e OpenStreetMap (o MapLibre mostra-o no canto de cada mapa) |
+| Mapa vectorial das três aplicações ([MapLibre](conceitos.md#mosaicos "As imagens das ruas por baixo dos autocarros e das paragens, que o mapa descarrega aos bocados (mosaicos) conforme se mexe.") GL) | **OpenFreeMap** (`tiles.openfreemap.org`): estilos `liberty` e `positron` e mosaicos vectoriais `planet`, feitos com o esquema OpenMapTiles a partir dos dados do OpenStreetMap | Gratuito, sem chave; crédito à OpenFreeMap, OpenMapTiles e OpenStreetMap (o MapLibre mostra-o no canto de cada mapa) |
 | Mapa raster em algumas páginas do painel (províncias, municípios, paragens e desenho de rotas) | **Servidor de mosaicos do OpenStreetMap** (`tile.openstreetmap.org`) | A [política de uso de mosaicos](https://operations.osmfoundation.org/policies/tiles/) da OpenStreetMap Foundation: uso leve, com crédito. Chega para poucos administradores; uma página pública com muito tráfego precisaria de outro fornecedor. |
 
 ## Serviços
 
 | Serviço | Para quê | Plano |
 |---|---|---|
-| [Africa's Talking](https://africastalking.com) | Menus USSD e SMS ([Africa's Talking](africas-talking.md)) | Sandbox (testes) |
+| [Africa's Talking](https://africastalking.com) | Menus USSD e SMS ([Africa's Talking](africas-talking.md)) | [Sandbox](conceitos.md#africas-talking "O gateway de USSD e SMS usado por este projecto.") (testes) |
 | [Vercel](https://vercel.com) | Alojamento das três aplicações ([Guia da Vercel](guia-vercel.md)) | Hobby (gratuito) |
-| [Neon](https://neon.tech) | Base de dados PostgreSQL ([Guia da Neon](guia-neon.md)) | Gratuito |
-| [GitHub](https://github.com/transportmozambique/Transport-Mozambique) | Código, pull requests, CI e o agendamento da verificação de chegadas (GitHub Actions) | Gratuito, repositório público |
+| [Neon](https://neon.tech) | Base de dados [PostgreSQL](conceitos.md#postgresql "O programa de base de dados que este projecto usa; gratuito e muito usado.") ([Guia da Neon](guia-neon.md)) | Gratuito |
+| [GitHub](https://github.com/transportmozambique/Transport-Mozambique) | Código, [pull requests](conceitos.md#pull-request "Um pull request é o pedido para juntar um ramo ao main; o merge é a junção, quando o pedido é aceite."), [CI](conceitos.md#ci "Verificações que o GitHub corre sozinho a cada pull request, para nenhum erro conhecido chegar ao main.") e o [agendamento](conceitos.md#agendamento "Uma tarefa que corre sozinha a uma hora marcada, ou de tantos em tantos minutos.") da verificação de chegadas (GitHub Actions) | Gratuito, repositório público |
 | [Traccar Client](https://www.traccar.org/client/) | Aplicação gratuita e aberta para Android e iOS que transforma um telemóvel num rastreador GPS ([Localização e GPS](localizacao-gps.md#traccar-client-num-telemóvel)) | |
 | Servidores OSRM da FOSSGIS e do projecto OSRM | Caminhos de carro e a pé ([Percursos pelas estradas](#percursos-pelas-estradas)) | Gratuitos, uso leve |
 | API Overpass e Nominatim | Descargas únicas de dados do OpenStreetMap e de nomes de paragens, quando os dados foram feitos | Gratuitos, uso leve |
 
 ## Software
 
-As principais bibliotecas abertas: Next.js e React (as três aplicações), Prisma (acesso à base de dados), MapLibre GL (mapas), Leaflet (a página de paragem do painel), Recharts (gráficos do painel), Tailwind CSS (estilos), bcryptjs (hashes de palavras-passe e PINs), o SDK `africastalking` para Node.js, e Playwright e Jest (testes). O portal do motorista usa a fonte Geist (Google Fonts, SIL Open Font License). As versões estão no `package.json` de cada aplicação.
+As principais bibliotecas abertas: [Next.js](conceitos.md#nextjs "O Next.js é a 'estrutura' sobre a qual as três aplicações estão feitas; o React é a parte dele que desenha os ecrãs.") e React (as três aplicações), [Prisma](conceitos.md#prisma "A ferramenta com que o código fala com a base de dados sem escrever SQL à mão.") (acesso à base de dados), MapLibre GL (mapas), Leaflet (a página de paragem do painel), Recharts (gráficos do painel), Tailwind CSS (estilos), bcryptjs ([hashes](conceitos.md#hash "Uma 'impressão digital' de um texto, que se calcula num sentido e não se consegue desfazer.") de palavras-passe e PINs), o SDK `africastalking` para [Node.js](conceitos.md#nodejs "O programa que corre JavaScript fora do navegador, num computador ou num servidor."), e [Playwright](conceitos.md#testes "Programas que experimentam as aplicações sozinhos e avisam quando algo deixou de funcionar.") e Jest (testes). O portal do motorista usa a fonte Geist (Google Fonts, SIL Open Font License). As versões estão no `package.json` de cada aplicação.
 
 ## Ficheiros de referência no repositório
 
@@ -142,7 +145,7 @@ Vieram com o código original. Nenhum código em funcionamento os usa:
 
 | Ficheiro | O que é |
 |---|---|
-| `transport-admin/app/components/TruRoute-USSD-XML-Interface-1.4.pdf`, `…-1_5.pdf`, `TruRoute-SMPP-Interface-1.7.8.pdf`, `SSMI-1_7_4.pdf` | Especificações de gateways USSD e SMS, guardadas de um plano anterior de gateway. A plataforma usa a Africa's Talking. |
+| `transport-admin/app/components/TruRoute-USSD-XML-Interface-1.4.pdf`, `…-1_5.pdf`, `TruRoute-SMPP-Interface-1.7.8.pdf`, `SSMI-1_7_4.pdf` | Especificações de [gateways](conceitos.md#gateway "A empresa que faz a ponte entre as redes dos telemóveis (Vodacom, Movitel, Tmcel) e a internet.") USSD e SMS, guardadas de um plano anterior de gateway. A plataforma usa a Africa's Talking. |
 | `maputo-stops-data.json`, `matola-stops-data.json` | As exportações de paragens descritas [acima](#os-primeiros-dados-2026-antes-de-o-código-vir-para-este-repositório). |
 
 ## Créditos a mostrar

@@ -42,7 +42,8 @@ cache, broken, count = {}, 0, 0
 for f in files:
     with open(f, encoding="utf-8") as fh:
         text = re.sub(r"```.*?```", "", fh.read(), flags=re.S)
-    targets = re.findall(r"\]\(([^)\s]+)\)", text) + re.findall(r'src="([^"]+)"', text) + re.findall(r'href="([^"]+)"', text)
+        text = re.sub(r"`[^`\n]*`", "", text)  # o código entre crases não é uma ligação
+    targets = re.findall(r"\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)", text) + re.findall(r'src="([^"]+)"', text) + re.findall(r'href="([^"]+)"', text)
     for t in targets:
         if re.match(r"^(https?:|mailto:)", t):
             continue
