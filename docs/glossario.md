@@ -41,7 +41,7 @@ Cada tabela está definida em [`prisma/schema.prisma`](../prisma/schema.prisma);
 | `Tarifa` (fare rule) | Tarifa mínima, preço por km e as velocidades das estimativas. Uma está activa. |
 | `Provincia`, `Municipio`, `Cidade` | Onde as vias pertencem. `Cidade` está vazia. |
 | `Administrador` | Uma conta do painel de administração. |
-| `GeoLocation` | Antiga: posições da primeira importação de dados. Só a rota USSD antiga da Telerivet a lê; as posições vêm agora de `Transporte`. |
+| `GeoLocation` | Antiga: posições da primeira importação de dados. Nenhum código a lê; as posições vêm agora de `Transporte`. |
 
 ## Campos que precisam de explicação
 

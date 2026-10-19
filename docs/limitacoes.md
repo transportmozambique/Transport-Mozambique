@@ -20,11 +20,11 @@ Anterior: [Resolução de problemas](resolucao-de-problemas.md) · [Índice](REA
 
 O que está incompleto, estimado ou antigo em 2026-10-18, para não ser confundido com um erro, nem se construir em cima disso sem saber. Cada item diz como contorná-lo agora, ou o que seria preciso para o tirar. As falhas de segurança têm a sua lista em [Segurança → Falhas conhecidas](seguranca.md#falhas-conhecidas).
 
-**Nesta página:** [Corrigido em 2026-10-18](#corrigido-em-2026-10-18) · [Posições e horas](#posições-e-horas) · [Viagens](#viagens) · [Notificações](#notificações) · [Dados](#dados) · [Painel](#painel) · [Portal do motorista](#portal-do-motorista) · [USSD e SMS](#ussd-e-sms) · [Código e repositório](#código-e-repositório)
+**Nesta página:** [Já corrigido](#já-corrigido) · [Posições e horas](#posições-e-horas) · [Viagens](#viagens) · [Notificações](#notificações) · [Dados](#dados) · [Painel](#painel) · [Portal do motorista](#portal-do-motorista) · [USSD e SMS](#ussd-e-sms) · [Código e repositório](#código-e-repositório)
 
 ---
 
-## Corrigido em 2026-10-18
+## Já corrigido
 
 Estavam nesta lista e já não são limitações:
 
@@ -41,8 +41,9 @@ Estavam nesta lista e já não são limitações:
 | 51 percursos de rotas desenhavam linhas rectas a cortar quarteirões | Postos nas estradas; o troço recto mais longo que resta tem 7,2 km na EN1, onde a estrada é recta ([Base de dados → Pôr os percursos nas estradas](base-de-dados.md#pôr-os-percursos-das-rotas-nas-estradas)). |
 | Sem CI | Cada pull request verifica os tipos das três aplicações, compara os três esquemas e confirma as ligações e a navegação da documentação ([Testes → CI no GitHub](testes.md#ci-no-github)). |
 | No USSD, um nome mal escrito ("chipamanine", "makalala") não encontrava nada, e uma lista errada obrigava a voltar atrás | A pesquisa aceita abreviaturas, sons iguais e erros, e escrever outro nome numa lista faz uma nova pesquisa ([Serviço USSD → Pesquisa tolerante](ussd.md#pesquisa-tolerante)). |
-| A documentação e os comentários do código estavam em inglês | Estão em português, com o porquê de cada escolha; só os ficheiros antigos por apagar ficam em inglês ([abaixo](#código-e-repositório)). |
+| A documentação e os comentários do código estavam em inglês | Estão em português, com o porquê de cada escolha. |
 | A V086 (Rua dos Bons Amigos – Antena) parecia cortar 2 km em linha recta | A linha já segue a rua: o router dá o mesmo comprimento quando passa pelos pontos do percurso. Nada a redesenhar ([Base de dados → Uma rota listada que já está na estrada](base-de-dados.md#uma-rota-listada-que-já-está-na-estrada-v086)). |
+| O repositório guardava cerca de 340 ficheiros que não se publicavam: a aplicação antiga da raiz, a rota Telerivet, scripts de uso único que escreviam na base de dados | Apagados em 2026-10-19; continuam no histórico do git ([Visão geral → Código antigo](visao-geral.md#código-antigo-apagado)). |
 | `USER_SESSION_SECRET` e `DRIVER_SESSION_SECRET` estavam como variáveis legíveis na Vercel | Valores novos, guardados como Secret ([Segurança → Mudar segredos](seguranca.md#mudar-segredos)). |
 
 ## Posições e horas
@@ -121,13 +122,9 @@ Estavam nesta lista e já não são limitações:
 - **182 caracteres por ecrã.** Os nomes longos cortam-se com `..`, e os acentos tiram-se (GSM-7). É um limite do próprio USSD; nomes de paragens mais curtos ajudam.
 - **A pesquisa por nome tem limites.** Aceita abreviaturas, sons iguais e um ou dois erros, mas não nomes completamente diferentes (um nome popular que não está no nome da paragem) nem erros na primeira letra.
   *Contornar:* pôr o nome popular no nome da paragem no painel, ou juntá-lo às formas curtas de [`lib/places.ts`](../transport-client/lib/places.ts).
-- **Telerivet** (`/api/ussd-telerivet`) é uma segunda integração de gateway, sem uso, com os menus antigos. Nada a chama.
 
 ## Código e repositório
 
-- **A aplicação antiga da raiz.** `app/`, `lib/`, o `package.json` e o `vercel.json` da raiz são uma variante antiga da aplicação dos passageiros. Nenhum projecto da Vercel a compila e já é diferente de `transport-client`. Não se publica.
-- **Scripts de uso único.** 100 ficheiros `.js` na raiz do repositório (incluindo 24 `test-*.js`), 4 em `scripts/`, 38 na raiz de `transport-admin` e 84 em `transport-admin/scripts`. Vêm da importação inicial dos dados e de correcções anteriores; vários escrevem na base de dados de `DATABASE_URL`. Lê-se um antes de o correr. Os scripts mantidos estão em `transport-client/scripts` ([Mapa do código → Scripts de dados](mapa-do-codigo.md#scripts-de-dados-scripts)).
-- **Ficheiros que se podem apagar.** Os de cima, e também as cópias `*.backup` e `*.old` das rotas, os scripts `transport-client/*.js`, a pasta `scratch/`, a rota Telerivet, e `docs/architecture.pdf` (desactualizado, substituído por [Visão geral](visao-geral.md)). Ficaram em inglês e por apagar porque apagar ficheiros precisa da autorização explícita do dono do projecto. Porquê apagá-los: confundem quem chega ao repositório, e alguns escrevem na base de dados.
 - **Três cópias do esquema.** `prisma/schema.prisma` é a referência; `transport-client/prisma/schema.prisma` tem de ser igual e `transport-admin/prisma/schema.prisma` só difere no bloco do generator. Mudam-se as três juntas; o CI falha quando diferem.
 - **Duas cópias do código das posições.** `lib/vehiclePosition.ts` existe na aplicação dos passageiros e no painel; uma alteração às regras do horário tem de ir para as duas.
 - **Muitos avisos antigos do lint** ([Testes](testes.md#tipos-e-lint)), por isso o lint não está no CI. A aplicação dos passageiros e o portal do motorista não têm testes automáticos; [Testes](testes.md#aplicação-dos-passageiros-e-ussd-à-mão) lista o que confirmar à mão.

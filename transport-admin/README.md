@@ -36,5 +36,3 @@ Os dois só correm contra uma base de dados local ([docs/testes.md](../docs/test
 | `__tests__/`, `e2e/` | testes Jest e Playwright |
 
 Cada ficheiro, com o que faz e onde é explicado: [docs/mapa-do-codigo.md](../docs/mapa-do-codigo.md#painel-de-administração-transport-admin).
-
-Os ficheiros `*.js` da raiz desta pasta (menos `create-admin.js` e as configurações) e a pasta `scripts/` são scripts antigos de uso único, não publicados ([docs/limitacoes.md](../docs/limitacoes.md#código-e-repositório)).

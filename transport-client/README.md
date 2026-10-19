@@ -30,5 +30,3 @@ Precisa de um `.env` com `DATABASE_URL` ([docs/configuracao.md](../docs/configur
 | `prisma/` | cópia do esquema (igual a `../prisma/schema.prisma`) e os dados de demonstração |
 
 Cada ficheiro, com o que faz e onde é explicado: [docs/mapa-do-codigo.md](../docs/mapa-do-codigo.md#aplicação-dos-passageiros-transport-client).
-
-Os ficheiros `*.js` desta pasta são scripts antigos de uso único, não publicados ([docs/limitacoes.md](../docs/limitacoes.md#código-e-repositório)).

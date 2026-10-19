@@ -708,7 +708,7 @@ Antes de redesenhar à mão uma rota listada, confirma-se se a linha está numa 
 
 Os dois resultados juntos dizem que a linha é a rua: nada a redesenhar. Se o primeiro desse dezenas de metros, ou o segundo um total muito maior do que a linha, a rota redesenhava-se no painel ([Painel → Redesenhar o percurso de uma rota](painel-admin.md#tarefa-redesenhar)).
 
-**Rotas novas.** A importação desenha as rotas novas pelas suas paragens, e o painel só guarda percursos pelas estradas ("Nova Via", "Redesenhar percurso"), por isso já não entram saltos rectos. Os scripts antigos `create-*.js` dos primeiros dados ([Visão geral → Código antigo](visao-geral.md#código-antigo-não-publicado)) ainda escrevem linhas rectas de paragem em paragem: não os usar para rotas novas.
+**Rotas novas.** A importação desenha as rotas novas pelas suas paragens, e o painel só guarda percursos pelas estradas ("Nova Via", "Redesenhar percurso"), por isso já não entram saltos rectos. Os scripts `create-*.js` dos primeiros dados, que as desenhavam em linha recta de paragem em paragem, foram apagados ([Visão geral → Código antigo](visao-geral.md#código-antigo-apagado)).
 
 ## Motoristas para os veículos importados
 

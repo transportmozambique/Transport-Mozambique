@@ -477,10 +477,6 @@ CON Transportes Mocambique
 
 Todos os menus, com ecrãs reais, e como se lê o campo `text`, estão em [Serviço USSD](ussd.md).
 
-#### `POST /api/ussd-telerivet`
-
-Os mesmos menus para o gateway Telerivet, que não se usa. Verifica `TELERIVET_SECRET` quando essa variável está definida.
-
 ---
 
 ## Painel de administração (`transport-admin`)

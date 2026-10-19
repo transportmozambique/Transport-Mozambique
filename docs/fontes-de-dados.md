@@ -48,8 +48,8 @@ Produção em 2026-10-18:
 
 ### Os primeiros dados (2026, antes de o código vir para este repositório)
 
-- **Paragens.** [`maputo-stops-data.json`](../maputo-stops-data.json) (1 346 linhas) e [`matola-stops-data.json`](../matola-stops-data.json) (691 linhas), na raiz do repositório, são exportações do OpenStreetMap separadas por tabulações (`@id @lat @lon name`), apesar da extensão `.json`. O script `transport-admin/scripts/seed-with-geocoding.js` leu-as, tirou os duplicados e deu nome a cada paragem pela geocodificação inversa do **Nominatim** (`nominatim.openstreetmap.org/reverse`, um pedido por segundo, como a política de uso do Nominatim exige): a paragem fica com o nome da sua rua ou do sítio. É por isso que muitas paragens partilham o nome de uma rua ([Limitações → Dados](limitacoes.md#dados)). São as 1 079 paragens com código `PAR-`.
-- **Rotas.** [`transport-admin/reorganize-vias-emtpm-routes.js`](../transport-admin/reorganize-vias-emtpm-routes.js) e os outros `reorganize-vias-*.js` da raiz de `transport-admin` criaram 91 rotas à semelhança das rotas da **EMTPM** (Empresa Municipal de Transporte Público de Maputo) e dos corredores de chapas entre Maputo e a Matola, e ligaram as paragens a menos de 50 m de cada uma. 70 têm códigos `V…` e 21 códigos `VIA-…`. As suas linhas foram desenhadas de paragem em paragem e depois postas nas estradas em 2026-10 ([Percursos pelas estradas](#percursos-pelas-estradas)).
+- **Paragens.** [`maputo-stops-data.json`](../maputo-stops-data.json) (1 346 linhas) e [`matola-stops-data.json`](../matola-stops-data.json) (691 linhas), na raiz do repositório, são exportações do OpenStreetMap separadas por tabulações (`@id @lat @lon name`), apesar da extensão `.json`. O script [`transport-admin/scripts/seed-with-geocoding.js`](https://github.com/transportmozambique/Transport-Mozambique/blob/bd007cf/transport-admin/scripts/seed-with-geocoding.js) (apagado em 2026-10-19 com o [código antigo](visao-geral.md#código-antigo-apagado)) leu-as, tirou os duplicados e deu nome a cada paragem pela geocodificação inversa do **Nominatim** (`nominatim.openstreetmap.org/reverse`, um pedido por segundo, como a política de uso do Nominatim exige): a paragem fica com o nome da sua rua ou do sítio. É por isso que muitas paragens partilham o nome de uma rua ([Limitações → Dados](limitacoes.md#dados)). São as 1 079 paragens com código `PAR-`.
+- **Rotas.** [`transport-admin/reorganize-vias-emtpm-routes.js`](https://github.com/transportmozambique/Transport-Mozambique/blob/bd007cf/transport-admin/reorganize-vias-emtpm-routes.js) e os outros `reorganize-vias-*.js` da raiz de `transport-admin` (apagados em 2026-10-19, no histórico do git) criaram 91 rotas à semelhança das rotas da **EMTPM** (Empresa Municipal de Transporte Público de Maputo) e dos corredores de chapas entre Maputo e a Matola, e ligaram as paragens a menos de 50 m de cada uma. 70 têm códigos `V…` e 21 códigos `VIA-…`. As suas linhas foram desenhadas de paragem em paragem e depois postas nas estradas em 2026-10 ([Percursos pelas estradas](#percursos-pelas-estradas)).
 
 ### Importação do OpenStreetMap (2026-10-18)
 
@@ -79,7 +79,7 @@ Porquê percursos pelas estradas e não linhas entre paragens: a distância ao l
 
 ## Províncias e municípios
 
-As 11 províncias de Moçambique (Maputo Cidade, Maputo, Gaza, Inhambane, Sofala, Manica, Tete, Zambézia, Nampula, Cabo Delgado, Niassa) e os municípios de Maputo e da Matola foram escritos pelos primeiros scripts de dados (`transport-admin/scripts/seed-provincias.js` e as sementes), com um ponto central cada. Cada rota pertence a um dos dois municípios. `Cidade` está vazia.
+As 11 províncias de Moçambique (Maputo Cidade, Maputo, Gaza, Inhambane, Sofala, Manica, Tete, Zambézia, Nampula, Cabo Delgado, Niassa) e os municípios de Maputo e da Matola foram escritos pelos primeiros scripts de dados ([`transport-admin/scripts/seed-provincias.js`](https://github.com/transportmozambique/Transport-Mozambique/blob/bd007cf/transport-admin/scripts/seed-provincias.js), apagado em 2026-10-19, e as sementes), com um ponto central cada. Cada rota pertence a um dos dois municípios. `Cidade` está vazia.
 
 ## Veículos, motoristas e proprietários
 
@@ -143,7 +143,6 @@ Vieram com o código original. Nenhum código em funcionamento os usa:
 | Ficheiro | O que é |
 |---|---|
 | `transport-admin/app/components/TruRoute-USSD-XML-Interface-1.4.pdf`, `…-1_5.pdf`, `TruRoute-SMPP-Interface-1.7.8.pdf`, `SSMI-1_7_4.pdf` | Especificações de gateways USSD e SMS, guardadas de um plano anterior de gateway. A plataforma usa a Africa's Talking. |
-| [`neighborhood-mappings.json`](../neighborhood-mappings.json) | Um agrupamento antigo das paragens por bairros de Maputo, feito por `generate-neighborhood-mappings.js`. |
 | `maputo-stops-data.json`, `matola-stops-data.json` | As exportações de paragens descritas [acima](#os-primeiros-dados-2026-antes-de-o-código-vir-para-este-repositório). |
 
 ## Créditos a mostrar

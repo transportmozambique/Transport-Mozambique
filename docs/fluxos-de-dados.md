@@ -454,7 +454,7 @@ Um PIN ou código novo substitui o antigo logo. Porquê só uma vez: o servidor 
 | `Proprietario`, `TransporteProprietario` | painel | painel |
 | `Utente` | aplicação dos passageiros (registo, perfil, opção 1 do USSD); painel | os dois |
 | `MISSION` | aplicação dos passageiros (alerta na web, opção 1 do USSD; `notificadoEm` pela verificação de chegadas) | aplicação dos passageiros, portal do motorista (contagem de quem espera), painel (páginas de passageiro e de paragem) |
-| `GeoLocation` | só a importação inicial | só a rota USSD antiga da Telerivet (as posições vêm agora de `Transporte`) |
+| `GeoLocation` | só a importação inicial | nada (as posições vêm agora de `Transporte`) |
 | `Tarifa` | painel (página "Tarifa", `PUT /api/tarifa`) | aplicação dos passageiros, painel |
 
 <!-- navegação-fim: gerada por .github/scripts/docs-nav.py -->

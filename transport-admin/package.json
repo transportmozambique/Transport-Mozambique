@@ -13,9 +13,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:e2e": "playwright test",
-    "atribuir-motoristas": "node scripts/atribuir-motoristas.js",
-    "criar-e-atribuir": "node scripts/criar-e-atribuir-motoristas.js"
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@types/bcryptjs": "^3.0.0",

@@ -43,7 +43,7 @@ git clone https://github.com/transportmozambique/Transport-Mozambique.git
 cd Transport-Mozambique
 ```
 
-O repositório tem as três aplicações publicadas (`transport-client`, `transport-admin`, `transport-driver`), o esquema Prisma partilhado e as migrações em `prisma/`, e uma aplicação antiga na raiz que não é publicada ([Visão geral → Estrutura do repositório](visao-geral.md#estrutura-do-repositório)).
+O repositório tem as três aplicações publicadas (`transport-client`, `transport-admin`, `transport-driver`) e, em `prisma/`, o esquema Prisma partilhado e as migrações ([Visão geral → Estrutura do repositório](visao-geral.md#estrutura-do-repositório)).
 
 ## 2. Arrancar uma base de dados
 
