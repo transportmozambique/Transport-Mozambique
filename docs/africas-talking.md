@@ -240,6 +240,24 @@ Os avisos só saem para autocarros em viagem, por isso primeiro um motorista ini
 
 Para ver um aviso "deixou de circular", terminar a viagem do autocarro anunciado no portal enquanto o passageiro espera.
 
+**Um ensaio real (2026-10-27).** Com só o autocarro ADA-013M em viagem na X19, pediu-se às 23:10 a viagem de Bassopa para o Museu (o autocarro estava a 14 min de Bassopa) e escolheu-se "Acompanhar por SMS". Chegaram, no simulador:
+
+| Hora | SMS |
+|---|---|
+| 23:10 | "Viagem Bassopa > Museu: chega 23:26, 10 MT. 1) Apanhe a rota X19 (ADA-013M) em Bassopa as 23:24; saia em Museu (X39) as 23:26 (10 MT). Vamos avisar por SMS: …" |
+| 23:15 | "Autocarro ADA-013M (rota X19) chega a Bassopa em 10 min." |
+| 23:19 | "Autocarro ADA-013M (rota X19) chega a Bassopa em 5 min." |
+| 23:23 | "Autocarro ADA-013M (rota X19) esta a chegar a Bassopa. Entre e saia em Museu (X39) daqui a 2 min. Se o perder, o proximo chega em 36 min." |
+| 23:24 | "Saia agora em Museu (X39): chegou ao seu destino, Museu. Boa viagem!" |
+
+Porque não há mais SMS:
+
+- **O de 15 minutos** não sai à parte quando o SMS da viagem já diz a hora (o autocarro estava a 14 min).
+- **"Prepare-se para sair"** não sai numa viagem a bordo curta: o "Entre e saia daqui a 2 min" já o diz.
+- **"Saia agora"** sai quando falta 1 minuto ou menos para a paragem de saída, um pouco antes de o autocarro lá chegar, porque a verificação só corre uma vez por minuto.
+
+Os níveis de cada aviso estão em [Fluxos de dados → Os avisos de uma viagem acompanhada](fluxos-de-dados.md#os-avisos-de-uma-viagem-acompanhada).
+
 ## Verificação de chegadas a cada minuto
 
 Os avisos de 15, 10 e 5 minutos precisam que a verificação de chegadas corra pelo menos a cada minuto. O [agendamento](conceitos.md#agendamento "Uma tarefa que corre sozinha a uma hora marcada, ou de tantos em tantos minutos.") do [GitHub Actions](conceitos.md#ci "Verificações que o GitHub corre sozinho a cada pull request, para nenhum erro conhecido chegar ao main.") não chega (em Outubro de 2026 corria a cada 40 a 50 minutos), e o plano Hobby da Vercel só permite cron jobs diários. Um serviço gratuito de pedidos agendados resolve-o. Com o [cron-job.org](https://cron-job.org):
@@ -255,6 +273,25 @@ Os avisos de 15, 10 e 5 minutos precisam que a verificação de chegadas corra p
 6. Carregar em **TEST RUN**: a resposta deve ser 200 com `"success":true`. Depois **CREATE**.
 
 O que faz: chama a mesma verificação que o GitHub Actions chama, mas a cada minuto ([Fluxos de dados → O que dispara a verificação](fluxos-de-dados.md#o-que-dispara-a-verificação)). Porquê é seguro: a verificação é a mesma para quem a chamar e nunca envia o mesmo aviso duas vezes, por isso chamá-la a mais só gasta um pouco de tempo de servidor. Para parar, desligar o cronjob no cron-job.org.
+
+**O cronjob da produção.** Existe desde 2026-10-27, na conta do cron-job.org do projecto, com os passos acima:
+
+| Campo | Valor |
+|---|---|
+| Title | `Verificação de chegadas` |
+| URL | `https://transport-mz.vercel.app/api/simulation` |
+| Execution schedule | Every minute |
+| Request method | `POST` |
+| Headers | `Content-Type: application/json` |
+| Request body | `{"action":"check"}` |
+
+Para ver se está a correr: [console.cron-job.org/jobs](https://console.cron-job.org/jobs) → na linha **Verificação de chegadas**, **HISTORY**. Cada linha do histórico é uma corrida:
+
+- **"Successful", "200 OK", cerca de 2 s:** o normal.
+- **"Failed (timeout)" aos 30 s, de vez em quando:** 30 s é o tempo máximo que o cron-job.org espera. Acontece numa corrida que envia um SMS quando a API do sandbox da Africa's Talking demora a responder ([SMS](#sms)). O SMS sai na mesma, e a corrida do minuto seguinte é normal. Em 2026-10-27 foram 2 em cerca de 60 corridas, as duas a enviar um aviso.
+- **Muitas falhas seguidas:** a plataforma não responde. Abrir `https://transport-mz.vercel.app/api/simulation` no navegador (deve responder `"success":true`) e seguir [Resolução de problemas](resolucao-de-problemas.md).
+
+O cron-job.org pode desligar sozinho um cronjob com muitas falhas seguidas, e avisa por email. Volta-se a ligar em **EDIT** → **Enable job** → **SAVE**. Enquanto está desligado, a verificação só corre com as visitas à web, ao USSD e ao portal, e com o GitHub Actions, por isso os avisos chegam tarde.
 
 ## Registos e sessões
 

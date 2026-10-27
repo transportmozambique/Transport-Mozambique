@@ -544,7 +544,7 @@ SELECT count(*) AS apagados, json_agg(apagados) AS copia FROM apagados;
 
 ## Rotas activas
 
-Só as rotas com `Via.ativa = true` aparecem aos passageiros: no mapa e nas viagens da web, no USSD, nos SMS e no início do painel. As outras ficam guardadas, com as suas paragens e veículos, e o painel mostra-as no filtro "Desactivadas". Os motoristas de uma rota desactivada não conseguem iniciar a viagem. Porquê uma coluna em vez de apagar: voltar atrás é mudar um valor, e nada se perde.
+Só as rotas com `Via.ativa = true` aparecem aos passageiros: no mapa e nas viagens da web, no USSD, nos SMS e no início do painel. As outras ficam guardadas, com as suas paragens, e o painel mostra-as no filtro "Desactivadas" (os veículos e motoristas delas foram apagados em 2026-10-27, [abaixo](#veículos-e-motoristas-das-rotas-desactivadas)). Os motoristas de uma rota desactivada não conseguem iniciar a viagem. Porquê uma coluna em vez de apagar: voltar atrás é mudar um valor, e nada se perde.
 
 Desde 2026-10-27 estão activas 3 rotas, escolhidas porque se ligam umas às outras e permitem experimentar viagens com 2 [transbordos](glossario.md#palavras-dos-ecrãs "Mudança de autocarro a meio de uma viagem") (Xipamanine para Zimpeto):
 
@@ -591,6 +591,59 @@ ORDER BY v.codigo, t.matricula;
 ```
 
 Um autocarro só anda no mapa depois de o seu motorista iniciar a viagem, e para isso precisa de um PIN ([Painel → Dar um PIN a um motorista](painel-admin.md#tarefa-pin)).
+
+### Veículos e motoristas das rotas desactivadas
+
+Em 2026-10-27 apagaram-se os veículos e os motoristas das 258 rotas desactivadas: 445 veículos, 445 motoristas (111 deles com PIN) e as 111 posições antigas (`GeoLocation`) desses veículos. Ficaram os 6 das rotas activas. Porquê: o painel mostrava 451 veículos e 451 motoristas para 3 rotas, e nenhum deles podia circular. As rotas, as paragens e os 11 proprietários ficaram (os proprietários já não tinham veículos ligados).
+
+**O que muda.** Activar outra rota já não lhe dá autocarros. Para uma rota ter autocarros, criar os veículos e os motoristas no painel ([Painel → Tarefas comuns](painel-admin.md#tarefas-comuns-passo-a-passo)) e dar um PIN a cada motorista.
+
+**A instrução usada**, numa só instrução no [SQL Editor da Neon](guia-neon.md), para ficar registada:
+
+```sql
+WITH activas AS (
+  SELECT count(*) AS n FROM "Via" WHERE ativa
+),
+sobra AS (
+  SELECT t.id
+  FROM "Transporte" t
+  JOIN "Via" v ON v.id = t."viaId"
+  WHERE NOT v.ativa
+    AND (SELECT n FROM activas) = 3
+),
+posicoes AS (
+  DELETE FROM "GeoLocation" WHERE "transporteId" IN (SELECT id FROM sobra) RETURNING 1
+),
+motoristas AS (
+  DELETE FROM "Motorista" WHERE "transporteId" IN (SELECT id FROM sobra) RETURNING 1
+),
+transportes AS (
+  DELETE FROM "Transporte" WHERE id IN (SELECT id FROM sobra) RETURNING 1
+)
+SELECT
+  (SELECT n FROM activas)                                           AS rotas_activas,
+  (SELECT count(*) FROM transportes)                                AS transportes_apagados,
+  (SELECT count(*) FROM motoristas)                                 AS motoristas_apagados,
+  (SELECT count(*) FROM posicoes)                                   AS posicoes_apagadas,
+  (SELECT count(*) FROM "Transporte") - (SELECT count(*) FROM transportes) AS transportes_no_fim,
+  (SELECT count(*) FROM "Motorista") - (SELECT count(*) FROM motoristas)   AS motoristas_no_fim;
+```
+
+O que faz, por partes:
+
+- `sobra`: os veículos das rotas desactivadas. Porquê o `= 3`: só apaga com exactamente 3 rotas activas; com outro número, `rotas_activas` mostra-o e nada se apaga.
+- `posicoes`: as posições antigas desses veículos. Saem primeiro porque `GeoLocation` não deixa apagar um veículo que ainda as tenha (`ON DELETE RESTRICT`).
+- `motoristas` e `transportes`: os motoristas desses veículos, e os veículos. As ligações a proprietários (`TransporteProprietario`) saem sozinhas com o veículo (`ON DELETE CASCADE`).
+
+Na produção deu `3 | 445 | 445 | 111 | 6 | 6`. Correr outra vez não apaga nada.
+
+**A cópia de antes.** Antes de apagar, criou-se na Neon o ramo `copia-antes-limpar-frota-2026-10-27`: a produção tal como estava nesse momento. Para recuperar um veículo ou um motorista:
+
+1. Neon → projecto → **Branches** → `copia-antes-limpar-frota-2026-10-27`. O ramo não tem computador ligado: carregar em **Add compute** e confirmar.
+2. **SQL Editor**, com esse ramo escolhido no selector de ramos, e ler as linhas a recuperar (por exemplo `SELECT * FROM "Transporte" WHERE matricula = 'ADA-001M'`).
+3. Voltar a pôr o selector em **production** antes de qualquer alteração, e criar o veículo ou o motorista no painel com esses dados.
+
+Quando a cópia já não for precisa, apaga-se o ramo em **Branches** → o ramo → **Delete**; a produção não muda.
 
 ## Mudar dados
 
@@ -858,6 +911,8 @@ Produção em 2026-10-18, depois da importação do OpenStreetMap:
 | Proprietario / TransporteProprietario | 11 / 0 (nenhum veículo tem proprietário ligado ainda) |
 | Tarifa | 1 |
 | Administrador | 3 |
+
+Em 2026-10-27 ficaram 3 rotas activas, 6 veículos, 6 motoristas e nenhuma posição antiga (`GeoLocation`) ([Veículos e motoristas das rotas desactivadas](#veículos-e-motoristas-das-rotas-desactivadas)).
 
 <!-- navegação-fim: gerada por .github/scripts/docs-nav.py -->
 
