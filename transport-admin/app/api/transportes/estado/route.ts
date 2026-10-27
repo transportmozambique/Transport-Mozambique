@@ -15,6 +15,7 @@ export async function GET() {
         currGeoLocation: true,
         gpsAtualizadoEm: true,
         gpsVelocidade: true,
+      gpsVelocidadeMedia: true,
         gpsDirecao: true,
         motorista: { select: TRIP_FIELDS },
         via: { select: { geoLocationPath: true } },

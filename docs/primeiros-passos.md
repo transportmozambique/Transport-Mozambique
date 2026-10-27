@@ -124,7 +124,7 @@ cd transport-client
 npx prisma migrate deploy --schema ../prisma/schema.prisma
 ```
 
-O que faz: cria, na base de dados vazia, todas as tabelas, pela ordem das [migrações](conceitos.md#migracao). Fim esperado: `All migrations have been successfully applied.` Correm seis migrações, de `20260430170348_init` a `20261016150000_vehicle_gps`, que criam todas as tabelas, incluindo a regra de tarifa por omissão ([`Tarifa`](glossario.md#a-rede-e-as-pessoas "A regra de tarifa: preço mínimo, preço por km e velocidades")). Para confirmar que a base de dados corresponde ao esquema:
+O que faz: cria, na base de dados vazia, todas as tabelas, pela ordem das [migrações](conceitos.md#migracao). Fim esperado: `All migrations have been successfully applied.` Correm oito migrações, de `20260430170348_init` a `20261028000000_gps_velocidade_media`, que criam todas as tabelas, incluindo a regra de tarifa por omissão ([`Tarifa`](glossario.md#a-rede-e-as-pessoas "A regra de tarifa: preço mínimo, preço por km e velocidades")). Para confirmar que a base de dados corresponde ao esquema:
 
 ```bash
 npx prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel ../prisma/schema.prisma --exit-code

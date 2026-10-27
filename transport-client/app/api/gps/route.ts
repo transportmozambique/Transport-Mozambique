@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import { waitUntil } from '@vercel/functions';
 import { prisma } from '@/lib/prisma';
 import { maybeCheckArrivals } from '@/lib/busSimulator';
+import { haversineMeters, parseLatLng, type LatLng } from '@/lib/fares';
 
 /**
  * Posições GPS reais dos veículos.
@@ -27,6 +28,9 @@ import { maybeCheckArrivals } from '@/lib/busSimulator';
  * Uma posição nova também corre a verificação de chegadas (os avisos por SMS), no máximo a cada
  * 30 s por instância: com GPS, os avisos acompanham o autocarro sem esperar pelo pedido agendado
  * de cada minuto (docs/guia-cron-job.md).
+ *
+ * Cada posição actualiza também a velocidade média recente (gpsVelocidadeMedia), que as horas de
+ * chegada usam em vez da velocidade fixa da tarifa (lib/vehiclePosition.ts, etaSpeedKmh).
  */
 
 // O portal do motorista (outro domínio) envia posições a partir do navegador
@@ -38,6 +42,36 @@ const CORS = {
 
 const MAX_ACCURACY_M = 200; // posições menos precisas do que isto são ignoradas
 const MAX_FUTURE_MS = 2 * 60 * 1000;
+/** A média da velocidade esquece as posições com esta constante de tempo (cerca dos últimos 5 minutos) */
+const SPEED_WINDOW_S = 5 * 60;
+/** Mais do que isto sem posições, a média recomeça (o autocarro pode ter estado parado ou desligado) */
+const SPEED_GAP_S = 10 * 60;
+/** Posições mais próximas do que isto no tempo não medem bem a velocidade: a média fica como estava */
+const SPEED_MIN_STEP_S = 5;
+/** Um salto mais rápido do que isto é um erro do GPS, não um autocarro */
+const SPEED_MAX_KMH = 100;
+
+/**
+ * A velocidade média recente, em km/h, depois de uma posição nova: a distância em linha recta desde
+ * a posição anterior a dividir pelo tempo, numa média que pesa mais as posições recentes. Porquê a
+ * distância e não a velocidade que o dispositivo envia: a média tem de contar o tempo parado nas
+ * paragens e nos semáforos, e muitos telemóveis não enviam posições enquanto estão parados.
+ */
+function nextSpeedAverage(
+  prev: { point: LatLng | null; at: Date | null; average: number | null },
+  point: LatLng,
+  at: Date,
+): number | null {
+  if (!prev.point || !prev.at) return null;
+  const stepS = (at.getTime() - prev.at.getTime()) / 1000;
+  if (stepS > SPEED_GAP_S) return null;
+  if (stepS < SPEED_MIN_STEP_S) return prev.average;
+  const kmh = (haversineMeters(prev.point, point) / stepS) * 3.6;
+  if (kmh > SPEED_MAX_KMH) return prev.average;
+  if (prev.average == null) return Math.round(kmh * 10) / 10;
+  const weight = 1 - Math.exp(-stepS / SPEED_WINDOW_S);
+  return Math.round((prev.average + weight * (kmh - prev.average)) * 10) / 10;
+}
 
 type Fields = Record<string, string | number | null | undefined>;
 
@@ -88,7 +122,7 @@ async function handle(request: NextRequest) {
 
   const vehicle = await prisma.transporte.findUnique({
     where: { gpsDispositivoHash: createHash('sha256').update(code).digest('hex') },
-    select: { id: true, gpsAtualizadoEm: true },
+    select: { id: true, gpsAtualizadoEm: true, currGeoLocation: true, gpsVelocidadeMedia: true },
   });
   if (!vehicle) return NextResponse.json({ error: 'Dispositivo desconhecido' }, { status: 401 });
 
@@ -115,6 +149,11 @@ async function handle(request: NextRequest) {
       // O OsmAnd envia nós, o formato JSON km/h
       gpsVelocidade: speed === null ? null : Math.round((json ? speed : speed * 1.852) * 10) / 10,
       gpsDirecao: heading === null ? null : ((heading % 360) + 360) % 360,
+      gpsVelocidadeMedia: nextSpeedAverage(
+        { point: parseLatLng(vehicle.currGeoLocation), at: vehicle.gpsAtualizadoEm, average: vehicle.gpsVelocidadeMedia },
+        [lat, lng],
+        at,
+      ),
     },
   });
   // A posição mudou: um aviso pode ter ficado na hora. Corre depois da resposta, para o dispositivo não esperar

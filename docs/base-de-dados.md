@@ -140,7 +140,7 @@ O Prisma liga cada modelo a uma tabela com o mesmo nome, por isso os nomes mistu
 
 | Tabela | Uma linha é | Colunas principais |
 |---|---|---|
-| [`Transporte`](glossario.md#a-rede-e-as-pessoas "A tabela dos veículos (vehicle)") | um veículo | `matricula` (única), `codigo` (número único), `marca`, `modelo`, `cor`, `lotacao` (lugares), `viaId` + `codigoVia` (a rota), `currGeoLocation` (última posição guardada), `routePath` (desactualizado, ver abaixo), `gpsDispositivoHash`, `gpsAtualizadoEm`, `gpsVelocidade` (km/h), `gpsDirecao` (graus, 0 = norte) |
+| [`Transporte`](glossario.md#a-rede-e-as-pessoas "A tabela dos veículos (vehicle)") | um veículo | `matricula` (única), `codigo` (número único), `marca`, `modelo`, `cor`, `lotacao` (lugares), `viaId` + `codigoVia` (a rota), `currGeoLocation` (última posição guardada), `routePath` (desactualizado, ver abaixo), `gpsDispositivoHash`, `gpsAtualizadoEm`, `gpsVelocidade` (km/h), `gpsDirecao` (graus, 0 = norte), `gpsVelocidadeMedia` (km/h, a média recente que as horas de chegada usam; [Localização e GPS](localizacao-gps.md#a-velocidade-das-horas-de-chegada)) |
 | [`Motorista`](glossario.md#a-rede-e-as-pessoas "A tabela dos motoristas e dos seus PIN") | um motorista | `nome`, `telefone`, `email` (único), `bi` (único), `cartaConducao` (única), `categoriaCarta`, `experienciaAnos`, datas da carta e do BI, contacto de emergência, `foto` ([URL](conceitos.md#url "O texto que diz ao navegador onde está uma página ou informação, como https://transport-mz.vercel.app/viagem.")), `status` (`ativo`/`inativo`/`suspenso`: a conta), `password` ([hash](conceitos.md#hash "Uma 'impressão digital' de um texto, que se calcula num sentido e não se consegue desfazer.") bcrypt do PIN, ou null = não pode entrar), `emViagem` + `viagemIniciadaEm` (viagem em curso: só os autocarros em viagem estão em serviço), `viagemSentido` (`1` partiu do início do percurso, `-1` do fim), `transporteId` (único: um veículo por motorista e um motorista por veículo) |
 | [`Proprietario`](glossario.md#a-rede-e-as-pessoas "A tabela dos donos dos veículos") | um dono de veículos (pessoa ou empresa) | `nome`, `bi` (único), `nacionalidade`, `birthDate`, `endereco`, `contacto1`, `contacto2`, `tipoProprietario` (`Indivíduo`/`Empresa`) |
 | `TransporteProprietario` | "este proprietário é dono deste veículo" | `transporteId`, `proprietarioId` (únicos em conjunto), `codigoTransporte`, `idProprietario` |
@@ -875,7 +875,7 @@ Numa cópia da produção (2026-10-18) criou 340 motoristas: os 451 veículos pa
 
 ## Alterações ao esquema e migrações
 
-O histórico de migrações está em [`prisma/migrations/`](../prisma/migrations) (sete migrações, `20260430170348_init` a `20261027120000_rotas_activas_e_acompanhamentos`). Numa base de dados nova, `prisma migrate deploy` aplica-as todas ([Primeiros passos](primeiros-passos.md#5-criar-o-esquema)).
+O histórico de migrações está em [`prisma/migrations/`](../prisma/migrations) (oito migrações, `20260430170348_init` a `20261028000000_gps_velocidade_media`). Numa base de dados nova, `prisma migrate deploy` aplica-as todas ([Primeiros passos](primeiros-passos.md#5-criar-o-esquema)).
 
 **A base de dados de produção não tem a tabela `_prisma_migrations`.** Foi criada com `db push`, antes de existir histórico de migrações, por isso `prisma migrate deploy` tentaria criar outra vez todas as tabelas. Por essa razão as migrações escrevem-se para poderem correr outra vez sem dano (`ADD COLUMN IF NOT EXISTS`, `CREATE … IF NOT EXISTS`). Para mudar o esquema de produção, passo a passo:
 

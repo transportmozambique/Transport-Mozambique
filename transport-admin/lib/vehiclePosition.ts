@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/prisma";
 
 /**
- * Onde está um veículo agora: a sua posição GPS real enquanto é recente, senão onde a viagem em
- * curso do motorista o põe, senão parado (fora de serviço). As mesmas regras de
+ * Onde está um veículo agora: a sua posição GPS real enquanto é recente; quando o GPS se cala a
+ * meio da viagem, a andar desde a última posição GPS; senão onde a viagem em curso do motorista o
+ * põe; senão parado (fora de serviço). As horas de chegada usam a velocidade média recente do GPS,
+ * dentro de limites, e sem GPS a da tarifa. As mesmas regras de
  * transport-client/lib/vehiclePosition.ts (manter as duas iguais), para o painel mostrar o
  * autocarro onde a aplicação dos passageiros, o USSD e o portal do motorista o mostram.
  * Porquê uma cópia: as duas aplicações são publicadas em separado e não partilham pacotes.
@@ -15,6 +17,9 @@ export const GPS_FRESH_MS = 3 * 60 * 1000;
 const MAPUTO_UTC_OFFSET_MIN = 120; // Africa/Maputo é UTC+2 todo o ano
 const TERMINAL_STOP_S = 5 * 60;
 const DEFAULT_SPEED_KMH = 30;
+/** A média do GPS só conta entre estas fracções da velocidade da tarifa (como no transport-client) */
+const GPS_SPEED_MIN_FACTOR = 0.5;
+const GPS_SPEED_MAX_FACTOR = 1.5;
 /** Um autocarro parado mais longe do que isto da sua via fica no terminal do início */
 const PARKED_ON_ROUTE_M = 300;
 
@@ -31,6 +36,8 @@ export interface VehiclePosition {
   /** O motorista não iniciou a viagem: parado, e os passageiros vêem-no "Fora de serviço" */
   outOfService: boolean;
   at: Date;
+  /** Velocidade, em m/s, das horas de chegada a partir desta posição (a média do GPS, ou a da tarifa). */
+  speedMps: number;
 }
 
 /** Campos a seleccionar em Transporte.motorista para saber a viagem em curso */
@@ -42,6 +49,8 @@ interface PositionedVehicle {
   gpsAtualizadoEm: Date | null;
   gpsDirecao: number | null;
   gpsVelocidade: number | null;
+  /** km/h, média recente das posições GPS; null sem GPS ou depois de uma pausa longa */
+  gpsVelocidadeMedia?: number | null;
   motorista: { emViagem: boolean; viagemIniciadaEm: Date | null; viagemSentido: number | null } | null;
 }
 
@@ -112,6 +121,21 @@ export async function travelSpeedMps(): Promise<number> {
   return ((rule?.velocidadeViagemKmh || DEFAULT_SPEED_KMH) * 1000) / 3600;
 }
 
+/** A velocidade das horas de chegada: a média recente do GPS, entre metade e uma vez e meia a da tarifa. */
+function etaSpeedMps(vehicle: PositionedVehicle, baseMps: number): number {
+  const avg = vehicle.gpsVelocidadeMedia;
+  if (avg == null || !Number.isFinite(avg)) return baseMps;
+  return Math.min(baseMps * GPS_SPEED_MAX_FACTOR, Math.max(baseMps * GPS_SPEED_MIN_FACTOR, (avg * 1000) / 3600));
+}
+
+/** O sentido pelo rumo do GPS comparado com o rumo do percurso nesse ponto; null parado ou sem rumo. */
+function gpsDirection(vehicle: PositionedVehicle, g: Geometry, i: number): Direction | null {
+  if ((vehicle.gpsVelocidade ?? 1) <= 0.5 || vehicle.gpsDirecao == null || g.path.length < 2) return null;
+  const a = i < g.path.length - 1 ? i : i - 1;
+  const diff = Math.abs(((bearing(g.path[a], g.path[a + 1]) - vehicle.gpsDirecao + 540) % 360) - 180);
+  return diff <= 90 ? 1 : -1;
+}
+
 /** A viagem em curso: quando começou e de que terminal partiu (1 = início do percurso); null quando parado. */
 function tripOf(vehicle: PositionedVehicle): { start: Date; from: Direction } | null {
   const m = vehicle.motorista;
@@ -136,6 +160,7 @@ function tripAt(elapsedS: number, g: Geometry, speedMps: number, from: Direction
 export function vehiclePosition(vehicle: PositionedVehicle, g: Geometry, speedMps: number, now = new Date()): VehiclePosition | null {
   const fix = parseLatLng(vehicle.currGeoLocation);
   const trip = tripOf(vehicle);
+  const etaMps = etaSpeedMps(vehicle, speedMps);
   if (fix && vehicle.gpsAtualizadoEm && now.getTime() - vehicle.gpsAtualizadoEm.getTime() < GPS_FRESH_MS) {
     const moving = (vehicle.gpsVelocidade ?? 1) > 0.5 && trip !== null;
     let progress: number | null = null;
@@ -143,16 +168,12 @@ export function vehiclePosition(vehicle: PositionedVehicle, g: Geometry, speedMp
     if (g.path.length > 1) {
       const i = nearestIndex(g, fix);
       progress = g.cumulative[i];
-      if (moving && vehicle.gpsDirecao != null) {
-        const a = i < g.path.length - 1 ? i : i - 1;
-        const diff = Math.abs(((bearing(g.path[a], g.path[a + 1]) - vehicle.gpsDirecao + 540) % 360) - 180);
-        direction = diff <= 90 ? 1 : -1;
-      }
+      direction = trip !== null ? gpsDirection(vehicle, g, i) : null;
     }
-    return { point: fix, source: "gps", moving, progress, direction, waitS: 0, outOfService: trip === null, at: vehicle.gpsAtualizadoEm };
+    return { point: fix, source: "gps", moving, progress, direction, waitS: 0, outOfService: trip === null, at: vehicle.gpsAtualizadoEm, speedMps: etaMps };
   }
 
-  const base = { source: "horario" as const, at: now };
+  const base = { source: "horario" as const, at: now, speedMps };
   if (!trip) {
     // Parado: onde a última viagem acabou, quando está na via, senão no terminal do início
     const parked = { ...base, moving: false, direction: null, waitS: 0, outOfService: true };
@@ -169,17 +190,30 @@ export function vehiclePosition(vehicle: PositionedVehicle, g: Geometry, speedMp
     return fix ? { ...base, point: fix, moving: false, progress: null, direction: null, waitS: 0, outOfService: false } : null;
   }
   if (g.length < 1) return { ...base, point: g.path[0], moving: false, progress: 0, direction: trip.from, waitS: 0, outOfService: false };
+  // O GPS calou-se a meio da viagem: a andar desde a última posição GPS, não desde a hora de início
+  if (fix && vehicle.gpsAtualizadoEm && vehicle.gpsAtualizadoEm >= trip.start && vehicle.gpsAtualizadoEm <= now && g.path.length > 1) {
+    const i = nearestIndex(g, fix);
+    const progress = g.cumulative[i];
+    if (haversine(pointAlong(g, progress), fix) <= PARKED_ON_ROUTE_M) {
+      const fixS = (vehicle.gpsAtualizadoEm.getTime() - trip.start.getTime()) / 1000;
+      const direction = gpsDirection(vehicle, g, i) ?? tripAt(fixS, g, speedMps, trip.from).direction;
+      // Uma viagem equivalente: saiu do terminal atrás dele à hora certa para estar aqui à hora da posição
+      const fromTerminal = direction === 1 ? progress : g.length - progress;
+      const s = tripAt((now.getTime() - vehicle.gpsAtualizadoEm.getTime()) / 1000 + fromTerminal / etaMps, g, etaMps, direction);
+      return { ...base, speedMps: etaMps, point: pointAlong(g, s.progress), moving: s.moving, progress: s.progress, direction: s.direction, waitS: s.waitS, outOfService: false };
+    }
+  }
   const s = tripAt((now.getTime() - trip.start.getTime()) / 1000, g, speedMps, trip.from);
   return { ...base, point: pointAlong(g, s.progress), moving: s.moving, progress: s.progress, direction: s.direction, waitS: s.waitS, outOfService: false };
 }
 
-/** A próxima paragem a que o autocarro chega no seu sentido, e em quantos minutos. */
+/** A próxima paragem a que o autocarro chega no seu sentido, e em quantos minutos (à velocidade da posição). */
 export function nextStop(
   position: VehiclePosition,
   g: Geometry,
   stops: { nome: string; geoLocation: string | null }[],
-  speedMps: number,
 ): { nome: string; minutos: number } | null {
+  const speedMps = position.speedMps;
   if (position.outOfService || position.progress === null || g.path.length < 2) return null;
   const p = position.progress;
   const dir = position.direction ?? 1;
@@ -209,7 +243,7 @@ export async function positionSummary(vehicle: PositionedVehicle, via: { geoLoca
   const g = routeGeometry(via?.geoLocationPath);
   const position = vehiclePosition(vehicle, g, speed);
   if (!position) return null;
-  const next = nextStop(position, g, via?.paragens.map((vp) => vp.paragem) ?? [], speed);
+  const next = nextStop(position, g, via?.paragens.map((vp) => vp.paragem) ?? []);
   return {
     latitude: position.point[0],
     longitude: position.point[1],
@@ -219,7 +253,7 @@ export async function positionSummary(vehicle: PositionedVehicle, via: { geoLoca
     velocidadeKmh: position.moving
       ? position.source === "gps" && vehicle.gpsVelocidade != null
         ? vehicle.gpsVelocidade
-        : Math.round(speed * 3.6)
+        : Math.round(position.speedMps * 3.6)
       : 0,
     atualizadoEm: position.at.toISOString(),
     proximaParagem: next?.nome ?? null,

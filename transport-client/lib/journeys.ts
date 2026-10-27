@@ -597,8 +597,8 @@ interface Arrivals {
  * numa rede deste tamanho e natural para contar transbordos (uma ronda = um autocarro).
  */
 function earliestArrivals(net: Network, origins: Catchment, vehicles: Map<string, Vehicle[]>, rule: FareRule, now: Date): Arrivals {
-  const v = (rule.velocidadeViagemKmh * 1000) / 3600;
-  const ride = (m: number) => Math.max(1, Math.ceil(m / v / 60)) * 60000;
+  // A bordo, à velocidade do autocarro apanhado (a média do GPS, ou a da tarifa), como estimateBusTrip
+  const ride = (m: number, kmh: number) => Math.max(1, Math.ceil(m / ((kmh * 1000) / 3600) / 60)) * 60000;
   const start = new Map<string, TimedLabel>();
   for (const [id, o] of origins) {
     start.set(id, { t: now.getTime() + (o.m > 0 ? walkMinutes(o.m) * 60000 : 0), prev: { type: 'start', anchor: o.anchor } });
@@ -622,10 +622,10 @@ function earliestArrivals(net: Network, origins: Catchment, vehicles: Map<string
       const vs = vehicles.get(routeId) ?? [];
       if (!r || !vs.length) continue;
       for (const order of [r.stops, [...r.stops].reverse()]) {
-        let cur: { from: string; board: number; at: number } | null = null;
+        let cur: { from: string; board: number; at: number; kmh: number } | null = null;
         for (let i = 0; i < order.length; i++) {
           const z = order[i];
-          const curAtZ = cur ? cur.board + ride(Math.abs(z.at - cur.at)) : Infinity;
+          const curAtZ = cur ? cur.board + ride(Math.abs(z.at - cur.at), cur.kmh) : Infinity;
           if (cur && Math.abs(z.at - cur.at) >= MIN_RIDE_M && curAtZ < (best.get(z.id)?.t ?? Infinity) && curAtZ < (bus.get(z.id)?.t ?? Infinity)) {
             bus.set(z.id, { t: curAtZ, prev: { type: 'bus', route: r, from: cur.from } });
           }
@@ -640,7 +640,7 @@ function earliestArrivals(net: Network, origins: Catchment, vehicles: Map<string
             const board = ready.t + trip.tempoChegada * 60000;
             if (board < boardAt) {
               boardAt = board;
-              cur = { from: z.id, board, at: z.at };
+              cur = { from: z.id, board, at: z.at, kmh: trip.position?.speedKmh ?? rule.velocidadeViagemKmh };
             }
           }
         }

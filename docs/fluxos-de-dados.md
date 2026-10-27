@@ -342,12 +342,12 @@ sequenceDiagram
   else precisão pior do que 200 m, ou mais antiga do que a última
     C-->>G: 200 {ok:true, ignored:"…"}
   else
-    C->>DB: UPDATE Transporte SET currGeoLocation, gpsAtualizadoEm, gpsVelocidade (km/h), gpsDirecao
+    C->>DB: UPDATE Transporte SET currGeoLocation, gpsAtualizadoEm, gpsVelocidade (km/h), gpsDirecao, gpsVelocidadeMedia
     C-->>G: 200 {ok:true}
   end
 ```
 
-Os leitores não mudam. Durante 3 minutos depois de uma posição, `vehiclePosition()` devolve o ponto GPS em vez do ponto calculado pela viagem, em todos os endpoints e no painel. Ver [Localização e GPS](localizacao-gps.md) e [`app/api/gps/route.ts`](../transport-client/app/api/gps/route.ts).
+Os leitores não mudam. Durante 3 minutos depois de uma posição, `vehiclePosition()` devolve o ponto GPS em vez do ponto calculado pela viagem, em todos os endpoints e no painel; depois, o autocarro continua a andar a partir dessa posição. As horas de chegada usam a velocidade média recente (`gpsVelocidadeMedia`). Ver [Localização e GPS](localizacao-gps.md) e [`app/api/gps/route.ts`](../transport-client/app/api/gps/route.ts).
 
 ## Alterações no painel
 

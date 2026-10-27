@@ -52,7 +52,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
   try {
     await prisma.transporte.update({
       where: { id },
-      data: { gpsDispositivoHash: null, gpsAtualizadoEm: null, gpsVelocidade: null, gpsDirecao: null },
+      data: { gpsDispositivoHash: null, gpsAtualizadoEm: null, gpsVelocidade: null, gpsDirecao: null, gpsVelocidadeMedia: null },
     });
   } catch {
     return NextResponse.json({ error: 'Transporte não encontrado' }, { status: 404 });
