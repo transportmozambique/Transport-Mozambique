@@ -1,9 +1,9 @@
 # Africa's Talking
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 5. Pôr online › **Africa's Talking** (página 22 de 25)
+[Documentação](README.md) › 5. Pôr online › **Africa's Talking** (página 22 de 26)
 
-Anterior: [Guia da Neon](guia-neon.md) · [Índice](README.md) · Seguinte: [Testes](testes.md)
+Anterior: [Guia da Neon](guia-neon.md) · [Índice](README.md) · Seguinte: [Guia do cron-job.org](guia-cron-job.md)
 
 <details>
 <summary>Todas as páginas</summary>
@@ -13,7 +13,7 @@ Anterior: [Guia da Neon](guia-neon.md) · [Índice](README.md) · Seguinte: [Tes
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
 - 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · [Localização e GPS](localizacao-gps.md) · [Serviço USSD](ussd.md) · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
 - 4. Usar as aplicações: [Aplicação dos passageiros](app-passageiros.md) · [Portal do motorista](portal-motorista.md) · [Painel de administração](painel-admin.md)
-- 5. Pôr online: [Publicação](publicacao.md) · [Guia da Vercel](guia-vercel.md) · [Guia da Neon](guia-neon.md) · **Africa's Talking**
+- 5. Pôr online: [Publicação](publicacao.md) · [Guia da Vercel](guia-vercel.md) · [Guia da Neon](guia-neon.md) · **Africa's Talking** · [Guia do cron-job.org](guia-cron-job.md)
 - 6. Manter: [Testes](testes.md) · [Resolução de problemas](resolucao-de-problemas.md) · [Limitações](limitacoes.md)
 
 </details>
@@ -260,38 +260,9 @@ Os níveis de cada aviso estão em [Fluxos de dados → Os avisos de uma viagem 
 
 ## Verificação de chegadas a cada minuto
 
-Os avisos de 15, 10 e 5 minutos precisam que a verificação de chegadas corra pelo menos a cada minuto. O [agendamento](conceitos.md#agendamento "Uma tarefa que corre sozinha a uma hora marcada, ou de tantos em tantos minutos.") do [GitHub Actions](conceitos.md#ci "Verificações que o GitHub corre sozinho a cada pull request, para nenhum erro conhecido chegar ao main.") não chega (em Outubro de 2026 corria a cada 40 a 50 minutos), e o plano Hobby da Vercel só permite cron jobs diários. Um serviço gratuito de pedidos agendados resolve-o. Com o [cron-job.org](https://cron-job.org):
+Os avisos de 15, 10 e 5 minutos precisam que a verificação de chegadas corra pelo menos a cada minuto. O [agendamento](conceitos.md#agendamento "Uma tarefa que corre sozinha a uma hora marcada, ou de tantos em tantos minutos.") do [GitHub Actions](conceitos.md#ci "Verificações que o GitHub corre sozinho a cada pull request, para nenhum erro conhecido chegar ao main.") não chega (em Outubro de 2026 corria a cada 40 a 50 minutos), e o plano Hobby da Vercel só permite cron jobs diários. Por isso, desde 2026-10-27, um cronjob do [cron-job.org](https://cron-job.org) faz `POST https://transport-mz.vercel.app/api/simulation` com `{"action":"check"}` a cada minuto.
 
-1. Criar uma conta em [console.cron-job.org/signup](https://console.cron-job.org/signup) e confirmar o email.
-2. Carregar em **CREATE CRONJOB**.
-3. **Title:** `Verificação de chegadas`. **URL:** `https://transport-mz.vercel.app/api/simulation`.
-4. **Execution schedule:** "Every minute".
-5. Abrir o separador **ADVANCED**:
-   - **Request method:** `POST`;
-   - **Headers:** juntar `Content-Type` com o valor `application/json`;
-   - **Request body:** `{"action":"check"}`.
-6. Carregar em **TEST RUN**: a resposta deve ser 200 com `"success":true`. Depois **CREATE**.
-
-O que faz: chama a mesma verificação que o GitHub Actions chama, mas a cada minuto ([Fluxos de dados → O que dispara a verificação](fluxos-de-dados.md#o-que-dispara-a-verificação)). Porquê é seguro: a verificação é a mesma para quem a chamar e nunca envia o mesmo aviso duas vezes, por isso chamá-la a mais só gasta um pouco de tempo de servidor. Para parar, desligar o cronjob no cron-job.org.
-
-**O cronjob da produção.** Existe desde 2026-10-27, na conta do cron-job.org do projecto, com os passos acima:
-
-| Campo | Valor |
-|---|---|
-| Title | `Verificação de chegadas` |
-| URL | `https://transport-mz.vercel.app/api/simulation` |
-| Execution schedule | Every minute |
-| Request method | `POST` |
-| Headers | `Content-Type: application/json` |
-| Request body | `{"action":"check"}` |
-
-Para ver se está a correr: [console.cron-job.org/jobs](https://console.cron-job.org/jobs) → na linha **Verificação de chegadas**, **HISTORY**. Cada linha do histórico é uma corrida:
-
-- **"Successful", "200 OK", cerca de 2 s:** o normal.
-- **"Failed (timeout)" aos 30 s, de vez em quando:** 30 s é o tempo máximo que o cron-job.org espera. Acontece numa corrida que envia um SMS quando a API do sandbox da Africa's Talking demora a responder ([SMS](#sms)). O SMS sai na mesma, e a corrida do minuto seguinte é normal. Em 2026-10-27 foram 2 em cerca de 60 corridas, as duas a enviar um aviso.
-- **Muitas falhas seguidas:** a plataforma não responde. Abrir `https://transport-mz.vercel.app/api/simulation` no navegador (deve responder `"success":true`) e seguir [Resolução de problemas](resolucao-de-problemas.md).
-
-O cron-job.org pode desligar sozinho um cronjob com muitas falhas seguidas, e avisa por email. Volta-se a ligar em **EDIT** → **Enable job** → **SAVE**. Enquanto está desligado, a verificação só corre com as visitas à web, ao USSD e ao portal, e com o GitHub Actions, por isso os avisos chegam tarde.
+A configuração, com capturas de cada separador, como foi criado, como se lê o histórico (incluindo os "Failed (timeout)" ocasionais quando o sandbox de SMS demora) e como se pausa: [Guia do cron-job.org](guia-cron-job.md).
 
 ## Registos e sessões
 
@@ -327,5 +298,5 @@ O código não precisa de mudar para ir ao vivo; a conta e a configuração sim.
 
 ---
 
-Anterior: [Guia da Neon](guia-neon.md) · [Índice](README.md) · Seguinte: [Testes](testes.md)
+Anterior: [Guia da Neon](guia-neon.md) · [Índice](README.md) · Seguinte: [Guia do cron-job.org](guia-cron-job.md)
 <!-- /navegação-fim -->

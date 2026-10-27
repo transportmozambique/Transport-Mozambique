@@ -1,7 +1,7 @@
 # Referência da API
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 3. Perceber como funciona › **Referência da API** (página 14 de 25)
+[Documentação](README.md) › 3. Perceber como funciona › **Referência da API** (página 14 de 26)
 
 Anterior: [Segurança](seguranca.md) · [Índice](README.md) · Seguinte: [Mapa do código](mapa-do-codigo.md)
 
@@ -13,7 +13,7 @@ Anterior: [Segurança](seguranca.md) · [Índice](README.md) · Seguinte: [Mapa 
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
 - 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · [Localização e GPS](localizacao-gps.md) · [Serviço USSD](ussd.md) · [Segurança](seguranca.md) · **Referência da API** · [Mapa do código](mapa-do-codigo.md)
 - 4. Usar as aplicações: [Aplicação dos passageiros](app-passageiros.md) · [Portal do motorista](portal-motorista.md) · [Painel de administração](painel-admin.md)
-- 5. Pôr online: [Publicação](publicacao.md) · [Guia da Vercel](guia-vercel.md) · [Guia da Neon](guia-neon.md) · [Africa's Talking](africas-talking.md)
+- 5. Pôr online: [Publicação](publicacao.md) · [Guia da Vercel](guia-vercel.md) · [Guia da Neon](guia-neon.md) · [Africa's Talking](africas-talking.md) · [Guia do cron-job.org](guia-cron-job.md)
 - 6. Manter: [Testes](testes.md) · [Resolução de problemas](resolucao-de-problemas.md) · [Limitações](limitacoes.md)
 
 </details>
@@ -390,7 +390,7 @@ Erros: 404 `Autocarro não encontrado`; 400 `Este transporte não tem via atribu
 | `following` | viagens acompanhadas por SMS ainda a decorrer ([`Acompanhamento`](glossario.md#a-rede-e-as-pessoas "Uma viagem acompanhada por SMS: os avisos de cada autocarro até ao destino") sem `terminadoEm`) |
 | `lastArrivalCheck` | a última verificação nesta instância: alertas de paragem lidos (`missions`), SMS enviados (`notified`), e desses os avisos das viagens acompanhadas (`journeys`); `null` antes da primeira |
 
-`POST {"action": "check"}` corre já a verificação de chegadas e responde com `notified` (SMS enviados) e o estado. Outra acção responde 400. O endpoint é público, mas a verificação só envia os SMS que estão na hora, e nunca o mesmo duas vezes. Um pedido agendado externo deve chamá-lo a cada minuto ([Africa's Talking → Verificação de chegadas a cada minuto](africas-talking.md#verificação-de-chegadas-a-cada-minuto)); o [GitHub Actions](conceitos.md#ci "Verificações que o GitHub corre sozinho a cada pull request, para nenhum erro conhecido chegar ao main.") também, como reserva ([Fluxos de dados → Alerta de chegada](fluxos-de-dados.md#alerta-de-chegada-e-sms)).
+`POST {"action": "check"}` corre já a verificação de chegadas e responde com `notified` (SMS enviados) e o estado. Outra acção responde 400. O endpoint é público, mas a verificação só envia os SMS que estão na hora, e nunca o mesmo duas vezes. Um pedido agendado externo deve chamá-lo a cada minuto ([Guia do cron-job.org](guia-cron-job.md)); o [GitHub Actions](conceitos.md#ci "Verificações que o GitHub corre sozinho a cada pull request, para nenhum erro conhecido chegar ao main.") também, como reserva ([Fluxos de dados → Alerta de chegada](fluxos-de-dados.md#alerta-de-chegada-e-sms)).
 
 ### Conta do passageiro
 

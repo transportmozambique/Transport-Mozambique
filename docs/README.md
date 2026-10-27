@@ -78,6 +78,7 @@ flowchart LR
 | [Guia da Vercel](guia-vercel.md) | Criar os projectos, as variáveis de ambiente (Secret ou Config), as publicações, os [registos](conceitos.md#registos "As linhas de texto que um programa escreve sobre o que está a fazer, para se perceber depois o que aconteceu."), com capturas. |
 | [Guia da Neon](guia-neon.md) | Criar o projecto, colar e correr SQL, descarregar resultados, ver uma tabela, seguir cada fluxo pelas tabelas, repor a palavra-passe. |
 | [Africa's Talking](africas-talking.md) | Como o USSD e os [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") foram configurados, usar o menu no [simulador](conceitos.md#africas-talking "O gateway de USSD e SMS usado por este projecto."), os registos, passar a produção. |
+| [Guia do cron-job.org](guia-cron-job.md) | O pedido agendado que corre a verificação de chegadas a cada minuto: a configuração com capturas, como foi criado, o histórico, pausar. |
 
 ### 6. Manter
 
@@ -103,6 +104,7 @@ flowchart LR
 | E se o passageiro escrever mal o nome de uma paragem? | [Serviço USSD → Pesquisa tolerante](ussd.md#pesquisa-tolerante) |
 | Como se experimenta o menu USSD? | [Africa's Talking → Usar o menu no simulador](africas-talking.md#usar-o-menu-no-simulador) |
 | Como foi configurada a Africa's Talking? | [Africa's Talking → Como foi configurado](africas-talking.md#como-foi-configurado-passo-a-passo) |
+| Quem manda verificar as chegadas a cada minuto? | [Guia do cron-job.org](guia-cron-job.md) |
 | Como se transforma um pedido de um passageiro numa viagem e numa hora de chegada? | [Fluxos de dados → Planear uma viagem](fluxos-de-dados.md#planear-uma-viagem) |
 | De onde vem a posição de um autocarro? | [Localização e GPS → Como se escolhe uma posição](localizacao-gps.md#como-se-escolhe-uma-posição) |
 | Onde está o código de uma funcionalidade? | [Mapa do código](mapa-do-codigo.md) |
@@ -118,7 +120,7 @@ flowchart LR
 
 - **Para quem nunca programou:** [Conceitos básicos](conceitos.md) → [Preparar o computador](preparar-o-computador.md) → [Primeiros passos](primeiros-passos.md) → [Visão geral](visao-geral.md), e depois as outras partes por ordem.
 - **Para ver a plataforma a funcionar:** as [aplicações ao vivo](../README.md#aplicações-ao-vivo), o [menu USSD no simulador](africas-talking.md#usar-o-menu-no-simulador), e depois [Primeiros passos](primeiros-passos.md) para a correr localmente.
-- **Para reproduzir a plataforma do zero:** [Conceitos básicos](conceitos.md) → [Preparar o computador](preparar-o-computador.md) → [Visão geral](visao-geral.md) → [Primeiros passos](primeiros-passos.md) → [Base de dados](base-de-dados.md) → [Configuração](configuracao.md) → [Guia da Neon](guia-neon.md#0-criar-o-projecto) → [Guia da Vercel](guia-vercel.md#criar-os-projectos) → [Africa's Talking](africas-talking.md#como-foi-configurado-passo-a-passo) → [Publicação](publicacao.md).
+- **Para reproduzir a plataforma do zero:** [Conceitos básicos](conceitos.md) → [Preparar o computador](preparar-o-computador.md) → [Visão geral](visao-geral.md) → [Primeiros passos](primeiros-passos.md) → [Base de dados](base-de-dados.md) → [Configuração](configuracao.md) → [Guia da Neon](guia-neon.md#0-criar-o-projecto) → [Guia da Vercel](guia-vercel.md#criar-os-projectos) → [Africa's Talking](africas-talking.md#como-foi-configurado-passo-a-passo) → [Guia do cron-job.org](guia-cron-job.md#como-foi-criado-passo-a-passo) → [Publicação](publicacao.md).
 - **Para chegar ao projecto pela primeira vez:** [Visão geral](visao-geral.md) → [Glossário](glossario.md) → [Estado do projecto](estado-do-projecto.md) → [Fluxos de dados](fluxos-de-dados.md).
 - **Para mudar o código:** [Visão geral](visao-geral.md) → [Mapa do código](mapa-do-codigo.md) → [Fluxos de dados](fluxos-de-dados.md) → [Base de dados](base-de-dados.md) → [Referência da API](referencia-api.md) → [Testes](testes.md).
 - **Para consultar ou analisar os dados:** [Fontes de dados](fontes-de-dados.md) (o que é real) → [Guia da Neon](guia-neon.md) (passo a passo) → [Base de dados](base-de-dados.md) (ligação, convenções, SQL de exemplo) → [Localização e GPS](localizacao-gps.md) (como se calculam as posições).

@@ -1,7 +1,7 @@
 # Resolução de problemas
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 6. Manter › **Resolução de problemas** (página 24 de 25)
+[Documentação](README.md) › 6. Manter › **Resolução de problemas** (página 25 de 26)
 
 Anterior: [Testes](testes.md) · [Índice](README.md) · Seguinte: [Limitações](limitacoes.md)
 
@@ -13,7 +13,7 @@ Anterior: [Testes](testes.md) · [Índice](README.md) · Seguinte: [Limitações
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
 - 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · [Localização e GPS](localizacao-gps.md) · [Serviço USSD](ussd.md) · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
 - 4. Usar as aplicações: [Aplicação dos passageiros](app-passageiros.md) · [Portal do motorista](portal-motorista.md) · [Painel de administração](painel-admin.md)
-- 5. Pôr online: [Publicação](publicacao.md) · [Guia da Vercel](guia-vercel.md) · [Guia da Neon](guia-neon.md) · [Africa's Talking](africas-talking.md)
+- 5. Pôr online: [Publicação](publicacao.md) · [Guia da Vercel](guia-vercel.md) · [Guia da Neon](guia-neon.md) · [Africa's Talking](africas-talking.md) · [Guia do cron-job.org](guia-cron-job.md)
 - 6. Manter: [Testes](testes.md) · **Resolução de problemas** · [Limitações](limitacoes.md)
 
 </details>
@@ -75,7 +75,7 @@ Sintomas, as causas habituais e a correcção, agrupados por onde se notam. Para
 | Todos os autocarros parados nos [terminais](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.") | Os motoristas não iniciaram a viagem: sem viagem, o autocarro está parado e "Fora de serviço". | O motorista carrega em "Iniciar viagem" no portal, ou `*6`, PIN, 1, 1 no USSD ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)). |
 | O USSD responde "Nenhum autocarro em servico agora" | Nenhum motorista das rotas da viagem iniciou a viagem. | Iniciar a viagem de um autocarro dessas rotas. Confirmar com a opção 2 ("Em servico: N de M"). |
 | Uma rota não aparece na web nem no USSD | A rota está desactivada (`Via.ativa = false`), ou não tem veículos. | Painel → Vias → filtro "Todas" → **Activar** ([Painel](painel-admin.md#tarefa-activar-rotas)). |
-| Os avisos por SMS chegam tarde ou saltam passos | A verificação de chegadas não corre a cada minuto. | Configurar o pedido agendado ([Africa's Talking → Verificação de chegadas a cada minuto](africas-talking.md#verificação-de-chegadas-a-cada-minuto)). |
+| Os avisos por SMS chegam tarde ou saltam passos | A verificação de chegadas não corre a cada minuto: o cronjob do cron-job.org falha, ou está desligado. | Ver o histórico do cronjob e ligá-lo outra vez se for preciso ([Guia do cron-job.org → Se os avisos chegarem tarde](guia-cron-job.md#se-os-avisos-chegarem-tarde)). |
 | Um autocarro fica parado alguns minutos | Está num terminal (5 minutos em cada um). | Esperado. |
 | Um autocarro salta entre dois sítios | O seu dispositivo [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") envia menos de uma vez a cada 3 minutos, por isso alterna entre o GPS e a posição calculada pela viagem. | Enviar mais vezes ([Traccar Client](conceitos.md#traccar "Uma aplicação gratuita para telemóvel que envia a posição do telemóvel pelo protocolo OsmAnd."): 15 s). |
 | O dispositivo recebe [401](conceitos.md#codigos-de-resposta "O número de três algarismos com que o servidor diz como correu o pedido.") "[Código do dispositivo](conceitos.md#rastreador "Um aparelho (ou um telemóvel com uma aplicação) que envia a posição de um veículo pela internet; o código do dispositivo é a sua 'palavra-passe'.") em falta" | O pedido não leva código (sem `id`, `deviceid` nem `Authorization: Bearer`). | Pôr o código como identificador do dispositivo ([Localização e GPS](localizacao-gps.md#traccar-client-num-telemóvel)). |

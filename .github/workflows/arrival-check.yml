@@ -3,7 +3,7 @@
 # ninguém a dispararia. Isto pede-a a cada 5 minutos. Na prática o GitHub corre os agendamentos de
 # um repositório público com grandes atrasos (em Outubro de 2026, a cada 40 a 50 minutos), por isso
 # os avisos de 15, 10 e 5 minutos precisam também de um pedido agendado externo a cada minuto
-# (docs/africas-talking.md#verificação-de-chegadas-a-cada-minuto); este fica como reserva. Porquê
+# (o cronjob do cron-job.org, docs/guia-cron-job.md); este fica como reserva. Porquê
 # não um cron da Vercel: o plano Hobby da Vercel só permite cron jobs uma vez por dia.
 # docs/fluxos-de-dados.md#alerta-de-chegada-e-sms
 name: Verificação de chegadas (SMS)
