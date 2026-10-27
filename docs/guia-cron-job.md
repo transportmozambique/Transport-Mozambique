@@ -193,9 +193,11 @@ O cronjob é só o relógio: dispara a cada minuto, sempre, esteja um autocarro 
 
 4. Só sai um SMS quando o aviso calculado é mais adiantado do que o último enviado; senão, a verificação não faz nada.
 
-**Porquê um relógio e não a posição a disparar.** A maior parte dos autocarros não envia posições: a posição calcula-se no momento em que alguém a pede, e entre dois pedidos nenhum programa está a correr (a [Vercel](conceitos.md#vercel) só corre código quando chega um pedido). Alguém tem de perguntar "e agora?" de tempos a tempos, e o cronjob é esse alguém. Hoje, mesmo uma posição de GPS real que chega a `/api/gps` não dispara a verificação: fica guardada até à próxima.
+**Porquê um relógio e não a posição a disparar.** A maior parte dos autocarros não envia posições: a posição calcula-se no momento em que alguém a pede, e entre dois pedidos nenhum programa está a correr (a [Vercel](conceitos.md#vercel) só corre código quando chega um pedido). Alguém tem de perguntar "e agora?" de tempos a tempos, e o cronjob é esse alguém.
 
-**O que isto quer dizer na prática.** Um aviso sai na primeira verificação depois de o autocarro passar o limiar, por isso pode chegar até 1 minuto depois: o de "5 min" pode dizer "chega em 4 min". O "Saia agora" sai quando falta 1 minuto ou menos, para não chegar depois de o autocarro passar a paragem.
+**Com GPS, a posição também dispara.** Desde 2026-10-28, cada posição nova que um dispositivo envia para `/api/gps` também corre a verificação, logo depois de a guardar, no máximo uma vez a cada 30 s por instância ([`app/api/gps/route.ts`](../transport-client/app/api/gps/route.ts)). Um autocarro com GPS a enviar posições a cada 10 a 30 s tem assim avisos com 30 s de atraso no máximo, em vez de 1 minuto. Porquê o limite de 30 s: com muitos dispositivos, cada posição faria uma verificação inteira na [base de dados](conceitos.md#base-de-dados "O sítio organizado onde a plataforma guarda tudo o que tem de durar: rotas, paragens, veículos, contas."), e os avisos não precisam de mais precisão do que isso. O cronjob continua a ser o relógio para os autocarros sem GPS.
+
+**O que isto quer dizer na prática.** Um aviso sai na primeira verificação depois de o autocarro passar o limiar, por isso pode chegar até 1 minuto depois (30 s com GPS): o de "5 min" pode dizer "chega em 4 min". O "Saia agora" sai quando falta 1 minuto ou menos, para não chegar depois de o autocarro passar a paragem.
 
 **Porquê o endpoint é público.** A verificação só envia os avisos que já estão na hora, e nunca o mesmo duas vezes, por isso quem a chamar não consegue enviar SMS a mais.
 

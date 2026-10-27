@@ -504,7 +504,7 @@ Posições do dispositivo de um veículo, autenticadas pelo [código do disposit
 
 | Pedido | Resposta |
 |---|---|
-| `GET /api/gps?id=<código>&lat=-25.8305&lon=32.5693&speed=12&bearing=80&timestamp=1792230233` | 200 `{"ok": true}` (guardada; 12 nós = 22,2 km/h) |
+| `GET /api/gps?id=<código>&lat=-25.8305&lon=32.5693&speed=12&bearing=80&timestamp=1792230233` | 200 `{"ok": true}` (guardada; 12 nós = 22,2 km/h; depois da resposta corre a verificação de chegadas, no máximo a cada 30 s) |
 | `POST` JSON com uma hora mais antiga do que a última posição | 200 `{"ok": true, "ignored": "posição mais antiga do que a última"}` |
 | código desconhecido | 401 `{"error": "Dispositivo desconhecido"}` |
 
