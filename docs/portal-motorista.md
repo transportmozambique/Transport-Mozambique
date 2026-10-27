@@ -65,10 +65,10 @@ O que o motorista faz, no telemóvel, depois de o administrador ter feito [os pa
 2. **Entrar** com o número de telefone que o administrador registou (com ou sem `+258`, os espaços não contam) e o PIN de 6 algarismos. O portal lembra-se do motorista durante 30 dias.
 3. **Confirmar o topo do ecrã:** o nome, a matrícula do veículo e o código da rota. Se estiverem errados, o administrador corrige-os; o portal mostra o veículo e a rota novos em 5 minutos.
 4. **Opcional, uma vez por telemóvel: partilhar o GPS.** Tocar no nome → colar em "Código GPS do veículo" o código dado pelo administrador → **Guardar**. Permitir a localização quando o navegador pedir ([detalhes](#partilhar-o-gps-do-telemóvel)).
-5. **No primeiro [terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar."), tocar em "Iniciar viagem".** O botão fica escuro, "Em viagem" aparece no topo e o relógio começa. Com um código GPS guardado, o telemóvel passa a enviar a posição: o portal fica aberto e o ecrã ligado.
+5. **No primeiro [terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar."), tocar em "Iniciar viagem".** O botão fica escuro, "Em viagem" aparece no topo e o relógio começa. É este botão que põe o autocarro em serviço: só a partir daqui os passageiros o vêem a andar, o recebem nas viagens e recebem [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") dele. O cartão "Os passageiros vêem" passa de "Fora de serviço" a "Em circulação". Com um código GPS guardado, o telemóvel passa a enviar a posição: o portal fica aberto e o ecrã ligado.
 6. **Durante a viagem,** "À espera" mostra quantos passageiros pediram para ser avisados nas paragens desta rota nas últimas 3 horas, e a lista de paragens mostra onde ("2 à espera"). Arrastar o painel para cima mostra todas as paragens.
-7. **No fim, tocar em "Terminar viagem".**
-8. **Sem dados ou sem smartphone?** Marcar o código USSD, escolher 6, escrever o PIN, e 1 → 1 inicia ou termina a viagem ([Serviço USSD → Área do motorista](ussd.md#6-área-do-motorista)). O portal mostra o mesmo estado em 30 segundos.
+7. **No fim, tocar em "Terminar viagem".** O autocarro fica parado onde está e sai das viagens dos passageiros; quem esperava por ele recebe um SMS a dizer que deixou de circular, com o autocarro seguinte.
+8. **Sem dados ou sem smartphone?** Marcar o código USSD, escolher 6, escrever o PIN, e 1 → 1 inicia ou termina a viagem ([Serviço USSD → Área do motorista](ussd.md#6-área-do-motorista)). O portal mostra o mesmo estado em 10 segundos.
 9. **Sair** (tocar no nome → **Sair**) num telemóvel partilhado. Um PIN esquecido repõe-o o administrador ("Gerar novo PIN").
 
 ## Entrada (`/`)
@@ -93,10 +93,11 @@ O que o motorista faz, no telemóvel, depois de o administrador ter feito [os pa
 O mapa ocupa o ecrã inteiro, com um painel por cima: uma folha em baixo num telemóvel, um cartão à esquerda num computador. É parecido com a aplicação dos passageiros ([`app/dashboard/page.tsx`](../transport-driver/app/dashboard/page.tsx)).
 
 - **Topo:** a foto do motorista (ou as iniciais), o nome, a matrícula e o código da rota, com "Parado" ou "Em viagem". Tocar abre o perfil ([abaixo](#partilhar-o-gps-do-telemóvel)). Num computador é o topo do cartão.
-- **Mapa:** [MapLibre](conceitos.md#mosaicos "As imagens das ruas por baixo dos autocarros e das paragens, que o mapa descarrega aos bocados (mosaicos) conforme se mexe.") com um estilo da OpenFreeMap, inclinado 60° com edifícios em 3D a partir do zoom 15. Desenha o percurso da rota pela estrada (`Via.geoLocationPath`) a azul, as paragens (os terminais como pontos escuros) com os nomes, e o autocarro. O autocarro fica na **posição do telemóvel** depois de o navegador a dar, e no início do percurso até lá. O botão redondo centra o mapa nele.
+- **Mapa:** [MapLibre](conceitos.md#mosaicos "As imagens das ruas por baixo dos autocarros e das paragens, que o mapa descarrega aos bocados (mosaicos) conforme se mexe.") com um estilo da OpenFreeMap, inclinado 60° com edifícios em 3D a partir do zoom 15. Desenha o percurso da rota pela estrada (`Via.geoLocationPath`) a azul, as paragens (os terminais como pontos escuros) com os nomes, e o autocarro. O autocarro fica **onde os passageiros o vêem**, a mesma posição da web e do USSD (`autocarro` em `GET /api/driver/trip`): parado e mais claro antes de "Iniciar viagem", depois a andar pela rota, ou na posição GPS enviada. Porquê esta e não a do telemóvel: o motorista vê o que os passageiros vêem, e um autocarro que não anda no mapa diz-lhe que falta iniciar a viagem. O botão redondo centra o mapa nele.
 - **O painel**, de cima para baixo:
   - **"Iniciar viagem"** (verde) ou **"Terminar viagem"** (escuro) ([Viagens](#iniciar-e-terminar-uma-viagem));
-  - três números: **Tempo de viagem**, o tempo desde o início da viagem, contado a partir de `viagemIniciadaEm` no servidor, e por isso certo depois de recarregar a página ou de iniciar a viagem pelo USSD; **km/h**, a velocidade do próprio telemóvel pela API de geolocalização do navegador; e **À espera**, os passageiros à espera ao longo da rota ([abaixo](#passageiros-à-espera-na-rota));
+  - três números: **Tempo de viagem**, o tempo desde o início da viagem, contado a partir de `viagemIniciadaEm` no servidor, e por isso certo depois de recarregar a página ou de iniciar a viagem pelo USSD; **km/h**, a velocidade do autocarro como os passageiros a vêem (a do GPS, ou a de viagem da tarifa durante a viagem, 0 parado); e **À espera**, os passageiros à espera ao longo da rota ([abaixo](#passageiros-à-espera-na-rota));
+  - **Os passageiros vêem:** o estado do autocarro na web e no USSD ("Em circulação", "No terminal" ou "Fora de serviço") e, durante a viagem, as 3 paragens seguintes com os minutos até lá. Parado, diz "Carregue em "Iniciar viagem" para o autocarro aparecer a andar." Sem veículo, ou com a rota desactivada no painel: "Os passageiros não vêem este autocarro";
   - **GPS do telemóvel:** se o telemóvel partilha a posição, com o último envio ("GPS enviado às 10:31") ou "Sem código: toque para o configurar". Tocar abre o perfil;
   - a rota: o código, o nome e os terminais, e depois as paragens pela ordem de viagem com "2 à espera" onde há passageiros. Paragens seguidas com o mesmo nome (os dois lados de uma rua) aparecem uma vez.
 - **Num telemóvel** a folha tem três alturas, como na aplicação dos passageiros: em baixo (só se vê o botão da viagem), meio ecrã, e ecrã inteiro (sem o mapa). Arrasta-se pelo topo, ou toca-se na barra ([`app/components/Sheet.tsx`](../transport-driver/app/components/Sheet.tsx)).
@@ -105,30 +106,30 @@ O mapa ocupa o ecrã inteiro, com um painel por cima: uma folha em baixo num tel
 
 | Quando | Pedido |
 |---|---|
-| A página abre, depois a cada 30 s | `GET {API}/api/driver/trip` (token da sessão como Bearer) → `{"emViagem", "viagemIniciadaEm"}` |
+| A página abre, depois a cada 10 s | `GET {API}/api/driver/trip` (token da sessão como Bearer) → `{"emViagem", "viagemIniciadaEm", "autocarro"}`: o estado da viagem e o autocarro como os passageiros o vêem ([Referência da API](referencia-api.md#get-apidrivertrip-post-apidrivertrip)) |
 | A página abre, depois a cada 5 min | `GET {API}/api/driver/me` (token da sessão como Bearer) → o motorista, o veículo e a rota como o painel os tem agora; o mapa só se redesenha quando mudaram |
 | A página abre, depois a cada 60 s | `GET {API}/api/driver/seguidores` (token da sessão como Bearer) |
 | Durante uma viagem, no máximo a cada 15 s | `POST {API}/api/gps` (**código do dispositivo** como Bearer), só se houver um código guardado |
 
-Porquê estes intervalos: o estado da viagem pode mudar pelo USSD (30 s chega para o ver), o veículo e a rota mudam raramente (5 min), e cada pedido gasta dados móveis do motorista.
+Porquê estes intervalos: o autocarro no mapa anda (10 s, como o acompanhamento de viagem da web) e o estado da viagem pode mudar pelo USSD; o veículo e a rota mudam raramente (5 min); e cada pedido gasta dados móveis do motorista (cerca de 1 KB a cada 10 s).
 
 ## Iniciar e terminar uma viagem
 
 <img src="images/driver-trip-active.png" alt="Viagem em curso: Em viagem no topo, Terminar viagem e o relógio da viagem a contar" width="320">
 
-"Iniciar viagem" envia `POST {API}/api/driver/trip` com `{"action": "iniciar"}`; "Terminar viagem" envia `{"action": "encerrar"}`. A resposta é o estado novo, e o botão, a etiqueta "Em viagem" e o relógio seguem-no. Um erro aparece por baixo do botão.
+"Iniciar viagem" envia `POST {API}/api/driver/trip` com `{"action": "iniciar"}`; "Terminar viagem" envia `{"action": "encerrar"}`. A resposta é o estado novo, com o autocarro, e o botão, a etiqueta "Em viagem", o relógio e o mapa seguem-no. Um erro aparece por baixo do botão: sem veículo ("Não tem veículo atribuído. Peça ao administrador."), com um veículo sem rota, ou com a rota desactivada ("A rota do seu veículo está desactivada. Peça ao administrador."), a viagem não começa (`409`).
 
 | Acção | Mudança na base de dados |
 |---|---|
-| `iniciar` | `Motorista.emViagem = true`, `viagemIniciadaEm = now()`. Se já houver uma viagem em curso (iniciada pelo USSD, por exemplo), nada muda e a hora de início fica. |
-| `encerrar` | `emViagem = false`, `viagemIniciadaEm = NULL` |
+| `iniciar` | `Motorista.emViagem = true`, `viagemIniciadaEm = now()`, e `viagemSentido`: `1` se o autocarro estava parado na primeira metade do percurso (parte do terminal do início), `-1` na segunda (parte do fim). Se já houver uma viagem em curso (iniciada pelo USSD, por exemplo), nada muda e a hora de início fica. |
+| `encerrar` | `emViagem = false`, `viagemIniciadaEm = NULL`, `viagemSentido = NULL`. Sem GPS recente, o ponto onde a viagem punha o autocarro fica em `Transporte.currGeoLocation`: é aí que ele aparece parado, e daí que a viagem seguinte escolhe o terminal. |
 
 O que o estado da viagem faz e não faz:
 
 - **Liga a partilha do GPS** deste portal: as posições só se enviam durante uma viagem. Porquê: fora do serviço, o telemóvel do motorista não deve mostrar onde ele está.
-- É **partilhado com o USSD**: uma viagem iniciada pelo `*6` aparece aqui em 30 s, e ao contrário.
-- **Não** muda onde o autocarro aparece aos passageiros. As posições vêm de uma posição GPS recente ou, sem ela, do horário ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)).
-- O portal não envia [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") numa viagem. O menu USSD do motorista envia ("Viagem iniciada com sucesso! …").
+- É **partilhado com o USSD**: uma viagem iniciada pelo `*6` aparece aqui em 10 s, e ao contrário.
+- **Põe o autocarro em serviço**, ou tira-o: é o que decide se os passageiros o vêem a andar, se entra nas viagens e nas horas de chegada, e se manda SMS. Sem GPS, a posição conta-se desde a hora de início ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)).
+- O portal não envia SMS numa viagem. O menu USSD do motorista envia ("Viagem iniciada com sucesso! …").
 - O painel de administração não mostra o estado. Consulta-se directamente ([Guia da Neon](guia-neon.md)):
 
 ```sql
@@ -155,7 +156,7 @@ Content-Type: application/json
 {"latitude": -25.9655, "longitude": 32.5832, "speed": 23.4, "heading": 87, "accuracy": 12, "timestamp": 1792225800000}
 ```
 
-`speed` está em km/h (os m/s do navegador × 3,6), `accuracy` em metros, `timestamp` em milissegundos. O servidor guarda-a no veículo (`Transporte.currGeoLocation`, `gpsAtualizadoEm`, `gpsVelocidade`, `gpsDirecao`). A partir daí, os passageiros vêem essa posição em vez da do horário durante 3 minutos depois de cada envio. As regras completas (limite de precisão, horas antigas e futuras) estão em [Localização e GPS → JSON](localizacao-gps.md#json-com-o-código-como-bearer).
+`speed` está em km/h (os m/s do navegador × 3,6), `accuracy` em metros, `timestamp` em milissegundos. O servidor guarda-a no veículo (`Transporte.currGeoLocation`, `gpsAtualizadoEm`, `gpsVelocidade`, `gpsDirecao`). A partir daí, os passageiros (e o mapa do portal) vêem essa posição em vez da calculada pela viagem, durante 3 minutos depois de cada envio. As regras completas (limite de precisão, horas antigas e futuras) estão em [Localização e GPS → JSON](localizacao-gps.md#json-com-o-código-como-bearer).
 
 Porquê o código do dispositivo e não o token do motorista: a posição é do veículo, não da pessoa, e o mesmo código serve um rastreador de hardware ou o [Traccar Client](conceitos.md#traccar "Uma aplicação gratuita para telemóvel que envia a posição do telemóvel pelo protocolo OsmAnd.") se o veículo passar a ter um.
 
@@ -173,7 +174,7 @@ Os navegadores param de enviar quando a página fica em segundo plano ou o ecrã
 
 ## Passageiros à espera na rota
 
-"À espera" no painel é o total. A lista de paragens por baixo mostra, em cada paragem, o número de alertas de chegada (linhas [`MISSION`](glossario.md#a-rede-e-as-pessoas "Um alerta de chegada: um SMS quando um autocarro estiver perto de uma paragem")) criados lá nas **últimas 3 horas**, pela web ou pelo USSD ("2 à espera"); as paragens sem nenhum não mostram nada. Os alertas já respondidos por um SMS de chegada continuam a contar, porque um passageiro avisado de que o autocarro está a 1 km continua à espera. Paragens seguidas com o mesmo nome aparecem uma vez, com as contagens somadas. Os números actualizam-se a cada minuto. Porquê 3 horas: um alerta mais antigo provavelmente já não é de alguém na paragem.
+"À espera" no painel é o total. A lista de paragens por baixo mostra, em cada paragem, o número de passageiros à espera lá ("2 à espera"): os alertas de chegada da web (linhas [`MISSION`](glossario.md#a-rede-e-as-pessoas "Um alerta de chegada: um SMS quando um autocarro estiver perto de uma paragem")) criados nas **últimas 3 horas**, e as viagens acompanhadas por SMS (USSD) cujo passageiro espera nessa paragem um autocarro desta rota; as paragens sem nenhum não mostram nada. Os alertas já respondidos por um SMS de chegada continuam a contar, porque um passageiro avisado de que o autocarro chega em 5 minutos continua à espera. Paragens seguidas com o mesmo nome aparecem uma vez, com as contagens somadas. Os números actualizam-se a cada minuto. Porquê 3 horas: um alerta mais antigo provavelmente já não é de alguém na paragem.
 
 `GET {API}/api/driver/seguidores` responde:
 

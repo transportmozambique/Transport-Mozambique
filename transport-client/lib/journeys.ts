@@ -1,5 +1,5 @@
 import { prisma } from './prisma';
-import { getFareRule, parseLatLng, type FareRule, type LatLng, type RouteStop } from './fares';
+import { fareFor, getFareRule, parseLatLng, travelMinutes, type FareRule, type LatLng, type RouteStop } from './fares';
 import {
   POSITION_FIELDS,
   estimateBusTrip,
@@ -19,8 +19,9 @@ import { distanceMeters, groupPlaces, normalizeName, placeName, walkMinutes, typ
  * Os autocarros vão e voltam ao longo da sua via, por isso um autocarro chega a todas as paragens
  * da via a partir de qualquer outra. As opções são primeiro ordenadas com velocidades fixas e uma
  * espera fixa por autocarro (rápido, para muitas candidatas); depois as melhores são cronometradas
- * com as posições reais dos autocarros (estimateBusTrip): GPS quando recente, senão o horário, no
- * momento em que o passageiro chega a cada paragem.
+ * com as posições reais dos autocarros (estimateBusTrip): GPS quando recente, senão a posição pela
+ * viagem que o motorista iniciou, no momento em que o passageiro chega a cada paragem. Só contam os
+ * autocarros em viagem; um autocarro parado não aparece em nenhuma viagem.
  */
 
 export interface NetStop {
@@ -69,7 +70,11 @@ const MAX_TIMED = 8;
 
 let cache: { at: number; network: Promise<Network> } | null = null;
 
-/** A rede das vias que têm autocarros, guardada em memória por instância do servidor durante uns minutos (evita ler a base de dados a cada pedido). */
+/**
+ * A rede das vias activas que têm autocarros, guardada em memória por instância do servidor
+ * durante uns minutos (evita ler a base de dados a cada pedido). As rotas desactivadas no painel
+ * (Via.ativa) ficam de fora de tudo o que os passageiros vêem: mapa, viagens, USSD e SMS.
+ */
 export function loadNetwork(): Promise<Network> {
   if (cache && Date.now() - cache.at < NETWORK_CACHE_MS) return cache.network;
   const network = buildNetwork().catch((error) => {
@@ -82,7 +87,7 @@ export function loadNetwork(): Promise<Network> {
 
 async function buildNetwork(): Promise<Network> {
   const vias = await prisma.via.findMany({
-    where: { transportes: { some: {} } },
+    where: { ativa: true, transportes: { some: {} } },
     select: {
       id: true,
       codigo: true,
@@ -201,7 +206,7 @@ export function placeLabel(net: Network, place: Place<NetStop>, max = Infinity):
 
 export type Vehicle = PositionedVehicle & { matricula: string; viaId: string | null };
 
-async function vehiclesOn(routeIds: Iterable<string>): Promise<Map<string, Vehicle[]>> {
+export async function vehiclesOn(routeIds: Iterable<string>): Promise<Map<string, Vehicle[]>> {
   const rows = await prisma.transporte.findMany({
     where: { viaId: { in: [...new Set(routeIds)] } },
     select: { ...POSITION_FIELDS, matricula: true, viaId: true },
@@ -215,8 +220,11 @@ async function vehiclesOn(routeIds: Iterable<string>): Promise<Map<string, Vehic
   return byRoute;
 }
 
-/** O primeiro autocarro de `route` que leva um passageiro que está em `fromId` às `ready` até `toId`. */
-function firstBus(route: NetRoute, vehicles: Vehicle[], fromId: string, toId: string, rule: FareRule, ready: Date) {
+/**
+ * O primeiro autocarro de `route` que leva um passageiro que está em `fromId` às `ready` até `toId`.
+ * Só os autocarros em viagem contam (estimateBusTrip não dá hora aos que estão parados).
+ */
+export function firstBus(route: NetRoute, vehicles: Vehicle[], fromId: string, toId: string, rule: FareRule, ready: Date) {
   let best: { vehicle: Vehicle; trip: NonNullable<ReturnType<typeof estimateBusTrip>> } | null = null;
   for (const vehicle of vehicles) {
     const trip = estimateBusTrip({ vehicle, path: route.g.path, stops: route.routeStops, origemId: fromId, destinoId: toId, rule, now: ready });
@@ -581,8 +589,8 @@ interface Arrivals {
 
 /**
  * Chegada mais cedo a todas as paragens a partir de `origins`, com 1, 2, … MAX_TIMED_BUSES
- * autocarros, usando a próxima passagem real de cada autocarro (GPS quando recente, senão o
- * horário) no momento em que o passageiro está na paragem: um RAPTOR dependente do tempo. Cada
+ * autocarros, usando a próxima passagem real de cada autocarro (GPS quando recente, senão a
+ * viagem do motorista) no momento em que o passageiro está na paragem: um RAPTOR dependente do tempo. Cada
  * ronda percorre todas as vias que passam numa paragem melhorada na ronda anterior, nos dois
  * sentidos, ficando no autocarro já apanhado a menos que outro, numa paragem seguinte, chegue
  * mais cedo. Porquê RAPTOR: é o algoritmo usado em planeadores de transportes públicos, rápido
@@ -679,7 +687,7 @@ function segmentsTo(a: Arrivals, stop: string): { origin: string; segs: Segment[
 
 async function allVehicles(): Promise<Map<string, Vehicle[]>> {
   const rows = await prisma.transporte.findMany({
-    where: { viaId: { not: null } },
+    where: { viaId: { not: null }, via: { ativa: true } },
     select: { ...POSITION_FIELDS, matricula: true, viaId: true },
   });
   const byRoute = new Map<string, Vehicle[]>();
@@ -719,6 +727,58 @@ export async function planJourneys(
   if ((from as string[]).some((id) => to.includes(id))) return [];
   const there = await planFrom(from, to, now, limit, 0);
   return there.length ? there : planFrom(from, to, now, limit, WALK_END_M);
+}
+
+/**
+ * Verdadeiro quando as rotas ligam as paragens `from` às `to` (com transbordos), haja ou não
+ * autocarros em viagem agora: distingue "não há ligação" de "nenhum autocarro em serviço agora".
+ */
+export async function hasConnection(from: string[], to: string[]): Promise<boolean> {
+  const [net, rule] = await Promise.all([loadNetwork(), getFareRule()]);
+  const dests = catchment(net, to, WALK_END_M);
+  return [0, WALK_END_M].some((radius) => candidatePlans(net, catchment(net, from, radius), dests, rule).length > 0);
+}
+
+/** A tarifa de uma ligação pelas rotas, sem horas: o que a opção 4 do USSD mostra. */
+export interface PlannedFare {
+  tarifa: number;
+  codigos: string[];
+  /** A bordo e a pé, sem as esperas */
+  minutos: number;
+  /** Só a bordo */
+  metros: number;
+}
+
+/**
+ * A tarifa e o tempo da melhor ligação pelas rotas entre as paragens `from` e `to`, haja ou não
+ * autocarros em viagem. Porquê: o preço não depende de um motorista ter iniciado a viagem, e a
+ * opção 4 do USSD deve dá-lo sempre (planJourneys só dá viagens com autocarros em serviço).
+ */
+export async function plannedFare(from: string[], to: string[]): Promise<PlannedFare | null> {
+  if (from.some((id) => to.includes(id))) return null;
+  const [net, rule] = await Promise.all([loadNetwork(), getFareRule()]);
+  const dests = catchment(net, to, WALK_END_M);
+  for (const radius of [0, WALK_END_M]) {
+    const [plan] = candidatePlans(net, catchment(net, from, radius), dests, rule);
+    if (!plan) continue;
+    const point = (id: string) => net.stops.get(id)!.point;
+    const walk = (a: string, b: string) => (a === b ? 0 : walkMinutes(Math.round(distanceMeters(point(a), point(b)))));
+    let at = plan.origin;
+    let minutos = 0;
+    let metros = 0;
+    let tarifa = 0;
+    for (const seg of plan.segs) {
+      // As mesmas contas que estimateBusTrip faz para cada autocarro
+      const m = Math.abs(seg.route.at.get(seg.to)! - seg.route.at.get(seg.from)!);
+      minutos += walk(at, seg.from) + Math.max(1, travelMinutes(m, rule));
+      metros += m;
+      tarifa += fareFor(m, rule);
+      at = seg.to;
+    }
+    minutos += walk(at, plan.dest);
+    return { tarifa, codigos: plan.segs.map((s) => s.route.codigo), minutos, metros };
+  }
+  return null;
 }
 
 /** planJourneys, com o primeiro autocarro apanhado a menos de `startRadius` das paragens de partida. */

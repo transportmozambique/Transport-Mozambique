@@ -108,14 +108,14 @@ Porquê o `prisma generate` antes do `next build`: o cliente Prisma é gerado a 
 
 ## Regra de tarifa (`Tarifa`)
 
-Os preços e as velocidades das horas de chegada estão na base de dados, na linha activa mais recente de [`Tarifa`](glossario.md#a-rede-e-as-pessoas "A regra de tarifa: preço mínimo, preço por km e velocidades"). A web, o USSD e os SMS de chegada lêem-na por `getFareRule()` ([`lib/fares.ts`](../transport-client/lib/fares.ts)); o painel lê a velocidade de viagem para as suas vistas de horário. Cada instância do servidor guarda a regra 60 s. Porquê na base de dados: mudar um preço não obriga a publicar código.
+Os preços e as velocidades das horas de chegada estão na base de dados, na linha activa mais recente de [`Tarifa`](glossario.md#a-rede-e-as-pessoas "A regra de tarifa: preço mínimo, preço por km e velocidades"). A web, o USSD e os SMS de chegada lêem-na por `getFareRule()` ([`lib/fares.ts`](../transport-client/lib/fares.ts)); o painel lê a velocidade de viagem para as posições e as passagens da página do veículo. Cada instância do servidor guarda a regra 60 s. Porquê na base de dados: mudar um preço não obriga a publicar código.
 
 | Coluna | Por omissão | Para quê |
 |---|---|---|
 | `tarifaMinima` | 10 MT | Tarifa mínima. |
 | `precoPorKm` | 10 MT | Tarifa = máx(`tarifaMinima`, ⌈km × `precoPorKm`⌉), com os km medidos ao longo do percurso da rota (`fareFor`). |
 | `fatorEstrada` | 1,3 | Linha recta × factor ≈ distância por estrada (`estimatedRoadMeters`). Nenhum cálculo actual o usa: todas as distâncias seguem os percursos; fica para estimativas sem percurso. |
-| `velocidadeViagemKmh` | 30 km/h | Velocidade dos autocarros no horário: decide as suas posições, horas de chegada e tempos de viagem. |
+| `velocidadeViagemKmh` | 30 km/h | Velocidade dos autocarros em viagem sem GPS: decide as suas posições, horas de chegada e tempos de viagem. |
 | `velocidadeChegadaKmh` | 45 km/h | Hora de chegada na estimativa de recurso usada quando uma rota não tem percurso. |
 | `ativa` | true | Só contam as linhas activas; ganha a actualizada mais recentemente. |
 
@@ -133,14 +133,15 @@ Estes valores estão fixos no código: mudam-se com uma alteração ao código e
 
 | Constante | Valor | Onde | Efeito |
 |---|---|---|---|
-| `GPS_FRESH_MS` | 3 min | [`transport-client/lib/vehiclePosition.ts`](../transport-client/lib/vehiclePosition.ts), [`transport-admin/lib/vehiclePosition.ts`](../transport-admin/lib/vehiclePosition.ts) | Uma posição GPS mais recente do que isto substitui a do horário. |
-| `SERVICE_START_MIN`, `SERVICE_END_MIN` | 05:00, 21:00 (Maputo) | os mesmos | Os autocarros do horário andam entre estas horas e ficam parados num [terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.") fora delas. |
-| `TERMINAL_STOP_S` | 5 min | os mesmos | Paragem em cada terminal antes da viagem seguinte. |
+| `GPS_FRESH_MS` | 3 min | [`transport-client/lib/vehiclePosition.ts`](../transport-client/lib/vehiclePosition.ts), [`transport-admin/lib/vehiclePosition.ts`](../transport-admin/lib/vehiclePosition.ts) | Uma posição GPS mais recente do que isto substitui a calculada pela viagem do motorista. |
+| `TERMINAL_STOP_S` | 5 min | os mesmos | Paragem em cada [terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.") antes da viagem seguinte. |
+| `PARKED_ON_ROUTE_M` | 300 m | [`transport-client/lib/vehiclePosition.ts`](../transport-client/lib/vehiclePosition.ts) | Um autocarro parado mais longe do que isto da sua rota aparece no terminal do início. |
+| `AVISO`, `MAX_FOLLOW_MS` | 15, 10 e 5 min; 4 h | [`lib/journeyAlerts.ts`](../transport-client/lib/journeyAlerts.ts) | Os avisos de uma viagem acompanhada, e quanto tempo um acompanhamento dura no máximo. |
 | `MAX_ACCURACY_M` | 200 m | [`app/api/gps/route.ts`](../transport-client/app/api/gps/route.ts) | Posições menos precisas são ignoradas. |
 | `MAX_FUTURE_MS` | 2 min | o mesmo | Uma hora mais no futuro do que isto é substituída pela hora do servidor. |
 | `NOTIFY_COOLDOWN_MS` | 30 min | [`lib/busSimulator.ts`](../transport-client/lib/busSimulator.ts) | Tempo mínimo entre dois SMS de chegada do mesmo alerta. |
 | `CHECK_INTERVAL_MS` | 30 s | o mesmo | Tempo mínimo entre duas verificações de chegadas numa instância. |
-| Janela dos alertas / distância do SMS | 24 h / 1 km | o mesmo | Alertas com mais de 24 h são ignorados; o SMS sai quando um autocarro em movimento está a menos de 1 km. |
+| Janela dos alertas, `STOP_ALERT_MIN` | 24 h, 5 min | o mesmo | Alertas com mais de 24 h são ignorados; o SMS sai quando o próximo autocarro em viagem chega à paragem em até 5 minutos. |
 | Janela dos passageiros à espera | 3 h | [`app/api/driver/seguidores/route.ts`](../transport-client/app/api/driver/seguidores/route.ts) | Alertas contados no portal do motorista. |
 | `USSD_MAX`, `PAGE_SIZE` | 182 caracteres, 6 itens | [`lib/ussdSteps.ts`](../transport-client/lib/ussdSteps.ts) | Tamanho de um ecrã USSD e itens por página (4 nas listas de locais e rotas, em [`app/api/ussd/route.ts`](../transport-client/app/api/ussd/route.ts)). |
 | Cache da regra de tarifa | 60 s | [`lib/fares.ts`](../transport-client/lib/fares.ts) | |

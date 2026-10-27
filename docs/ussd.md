@@ -99,24 +99,24 @@ Há quatro tipos de ecrã:
 |---|---|---|
 | **pergunta** (`ask`) | "Onde esta? Escreva o nome…" | Qualquer texto é a resposta (um nome, uma matrícula, um PIN). `0` volta atrás. |
 | **lista** (`list`) | "Qual paragem? 1. Portao 2. …" | `1`–`6` (ou `1`–`4` nas listas de locais e rotas) escolhe o item dessa página; `7` página seguinte; `8` página anterior; `0` volta atrás; outro número de 1 ou 2 algarismos mostra a mesma lista outra vez. **Numa lista de resultados de pesquisa, qualquer outro texto é uma nova pesquisa.** |
-| **teclas** (`keys`) | "1. Receber por SMS 2. Outra opcao" | Só as teclas oferecidas, e `0`. Outra tecla dá "Opcao invalida". |
+| **teclas** (`keys`) | "1. Acompanhar por SMS 2. Outra opcao" | Só as teclas oferecidas, e `0`. Outra tecla dá "Opcao invalida". |
 | **fim** (`end`) | "TARIFA … Preco: 208 MT" | Nenhuma: a sessão acabou. |
 
 ### Um exemplo, tecla a tecla
 
-O passageiro está no Portão e quer ir a Makalela. Escreve `portao`, vê a lista, escolhe o primeiro; escreve `makalela`, vê dois resultados, escolhe o primeiro; vê a viagem, pede outra opção, e depois o SMS. No fim, `text` é `1*portao*1*makalela*1*2*1`. O servidor lê assim:
+O passageiro está em Xipamanine e quer ir à Igreja. Escreve `xipamanine`, vê a lista, escolhe o primeiro; escreve `igreja`, vê dois resultados, escolhe o primeiro; vê a viagem, pede outra opção, e depois acompanha-a por SMS. No fim, `text` é `1*xipamanine*1*igreja*1*2*1`. O servidor lê assim:
 
 | Tecla | Ecrã à frente quando foi escrita | Lida como | Respostas guardadas | Ecrã seguinte |
 |---|---|---|---|---|
 | `1` | menu principal | opção 1 (Encontrar transporte) | | pergunta "Onde esta?" |
-| `portao` | pergunta "Onde esta?" | o nome escrito | `portao` | lista "Qual paragem?" (Portao, Portao da Vila, …) |
-| `1` | lista de locais, página 1 | item 1 = Portao | `portao`, `1` (→ Portao) | pergunta "Para onde vai?" |
-| `makalela` | pergunta "Para onde vai?" | o nome escrito | …, `makalela` | lista "Para onde vai?" (Makalela, Mikaela) |
-| `1` | lista de locais | item 1 = Makalela | …, `1` (→ Makalela) | teclas: a melhor viagem |
+| `xipamanine` | pergunta "Onde esta?" | o nome escrito | `xipamanine` | lista "Qual paragem?" (Xipamanine, Bombas-Xicanhanine) |
+| `1` | lista de locais, página 1 | item 1 = Xipamanine | `xipamanine`, `1` (→ Xipamanine) | pergunta "Para onde vai?" |
+| `igreja` | pergunta "Para onde vai?" | o nome escrito | …, `igreja` | lista "Para onde vai?" (Igreja - Capuchinho, Igreja - Bombas-Xicanhanine) |
+| `1` | lista de locais | item 1 = Igreja - Capuchinho | …, `1` (→ Igreja - Capuchinho) | teclas: a melhor viagem |
 | `2` | teclas `1`, `2` | "Outra opcao" | …, `2` | teclas: a segunda viagem |
-| `1` | teclas `1`, `2` | "Receber por SMS" | …, `1` | fim: "Detalhes enviados por SMS." (e o SMS sai) |
+| `1` | teclas `1`, `2` | "Acompanhar por SMS" | …, `1` | fim: "Vai receber a viagem por SMS e avisos ate chegar…" (sai o SMS da viagem e começa o acompanhamento) |
 
-Se o passageiro tivesse escrito outro nome em vez de escolher um item (por exemplo `1*portao*xipamanine`), a lista de "Qual paragem?" leria `xipamanine` como **nova pesquisa** e substituiria `portao`. Se tivesse escrito `9` numa lista de 4 itens, a mesma lista voltaria a aparecer. Se tivesse escrito `0`, voltaria um passo.
+Se o passageiro tivesse escrito outro nome em vez de escolher um item (por exemplo `1*xipamanine*museu`), a lista de "Qual paragem?" leria `museu` como **nova pesquisa** e substituiria `xipamanine`. Se tivesse escrito `9` numa lista de 4 itens, a mesma lista voltaria a aparecer. Se tivesse escrito `0`, voltaria um passo.
 
 ### As regras, em diagrama
 
@@ -148,7 +148,7 @@ flowchart TD
   N --> K
 ```
 
-No código: `replay(menu, keys)` em [`lib/ussdSteps.ts`](../transport-client/lib/ussdSteps.ts). Cada opção do menu é uma função `Menu` que recebe as respostas guardadas e devolve o ecrã a mostrar ([`app/api/ussd/route.ts`](../transport-client/app/api/ussd/route.ts): `journeyMenu`, `routesMenu`, `routeStopsMenu`, `fareMenu`, `trackBusMenu`). Os efeitos (enviar um SMS, criar um alerta) só correm no ecrã que fica à frente, nunca enquanto as teclas anteriores são repetidas: por isso um SMS não sai duas vezes.
+No código: `replay(menu, keys)` em [`lib/ussdSteps.ts`](../transport-client/lib/ussdSteps.ts). Cada opção do menu é uma função `Menu` que recebe as respostas guardadas e devolve o ecrã a mostrar ([`app/api/ussd/route.ts`](../transport-client/app/api/ussd/route.ts): `journeyMenu`, `routesMenu`, `routeStopsMenu`, `fareMenu`, `trackBusMenu`). Os efeitos (enviar um SMS, começar um acompanhamento) só correm no ecrã que fica à frente, nunca enquanto as teclas anteriores são repetidas: por isso um SMS não sai duas vezes.
 
 ## Pesquisa tolerante
 
@@ -166,6 +166,8 @@ As pessoas escrevem os nomes no teclado do telemóvel, de memória, sem sugestõ
 | `magoa nine` | Magoanine | espaços no sítio errado |
 | `1o de maio`, `primeiro de maio` | 1º de Maio | ordinais como `1o`, `2a` ou por extenso (até `terceiro`) |
 
+A tabela mostra como a pesquisa compara os nomes. Só se encontram os locais das rotas activas: com as 3 rotas de Outubro de 2026, `chipamanine` encontra Xipamanine, mas `makalala` responde "Nenhuma paragem", porque Makalela não está em nenhuma delas.
+
 Os resultados vêm ordenados pela coincidência mais fraca de todas as palavras: primeiro as palavras iguais e os inícios, depois as que soam igual, depois os erros. Um nome igual ao escrito vem em primeiro.
 
 Também há o que **não** coincide, de propósito:
@@ -176,7 +178,7 @@ Também há o que **não** coincide, de propósito:
 
 Quando nada coincide, o ecrã diz `Nenhuma paragem com "…". Escreva outra vez so uma parte do nome (ex: Museu)`, e o que se escrever a seguir é uma pesquisa nova. Quando a lista mostra os sítios errados, também basta escrever outro nome.
 
-As rotas (opções 2 e 3) aceitam o número que está no autocarro, com ou sem espaços e palavras à volta: `X12`, `x 12`, `rota 53-0`, `chapa 53`. As matrículas (opção 5) comparam-se só pelas letras e algarismos: `ack 145m`, `ACK-145M` e `ack145` são a mesma.
+As rotas (opções 2 e 3) aceitam o número que está no autocarro, com ou sem espaços e palavras à volta: `X19`, `x 19`, `rota 411`, `chapa 411`. As matrículas (opção 5) comparam-se só pelas letras e algarismos: `ada 193m`, `ADA-193M` e `ada193` são a mesma.
 
 ## Dentro do handler
 
@@ -241,22 +243,22 @@ flowchart TD
   M --> O5["5 Rastrear autocarro"]
   M --> O6["6 Area do motorista"]
   M --> O7["7 Ajuda (END)"]
-  O1 --> O1a["Onde esta? (escrever)"] --> O1b["escolher o local<br/>(saltado se só há um)"] --> O1c["Para onde vai? (escrever)"] --> O1d["escolher o local"] --> O1e["a melhor viagem, com transbordos se preciso<br/>escreve Utente + MISSION"]
-  O1e --> O1f["1 Receber por SMS (END + SMS)"]
+  O1 --> O1a["Onde esta? (escrever)"] --> O1b["escolher o local<br/>(saltado se só há um)"] --> O1c["Para onde vai? (escrever)"] --> O1d["escolher o local"] --> O1e["a melhor viagem, com transbordos se preciso<br/>(só autocarros em viagem)"]
+  O1e --> O1f["1 Acompanhar por SMS (END + SMS)<br/>escreve Acompanhamento; avisos até ao destino"]
   O1e --> O1g["2 Outra opcao"]
   O2 --> O2a["número da rota ou local (escrever)"] --> O2b["escolher o local e a rota<br/>(saltados se só há uma)"] --> O2c["resumo da rota (END + SMS)"]
   O3 --> O3a["número da rota ou local (escrever)"] --> O3b["escolher a rota"] --> O3c["paragens pela ordem de viagem"] --> O3d["detalhe da paragem (END + SMS)"]
   O4 --> O4a["origem (escrever, escolher)"] --> O4b["destino (escrever, escolher)"] --> O4c["TARIFA da melhor viagem (END + SMS)"]
   O5 --> O5a["matrícula ou parte dela (escrever)"] --> O5b["um resultado: o autocarro (END + SMS)<br/>vários: escolher da lista"]
   O6 --> O6a["PIN:"] --> O6b["menu do motorista"]
-  O6b --> D1["1 Iniciar / Encerrar viagem → confirmar<br/>escreve Motorista.emViagem"]
+  O6b --> D1["1 Iniciar / Encerrar viagem → confirmar<br/>escreve Motorista.emViagem, viagemSentido"]
   O6b --> D2["2 Ver Minha Info (END + SMS)"]
   O6b --> D3["3 Ver Rota (END + SMS)"]
   O6b --> D4["4 Ver Autocarro (END + SMS)"]
   O6b --> D0["0 Sair (END)"]
 ```
 
-Os ecrãs abaixo foram gravados com [`scripts/ussd-ecras.ts`](../transport-client/scripts/ussd-ecras.ts) numa cópia local dos dados de produção, com o relógio fixo numa segunda-feira às 08:30 (hora de Maputo), em 2026-10-18 ([Testar](#testar)). As horas e as tarifas mudam com a hora e com a regra de tarifa.
+Os ecrãs abaixo foram gravados com [`scripts/ussd-ecras.ts`](../transport-client/scripts/ussd-ecras.ts) numa cópia local, em 2026-10-27 às 20:50 (hora de Maputo), com as 3 rotas activas (X19, 411 e X22) e 4 dos 6 autocarros em viagem: ADA-013M na X19, ADA-193M e ADA-194M na 411, ADA-169M na X22 ([Testar](#testar)). As horas mudam com as posições dos autocarros, e as tarifas com a regra de tarifa.
 
 ### Menu principal (`text=""`)
 
@@ -275,7 +277,7 @@ CON Transportes Mocambique
 
 ## 1 Encontrar transporte
 
-Como ir de um sítio a outro: o próximo autocarro, ou os autocarros entre os quais mudar quando nenhum vai directo. Os dois sítios escrevem-se, por isso qualquer paragem pode ser a origem ou o destino (o USSD não sabe onde está o telemóvel). Usa o mesmo planeador da [aplicação web](conceitos.md#aplicacao-web "Um site que se usa como um programa: tem botões, mapas e contas, e muda conforme o que se faz.") ([Fluxos de dados → Planear uma viagem](fluxos-de-dados.md#planear-uma-viagem)).
+Como ir de um sítio a outro: o próximo autocarro, ou os autocarros entre os quais mudar quando nenhum vai directo, e depois avisos por SMS até ao destino. Os dois sítios escrevem-se, por isso qualquer paragem pode ser a origem ou o destino (o USSD não sabe onde está o telemóvel). Usa o mesmo planeador da [aplicação web](conceitos.md#aplicacao-web "Um site que se usa como um programa: tem botões, mapas e contas, e muda conforme o que se faz.") ([Fluxos de dados → Planear uma viagem](fluxos-de-dados.md#planear-uma-viagem)). Só contam os autocarros cujo motorista iniciou a viagem ([Localização dos autocarros](localizacao-gps.md)).
 
 ```text
 text="1"                                  text="1*museu"
@@ -285,188 +287,183 @@ local (ex: Museu)                         0. Voltar
 0. Voltar
 ```
 
-Com um só local, como "Museu", não há lista: passa logo ao destino. Com vários, aparece a lista (4 por página):
+Com um só local, como "Museu", não há lista: passa logo ao destino. Com vários, aparece a lista (4 por página; `7` mostra a seguinte e `8` a anterior):
 
 ```text
-text="1*portao"                           text="1*av ind"                          text="1*av ind*7"
-CON Qual paragem?                         CON Qual paragem?                        CON Qual paragem?
-1. Portao                                 1. Av. das Industrias                    1. Av. Indu.. - Machava-.. 170 m
-2. Portao da Vila                         2. Av. Indu.. - Machava-.. 970 m         2. Av. Indu.. - Machava.. 1360 m
-3. Primeiro Portao                        3. Av. Indu.. - Machava-.. 540 m         3. Avenida das Industrias - 120
-4. Segundo Portao                         4. Av. Indu.. - Machava.. 2110 m         4. Av. Industrias - Darling
-7. Proximo                                7. Proximo                               7. Proximo
-0. Voltar                                 0. Voltar                                8. Anterior
-                                                                                   0. Voltar
-```
-
-- **Locais com o mesmo nome** (49 nomes são usados por vários locais, muitas vezes ao longo de uma avenida) distinguem-se pelo local mais próximo com outro nome, e pela distância até ele quando também se repete. A web mostra os nomes inteiros ("Av. Industrias - Machava-Sede 960 m"); no USSD uma etiqueta tem no máximo 29 caracteres: encurta-se primeiro o nome, deixando pelo menos 10 caracteres, e depois a referência ([`lib/journeys.ts`](../transport-client/lib/journeys.ts), `placeLabel`).
-- **A pesquisa tolerante** ([acima](#pesquisa-tolerante)) em acção:
-
-```text
-text="1*makalala"                         text="1*chipamanine"                     text="1*xyzq"
-CON De: Makalela                          CON Qual paragem?                        CON Nenhuma paragem com "xyzq".
-Para onde vai? Escreva o nome do destino  1. Xipamanine                            Escreva outra vez so uma parte do
-0. Voltar                                 2. Xipesanine                            nome (ex: Museu)
-                                          3. Bombas-Xicanhanine                    0. Voltar
-                                          0. Voltar
-
-text="1*xyzq*museu"                       text="1*portao*9"  (9 não está na lista)
-CON De: Museu                             CON Qual paragem?
-Para onde vai? Escreva o nome do destino  1. Portao
-0. Voltar                                 2. Portao da Vila
-                                          3. Primeiro Portao
-                                          4. Segundo Portao
-                                          7. Proximo
-                                          0. Voltar
-```
-
-- **A resposta** é a melhor viagem, a chegada mais cedo primeiro; a hora conta a partir de agora, com as esperas. Um autocarro directo, e a opção seguinte com `2`:
-
-```text
-text="1*museu*zimpeto"                    text="1*museu*zimpeto*2"
-CON Directo, chega 09:14                  CON Directo, chega 09:15
-Apanhe em Museu (210) as 08:32            Apanhe em Museu (X10) as 08:33
-Saia em Zimpeto (302)                     Saia em Zimpeto (703)
-44 min, 208 MT                            45 min, 206 MT
-1. Receber por SMS                        1. Receber por SMS
-2. Outra opcao                            2. Outra opcao
+text="1*igreja"                           text="1*igreja*9"  (9 não está na lista)
+CON Qual paragem?                         CON Qual paragem?
+1. Igreja - Capuchinho                    1. Igreja - Capuchinho
+2. Igreja - Bombas-Xicanhanine            2. Igreja - Bombas-Xicanhanine
 0. Voltar                                 0. Voltar
 ```
 
-  "Museu (210)" é a baia do [terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.") do Museu onde pára a rota 210. Uma viagem com [transbordos](glossario.md#palavras-dos-ecrãs "Mudança de autocarro a meio de uma viagem") diz onde apanhar cada autocarro, a que horas, e onde sair para o seguinte (os nomes encurtam-se para caber; "amanha" marca o dia seguinte):
+- **Locais com o mesmo nome** (muitas vezes ao longo de uma avenida) distinguem-se pelo local mais próximo com outro nome, e pela distância até ele quando também se repete, como "Igreja - Capuchinho". A web mostra os nomes inteiros; no USSD uma etiqueta tem no máximo 29 caracteres: encurta-se primeiro o nome, deixando pelo menos 10 caracteres, e depois a referência ([`lib/journeys.ts`](../transport-client/lib/journeys.ts), `placeLabel`).
+- **A pesquisa tolerante** ([acima](#pesquisa-tolerante)) em acção:
 
 ```text
-text="1*museu*johane"                     text="1*portao*1*johane"
-CON 1 transbordo, chega 09:04             CON 2 transbordos, chega 09:16
-1) Museu (X10) 08:33 > UP                 1) Portao 08:31 > Hospital
-2) UP 08:38 > Avenida Eduardo Mondlane    2) Hospital 08:51 > Rua 15
-34 min, 125 MT                            3) Rua 15 09:01 > Johane Malate
-1. Receber por SMS                        46 min, 197 MT
-2. Outra opcao                            1. Receber por SMS
-0. Voltar                                 2. Outra opcao
-                                          0. Voltar
+text="1*chipamanine"                      text="1*xyzq"                             text="1*xyzq*museu"
+CON Qual paragem?                         CON Nenhuma paragem com "xyzq".           CON De: Museu
+1. Xipamanine                             Escreva outra vez so uma parte do         Para onde vai? Escreva o nome do
+2. Bombas-Xicanhanine                     nome (ex: Museu)                          destino
+0. Voltar                                 0. Voltar                                 0. Voltar
+```
+
+- **A resposta** é a melhor viagem, a chegada mais cedo primeiro. A hora conta a partir de agora, com as esperas, e vem das posições dos autocarros em viagem. Um autocarro directo, e o ecrã depois de `1`:
+
+```text
+text="1*capuchinho*combatentes"           text="1*capuchinho*combatentes*1"
+CON Directo, chega 21:21                  END Vai receber a viagem por SMS e
+Apanhe em Capuchinho as 21:11             avisos ate chegar: autocarro a 15, 10
+Saia em Praca dos Combatentes (X23)       e 5 min, chegada, transbordos e
+30 min, 47 MT                             destino.
+1. Acompanhar por SMS
+0. Voltar
+```
+
+  Uma viagem com [transbordos](glossario.md#palavras-dos-ecrãs "Mudança de autocarro a meio de uma viagem") diz onde apanhar cada autocarro, a que horas, e onde sair para o seguinte. Os nomes encurtam-se até caber em 182 caracteres; o SMS leva-os inteiros:
+
+```text
+text="1*museu*combatentes"                      text="1*xipamanine*1*zimpeto"
+CON 1 transbordo, chega 22:01                   CON 2 transbordos, chega 22:42
+1) Museu (412) 21:14 > Igreja                   1) Xipama.. 20:57 > Igreja
+2) Igreja 21:51 > Praca dos Combatentes (X23)   2) Igreja 21:11 > Praca ..
+1 h 10 min, 80 MT                               3) Praca .. 22:11 > Zimpet..
+1. Acompanhar por SMS                           1 h 51 min, 232 MT
+2. Outra opcao                                  1. Acompanhar por SMS
+0. Voltar                                       2. Outra opcao
+                                                0. Voltar
 ```
 
 - `2` mostra a opção seguinte (a partir da segunda, `2` outra vez mostra a seguinte, e dá a volta); "2. Outra opcao" só aparece quando há mais de uma.
-- `1` envia por SMS a opção mostrada, com todos os passos: caminhadas ("Caminhe 150 m ate …"), a rota e a matrícula de cada autocarro, onde e quando apanhar e sair, e cada tarifa. Depois, `END Detalhes enviados por SMS.`
+- `1` (**Acompanhar por SMS**) envia a viagem mostrada num SMS, com todos os passos: caminhadas ("Caminhe 150 m ate …"), a rota e a matrícula de cada autocarro, onde e quando apanhar e sair, e cada tarifa. Por exemplo: `Viagem Capuchinho > Praca dos Combatentes: chega 21:21, 47 MT. 1) Apanhe a rota 411 (ADA-194M) em Capuchinho as 21:11; saia em Praca dos Combatentes (X23) as 21:21 (47 MT). Vamos avisar por SMS: …`. Depois chegam os avisos de cada autocarro, até ao destino: a 15, 10 e 5 minutos, "esta a chegar", 15, 10 e 5 minutos antes de sair, onde apanhar o autocarro seguinte, e "chegou ao seu destino". A lista completa, com exemplos, está em [Fluxos de dados → Os avisos de uma viagem acompanhada](fluxos-de-dados.md#os-avisos-de-uma-viagem-acompanhada); os avisos precisam da [verificação a cada minuto](africas-talking.md#verificação-de-chegadas-a-cada-minuto) para chegar a horas.
 - `0` volta ao destino (para escrever outro).
-- **Escreve:** cada ecrã de viagem regista um alerta de chegada ([`MISSION`](glossario.md#a-rede-e-as-pessoas "Um alerta de chegada: um SMS quando um autocarro estiver perto de uma paragem")) na paragem onde se apanha o primeiro autocarro, para o passageiro receber um SMS quando um autocarro estiver a menos de 1 km. Se o número não tiver conta, cria primeiro um [`Utente`](glossario.md#a-rede-e-as-pessoas "A tabela das contas de passageiros") sem palavra-passe. Uma conta da web com o mesmo número conta, seja com que espaços ou indicativo foi guardada ([`lib/phones.ts`](../transport-client/lib/phones.ts)). Um alerta da mesma paragem das últimas 24 h é reutilizado.
-- **Sem ligação:** `END Nao ha autocarro de … para ….` (algumas rotas formam grupos sem paragens em comum com o resto da rede).
+- **Escreve:** só a tecla `1`. Grava um [`Acompanhamento`](glossario.md#a-rede-e-as-pessoas "Uma viagem acompanhada por SMS: os avisos de cada autocarro até ao destino") com o telefone, os autocarros da viagem, a etapa actual e o último aviso enviado; um acompanhamento anterior do mesmo telefone acaba (uma viagem de cada vez). Ver os ecrãs não escreve nada. (Até Outubro de 2026, cada ecrã de viagem criava um [`Utente`](glossario.md#a-rede-e-as-pessoas "A tabela das contas de passageiros") sem palavra-passe e um [`MISSION`](glossario.md#a-rede-e-as-pessoas "Um alerta de chegada: um SMS quando um autocarro estiver perto de uma paragem"); já não.)
+- **Nenhum autocarro em serviço:** `END Nenhum autocarro em servico agora de Capuchinho para Praca dos Combatentes. Tente mais tarde.` quando as rotas ligam os dois locais mas nenhum motorista delas iniciou a viagem.
+- **Sem ligação:** `END Nao ha autocarro de … para ….` quando nenhuma rota activa liga os dois locais.
 
 ## 2 Procurar rotas
 
-O resumo de uma rota: pelo número que está no autocarro, ou entre as rotas que passam num local.
+O resumo de uma rota: pelo número que está no autocarro, ou entre as rotas que passam num local. Só aparecem as rotas activas ([Painel → Vias](painel-admin.md#tarefa-activar-rotas)).
 
 ```text
-text="2"                                  text="2*X12"  (também "2*x 12")
-CON Rotas de um local                     END X12 Museu - Praca dos Combatentes
-Escreva o nome do local ou o numero       De: Museu
-da rota (ex: Baixa ou X12)                Para: Praca dos Combatentes
-0. Voltar                                 Paragens: 24
-                                          Distancia: 7.1 km
-                                          Tarifa (percurso todo): 72 MT
-                                          Autocarros: 2
+text="2"                                  text="2*X19"  (também "2*x 19")
+CON Rotas de um local                     END X19 Xipamanine - Museu
+Escreva o nome do local ou o numero       De: Xipamanine (X19)
+da rota (ex: Museu ou X19)                Para: Museu (X15)
+0. Voltar                                 Paragens: 27
+                                          Distancia: 6.2 km
+                                          Tarifa (percurso todo): 62 MT
+                                          Em servico: 1 de 2
 
-text="2*museu"                            text="2*museu*1"
-CON Rotas em Museu:                       END 3-0 Museu - Praca dos Trabalhadores
-1. 3-0 Museu - Praca dos Trabalha..       (Via Av. 24 de Julho)
-2. 18-0 Museu - Magoanine (Via Av..       De: Museu
-3. 21-0 Museu - Albazine(via Dom ..       Para: Praca dos Trabalhadores
-4. 23-0 Museu - Matendene (Via Ja..       Paragens: 15
-7. Proximo                                Distancia: 3.4 km
-0. Voltar                                 Tarifa (percurso todo): 35 MT
-                                          Autocarros: 2
+text="2*combatentes"                      text="2*combatentes*1"  (também "2*rota 411")
+CON Rotas em Praca dos Combatentes:       END 411 Baixa - Praca dos Combatentes
+1. 411 Baixa - Praca dos Combatentes      De: P. Trabalhadores (411)
+2. X22 Praca dos Combatentes - Zimpeto    Para: Praca dos Combatentes (X34)
+0. Voltar                                 Paragens: 27
+                                          Distancia: 7.6 km
+                                          Tarifa (percurso todo): 77 MT
+                                          Em servico: 2 de 2
 
-text="2*rota 53-0"                        text="2*xyzq"
-END 53-0 Baixa - Albazine(via Hulene)     CON Nenhuma rota ou paragem com "xyzq".
-De: Baixa                                 Escreva outra vez so uma parte do
-Para: Albazine                            nome (ex: Museu)
-Paragens: 52                              0. Voltar
-Distancia: 20.1 km
-Tarifa (percurso todo): 202 MT
-Autocarros: 2
+text="2*xyzq"
+CON Nenhuma rota ou paragem com "xyzq".
+Escreva outra vez so uma parte do
+nome (ex: Museu)
+0. Voltar
 ```
 
-Quando o nome escrito coincide com vários locais (`2*baixa`: o Terminal de [Chapas](glossario.md#transportes-em-maputo "Os minibuses que levam a maior parte dos passageiros de Maputo") da Baixa e várias ruas da Baixa), aparece primeiro `CON Qual local?` com a lista, 4 por página. Cada rota começa pelo código, o número no autocarro: várias rotas vão do Museu a Albazine, e o código distingue-as quando o resto do nome é cortado. "De" e "Para" são os terminais da rota (`Via.terminalPartida`, `terminalChegada`). As paragens contam-se depois de juntar as seguidas com o mesmo nome (os dois lados de uma rua). A distância mede-se ao longo do percurso. O mesmo texto vai por SMS.
+Quando o nome escrito coincide com vários locais, aparece primeiro `CON Qual local?` com a lista, 4 por página. Quando só uma rota passa no local (`2*museu`), o resumo aparece logo. Cada rota começa pelo código, o número no autocarro, que distingue rotas parecidas quando o resto do nome é cortado. "De" e "Para" são os [terminais](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.") da rota (`Via.terminalPartida`, `terminalChegada`). As paragens contam-se depois de juntar as seguidas com o mesmo nome (os dois lados de uma rua). A distância mede-se ao longo do percurso. "Em servico: 1 de 2" quer dizer que a rota tem 2 autocarros e o motorista de um deles iniciou a viagem (`Motorista.emViagem`); só esse aparece no mapa, nas viagens e nos avisos. O mesmo texto vai por SMS.
 
 ## 3 Paragens de uma rota
 
 As paragens de uma rota pela ordem de viagem, e depois os detalhes de uma paragem.
 
 ```text
-text="3"                                  text="3*X12"                text="3*X12*7"
-CON Paragens de uma rota                  CON X12: 24 paragens        CON X12: 24 paragens
-Escreva o numero da rota ou um local      1. Museu (X12)              1. Cadeia Civil
-onde passa (ex: X12 ou Museu)             2. Cristal                  2. Clinica
-0. Voltar                                 3. Oftamologia              3. Esquina
-                                          4. Primeira Esquina         4. Instituto do Cor..
-                                          5. Maternidade              5. Coop
-                                          6. Mangueira                6. OMM
-                                          7. Proximo                  7. Proximo
-                                          0. Voltar                   8. Anterior
-                                                                      0. Voltar
+text="3"                              text="3*X19"                          text="3*X19*7"
+CON Paragens de uma rota              CON X19: 27 paragens                  CON X19: 27 paragens
+Escreva o numero da rota ou um local  1. Xipamanine (X19)                   1. Mangueiras
+onde passa (ex: X19 ou Museu)         2. Paragem Mercado                    2. Tijuca
+0. Voltar                             3. Bombas                             3. Alto-Mae
+                                      4. Retiro                             4. Bombas
+                                      5. Paragem de Retiro                  5. Amasp
+                                      6. Farmacia                           6. 6a Esquadra
+                                      7. Proximo                            7. Proximo
+                                      0. Voltar                             8. Anterior
+                                                                            0. Voltar
 
-text="3*X12*2"
-END Cristal
-Paragem 2 de 24
-Rota: X12 Museu - Praca dos Combatentes
-Rotas que passam aqui: 18-0, 21-0, 215, 221, 222, 23-0, 302, 305, 307, 34-1, 37-0, 403, 404, 406, 408, 67-0, C6, X10..
+text="3*X19*2"
+END Paragem Mercado
+Paragem 2 de 27
+Rota: X19 Xipamanine - Museu
+Rotas que passam aqui: X19
 ```
 
-Como na opção 2, escrever um local (`3*museu`) mostra primeiro as rotas que lá passam. Paragens seguidas com o mesmo nome aparecem uma vez. Escolher uma paragem acaba a sessão e envia os detalhes por SMS.
+Como na opção 2, escrever um local (`3*combatentes`) mostra primeiro as rotas que lá passam. Paragens seguidas com o mesmo nome aparecem uma vez. "Rotas que passam aqui" só conta as rotas activas. Escolher uma paragem acaba a sessão e envia os detalhes por SMS.
 
 ## 4 Calcular tarifa
 
 A tarifa entre dois locais escritos: a da melhor viagem, contando todos os autocarros (o mesmo planeador da opção 1). Porquê a da viagem: o passageiro paga cada autocarro que apanha, e uma distância em linha recta daria outro valor.
 
 ```text
-text="4"                                  text="4*museu*zimpeto"            text="4*portao*1*johane"
-CON Calcular tarifa                       END TARIFA                        END TARIFA
-De onde parte? Escreva o nome da          De: Museu                         De: Portao
-paragem ou do local                       Para: Zimpeto                     Para: Johane Malate
-0. Voltar                                 Preco: 208 MT                     Preco: 197 MT
-                                          Directo, rota 302                 2 transbordos: rotas 504 > V053 > 203
-                                          Viagem: 42 min, 20.7 km           Viagem: 43 min, 19.5 km
+text="4"                            text="4*capuchinho*combatentes"     text="4*xipamanine*1*zimpeto"
+CON Calcular tarifa                 END TARIFA                          END TARIFA
+De onde parte? Escreva o nome da    De: Capuchinho                      De: Xipamanine
+paragem ou do local                 Para: Praca dos Combatentes         Para: Zimpeto
+0. Voltar                           Preco: 47 MT                        Preco: 232 MT
+                                    Directo, rota 411                   2 transbordos: rotas X19 > 411 > X22
+                                    Viagem: 10 min, 4.6 km              Viagem: 48 min, 23.0 km
 ```
 
 A escolha dos locais é como na opção 1 (lista quando há vários, pesquisa tolerante). "Viagem" é o tempo a bordo e a pé, sem as esperas; a opção 1 dá a hora de chegada com as esperas. A tarifa e o tempo usam a regra de tarifa activa ([Configuração](configuracao.md#regra-de-tarifa-tarifa)). Também por SMS.
 
+Com autocarros em viagem, a tarifa é a da melhor viagem da opção 1. Sem nenhum, é a da ligação mais rápida pelas rotas (`plannedFare` em [`lib/journeys.ts`](../transport-client/lib/journeys.ts)), com as mesmas contas. Porquê: o preço não depende de um motorista ter iniciado a viagem, por isso a opção 4 responde mesmo quando a opção 1 diz "Nenhum autocarro em servico agora". Os dois ecrãs acima dão o mesmo valor com e sem autocarros em viagem.
+
 ## 5 Rastrear autocarro
 
-Um autocarro pela matrícula, ou parte dela, e onde está agora.
+Um autocarro pela matrícula, ou parte dela, o seu estado e onde está agora. Só os autocarros das rotas activas.
 
 ```text
-text="5"                                  text="5*ack 145"
-CON Rastrear autocarro                    END AUTOCARRO ACK-145M
-Escreva a matricula ou parte dela         Mercedes-Benz Sprinter
-(ex: ACK ou 184M)                         Rota: V086 Rua Dos Bons Amigos - Antena
-0. Voltar                                 Perto de: Canhueiro
+text="5"                                  text="5*ada 193"
+CON Rastrear autocarro                    END AUTOCARRO ADA-193M
+Escreva a matricula ou parte dela         Toyota Coaster
+(ex: ADA ou 193M)                         Rota: 411 Baixa - Praca dos Combatentes
+0. Voltar                                 Em circulacao
+                                          Perto de: Praca dos Combatentes (X23)
 
-text="5*ACI"                              text="5*ACI*3"
-CON Qual autocarro?                       END AUTOCARRO ACI-004M
-1. ACI-001M                               Toyota Hiace
-2. ACI-002M                               Rota: V063 Rua do Cajueiro (Fedel Castro) - Estrada Circular
-3. ACI-004M                               Perto de: Tanques
-4. ACI-005M
-5. ACI-006M                               text="5*XYZ"
-6. ACI-007M                               CON Nenhum autocarro com "XYZ".
-7. Proximo                                Escreva outra vez parte da matricula (ex: ACK)
-0. Voltar                                 0. Voltar
+text="5*ADA"                              text="5*ADA*2"
+CON Qual autocarro?                       END AUTOCARRO ADA-014M
+1. ADA-013M                               Toyota Coaster
+2. ADA-014M                               Rota: X19 Xipamanine - Museu
+3. ADA-169M                               Parado, fora de servico
+4. ADA-170M                               Em: Museu (X19)
+5. ADA-193M
+6. ADA-194M                               text="5*XYZ"
+0. Voltar                                 CON Nenhum autocarro com "XYZ".
+                                          Escreva outra vez parte da matricula (ex: ADA)
+                                          0. Voltar
 ```
 
-"Perto de" é a paragem da rota mais próxima da posição actual do autocarro ([GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") ou horário, [Localização e GPS](localizacao-gps.md)). Menos de 3 letras ou algarismos pede mais (`Escreva pelo menos 3 letras ou numeros da matricula`). Na lista, escrever outra matrícula faz nova pesquisa. Também por SMS.
+A linha do estado é a mesma que o [portal do motorista](portal-motorista.md) e o mapa mostram, porque vem da mesma conta ([Localização dos autocarros](localizacao-gps.md)):
+
+| Estado | Quando | Linha seguinte |
+|---|---|---|
+| `Em circulacao` | o motorista iniciou a viagem e o autocarro anda | `Perto de:` a paragem da rota mais próxima |
+| `No terminal` | o motorista iniciou a viagem e o autocarro espera num terminal antes de voltar | `Perto de:` o terminal |
+| `Parado, fora de servico` | o motorista não iniciou a viagem (ou terminou-a) | `Em:` onde o autocarro ficou |
+| `Localizacao indisponivel` | sem posição nem percurso | nada |
+
+Menos de 3 letras ou algarismos pede mais (`Escreva pelo menos 3 letras ou numeros da matricula`). Na lista, escrever outra matrícula faz nova pesquisa. Também por SMS.
 
 ## 6 Área do motorista
 
-O número de telefone do motorista tem de coincidir com um `Motorista.telefone` (espaços e o `+258` ignorados). O PIN é o que o administrador gerou ([Painel → Dar um PIN a um motorista](painel-admin.md#tarefa-pin)). É o mesmo estado de viagem que o [portal do motorista](portal-motorista.md) mostra. Este menu ([`handleDriverMenuStateless`](../transport-client/app/api/ussd/route.ts)) lê as teclas por nível: a segunda é sempre o PIN, que se verifica em cada pedido porque não há sessão.
+O número de telefone do motorista tem de coincidir com um `Motorista.telefone` (espaços e o `+258` ignorados). O PIN é o que o administrador gerou ([Painel → Dar um PIN a um motorista](painel-admin.md#tarefa-pin)). É o mesmo estado de viagem que o [portal do motorista](portal-motorista.md) mostra: iniciar a viagem aqui ou no portal põe o autocarro em serviço (no mapa, nas viagens, nos avisos por SMS), e encerrá-la tira-o. Este menu ([`handleDriverMenuStateless`](../transport-client/app/api/ussd/route.ts)) lê as teclas por nível: a segunda é sempre o PIN, que se verifica em cada pedido porque não há sessão.
 
 ```text
 text="6"                     text="6*<PIN>"
-CON Area do Motorista        CON BEM-VINDO, PEDRO
+CON Area do Motorista        CON BEM-VINDO, MOTORISTA
 PIN:
                              STATUS: OFFLINE
-                             MATRICULA: ACI-004M
-                             ROTA: Rua do Cajueiro (Fedel Castr..
+                             MATRICULA: ADA-014M
+                             ROTA: Xipamanine - Museu
 
                              1. Iniciar Viagem
                              2. Ver Minha Info
@@ -477,11 +474,11 @@ PIN:
 text="6*<PIN>*1"                                   text="6*<PIN>*1*1"
 CON INICIAR VIAGEM                                 END VIAGEM INICIADA
 
-Veiculo: ACI-004M                                  STATUS: ONLINE
-Rota: Rua do Cajueiro (Fedel Castro) -> Estrada Circular
-                                                   Boa viagem, Pedro!
-1. Confirmar - Iniciar Viagem                      Veiculo: ACI-004M
-0. Cancelar                                        Rota: Rua do Cajueiro (Fedel Castro) -> Estrada Circular
+Veiculo: ADA-014M                                  STATUS: ONLINE
+Rota: Xipamanine (X19) -> Museu (X15)
+                                                   Boa viagem, Motorista!
+1. Confirmar - Iniciar Viagem                      Veiculo: ADA-014M
+0. Cancelar                                        Rota: Xipamanine (X19) -> Museu (X15)
 
                                                    Bom trabalho!
 ```
@@ -490,7 +487,8 @@ Durante uma viagem a primeira opção passa a "1. Encerrar Viagem", e confirmar 
 
 | Teclas | Ecrã | Escreve / envia |
 |---|---|---|
-| `6*<PIN>*1*1` | VIAGEM INICIADA / ENCERRADA | `Motorista.emViagem`, `viagemIniciadaEm`; SMS "Viagem iniciada com sucesso! …" ou "Viagem encerrada com sucesso. …" |
+| `6*<PIN>*1*1` | VIAGEM INICIADA / ENCERRADA | `Motorista.emViagem`, `viagemIniciadaEm`, `viagemSentido` (e, ao encerrar sem [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas."), a posição onde o autocarro fica); SMS "Viagem iniciada com sucesso! …" ou "Viagem encerrada com sucesso. …" |
+| `6*<PIN>*1*1` sem poder iniciar | "A rota do seu veiculo esta desactivada. Peca ao administrador.", "O seu veiculo nao tem rota. …" ou "Nao tem veiculo atribuido. …" | nada |
 | `6*<PIN>*1*2` (outra tecla que não 1) | "Operacao cancelada." | nada |
 | `6*<PIN>*2` | nome, BI, carta, estado da viagem, veículo, rota | SMS com o mesmo |
 | `6*<PIN>*3` | rota e número de paragens | SMS com todas as paragens pela ordem de viagem |
@@ -522,7 +520,8 @@ Escreva so parte do nome
 |---|---|
 | Uma opção que não está no ecrã (`text="9"`, `text="1*museu*zimpeto*5"`) | `END Opcao invalida. Tente novamente.` |
 | Nada encontrado numa pesquisa | `CON Nenhuma paragem com "…".` e pede para escrever outra vez (não fecha a sessão) |
-| Nenhuma viagem entre os dois locais | `END Nao ha autocarro de … para ….` |
+| Nenhuma rota activa liga os dois locais | `END Nao ha autocarro de … para ….` |
+| As rotas ligam os locais, mas nenhum autocarro delas está em viagem (opção 1) | `END Nenhum autocarro em servico agora de … para …. Tente mais tarde.` |
 | Erro inesperado no servidor | `END Erro ao processar pedido. Tente novamente.` (HTTP 200, para o telemóvel o mostrar) |
 
 ## Testar
@@ -531,20 +530,20 @@ Escreva so parte do nome
 
 ```bash
 cd transport-client
-npx tsx scripts/ussd-ecras.ts "" "1*museu" "1*museu*zimpeto"
-USSD_HORA="2026-10-19T08:30:00+02:00" npx tsx scripts/ussd-ecras.ts "4*museu*zimpeto"   # relógio fixo
+npx tsx scripts/ussd-ecras.ts "" "1*capuchinho" "1*capuchinho*combatentes"
+USSD_TELEFONE="+258840000002" npx tsx scripts/ussd-ecras.ts "6*<PIN>"   # como um motorista
 ```
 
-Usa a base de dados de `DATABASE_URL`. A opção 1 escreve (um `MISSION`, e um `Utente` para um telefone novo) e, com `AFRICASTALKING_API_KEY` definida, os ecrãs finais enviam SMS: usar contra uma cópia local.
+Usa a base de dados de `DATABASE_URL`. A tecla 1 no ecrã de uma viagem grava um `Acompanhamento`, `6*<PIN>*1*1` inicia ou encerra uma viagem, e, com `AFRICASTALKING_API_KEY` definida, os ecrãs finais enviam SMS: usar contra uma cópia local. Os autocarros só aparecem nas viagens depois de um motorista iniciar a viagem (`6*<PIN>*1*1` com o telefone dele em `USSD_TELEFONE`, ou o [portal do motorista](portal-motorista.md)).
 
-**Com [`curl`](conceitos.md#curl "Um comando que faz pedidos HTTP a partir do terminal, como um navegador sem janela.")**, localmente ou contra a produção (com a chave do callback). Na produção as opções 2 a 5 e 7 só lêem, mas enviam SMS; o ecrã de viagem da opção 1 escreve um alerta.
+**Com [`curl`](conceitos.md#curl "Um comando que faz pedidos HTTP a partir do terminal, como um navegador sem janela.")**, localmente ou contra a produção (com a chave do callback). Na produção as opções 2 a 5 e 7 só lêem, mas enviam SMS; a tecla 1 no ecrã de uma viagem grava um acompanhamento e envia SMS até ao destino.
 
 ```bash
 curl -s -X POST "http://localhost:3000/api/ussd" \
   --data-urlencode "sessionId=teste-1" \
   --data-urlencode "serviceCode=*384*848080#" \
   --data-urlencode "phoneNumber=+258840000001" \
-  --data-urlencode "text=2*X12"
+  --data-urlencode "text=2*X19"
 ```
 
 **No simulador da Africa's Talking.** Marcar `*384*848080#` a partir de um número de teste. Os ecrãs são respostas reais da produção, e os SMS chegam à caixa do telemóvel simulado ([Africa's Talking → Usar o menu no simulador](africas-talking.md#usar-o-menu-no-simulador)):

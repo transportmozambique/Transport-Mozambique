@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 /**
- * A regra de tarifa activa (Tarifa): a base de todas as tarifas, tempos de viagem e posições pelo
- * horário, na web, no USSD e aqui. A aplicação dos passageiros volta a lê-la até 60 s depois de uma
+ * A regra de tarifa activa (Tarifa): a base de todas as tarifas, tempos de viagem e posições dos
+ * autocarros em viagem, na web, no USSD e aqui. A aplicação dos passageiros volta a lê-la até 60 s depois de uma
  * alteração. Porquê na base de dados: um preço muda-se nesta página, sem publicar código novo.
  *
  * GET  /api/tarifa → a regra activa

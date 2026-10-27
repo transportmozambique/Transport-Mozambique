@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAndNotifyUsers, getSimulationStatus } from '@/lib/busSimulator';
 
-// GET: como são produzidas as posições (GPS real ou horário) e a última verificação de chegadas.
+// GET: como são produzidas as posições (GPS real, ou a viagem do motorista) e a última verificação de chegadas.
 export async function GET() {
   try {
     return NextResponse.json({ success: true, status: await getSimulationStatus() });
@@ -10,14 +10,14 @@ export async function GET() {
   }
 }
 
-// POST {"action": "check"}: corre agora a verificação dos SMS de chegada (o GitHub Actions chama-o a cada 5 min).
-// As posições não precisam de arranque nem paragem: vêm do GPS real ou do horário a cada leitura.
+// POST {"action": "check"}: corre agora a verificação dos SMS de chegada (o GitHub Actions e um pedido agendado externo chamam-no; ver docs/africas-talking.md).
+// As posições não precisam de arranque nem paragem: vêm do GPS real ou da viagem do motorista a cada leitura.
 export async function POST(request: NextRequest) {
   try {
     const { action } = await request.json().catch(() => ({ action: null }));
     if (action !== 'check') {
       return NextResponse.json(
-        { error: 'Ação inválida. Use "check". As posições são calculadas em cada pedido (GPS real ou horário).' },
+        { error: 'Ação inválida. Use "check". As posições são calculadas em cada pedido (GPS real, ou a viagem do motorista).' },
         { status: 400 }
       );
     }

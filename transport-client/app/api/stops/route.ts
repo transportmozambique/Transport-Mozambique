@@ -6,8 +6,9 @@ import { prisma } from '@/lib/prisma';
 /**
  * Todas as paragens servidas por um autocarro, com as vias que passam por elas, para o mapa e a
  * pesquisa de paragens. Compacto (é a maior resposta da aplicação): cada paragem lista as suas vias
- * como índices em `vias`. `semAutocarro` lista as outras paragens (nenhuma via com veículo passa lá),
- * para o mapa ainda as poder mostrar.
+ * como índices em `vias`. `semAutocarro` lista as outras paragens das rotas activas (nenhuma via
+ * com veículo passa lá), para o mapa ainda as poder mostrar. As paragens só de rotas desactivadas
+ * no painel (Via.ativa) não aparecem.
  */
 export async function GET() {
   try {
@@ -21,7 +22,10 @@ export async function GET() {
       lng: s.point[1],
       v: s.routeIds.map((id) => index.get(id)).filter((i): i is number => i !== undefined),
     }));
-    const others = await prisma.paragem.findMany({ select: { id: true, nome: true, geoLocation: true } });
+    const others = await prisma.paragem.findMany({
+      where: { vias: { some: { via: { ativa: true } } } },
+      select: { id: true, nome: true, geoLocation: true },
+    });
     const semAutocarro = others.flatMap((p) => {
       const point = net.stops.has(p.id) ? null : parseLatLng(p.geoLocation);
       return point ? [{ id: p.id, nome: p.nome, lat: point[0], lng: point[1] }] : [];

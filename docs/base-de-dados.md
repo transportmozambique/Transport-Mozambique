@@ -56,6 +56,7 @@ erDiagram
     string terminalPartida
     string terminalChegada
     string geoLocationPath "lng,lat;lng,lat;…"
+    boolean ativa "só as activas aparecem"
     string municipioId FK
   }
   Paragem {
@@ -84,7 +85,18 @@ erDiagram
     string telefone
     string password "PIN em bcrypt, ou null"
     boolean emViagem
+    datetime viagemIniciadaEm
+    int viagemSentido "1 ou -1"
     string transporteId FK "único"
+  }
+  Acompanhamento {
+    string id PK
+    string telefone
+    json etapas "autocarros da viagem"
+    int etapa
+    int aviso
+    string transporteId "autocarro anunciado"
+    datetime terminadoEm
   }
   Utente {
     string id PK
@@ -120,7 +132,7 @@ O Prisma liga cada modelo a uma tabela com o mesmo nome, por isso os nomes mistu
 | `Provincia` | uma província | `nome`, `codigo` (único), `geoLocation` (centro `lat,lng`), `administradorId` |
 | `Cidade` | uma cidade (sem uso: sem interface, 0 linhas) | `nome`, `codigo`, `provinciaId` |
 | `Municipio` | um município (Maputo, Matola) | `nome`, `codigo` (único), `geoLocation`, `endereco`, `contacto1`, `provinciaId`, `cidadeId` |
-| [`Via`](glossario.md#a-rede-e-as-pessoas "A tabela das rotas de autocarro (route)") | uma rota (um sentido de uma linha, ou os dois) | `codigo` (único, ex: `V063`), `nome`, `cor` (cor hexadecimal nos mapas), `terminalPartida`, `terminalChegada` (nomes das pontas), `geoLocationPath` (o percurso pelas estradas), `municipioId`, `codigoMunicipio` |
+| [`Via`](glossario.md#a-rede-e-as-pessoas "A tabela das rotas de autocarro (route)") | uma rota (um sentido de uma linha, ou os dois) | `codigo` (único, ex: `V063`), `nome`, `cor` (cor hexadecimal nos mapas), `terminalPartida`, `terminalChegada` (nomes das pontas), `geoLocationPath` (o percurso pelas estradas), `ativa` (a rota aparece na web, no [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.") e nos [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis."); ver [Rotas activas](#rotas-activas)), `municipioId`, `codigoMunicipio` |
 | [`Paragem`](glossario.md#a-rede-e-as-pessoas "A tabela das paragens (stop)") | uma paragem | `codigo` (único, ex: `PAR-0869`), `nome`, `geoLocation` |
 | [`ViaParagem`](glossario.md#a-rede-e-as-pessoas "A ligação de uma paragem a uma rota") | "esta paragem está nesta rota" | `viaId`, `paragemId` (únicos em conjunto; os dois apagam em cascata), `terminalBoolean`, `codigoVia`, `codigoParagem` |
 
@@ -129,7 +141,7 @@ O Prisma liga cada modelo a uma tabela com o mesmo nome, por isso os nomes mistu
 | Tabela | Uma linha é | Colunas principais |
 |---|---|---|
 | [`Transporte`](glossario.md#a-rede-e-as-pessoas "A tabela dos veículos (vehicle)") | um veículo | `matricula` (única), `codigo` (número único), `marca`, `modelo`, `cor`, `lotacao` (lugares), `viaId` + `codigoVia` (a rota), `currGeoLocation` (última posição guardada), `routePath` (desactualizado, ver abaixo), `gpsDispositivoHash`, `gpsAtualizadoEm`, `gpsVelocidade` (km/h), `gpsDirecao` (graus, 0 = norte) |
-| [`Motorista`](glossario.md#a-rede-e-as-pessoas "A tabela dos motoristas e dos seus PIN") | um motorista | `nome`, `telefone`, `email` (único), `bi` (único), `cartaConducao` (única), `categoriaCarta`, `experienciaAnos`, datas da carta e do BI, contacto de emergência, `foto` ([URL](conceitos.md#url "O texto que diz ao navegador onde está uma página ou informação, como https://transport-mz.vercel.app/viagem.")), `status` (`ativo`/`inativo`/`suspenso`: a conta), `password` ([hash](conceitos.md#hash "Uma 'impressão digital' de um texto, que se calcula num sentido e não se consegue desfazer.") bcrypt do PIN, ou null = não pode entrar), `emViagem` + `viagemIniciadaEm` (viagem em curso), `transporteId` (único: um veículo por motorista e um motorista por veículo) |
+| [`Motorista`](glossario.md#a-rede-e-as-pessoas "A tabela dos motoristas e dos seus PIN") | um motorista | `nome`, `telefone`, `email` (único), `bi` (único), `cartaConducao` (única), `categoriaCarta`, `experienciaAnos`, datas da carta e do BI, contacto de emergência, `foto` ([URL](conceitos.md#url "O texto que diz ao navegador onde está uma página ou informação, como https://transport-mz.vercel.app/viagem.")), `status` (`ativo`/`inativo`/`suspenso`: a conta), `password` ([hash](conceitos.md#hash "Uma 'impressão digital' de um texto, que se calcula num sentido e não se consegue desfazer.") bcrypt do PIN, ou null = não pode entrar), `emViagem` + `viagemIniciadaEm` (viagem em curso: só os autocarros em viagem estão em serviço), `viagemSentido` (`1` partiu do início do percurso, `-1` do fim), `transporteId` (único: um veículo por motorista e um motorista por veículo) |
 | [`Proprietario`](glossario.md#a-rede-e-as-pessoas "A tabela dos donos dos veículos") | um dono de veículos (pessoa ou empresa) | `nome`, `bi` (único), `nacionalidade`, `birthDate`, `endereco`, `contacto1`, `contacto2`, `tipoProprietario` (`Indivíduo`/`Empresa`) |
 | `TransporteProprietario` | "este proprietário é dono deste veículo" | `transporteId`, `proprietarioId` (únicos em conjunto), `codigoTransporte`, `idProprietario` |
 | [`Administrador`](glossario.md#a-rede-e-as-pessoas "A tabela das contas do painel de administração") | uma conta do painel | `nome`, `email` (único), `senha` (bcrypt) |
@@ -138,8 +150,9 @@ O Prisma liga cada modelo a uma tabela com o mesmo nome, por isso os nomes mistu
 
 | Tabela | Uma linha é | Colunas principais |
 |---|---|---|
-| [`Utente`](glossario.md#a-rede-e-as-pessoas "A tabela das contas de passageiros") | um passageiro | `nome`, `email` (único), `telefone` (único), `senha` (hash bcrypt, ou `temp` nas contas criadas por [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.")), `mISSION` (código de referência único), `subscrito`, `dataSubscricao` |
-| [`MISSION`](glossario.md#a-rede-e-as-pessoas "Um alerta de chegada: um SMS quando um autocarro estiver perto de uma paragem") | um alerta de chegada: "este passageiro espera nesta paragem" | `utenteId`, `paragemId`, `createdAt` (alertas com mais de 24 h são ignorados), `notificadoEm` (último [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") de chegada), `geoLocationParagem`, `codigoParagem`, `mISSIONUtente` |
+| [`Utente`](glossario.md#a-rede-e-as-pessoas "A tabela das contas de passageiros") | um passageiro | `nome`, `email` (único), `telefone` (único), `senha` (hash bcrypt, ou `temp` nas contas criadas por USSD), `mISSION` (código de referência único), `subscrito`, `dataSubscricao` |
+| [`MISSION`](glossario.md#a-rede-e-as-pessoas "Um alerta de chegada: um SMS quando um autocarro estiver perto de uma paragem") | um alerta de chegada: "este passageiro espera nesta paragem" | `utenteId`, `paragemId`, `createdAt` (alertas com mais de 24 h são ignorados), `notificadoEm` (último SMS de chegada), `geoLocationParagem`, `codigoParagem`, `mISSIONUtente` |
+| [`Acompanhamento`](glossario.md#a-rede-e-as-pessoas "Uma viagem acompanhada por SMS: os avisos de cada autocarro até ao destino") | uma viagem acompanhada por SMS (opção 1 do USSD, "Acompanhar por SMS") | `telefone`, `utenteId` (opcional), `etapas` ([JSON](conceitos.md#json): para cada autocarro da viagem, `viaId`, `busId`, `from`, `to`), `destinoId`, `destinoNome`, `etapa` (o autocarro em que o passageiro está, 0 o primeiro), `aviso` (o último aviso enviado, um número que só sobe), `transporteId` (o autocarro anunciado no último aviso), `terminadoEm` (preenchido no destino, quando o mesmo telefone pede outra viagem, ou ao fim de 4 horas). Ver [Fluxos de dados → Os avisos de uma viagem acompanhada](fluxos-de-dados.md#os-avisos-de-uma-viagem-acompanhada) |
 | `Tarifa` | a regra de tarifa e velocidades | `nome` (único), `tarifaMinima` (MT), `precoPorKm` (MT/km), `fatorEstrada`, `velocidadeViagemKmh`, `velocidadeChegadaKmh`, `ativa`. Usa-se a linha activa mais recente ([Configuração](configuracao.md#regra-de-tarifa-tarifa)) |
 | `GeoLocation` | histórico antigo de posições (a actual e as 3 anteriores) | preenchida pela importação inicial; nada publicado escreve nela. As posições vivem agora em `Transporte` |
 
@@ -473,7 +486,7 @@ FROM "Utente";
 
 Uma conta só de USSD passa a conta completa quando o mesmo número se regista na web ([Aplicação dos passageiros → Conta e entrada](app-passageiros.md#conta-e-entrada)).
 
-**Apagar os passageiros de teste.** Cada ensaio da opção 1 no [simulador](africas-talking.md#usar-o-menu-no-simulador) cria um passageiro só de USSD com o número de teste, e um alerta de chegada (`MISSION`) na paragem onde a viagem começa. Porquê apagá-los: a verificação de chegadas continua a enviar-lhes SMS. Primeiro vê-se o que existe (só leitura):
+**Apagar os passageiros de teste.** Até Outubro de 2026, cada ensaio da opção 1 no [simulador](africas-talking.md#usar-o-menu-no-simulador) criava um passageiro só de USSD com o número de teste, e um alerta de chegada (`MISSION`) na paragem onde a viagem começa. Hoje a opção 1 grava só um `Acompanhamento` ([abaixo](#viagens-acompanhadas-por-sms)). Porquê apagá-los: a verificação de chegadas continua a enviar-lhes SMS. Primeiro vê-se o que existe (só leitura):
 
 ```sql
 SELECT u.telefone, u.nome, u."createdAt" AS criado, count(m.id) AS alertas
@@ -485,7 +498,7 @@ GROUP BY u.id
 ORDER BY u."createdAt";
 ```
 
-Depois apaga-se numa só instrução, que devolve uma cópia em [JSON](conceitos.md#json "Uma forma de escrever dados em texto que qualquer programa lê: nomes entre aspas, valores depois de dois pontos, listas entre parênteses rectos.") das linhas apagadas. Só apanha contas criadas pelo USSD (`senha = 'temp'`, nunca registadas na web) com estes números de teste; correr duas vezes não apaga mais nada:
+Depois apaga-se numa só instrução, que devolve uma cópia em JSON das linhas apagadas. Só apanha contas criadas pelo USSD (`senha = 'temp'`, nunca registadas na web) com estes números de teste; correr duas vezes não apaga mais nada:
 
 ```sql
 WITH alvo AS (
@@ -507,6 +520,77 @@ SELECT
 ```
 
 Porquê uma só instrução: o [SQL Editor da Neon](guia-neon.md#4-várias-instruções-de-uma-vez) mostra um resultado por instrução, e assim os alertas e os passageiros saem juntos ou não sai nada. A cópia em JSON descarrega-se do resultado ([Guia da Neon → Descarregar](guia-neon.md#5-descarregar-histórico-e-consultas-guardadas)). Outro número de teste junta-se às duas listas.
+
+### Viagens acompanhadas por SMS
+
+```sql
+SELECT a."createdAt", a.telefone, a."destinoNome", a.etapa, a.aviso, a."terminadoEm",
+       jsonb_array_length(a.etapas) AS autocarros
+FROM "Acompanhamento" a
+ORDER BY a."createdAt" DESC
+LIMIT 20;
+```
+
+As linhas com `terminadoEm` vazio são as que a verificação de chegadas ainda segue. `aviso` diz o último SMS enviado (`AVISO` em [`lib/journeyAlerts.ts`](../transport-client/lib/journeyAlerts.ts): 10, 20 e 30 são os 15, 10 e 5 minutos; 40 "a chegar"; 60 a 80 a bordo; 90 na saída). Para apagar os acompanhamentos de um número de teste, numa só instrução:
+
+```sql
+WITH apagados AS (
+  DELETE FROM "Acompanhamento"
+  WHERE regexp_replace(telefone, '[^0-9+]', '', 'g') IN ('+258840000009')
+  RETURNING *
+)
+SELECT count(*) AS apagados, json_agg(apagados) AS copia FROM apagados;
+```
+
+## Rotas activas
+
+Só as rotas com `Via.ativa = true` aparecem aos passageiros: no mapa e nas viagens da web, no USSD, nos SMS e no início do painel. As outras ficam guardadas, com as suas paragens e veículos, e o painel mostra-as no filtro "Desactivadas". Os motoristas de uma rota desactivada não conseguem iniciar a viagem. Porquê uma coluna em vez de apagar: voltar atrás é mudar um valor, e nada se perde.
+
+Desde 2026-10-27 estão activas 3 rotas, escolhidas porque se ligam umas às outras e permitem experimentar viagens com 2 [transbordos](glossario.md#palavras-dos-ecrãs "Mudança de autocarro a meio de uma viagem") (Xipamanine para Zimpeto):
+
+| Código | Rota | Autocarros | Liga a |
+|---|---|---|---|
+| X19 | Xipamanine – Museu | ADA-013M, ADA-014M | 411, em Igreja / Capuchinho |
+| 411 | Baixa – Praça dos Combatentes | ADA-193M, ADA-194M | X19, e X22 na Praça dos Combatentes |
+| X22 | Praça dos Combatentes – Zimpeto | ADA-169M, ADA-170M | 411 |
+
+**Mudar as rotas activas.** Uma de cada vez, no painel ([Painel → Activar ou desactivar rotas](painel-admin.md#tarefa-activar-rotas)). Várias de uma vez, com uma só instrução no [SQL Editor da Neon](guia-neon.md) (trocar os códigos na lista, nos três sítios):
+
+```sql
+WITH escolhidas AS (
+  SELECT id FROM "Via" WHERE codigo IN ('X19', '411', 'X22')
+),
+mudadas AS (
+  UPDATE "Via" v
+  SET ativa = (v.codigo IN ('X19', '411', 'X22'))
+  WHERE v.ativa IS DISTINCT FROM (v.codigo IN ('X19', '411', 'X22'))
+    AND (SELECT count(*) FROM escolhidas) = 3
+  RETURNING v.ativa
+)
+SELECT
+  (SELECT count(*) FROM escolhidas)        AS rotas_encontradas,
+  count(*) FILTER (WHERE ativa)            AS activadas_agora,
+  count(*) FILTER (WHERE NOT ativa)        AS desactivadas_agora,
+  -- Dentro da mesma instrução, "Via" ainda se lê como estava antes: somam-se as mudanças
+  (SELECT count(*) FROM "Via" WHERE ativa) + count(*) FILTER (WHERE ativa) - count(*) FILTER (WHERE NOT ativa) AS activas_no_fim
+FROM mudadas;
+```
+
+O que faz: activa as rotas da lista e desactiva todas as outras. Porquê o `= 3`: se um código estiver mal escrito, `rotas_encontradas` sai menor e nada muda (o número tem de ser o tamanho da lista). Correr outra vez não muda nada. A web e o USSD vêem a mudança em até 5 minutos. Para voltar a mostrar todas as rotas: `UPDATE "Via" SET ativa = true WHERE NOT ativa;`.
+
+As rotas activas, com os autocarros e se os motoristas têm PIN:
+
+```sql
+SELECT v.codigo AS rota, v.nome, t.matricula, m.nome AS motorista, m.telefone,
+       (m.password IS NOT NULL) AS tem_pin, m."emViagem" AS em_viagem
+FROM "Via" v
+JOIN "Transporte" t ON t."viaId" = v.id
+LEFT JOIN "Motorista" m ON m."transporteId" = t.id
+WHERE v.ativa
+ORDER BY v.codigo, t.matricula;
+```
+
+Um autocarro só anda no mapa depois de o seu motorista iniciar a viagem, e para isso precisa de um PIN ([Painel → Dar um PIN a um motorista](painel-admin.md#tarefa-pin)).
 
 ## Mudar dados
 
@@ -554,7 +638,7 @@ O que faz:
   - Toyota Hiace (15 lugares) para chapas, e Mercedes-Benz Sprinter (22) para a EMTPM e os Corujas;
   - as próximas matrículas livres da série `ADA-001M`.
 
-  Como todos os veículos sem dispositivo GPS, andam pelo modelo de horário ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)). Quando um operador registar o veículo real, edita-se o registo ou substitui-se.
+  Como todos os veículos sem dispositivo GPS, só andam no mapa depois de o motorista iniciar a viagem ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)). Quando um operador registar o veículo real, edita-se o registo ou substitui-se.
 - **Cópia e desfazer.** `--apply` guarda primeiro todas as linhas de `Paragem`, `Via`, `ViaParagem` e `Transporte` em `osm-data/backup-<hora>.json`. No fim lista o que criou em `osm-data/created-<hora>.json`: códigos de paragens, códigos de rotas, matrículas e as paragens ligadas a rotas existentes. Para desfazer a importação, apagar essas linhas.
 - **Idempotente.** Uma segunda corrida não junta nada.
 
@@ -738,7 +822,7 @@ Numa cópia da produção (2026-10-18) criou 340 motoristas: os 451 veículos pa
 
 ## Alterações ao esquema e migrações
 
-O histórico de migrações está em [`prisma/migrations/`](../prisma/migrations) (seis migrações, `20260430170348_init` a `20261016150000_vehicle_gps`). Numa base de dados nova, `prisma migrate deploy` aplica-as todas ([Primeiros passos](primeiros-passos.md#5-criar-o-esquema)).
+O histórico de migrações está em [`prisma/migrations/`](../prisma/migrations) (sete migrações, `20260430170348_init` a `20261027120000_rotas_activas_e_acompanhamentos`). Numa base de dados nova, `prisma migrate deploy` aplica-as todas ([Primeiros passos](primeiros-passos.md#5-criar-o-esquema)).
 
 **A base de dados de produção não tem a tabela `_prisma_migrations`.** Foi criada com `db push`, antes de existir histórico de migrações, por isso `prisma migrate deploy` tentaria criar outra vez todas as tabelas. Por essa razão as migrações escrevem-se para poderem correr outra vez sem dano (`ADD COLUMN IF NOT EXISTS`, `CREATE … IF NOT EXISTS`). Para mudar o esquema de produção, passo a passo:
 

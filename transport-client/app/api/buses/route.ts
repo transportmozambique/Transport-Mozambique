@@ -8,7 +8,7 @@ import {
   parseRoutePath,
   type LatLng,
 } from '@/lib/fares';
-import { POSITION_FIELDS, currentSpeedKmh, estimateBusTrip, routePaths, vehiclePosition } from '@/lib/vehiclePosition';
+import { POSITION_FIELDS, currentSpeedKmh, estimateBusTrip, routePaths, statusLabel, vehiclePosition } from '@/lib/vehiclePosition';
 import { maybeCheckArrivals } from '@/lib/busSimulator';
 import { waitUntil } from '@vercel/functions';
 
@@ -26,7 +26,13 @@ import { waitUntil } from '@vercel/functions';
  * - Distância Viagem: distância da origem ao destino do passageiro
  * - Tempo de Viagem: tempo que o passageiro passa no autocarro (origem → destino)
  * - Preço: pela distância da viagem do passageiro, com a regra de Tarifa activa (lib/fares.ts)
+ *
+ * Só os autocarros das rotas activas (Via.ativa). Um autocarro cujo motorista não iniciou a viagem
+ * aparece parado, "Fora de serviço" (lib/vehiclePosition.ts).
  */
+
+/** Os autocarros das rotas activas */
+const ON_ACTIVE_ROUTE = { via: { ativa: true } } as const;
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,7 +47,7 @@ export async function GET(request: NextRequest) {
     if (searchParams.get('fields') === 'position') {
       const [rows, paths] = await Promise.all([
         prisma.transporte.findMany({
-          where: { viaId: { not: null } },
+          where: ON_ACTIVE_ROUTE,
           select: { ...POSITION_FIELDS, viaId: true },
         }),
         routePaths(),
@@ -50,7 +56,7 @@ export async function GET(request: NextRequest) {
       const buses = rows.flatMap((t) => {
         const pos = vehiclePosition(t, paths.get(t.viaId!), now, rule);
         return pos
-          ? [{ id: t.id, latitude: pos.point[0], longitude: pos.point[1], fonte: pos.source, direcao: pos.heading }]
+          ? [{ id: t.id, latitude: pos.point[0], longitude: pos.point[1], fonte: pos.source, direcao: pos.heading, status: statusLabel(pos) }]
           : [];
       });
       // O mapa ao vivo pede isto a cada poucos segundos: um bom momento para verificar os SMS de chegada
@@ -62,7 +68,7 @@ export async function GET(request: NextRequest) {
     const servesStop = searchParams.get('servesStop');
     if (servesStop) {
       const rows = await prisma.transporte.findMany({
-        where: { via: { paragens: { some: { paragemId: servesStop } } } },
+        where: { via: { ativa: true, paragens: { some: { paragemId: servesStop } } } },
         select: { id: true, matricula: true, via: { select: { nome: true } } },
         orderBy: { matricula: 'asc' },
       });
@@ -75,7 +81,7 @@ export async function GET(request: NextRequest) {
     if (searchParams.get('fields') === 'map') {
       const [rows, paths] = await Promise.all([
         prisma.transporte.findMany({
-          where: { viaId: { not: null } },
+          where: ON_ACTIVE_ROUTE,
           select: { ...POSITION_FIELDS, matricula: true, viaId: true, via: { select: { nome: true } } },
         }),
         routePaths(),
@@ -91,7 +97,7 @@ export async function GET(request: NextRequest) {
               latitude: pos.point[0],
               longitude: pos.point[1],
               fonte: pos.source,
-              status: !pos.moving && pos.source === 'horario' ? 'No terminal' : 'Em Circulação',
+              status: statusLabel(pos),
             }]
           : [];
       });
@@ -102,7 +108,9 @@ export async function GET(request: NextRequest) {
     if (!paragemId && !viaId && !viaIds && !destinoId) {
       
       const allTransportes = await prisma.transporte.findMany({
+        where: ON_ACTIVE_ROUTE,
         include: {
+          motorista: { select: POSITION_FIELDS.motorista.select },
           via: {
             include: {
               paragens: {
@@ -125,7 +133,7 @@ export async function GET(request: NextRequest) {
         const { via } = transporte;
         // Paragens pela ordem de viagem (a ordem dos ids não é)
         via.paragens = orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation);
-        // GPS real quando recente, senão a posição pelo horário na via
+        // GPS real quando recente, senão a posição pela viagem do motorista (parado sem viagem)
         const position = vehiclePosition(transporte, via.geoLocationPath || transporte.routePath, now, rule);
         const [currentLat, currentLng] =
           position?.point ?? parseLatLng(via.paragens[0]?.paragem.geoLocation) ?? [-25.9655, 32.5892];
@@ -157,7 +165,7 @@ export async function GET(request: NextRequest) {
           latitude: currentLat,
           longitude: currentLng,
           fonte: position?.source ?? 'horario',
-          status: position && !position.moving && position.source === 'horario' ? 'No terminal' : 'Em Circulação',
+          status: statusLabel(position),
           fare,
           routePath: routePath,
           stops: stops,
@@ -202,8 +210,9 @@ export async function GET(request: NextRequest) {
 
     // Encontrar todos os transportes que passam pelas DUAS paragens
     const allTransportes = await prisma.transporte.findMany({
-      where: viaIdFilter ? { viaId: { in: viaIdFilter } } : {},
+      where: viaIdFilter ? { ...ON_ACTIVE_ROUTE, viaId: { in: viaIdFilter } } : ON_ACTIVE_ROUTE,
       include: {
+        motorista: { select: POSITION_FIELDS.motorista.select },
         via: {
           include: {
             paragens: {
@@ -263,7 +272,7 @@ export async function GET(request: NextRequest) {
           latitude: bus[0],
           longitude: bus[1],
           fonte: position?.source ?? 'horario',
-          status: 'Em Circulação',
+          status: statusLabel(position),
           fare: trip.fare,
           routeCoords: parseRoutePath(via.geoLocationPath).map(([lat, lng]) => [lng, lat]),
           stops: stops.map(({ vp, point }) => ({

@@ -588,7 +588,7 @@ A **latitude** diz quão a norte ou a sul (negativa a sul do equador: Maputo est
 
 **Em uma frase:** o sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.
 
-Um autocarro com GPS envia a sua posição real à plataforma a cada poucos segundos. Um autocarro sem GPS aparece no mapa numa posição **estimada** a partir do horário ([Localização e GPS → Como se escolhe uma posição](localizacao-gps.md#como-se-escolhe-uma-posição)). Hoje, nenhum veículo tem GPS.
+Um autocarro com GPS envia a sua posição real à plataforma a cada poucos segundos. Um autocarro sem GPS aparece no mapa numa posição **estimada** a partir da hora em que o motorista iniciou a viagem ([Localização e GPS → Como se escolhe uma posição](localizacao-gps.md#como-se-escolhe-uma-posição)). Hoje, nenhum veículo tem GPS.
 
 ### Rastreador GPS e código do dispositivo
 

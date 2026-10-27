@@ -19,9 +19,9 @@ Anterior: [Fluxos de dados](fluxos-de-dados.md) · [Índice](README.md) · Segui
 </details>
 <!-- /navegação -->
 
-> **Em palavras simples:** Cada autocarro aparece no mapa num ponto. Se o autocarro tem um aparelho de [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas."), o ponto é a sua posição real; se não tem (hoje nenhum tem), a plataforma calcula onde ele deve estar pelo horário. Esta página explica os dois casos, e como ligar um telemóvel ou um aparelho de GPS a um autocarro.
+> **Em palavras simples:** Cada autocarro aparece no mapa num ponto. Se o autocarro tem um aparelho de [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas."), o ponto é a sua posição real; se não tem (hoje nenhum tem), a plataforma calcula onde ele está a partir da hora em que o motorista carregou em "Iniciar viagem". Sem viagem iniciada, o autocarro está parado e os passageiros não contam com ele. Esta página explica estes casos, e como ligar um telemóvel ou um aparelho de GPS a um autocarro.
 
-Cada veículo tem sempre uma posição. Vem de um dispositivo GPS real quando um enviou posição nos últimos 3 minutos; senão vem do **horário**: uma estimativa determinística de onde o autocarro estaria se fosse e voltasse ao longo da sua rota o dia inteiro. Esta página explica como se escolhe a posição e porquê, como ligar um telemóvel ou um [rastreador](conceitos.md#rastreador "Um aparelho (ou um telemóvel com uma aplicação) que envia a posição de um veículo pela internet; o código do dispositivo é a sua 'palavra-passe'.") a um veículo, e o protocolo que a aplicação dos passageiros aceita.
+Cada veículo tem sempre uma posição. Vem de um dispositivo GPS real quando um enviou posição nos últimos 3 minutos; senão vem da **viagem do motorista**: desde que ele carregou em "Iniciar viagem" (no [portal do motorista](portal-motorista.md) ou na opção 6 do [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.")), o autocarro vai e volta ao longo da rota, e sem viagem está parado e fora de serviço. O portal do motorista, o mapa e as viagens da web, o USSD, os [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") e o painel usam esta mesma conta, por isso mostram o mesmo autocarro no mesmo sítio e no mesmo estado. Esta página explica como se escolhe a posição e porquê, como ligar um telemóvel ou um [rastreador](conceitos.md#rastreador "Um aparelho (ou um telemóvel com uma aplicação) que envia a posição de um veículo pela internet; o código do dispositivo é a sua 'palavra-passe'.") a um veículo, e o protocolo que a aplicação dos passageiros aceita.
 
 **Nesta página:** [Como se escolhe uma posição](#como-se-escolhe-uma-posição) · [Onde se usam as posições](#onde-se-usam-as-posições) · [Ligar um dispositivo](#ligar-um-dispositivo) · [Protocolo](#protocolo) · [Verificar que funciona](#verificar-que-funciona) · [Revogar um dispositivo](#revogar-um-dispositivo) · [Limites](#limites)
 
@@ -34,51 +34,66 @@ Cada veículo tem sempre uma posição. Vem de um dispositivo GPS real quando um
 ```mermaid
 flowchart TD
   A["vehiclePosition(veículo, percurso da rota, agora)"] --> B{"Posição GPS com menos de 3 min?<br/>(Transporte.gpsAtualizadoEm)"}
-  B -- sim --> G["Posição GPS<br/>fonte = gps"]
-  B -- não --> C{"A rota tem percurso?<br/>(Via.geoLocationPath)"}
-  C -- sim --> H["Posição pelo horário<br/>fonte = horario"]
-  C -- não --> D{"Há posição guardada?<br/>(Transporte.currGeoLocation)"}
-  D -- sim --> L["Último ponto guardado, parado<br/>fonte = horario"]
-  D -- não --> N["Sem posição"]
+  B -- sim --> G["Posição GPS<br/>fonte = gps<br/>em serviço só com viagem iniciada"]
+  B -- não --> T{"O motorista iniciou a viagem?<br/>(Motorista.emViagem)"}
+  T -- não --> P["Parado, fora de serviço<br/>onde ficou, ou no terminal do início"]
+  T -- sim --> C{"A rota tem percurso?<br/>(Via.geoLocationPath)"}
+  C -- sim --> H["Posição pela viagem<br/>fonte = horario, em serviço"]
+  C -- não --> L["Último ponto guardado, parado<br/>(Transporte.currGeoLocation)"]
 ```
+
+**Em serviço** quer dizer que o motorista iniciou a viagem (`Motorista.emViagem`). Só os autocarros em serviço entram nas viagens planeadas, nas horas de chegada, nos SMS e em "Em servico" do USSD. O mapa mostra também os parados, com o estado "Fora de serviço". Porquê: um autocarro sem motorista ao volante não vai chegar, e mostrá-lo a andar enganava o passageiro (era o que acontecia até Outubro de 2026, quando a posição vinha de um horário fixo, das 05:00 às 21:00, que ignorava o portal do motorista).
 
 **1. GPS real.** Se `gpsAtualizadoEm` tem menos de 3 minutos (`GPS_FRESH_MS`), o veículo está em `currGeoLocation`:
 
-- está **em movimento** quando a velocidade enviada é maior do que 0,5 km/h (ou desconhecida);
+- está **em movimento** quando a velocidade enviada é maior do que 0,5 km/h (ou desconhecida) **e** o motorista iniciou a viagem;
 - o seu sítio na rota é o ponto mais próximo do percurso da rota;
 - o **sentido** compara o rumo enviado com o rumo do próprio percurso nesse ponto: até 90° quer dizer "para o fim do percurso", senão "de volta";
 - a velocidade é `gpsVelocidade`.
 
-**2. Horário.** Sem posição recente, o autocarro vai e volta ao longo do percurso da rota à velocidade de viagem da tarifa (`Tarifa.velocidadeViagemKmh`, 30 km/h por omissão):
+Um rastreador ligado num autocarro sem viagem iniciada mostra onde ele está, mas o autocarro continua fora de serviço.
+
+**2. Viagem iniciada, sem GPS.** O autocarro parte do [terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.") de onde saiu à hora em que o motorista iniciou a viagem, e vai e volta ao longo do percurso da rota à velocidade de viagem da tarifa (`Tarifa.velocidadeViagemKmh`, 30 km/h por omissão), até o motorista encerrar a viagem ([`tripPosition`](../transport-client/lib/vehiclePosition.ts)):
 
 | Regra | Valor |
 |---|---|
-| Horas de serviço | 05:00–21:00, hora de Maputo (UTC+2 todo o ano) |
-| Um ciclo | ida, 5 min no [terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.") do fim, volta, 5 min no primeiro terminal |
+| Início | `Motorista.viagemIniciadaEm`, gravado em "Iniciar viagem" |
+| Terminal de partida | `Motorista.viagemSentido`: `1` o início do percurso, `-1` o fim. Escolhe-se ao iniciar: o terminal mais perto de onde o autocarro estava parado ([`startTrip`](../transport-client/lib/driverTrips.ts)) |
+| Um ciclo | ida, 5 min no terminal do fim, volta, 5 min no terminal de partida, e outra vez |
 | Duração de cada sentido | comprimento do percurso ÷ velocidade de viagem |
-| Onde está cada autocarro no ciclo | desfasado por um número tirado do id do veículo (FNV-1a), para os autocarros da mesma rota ficarem espalhados |
-| Fora das horas de serviço | parado até às 05:00, metade dos autocarros em cada terminal (também pelo número) |
+| Fim | "Encerrar viagem": o autocarro fica parado no ponto onde estava (gravado em `Transporte.currGeoLocation` quando não há GPS) |
 
-O autocarro segue exactamente o percurso guardado: onde um percurso corta quarteirões, o autocarro no mapa também. Corrigir um percurso ([Base de dados → Pôr os percursos nas estradas](base-de-dados.md#pôr-os-percursos-das-rotas-nas-estradas), ou "Redesenhar percurso" no painel) muda logo as posições pelo horário e as horas de chegada.
+O autocarro segue exactamente o percurso guardado: onde um percurso corta quarteirões, o autocarro no mapa também. Corrigir um percurso ([Base de dados → Pôr os percursos nas estradas](base-de-dados.md#pôr-os-percursos-das-rotas-nas-estradas), ou "Redesenhar percurso" no painel) muda logo as posições e as horas de chegada.
 
-O resultado depende só da hora, do id do veículo, do percurso e da velocidade. **Porquê assim:** todos os [endpoints](conceitos.md#api "Uma API é a lista de pedidos que um servidor aceita de outros programas; cada um desses pedidos, com o seu endereço, é um endpoint."), todas as instâncias [serverless](conceitos.md#serverless "Um pedaço de código que a Vercel arranca só quando chega um pedido, e desliga a seguir.") e os menus [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.") calculam a mesma posição sem falarem uns com os outros, e nada corre em segundo plano (a [Vercel](conceitos.md#vercel "A empresa cujos servidores correm as três aplicações e as publicam a cada merge.") não tem processos sempre ligados). **O que se perde:** o horário é uma estimativa, não um horário publicado; o GPS real resolve-o ([Limitações](limitacoes.md)).
+O resultado depende só da hora, da viagem (início e terminal de partida), do percurso e da velocidade. **Porquê assim:** todos os [endpoints](conceitos.md#api "Uma API é a lista de pedidos que um servidor aceita de outros programas; cada um desses pedidos, com o seu endereço, é um endpoint."), todas as instâncias [serverless](conceitos.md#serverless "Um pedaço de código que a Vercel arranca só quando chega um pedido, e desliga a seguir.") e os menus USSD calculam a mesma posição sem falarem uns com os outros, e nada corre em segundo plano (a [Vercel](conceitos.md#vercel "A empresa cujos servidores correm as três aplicações e as publicam a cada merge.") não tem processos sempre ligados). **O que se perde:** sem GPS é uma estimativa: o trânsito e as paragens longas não contam, e o autocarro real pode ir adiantado ou atrasado. O GPS real resolve-o ([Limitações](limitacoes.md)).
 
-**3. Sem percurso.** Uma rota sem percurso guardado não se pode seguir. O veículo aparece parado no último `currGeoLocation` guardado; sem ele, não tem posição (o painel mostra "Sem rota").
+**3. Sem viagem.** O autocarro está parado e fora de serviço. Fica no último ponto guardado em `currGeoLocation` quando esse ponto está a menos de 300 m do percurso (onde a última viagem acabou); senão, no primeiro ponto do percurso (`parkedPosition`).
 
-Uma posição GPS não muda a forma da rota nem o horário. Quando a posição passa os 3 minutos, o veículo volta simplesmente à posição pelo horário, que pode ser noutro sítio da rota.
+**4. Sem percurso.** Uma rota sem percurso guardado não se pode seguir. O veículo aparece parado no último `currGeoLocation` guardado; sem ele, não tem posição (o painel mostra "Sem rota").
+
+Uma posição GPS não muda a forma da rota nem a viagem. Quando a posição passa os 3 minutos, o veículo volta à posição pela viagem, que pode ser noutro sítio da rota.
+
+**Os estados**, iguais em todo o lado ([`statusLabel`](../transport-client/lib/vehiclePosition.ts)):
+
+| Estado | Quando | Portal do motorista | Web | USSD (opção 5) |
+|---|---|---|---|---|
+| Em circulação | em viagem, a andar | "Em viagem"; "Os passageiros vêem: Em circulação" | "Em circulação" | `Em circulacao` |
+| No terminal | em viagem, nos 5 min de espera num terminal | "Em viagem"; "Os passageiros vêem: No terminal" | "No terminal" | `No terminal` |
+| Fora de serviço | sem viagem iniciada | "Parado"; "Os passageiros vêem: Fora de serviço" | "Fora de serviço" | `Parado, fora de servico` |
 
 ## Onde se usam as posições
 
 | Quem usa | Endpoint ou código | Usa |
 |---|---|---|
-| Mapa ao vivo dos passageiros | `GET /api/buses?fields=map`, depois `GET /api/buses?fields=position` | posição, `fonte` (`gps` ou `horario`), rumo |
-| Resultados de pesquisa, acompanhar uma viagem | `GET /api/buses?paragemId=…`, `POST /api/viagem` | posição, sentido e sítio no percurso → hora de chegada |
-| Opções 1, 4 e 5 do USSD | `/api/ussd` | hora de chegada; paragem mais próxima do autocarro |
-| [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") de chegada | `checkAndNotifyUsers()` ([`lib/busSimulator.ts`](../transport-client/lib/busSimulator.ts)) | distância dos autocarros em movimento à paragem onde se espera |
+| Portal do motorista, "Os passageiros vêem" | `GET /api/driver/trip` (campo `autocarro`) | o estado, a posição e as próximas paragens que os passageiros vêem, a cada 10 s |
+| Mapa ao vivo dos passageiros | `GET /api/buses?fields=map`, depois `GET /api/buses?fields=position` | posição, `fonte` (`gps` ou `horario`), rumo, estado |
+| Resultados de pesquisa, acompanhar uma viagem | `GET /api/buses?paragemId=…`, `POST /api/viagem` | posição, sentido e sítio no percurso → hora de chegada (só autocarros em serviço) |
+| Opções 1, 2, 4 e 5 do USSD | `/api/ussd` | viagens e horas (só em serviço), "Em servico: N de M", estado e paragem mais próxima |
+| SMS de chegada e avisos das viagens acompanhadas | `checkAndNotifyUsers()` ([`lib/busSimulator.ts`](../transport-client/lib/busSimulator.ts)), `checkJourneyAlerts()` ([`lib/journeyAlerts.ts`](../transport-client/lib/journeyAlerts.ts)) | minutos até cada autocarro em serviço chegar à paragem |
 | Lista de veículos e página do veículo no painel | `GET /api/transportes/estado`, `/posicao` | coluna "Agora", mapa ao vivo, etiqueta |
-| "Próximas Passagens" e gráficos do painel | `GET /api/transportes/{id}/operacao` | só o horário |
+| "Próximas Passagens" e gráficos do painel | `GET /api/transportes/{id}/operacao` | a viagem em curso, desde que o motorista a iniciou |
 
-As horas de chegada usam as mesmas regras: um autocarro que já passou a paragem, ou que vai no outro sentido, primeiro dá a volta num terminal (5 minutos lá), e uma passagem depois das 21:00 passa a ser a da manhã seguinte ([Fluxos de dados → Hora de chegada](fluxos-de-dados.md#hora-de-chegada)).
+As horas de chegada usam as mesmas regras: um autocarro que já passou a paragem, ou que vai no outro sentido, primeiro dá a volta num terminal (5 minutos lá) ([Fluxos de dados → Hora de chegada](fluxos-de-dados.md#hora-de-chegada)). Um autocarro parado não tem hora de chegada: quando nenhum autocarro de uma rota está em serviço, a web e o USSD dizem-no, em vez de inventar uma hora.
 
 ## Ligar um dispositivo
 
@@ -203,12 +218,13 @@ ORDER BY "gpsAtualizadoEm" DESC NULLS LAST;
 
 ## Revogar um dispositivo
 
-"Revogar dispositivo" no cartão GPS do veículo (`DELETE /api/transportes/{id}/gps`) limpa o hash do código e `gpsAtualizadoEm`, `gpsVelocidade` e `gpsDirecao`. O dispositivo passa a receber 401, e o veículo volta logo à posição pelo horário. Para passar um telemóvel para outro veículo, gerar um código no veículo novo e escrevê-lo no telemóvel.
+"Revogar dispositivo" no cartão GPS do veículo (`DELETE /api/transportes/{id}/gps`) limpa o hash do código e `gpsAtualizadoEm`, `gpsVelocidade` e `gpsDirecao`. O dispositivo passa a receber 401, e o veículo volta logo à posição pela viagem do motorista (ou parado, sem viagem). Para passar um telemóvel para outro veículo, gerar um código no veículo novo e escrevê-lo no telemóvel.
 
 ## Limites
 
-- **Recente quer dizer 3 minutos.** Um dispositivo que envia com menos frequência faz o autocarro saltar entre o ponto GPS e o ponto do horário. Os 15 s do Traccar Client ficam bem dentro do limite.
-- **O estado da viagem não trava os rastreadores.** O Traccar Client e os rastreadores enviam sempre que estão ligados. Só a partilha pelo navegador do portal do motorista espera por "Iniciar viagem".
+- **Recente quer dizer 3 minutos.** Um dispositivo que envia com menos frequência faz o autocarro saltar entre o ponto GPS e o ponto calculado pela viagem. Os 15 s do Traccar Client ficam bem dentro do limite.
+- **O estado da viagem não trava os rastreadores.** O Traccar Client e os rastreadores enviam sempre que estão ligados, e a posição aparece no mapa. Mas o autocarro só fica em serviço (viagens, horas, SMS) depois de "Iniciar viagem". A partilha pelo navegador do portal do motorista também espera por "Iniciar viagem".
+- **Sem GPS, a viagem começa sempre num terminal.** Quem inicia a viagem a meio da rota aparece no terminal mais perto, e o autocarro no mapa vai à frente ou atrás do real até a viagem acertar. Um GPS resolve-o.
 - **Um dispositivo por veículo.** Um código novo substitui o anterior.
 - **Sem histórico.** Cada posição substitui a anterior; não se guarda o trajecto. (`GeoLocation` só tem dados da importação inicial.)
 - **Posições fora da rota aparecem onde estão.** A hora de chegada projecta-as no ponto mais próximo do percurso da rota.

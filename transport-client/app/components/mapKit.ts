@@ -38,13 +38,14 @@ export function glideMarker(marker: maplibregl.Marker, to: [number, number]) {
 }
 
 /** Conteúdo do balão construído como DOM, para os nomes vindos da base de dados nunca serem lidos como HTML (sem injecção de código). */
-export function popupContent(lines: { text: string; bold?: boolean; color?: string; href?: string }[]) {
+export function popupContent(lines: { text: string; bold?: boolean; color?: string; href?: string; key?: string }[]) {
   const div = document.createElement("div");
   div.style.color = "#0f172a";
   lines.forEach((line, i) => {
     if (i) div.appendChild(document.createElement("br"));
     const el = document.createElement(line.href ? "a" : line.bold ? "strong" : "span");
     el.textContent = line.text;
+    if (line.key) el.dataset.key = line.key; // para encontrar a linha e actualizá-la depois (o estado de um autocarro)
     if (line.color) el.style.color = line.color;
     if (el instanceof HTMLAnchorElement) {
       el.href = line.href!;

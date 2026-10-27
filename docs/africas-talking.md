@@ -162,25 +162,26 @@ O simulador não precisa de conta. Os ecrãs abaixo são respostas reais.
 
 <img src="images/at-sim-menu.png" alt="Menu principal: 1 Encontrar transporte a 7 Ajuda" width="200"> <img src="images/at-sim-answer.png" alt="A resposta 2 escrita por baixo do menu principal" width="200">
 
-5. A opção 2 pede um local ou o número de uma rota. Escrever `museu` e **SEND**: aparecem as rotas que passam no Museu, 4 por página, cada uma começada pelo código (o número no autocarro). `7` mostra a página seguinte, `8` a anterior, `0` volta atrás.
+5. A opção 2 pede um local ou o número de uma rota. Escrever `combatentes` e **SEND**: aparecem as rotas activas que passam na Praça dos Combatentes, até 4 por página, cada uma começada pelo código (o número no autocarro). Com mais de 4, `7` mostra a página seguinte e `8` a anterior; `0` volta atrás. Quando só uma rota passa no local (por exemplo `museu`), o ecrã final aparece logo.
 6. Escrever `1` escolhe a primeira rota. O ecrã final (`END`) fecha a [sessão](conceitos.md#sessao "Depois de entrar, o servidor dá uma prova de quem se é (um token), e o navegador mostra-a a cada pedido para não ter de pedir a palavra-passe outra vez."): carregar em **OK**.
 7. Abrir as **mensagens**: o mesmo resultado chega por SMS de `AFRICASTKNG`.
 
 Os ecrãs desta sessão, como o telemóvel os mostra (os mesmos de [Serviço USSD → 2 Procurar rotas](ussd.md#2-procurar-rotas)):
 
 ```text
-text="2"                                  text="2*museu"                          text="2*museu*1"
-CON Rotas de um local                     CON Rotas em Museu:                     END 3-0 Museu - Praca dos Trabalhadores
-Escreva o nome do local ou o numero       1. 3-0 Museu - Praca dos Trabalha..     (Via Av. 24 de Julho)
-da rota (ex: Baixa ou X12)                2. 18-0 Museu - Magoanine (Via Av..     De: Museu
-0. Voltar                                 3. 21-0 Museu - Albazine(via Dom ..     Para: Praca dos Trabalhadores
-                                          4. 23-0 Museu - Matendene (Via Ja..     Paragens: 15
-                                          7. Proximo                              Distancia: 3.4 km
-                                          0. Voltar                               Tarifa (percurso todo): 35 MT
-                                                                                  Autocarros: 2
+text="2"                                  text="2*combatentes"                    text="2*combatentes*1"
+CON Rotas de um local                     CON Rotas em Praca dos Combatentes:     END 411 Baixa - Praca dos Combatentes
+Escreva o nome do local ou o numero       1. 411 Baixa - Praca dos Combatentes    De: P. Trabalhadores (411)
+da rota (ex: Museu ou X19)                2. X22 Praca dos Combatentes - Zimpeto  Para: Praca dos Combatentes (X34)
+0. Voltar                                 0. Voltar                               Paragens: 27
+                                                                                  Distancia: 7.6 km
+                                                                                  Tarifa (percurso todo): 77 MT
+                                                                                  Em servico: 2 de 2
 ```
 
-Quando o nome escrito coincide com vários locais (por exemplo `baixa`: o [Terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.") de [Chapas](glossario.md#transportes-em-maputo "Os minibuses que levam a maior parte dos passageiros de Maputo") da Baixa e várias ruas da Baixa), aparece primeiro "Qual local?" para escolher um.
+"Em servico: 2 de 2" quer dizer que a rota tem 2 autocarros e os motoristas dos dois iniciaram a viagem. Só os autocarros em serviço entram nas viagens e nos SMS ([Localização dos autocarros](localizacao-gps.md)).
+
+Quando o nome escrito coincide com vários locais (por exemplo `igreja`: Igreja - Capuchinho e Igreja - Bombas-Xicanhanine), aparece primeiro uma lista para escolher um. Só contam as paragens das rotas activas: um nome que só existe em rotas desactivadas responde "Nenhuma rota ou paragem".
 
 ![SMS recebidos no simulador (de uma versão anterior dos menus, com o mesmo remetente)](images/at-sim-sms.png)
 
@@ -190,7 +191,7 @@ Quando o nome escrito coincide com vários locais (por exemplo `baixa`: o [Termi
 
 Notas:
 
-- **O número é um passageiro real na produção.** O número do telemóvel simulado é o que a aplicação recebe como `phoneNumber`. As opções 2 a 5 e 7 só lêem. O ecrã de viagem da opção 1 cria um passageiro sem palavra-passe para esse número e um alerta de chegada na [base de dados](conceitos.md#base-de-dados "O sítio organizado onde a plataforma guarda tudo o que tem de durar: rotas, paragens, veículos, contas.") de **produção**. Usa-se um número de teste como `+25884000000x`; [Base de dados → Passageiros criados por USSD](base-de-dados.md#passageiros-criados-por-ussd-ainda-sem-palavra-passe) mostra como encontrar ou apagar o que criou.
+- **O número é um passageiro real na produção.** O número do telemóvel simulado é o que a aplicação recebe como `phoneNumber`. As opções 2 a 5 e 7 só lêem. Na opção 1, "1. Acompanhar por SMS" grava um acompanhamento para esse número na [base de dados](conceitos.md#base-de-dados "O sítio organizado onde a plataforma guarda tudo o que tem de durar: rotas, paragens, veículos, contas.") de **produção** e envia-lhe SMS até ao destino. Usa-se um número de teste como `+25884000000x`. (Até Outubro de 2026, o ecrã da viagem criava também um passageiro sem palavra-passe; [Base de dados → Passageiros criados por USSD](base-de-dados.md#passageiros-criados-por-ussd-ainda-sem-palavra-passe) mostra como encontrar ou apagar esses.)
 - **O menu do motorista.** Para testar a opção 6, liga-se com o número de telefone de um motorista e usa-se o PIN que o painel gerou para ele ([Painel → Dar um PIN a um motorista](painel-admin.md#tarefa-pin)).
 - **Todas as opções.** Todos os menus, com os seus ecrãs, estão em [Serviço USSD → Árvore dos menus](ussd.md#árvore-dos-menus).
 
@@ -221,11 +222,39 @@ O que se envia:
 
 | Quando | Mensagem | Onde |
 |---|---|---|
-| Opções 1 a 6 do USSD, no ecrã final | o conteúdo do ecrã (na opção 1, só quando se pede) | depois da resposta, com `waitUntil` ([Serviço USSD](ussd.md)) |
-| Alerta de chegada | "Autocarro {matrícula} está a {n} minutos da {paragem}!" | a verificação de chegadas ([Fluxos de dados](fluxos-de-dados.md#alerta-de-chegada-e-sms)) |
+| Opções 2 a 6 do USSD, no ecrã final | o conteúdo do ecrã | depois da resposta, com `waitUntil` ([Serviço USSD](ussd.md)) |
+| Opção 1 do USSD, "Acompanhar por SMS" | a viagem inteira, e depois os avisos de cada etapa: autocarro a 15, 10 e 5 min, "está a chegar", 15, 10 e 5 min até sair, [transbordo](glossario.md#palavras-dos-ecrãs "Mudança de autocarro a meio de uma viagem"), destino | a verificação de chegadas ([Fluxos de dados → Os avisos de uma viagem acompanhada](fluxos-de-dados.md#os-avisos-de-uma-viagem-acompanhada)) |
+| Alerta de paragem (web) | "Autocarro {matrícula} (rota {código}) chega a {paragem} em {n} min." | a verificação de chegadas ([Fluxos de dados](fluxos-de-dados.md#alerta-de-chegada-e-sms)) |
 | Um motorista inicia ou termina uma viagem pelo USSD | "Viagem iniciada com sucesso! Veiculo: … Bons trabalhos!" / "Viagem encerrada com sucesso. …" | opção 6 do USSD |
 
 **No sandbox**, as mensagens só chegam aos telemóveis abertos no simulador. A API de mensagens do sandbox às vezes é lenta e pode responder "The server was not able to produce a timely response" sem nada estar errado do lado da plataforma. O envio fica então registado como erro e não se repete, e a mensagem pode chegar na mesma.
+
+## Testar os avisos por SMS no simulador
+
+Os avisos só saem para autocarros em viagem, por isso primeiro um motorista inicia a viagem.
+
+1. **Iniciar a viagem de um autocarro.** Entrar no [portal do motorista](https://transport-mz-driver.vercel.app) com o telefone e o PIN de um motorista de uma das rotas activas ([Painel → Dar um PIN a um motorista](painel-admin.md#tarefa-pin)) e carregar em **Iniciar viagem**. O cartão "Os passageiros vêem" passa a "Em circulação". (No simulador, o mesmo faz-se com o número desse motorista: `6`, o PIN, `1`, `1`.)
+2. **Pedir a viagem como passageiro.** No simulador, com um número de teste, marcar `*384*848080#`, escrever `1`, depois a origem e o destino (por exemplo `xipamanine` e `zimpeto`), escolhendo nas listas quando aparecem.
+3. **Acompanhar.** No ecrã da viagem, escrever `1` ("Acompanhar por SMS"). O ecrã final diz que os avisos vão chegar.
+4. **Ver os SMS.** Abrir as **mensagens** do simulador: chega a viagem, e depois um SMS a cada passo. Com a verificação a cada minuto configurada ([abaixo](#verificação-de-chegadas-a-cada-minuto)), os avisos de 15, 10 e 5 minutos chegam a horas; sem ela, chegam quando alguém usa a web, o USSD ou o portal.
+
+Para ver um aviso "deixou de circular", terminar a viagem do autocarro anunciado no portal enquanto o passageiro espera.
+
+## Verificação de chegadas a cada minuto
+
+Os avisos de 15, 10 e 5 minutos precisam que a verificação de chegadas corra pelo menos a cada minuto. O [agendamento](conceitos.md#agendamento "Uma tarefa que corre sozinha a uma hora marcada, ou de tantos em tantos minutos.") do [GitHub Actions](conceitos.md#ci "Verificações que o GitHub corre sozinho a cada pull request, para nenhum erro conhecido chegar ao main.") não chega (em Outubro de 2026 corria a cada 40 a 50 minutos), e o plano Hobby da Vercel só permite cron jobs diários. Um serviço gratuito de pedidos agendados resolve-o. Com o [cron-job.org](https://cron-job.org):
+
+1. Criar uma conta em [console.cron-job.org/signup](https://console.cron-job.org/signup) e confirmar o email.
+2. Carregar em **CREATE CRONJOB**.
+3. **Title:** `Verificação de chegadas`. **URL:** `https://transport-mz.vercel.app/api/simulation`.
+4. **Execution schedule:** "Every minute".
+5. Abrir o separador **ADVANCED**:
+   - **Request method:** `POST`;
+   - **Headers:** juntar `Content-Type` com o valor `application/json`;
+   - **Request body:** `{"action":"check"}`.
+6. Carregar em **TEST RUN**: a resposta deve ser 200 com `"success":true`. Depois **CREATE**.
+
+O que faz: chama a mesma verificação que o GitHub Actions chama, mas a cada minuto ([Fluxos de dados → O que dispara a verificação](fluxos-de-dados.md#o-que-dispara-a-verificação)). Porquê é seguro: a verificação é a mesma para quem a chamar e nunca envia o mesmo aviso duas vezes, por isso chamá-la a mais só gasta um pouco de tempo de servidor. Para parar, desligar o cronjob no cron-job.org.
 
 ## Registos e sessões
 

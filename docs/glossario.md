@@ -39,8 +39,9 @@ Cada tabela está definida em [`prisma/schema.prisma`](../prisma/schema.prisma);
 | `Transporte` (vehicle) | Um veículo: matrícula (`matricula`), marca, modelo, lugares, via e campos de [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas."). |
 | `Motorista` (driver) | Um motorista, com o veículo que conduz e o [hash](conceitos.md#hash "Uma 'impressão digital' de um texto, que se calcula num sentido e não se consegue desfazer.") do seu PIN. |
 | `Proprietario` (owner) | O dono de veículos; `TransporteProprietario` liga-os. |
-| `Utente` (passenger) | Uma conta de passageiro, criada na web ou pela opção 1 do [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet."). |
+| `Utente` (passenger) | Uma conta de passageiro, criada na web (até Outubro de 2026, também pela opção 1 do [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.")). |
 | `MISSION` (arrival alert) | "Avise-me por [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") quando um autocarro estiver perto desta paragem". O nome vem do primeiro modelo de dados e ficou. |
+| `Acompanhamento` (journey follow) | Uma viagem acompanhada por SMS: o telefone, os autocarros da viagem (`etapas`) e o ponto em que está. A verificação de chegadas envia-lhe os avisos de cada autocarro até ao destino ([Fluxos de dados → Os avisos de uma viagem acompanhada](fluxos-de-dados.md#os-avisos-de-uma-viagem-acompanhada)). |
 | `Tarifa` (fare rule) | Tarifa mínima, preço por km e as velocidades das estimativas. Uma está activa. |
 | `Provincia`, `Municipio`, `Cidade` | Onde as vias pertencem. `Cidade` está vazia. |
 | `Administrador` | Uma conta do painel de administração. |
@@ -51,16 +52,19 @@ Cada tabela está definida em [`prisma/schema.prisma`](../prisma/schema.prisma);
 | Campo | Significado |
 |---|---|
 | `Via.geoLocationPath` | O percurso da via pelas estradas, `lng,lat;lng,lat;…`, num só sentido; os autocarros vão por ele e voltam por ele. Atenção: [longitude](conceitos.md#coordenadas "Dois números que dizem onde está um ponto na Terra.") primeiro. |
+| `Via.ativa` | A rota está activa: aparece no mapa, no USSD, nas viagens e nos avisos. As outras ficam guardadas, escondidas. Muda-se no painel, em Vias ([Painel → Vias](painel-admin.md#tarefa-activar-rotas)). |
 | `Via.terminalPartida`, `terminalChegada` | O início e o fim da via, como nomes. |
 | `codigo`, `codigoVia`, `codigoParagem` | Códigos legíveis, repetidos ao lado das [chaves estrangeiras](conceitos.md#chave "Cada linha tem um identificador único (id), e uma linha aponta para outra guardando o id dela.") verdadeiras. As junções fazem-se pelas colunas `…Id`. |
 | `Transporte.currGeoLocation` | O último ponto GPS do veículo, `lat,lng` (latitude primeiro, ao contrário do percurso). |
 | `gpsAtualizadoEm` | Quando esse ponto chegou. Com menos de 3 minutos, está "ao vivo". |
 | `gpsDispositivoHash` | O SHA-256 do [código do dispositivo](conceitos.md#rastreador "Um aparelho (ou um telemóvel com uma aplicação) que envia a posição de um veículo pela internet; o código do dispositivo é a sua 'palavra-passe'.") GPS do veículo. O código em si nunca é guardado. |
-| `Motorista.emViagem`, `viagemIniciadaEm` | O motorista está em viagem, e desde quando. |
+| `Motorista.emViagem`, `viagemIniciadaEm` | O motorista está em viagem, e desde quando. Só os autocarros em viagem estão em serviço: sem viagem, o autocarro está parado e não aparece nas viagens nem nos avisos. |
+| `Motorista.viagemSentido` | O sentido em que a viagem começou: `1` do início do percurso, `-1` do fim (o terminal mais perto de onde o autocarro estava). |
 | `Motorista.status` | O estado da conta (`ativo`, `inativo`, `suspenso`), não o da viagem. |
 | `Motorista.password` | O hash bcrypt do PIN. O nome ficou do primeiro modelo, em que os motoristas tinham palavra-passe. |
 | `MISSION.notificadoEm` | Quando foi enviado o SMS de chegada. |
-| `fonte` (API) | De onde vem a posição de um autocarro: `gps` (posição ao vivo) ou `horario` (o modelo de horário). |
+| `Acompanhamento.etapa`, `aviso` | O autocarro da viagem em que o passageiro está (0 o primeiro), e o último aviso enviado para ele (um número que só sobe, por isso o mesmo aviso não sai duas vezes). |
+| `fonte` (API) | De onde vem a posição de um autocarro: `gps` (posição ao vivo) ou `horario` (calculada pela viagem que o motorista iniciou; o nome ficou do antigo modelo de horário). |
 
 ## Palavras dos ecrãs
 
@@ -69,6 +73,8 @@ Cada tabela está definida em [`prisma/schema.prisma`](../prisma/schema.prisma);
 | Partida, Destino | início e destino da viagem (aplicação dos passageiros) |
 | Acompanhar viagem | seguir uma viagem no mapa, passo a passo (`/viagem`) |
 | "Avisar-me por SMS…" | pedir um SMS de chegada (cria um `MISSION`) |
+| Acompanhar por SMS | a tecla 1 no ecrã de uma viagem do USSD: os avisos até ao destino (cria um `Acompanhamento`) |
+| Em servico, Parado, fora de servico | o autocarro está em viagem (o motorista iniciou-a), ou não |
 | Iniciar viagem, Encerrar viagem | portal do motorista e opção 6 do USSD |
 | Rastreador GPS, "Gerar código do dispositivo" | painel, página do veículo |
 | Nova Via, Redesenhar percurso | painel, vias |
@@ -94,7 +100,8 @@ As ideias técnicas gerais (servidor, API, base de dados, USSD, GPS…) estão e
 
 | Termo | Significado |
 |---|---|
-| modelo de horário | Como se põe um autocarro no mapa sem GPS: vai e volta ao longo do percurso das 05:00 às 21:00 à velocidade da tarifa ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)). |
+| em serviço | Um autocarro cujo motorista iniciou a viagem. Sem GPS, vai e volta ao longo do percurso desde essa hora, à velocidade da tarifa; sem viagem, está parado ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)). |
+| modelo de horário | Antigo (até Outubro de 2026): todos os autocarros andavam das 05:00 às 21:00, iniciassem os motoristas a viagem ou não. Substituído pela viagem do motorista. |
 | USSD | Os menus `*…#` que qualquer telemóvel usa sem dados. `CON` mantém a [sessão](conceitos.md#sessao "Depois de entrar, o servidor dá uma prova de quem se é (um token), e o navegador mostra-a a cada pedido para não ter de pedir a palavra-passe outra vez.") aberta, `END` fecha-a ([Serviço USSD](ussd.md)). |
 | código de serviço, canal | `*384*848080#`: o canal `848080` no código partilhado `*384#` da [Africa's Talking](conceitos.md#africas-talking "O gateway de USSD e SMS usado por este projecto."). |
 | sandbox | O ambiente de testes gratuito da Africa's Talking: o USSD e os SMS só chegam ao simulador ([Africa's Talking](africas-talking.md)). |

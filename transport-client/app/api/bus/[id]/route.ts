@@ -7,7 +7,7 @@ import {
   parseRoutePath,
   type LatLng,
 } from '@/lib/fares';
-import { currentSpeedKmh, estimateBusTrip, vehiclePosition } from '@/lib/vehiclePosition';
+import { POSITION_FIELDS, currentSpeedKmh, estimateBusTrip, statusLabel, vehiclePosition } from '@/lib/vehiclePosition';
 
 // GET /api/bus/[id]?paragem=<origem>&destino=<destino>
 export async function GET(
@@ -23,11 +23,13 @@ export async function GET(
     const transporte = await prisma.transporte.findUnique({
       where: { id: busId },
       include: {
+        motorista: { select: POSITION_FIELDS.motorista.select },
         via: { include: { paragens: { include: { paragem: true } } } },
       },
     });
 
-    if (!transporte) {
+    // Os autocarros das rotas desactivadas não aparecem a quem viaja
+    if (!transporte || transporte.via?.ativa === false) {
       return NextResponse.json({ error: 'Autocarro não encontrado' }, { status: 404 });
     }
     if (!transporte.via) {
@@ -42,7 +44,7 @@ export async function GET(
       .map((vp) => ({ vp, point: parseLatLng(vp.paragem.geoLocation) }))
       .filter((s): s is { vp: typeof s.vp; point: LatLng } => s.point !== null);
 
-    // GPS real quando recente, senão a posição pelo horário na via
+    // GPS real quando recente, senão a posição pela viagem do motorista (parado sem viagem)
     const now = new Date();
     const position = vehiclePosition(transporte, via.geoLocationPath || transporte.routePath, now, rule);
     const bus: LatLng = position?.point ?? stops[0]?.point ?? [-25.9692, 32.5732];
@@ -80,7 +82,7 @@ export async function GET(
       fonte: position?.source ?? 'horario',
       direcaoGraus: position?.heading ?? null,
       posicaoEm: (position?.at ?? new Date()).toISOString(),
-      status: position && !position.moving && position.source === 'horario' ? 'No terminal' : 'Em Circulação',
+      status: statusLabel(position),
       routeCoords,
       stops: stops.map(({ vp, point }) => ({
         id: vp.paragem.id,
@@ -91,9 +93,9 @@ export async function GET(
         isPickup: vp.paragem.id === paragemId,
         isDestination: vp.paragem.id === destinoId,
       })),
-      // Valores por omissão quando não foi dado um par origem -> destino válido
-      tempoEstimado: trip?.tempoChegada ?? 5,
-      distancia: Math.round(trip?.distanciaAteOrigem ?? 1000),
+      // null sem um par origem -> destino válido, ou quando o autocarro está fora de serviço (não vem)
+      tempoEstimado: trip?.tempoChegada ?? null,
+      distancia: trip ? Math.round(trip.distanciaAteOrigem) : null,
       jaPassou: trip?.jaPassou ?? false,
       tempoViagem: trip?.tempoViagem ?? 0,
       distanciaViagem: Math.round(trip?.distanciaViagem ?? 0),

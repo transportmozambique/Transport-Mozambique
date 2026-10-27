@@ -9,15 +9,21 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const search = searchParams.get('search') || '';
     const countOnly = searchParams.get('countOnly') === 'true';
+    // ativa=true só as rotas que os passageiros vêem, ativa=false só as desactivadas; sem ela, todas
+    const ativa = searchParams.get('ativa');
 
     // Nome, código ou município, sem distinguir maiúsculas (o que a caixa de pesquisa da lista promete)
-    const whereClause = search ? {
-      OR: [
-        { nome: { contains: search, mode: 'insensitive' as const } },
-        { codigo: { contains: search, mode: 'insensitive' as const } },
-        { municipio: { is: { nome: { contains: search, mode: 'insensitive' as const } } } },
-      ],
-    } : {};
+    const whereClause = {
+      ...(search ? {
+        OR: [
+          { nome: { contains: search, mode: 'insensitive' as const } },
+          { codigo: { contains: search, mode: 'insensitive' as const } },
+          { municipio: { is: { nome: { contains: search, mode: 'insensitive' as const } } } },
+        ],
+      } : {}),
+      ...(ativa === 'true' || ativa === 'false' ? { ativa: ativa === 'true' } : {}),
+    };
+    const filtered = Boolean(search) || ativa === 'true' || ativa === 'false';
 
     // Quando só se pede a contagem, devolver só a contagem
     if (countOnly) {
@@ -44,15 +50,14 @@ export async function GET(request: Request) {
             },
           },
         },
-        orderBy: {
-          nome: 'asc',
-        },
+        // As rotas activas primeiro: são as que os passageiros vêem
+        orderBy: [{ ativa: 'desc' }, { nome: 'asc' }],
         skip,
         take: limit,
       }),
       prisma.via.count({ where: whereClause }),
-      prisma.transporte.count({ where: search ? { via: { is: whereClause } } : { viaId: { not: null } } }),
-      prisma.viaParagem.count({ where: search ? { via: whereClause } : {} }),
+      prisma.transporte.count({ where: filtered ? { via: { is: whereClause } } : { viaId: { not: null } } }),
+      prisma.viaParagem.count({ where: filtered ? { via: whereClause } : {} }),
     ]);
 
     return NextResponse.json({
@@ -96,7 +101,7 @@ export async function POST(request: Request) {
     }
 
     // Guardado como "lng,lat;lng,lat;..." seja o que for que o formulário enviou: as aplicações, o
-    // horário dos autocarros e as tarifas só lêem esse formato.
+    // posições dos autocarros e as tarifas só lêem esse formato.
     const storedPath = toStoredPath(geoLocationPath);
     if (!storedPath) {
       return NextResponse.json(

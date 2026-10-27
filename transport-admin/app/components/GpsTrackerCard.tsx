@@ -79,7 +79,7 @@ export default function GpsTrackerCard({ transporteId }: { transporteId: string 
         <div>
           <h3 className="text-lg font-bold text-slate-900">Rastreador GPS</h3>
           <p className="text-sm text-slate-900">
-            Posição real enviada pelo telemóvel do motorista ou por um rastreador. Sem GPS, a posição é estimada pelo horário.
+            Posição real enviada pelo telemóvel do motorista ou por um rastreador. Sem GPS, a posição é estimada pela viagem do motorista: parado até ele a iniciar.
           </p>
         </div>
         <span

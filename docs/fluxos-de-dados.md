@@ -53,7 +53,7 @@ Alguns valores **nunca são guardados**: calculam-se a cada pedido a partir do q
 
 | Valor | Calculado a partir de | Código |
 |---|---|---|
-| Onde está um autocarro agora | a última posição [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") se tiver menos de 3 minutos, senão o modelo de horário: vai e volta ao longo do percurso da rota das 05:00 às 21:00 à velocidade da tarifa | [`lib/vehiclePosition.ts`](../transport-client/lib/vehiclePosition.ts) |
+| Onde está um autocarro agora | a última posição [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") se tiver menos de 3 minutos, senão a viagem do motorista: parado até ele carregar em "Iniciar viagem", depois vai e volta ao longo do percurso da rota à velocidade da tarifa | [`lib/vehiclePosition.ts`](../transport-client/lib/vehiclePosition.ts) |
 | Quando um autocarro chega a uma paragem, tempo de viagem | essa posição, o percurso da rota e as velocidades da tarifa | `estimateBusTrip` no mesmo ficheiro |
 | Tarifa | distância ao longo do percurso × `Tarifa.precoPorKm`, pelo menos `Tarifa.tarifaMinima` | `fareFor` em [`lib/fares.ts`](../transport-client/lib/fares.ts) |
 | Ordem das paragens de uma rota | cada paragem projectada no percurso da rota ([`ViaParagem`](glossario.md#a-rede-e-as-pessoas "A ligação de uma paragem a uma rota") não tem coluna de ordem) | `orderStopsAlongRoute` em [`lib/fares.ts`](../transport-client/lib/fares.ts) |
@@ -128,7 +128,8 @@ A rede de produção tem 1 855 paragens servidas e 261 rotas. Uma viagem ou uma 
 Os mesmos números servem as viagens, o "próximo autocarro" de uma paragem, a viagem acompanhada e o USSD. Vêm de [`lib/vehiclePosition.ts`](../transport-client/lib/vehiclePosition.ts) e [`lib/fares.ts`](../transport-client/lib/fares.ts):
 
 - **Ordem das paragens.** `ViaParagem` não tem coluna de ordem. As paragens ordenam-se pela projecção de cada uma no percurso da rota (`orderStopsAlongRoute`). As viagens podem ir num sentido ou no outro: um destino antes da origem é uma viagem no regresso.
-- **Chegada ("Chega em").** A distância que o autocarro ainda percorre até passar na origem no sentido certo, mais 5 minutos em cada [terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.") onde dá a volta, a dividir pela velocidade de viagem da tarifa (`velocidadeViagemKmh`, 30 km/h por omissão). Os autocarros só andam das 05:00 às 21:00 (hora de Maputo): uma passagem que seria depois das 21:00, ou uma pesquisa feita de noite, recebe a primeira passagem do autocarro na manhã seguinte. Esperas de 60 minutos ou mais mostram-se como hora ("às 11:56", "amanhã às 05:12", [`lib/eta.ts`](../transport-client/lib/eta.ts)).
+- **Só os autocarros em viagem.** Um autocarro só tem hora de chegada quando o motorista iniciou a viagem (no portal ou no USSD *6). Os outros estão parados, "Fora de serviço", e não entram nas viagens, no "próximo autocarro" nem nos SMS ([Localização e GPS → Como se escolhe uma posição](localizacao-gps.md#como-se-escolhe-uma-posição)). Porquê: o portal do motorista dizia "Parado" enquanto a web mostrava o mesmo autocarro a andar; agora os dois lêem o mesmo estado.
+- **Chegada ("Chega em").** A distância que o autocarro ainda percorre até passar na origem no sentido certo, mais 5 minutos em cada [terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.") onde dá a volta, a dividir pela velocidade de viagem da tarifa (`velocidadeViagemKmh`, 30 km/h por omissão). Esperas de 60 minutos ou mais mostram-se como hora ("às 11:56", [`lib/eta.ts`](../transport-client/lib/eta.ts)). Quando nenhum autocarro de uma ligação está em viagem, a web e o USSD dizem-no ("Nenhum autocarro em serviço agora") em vez de inventar uma hora.
 - **Distância, tempo e tarifa da viagem.** Medidos ao longo do percurso entre a origem e o destino. Tarifa = máx(`tarifaMinima`, ⌈km × `precoPorKm`⌉), 10 MT mínimo e 10 MT/km por omissão. Uma rota sem percurso usa a cadeia de paragem em paragem.
 
 ## Mapa ao vivo
@@ -184,35 +185,74 @@ O mesmo `estimateBusTrip()` serve `/api/buses`, `/api/viagem`, `/api/stops/{id}`
 
 ## Alerta de chegada e SMS
 
-Uma linha `MISSION` quer dizer "este passageiro está à espera nesta paragem". Há duas formas de a criar:
+Há dois tipos de aviso por SMS, e a mesma verificação envia os dois ([`lib/busSimulator.ts`](../transport-client/lib/busSimulator.ts)).
 
-- na web: "Avisar-me por SMS…" na página que acompanha uma viagem chama `POST /api/user/missions/save` com o token do passageiro ([`app/api/user/missions/save/route.ts`](../transport-client/app/api/user/missions/save/route.ts));
-- por USSD: o ecrã de viagem da opção 1, na paragem onde se apanha o primeiro autocarro. Esse ecrã também cria um `Utente` sem palavra-passe para o número de telefone, se não houver ([`app/api/ussd/route.ts`](../transport-client/app/api/ussd/route.ts), `createMissionForUser`).
+| Aviso | Como se pede | Guardado em | O que o passageiro recebe |
+|---|---|---|---|
+| **Viagem acompanhada** | USSD opção 1, depois "1. Acompanhar por SMS" no ecrã da viagem | [`Acompanhamento`](glossario.md#a-rede-e-as-pessoas "Uma viagem acompanhada por SMS: os avisos de cada autocarro até ao destino") | A viagem num SMS, e depois um SMS a cada passo até ao destino (tabela abaixo) |
+| **Alerta de paragem** | Web: "Avisar-me por SMS…" na página que acompanha um autocarro (`POST /api/user/missions/save`, [`app/api/user/missions/save/route.ts`](../transport-client/app/api/user/missions/save/route.ts)) | `MISSION` | Um SMS quando o próximo autocarro em viagem que pára ali está a 5 min ou menos |
+
+### Os avisos de uma viagem acompanhada
+
+Uma viagem pode ter vários autocarros (etapas). Para cada etapa, os avisos seguem esta ordem, e depois recomeçam na etapa seguinte, até ao destino ([`lib/journeyAlerts.ts`](../transport-client/lib/journeyAlerts.ts)):
+
+| Quando | SMS (exemplo) |
+|---|---|
+| Logo ao escolher | `Viagem Xipamanine > Zimpeto: chega 22:19, 232 MT. 1) Apanhe a rota X19 (ADA-013M) em Xipamanine (C8) as 20:04; …` |
+| O autocarro está a 15, 10 e 5 min da paragem | `Autocarro ADA-169M (rota X22) chega a Praca dos Combatentes (216) em 10 min.` |
+| O autocarro está a chegar | `Autocarro ADA-169M (rota X22) esta a chegar a Praca dos Combatentes (216). Entre e saia em Zimpeto (703) daqui a 31 min. Se o perder, o proximo chega em 3 min.` |
+| Faltam 15, 10 e 5 min para a paragem de saída | `Chega a Zimpeto (703) em 5 min. Prepare-se para sair.` |
+| Na paragem de saída, com outro autocarro a seguir | `Saia agora em Igreja, apanhe em Igreja a rota 411: o autocarro ADA-193M chega em 1 min.` |
+| No fim | `Saia agora em Zimpeto (703): chegou ao seu destino, Zimpeto. Boa viagem!` |
+| O autocarro anunciado deixou de andar (o motorista terminou a viagem) | `O autocarro ADA-193M deixou de circular. Autocarro ADA-194M (rota 411) chega a Igreja em 4 min.` |
+| Nenhum autocarro da rota está em viagem | `Nenhum autocarro da rota X22 esta em servico agora. Avisamos quando um partir para …` |
+
+Como funciona, passo a passo:
+
+1. **Escolher.** No ecrã da viagem, a tecla 1 grava um `Acompanhamento` com o telefone, os autocarros da viagem (`etapas`: rota, autocarro, paragem de entrada e de saída), a etapa actual (`etapa`) e o último aviso enviado (`aviso`), e envia a viagem num SMS (`startFollow`). Um acompanhamento anterior do mesmo telefone acaba: um passageiro faz uma viagem de cada vez.
+2. **Verificar.** A cada verificação, `nextStep()` olha para os autocarros **agora** e decide em que ponto da etapa o passageiro está: à espera (o primeiro autocarro em viagem que chega à paragem, que pode ser outro que não o planeado), a bordo, ou na paragem de saída. Cada ponto tem um número (`AVISO` no código: 10, 20 e 30 para 15, 10 e 5 min; 40 "a chegar"; 60, 70 e 80 a bordo; 90 na saída). Só sai um SMS quando o número sobe; quando a verificação salta vários (atrasou-se), sai só o mais recente, com os minutos de agora.
+3. **Não repetir.** Antes de enviar, o servidor grava o novo número só se a linha ainda tem o número lido (`updateMany … where aviso = <lido>`). Porquê: duas verificações ao mesmo tempo (o [agendamento](conceitos.md#agendamento "Uma tarefa que corre sozinha a uma hora marcada, ou de tantos em tantos minutos.") e uma visita à web) não enviam o mesmo SMS duas vezes; só a que grava primeiro envia.
+4. **Entrar no autocarro.** O sistema não sabe ao certo que o passageiro entrou: conta-o a bordo quando o autocarro anunciado sai da paragem de entrada no sentido da viagem. Por isso o aviso "está a chegar" diz quando chega o seguinte, para quem o perder.
+5. **Acabar.** O acompanhamento acaba no destino, quando a rota deixa de existir ou é desactivada, ou ao fim de 4 horas.
+
+Porquê guardar o último aviso, e não calcular tudo outra vez: o servidor é serverless e não guarda memória entre pedidos; a linha na base de dados é a memória do acompanhamento.
 
 ```mermaid
 sequenceDiagram
   autonumber
-  participant T as Disparo (GitHub Actions a cada 5 min, ou o mapa de 5 em 5 s, uma paragem ou uma viagem)
+  participant T as Disparo (pinger de 1 min, USSD, portal, mapa, GitHub Actions)
   participant C as transport-client (lib/busSimulator.ts)
   participant DB as PostgreSQL
   participant AT as Africa's Talking
   participant P as Telemóvel do passageiro
   T->>C: maybeCheckArrivals() (no máximo uma vez a cada 30 s por instância)
-  C->>DB: MISSION criados nas últimas 24 h,<br/>notificadoEm null ou com mais de 30 min
-  C->>DB: Transporte das rotas que passam nessas paragens
-  loop cada alerta
-    C->>C: vehiclePosition() de cada autocarro da rota
-    alt um autocarro em movimento está a menos de 1 km da paragem
-      C->>DB: UPDATE MISSION SET notificadoEm = now()
-      C->>AT: SMS "Autocarro {matrícula} está a {n} minutos da {paragem}!"
+  C->>DB: Acompanhamento sem terminadoEm
+  loop cada acompanhamento
+    C->>C: nextStep(): autocarros agora → aviso seguinte
+    alt o aviso subiu
+      C->>DB: UPDATE … WHERE aviso = <lido> (só uma verificação ganha)
+      C->>AT: SMS do aviso
       AT->>P: SMS
+    end
+  end
+  C->>DB: MISSION das últimas 24 h, notificadoEm null ou com mais de 30 min
+  loop cada alerta de paragem
+    alt o próximo autocarro em viagem está a 5 min ou menos
+      C->>DB: UPDATE MISSION SET notificadoEm = now()
+      C->>AT: SMS "Autocarro {matrícula} (rota {código}) chega a {paragem} em {n} min."
     end
   end
 ```
 
-**O que dispara a verificação.** Um workflow do GitHub Actions ([`.github/workflows/arrival-check.yml`](../.github/workflows/arrival-check.yml), "Verificação de chegadas (SMS)") chama `POST /api/simulation {"action":"check"}` a cada 5 minutos, para quem espera por USSD receber o SMS mesmo sem ninguém com a web aberta. O [GitHub](conceitos.md#github "O site onde o repositório está guardado e partilhado, e onde se revêem as alterações.") pode começar uma corrida agendada uns minutos tarde, e pausa os [agendamentos](conceitos.md#agendamento "Uma tarefa que corre sozinha a uma hora marcada, ou de tantos em tantos minutos.") de um [repositório](conceitos.md#repositorio "A pasta do projecto com todo o seu histórico no git.") sem actividade durante 60 dias (volta-se a ligar em Actions → Verificação de chegadas (SMS) → Enable workflow). Enquanto a web é usada, o pedido de posições de 5 em 5 s e os pedidos de paragens e viagens também a correm, no máximo a cada 30 s por instância. Porquê o GitHub: o plano Hobby da [Vercel](conceitos.md#vercel "A empresa cujos servidores correm as três aplicações e as publicam a cada merge.") só permite cron jobs uma vez por dia.
+### O que dispara a verificação
 
-O alerta é marcado antes de o SMS sair, para um SMS falhado não ser repetido a cada 30 s. Pedir outra vez na web para a mesma paragem recomeça o alerta (novo `createdAt`, `notificadoEm` limpo). O USSD reutiliza um alerta dessa paragem das últimas 24 h, ou cria um novo. `POST /api/simulation {"action":"check"}` corre a verificação a pedido.
+Os avisos de 15, 10 e 5 minutos só chegam a tempo se a verificação corre pelo menos a cada minuto. Corre:
+
+- a cada pedido ao USSD, ao portal do motorista (que pergunta a cada 10 s durante uma viagem), ao mapa da web (de 5 em 5 s) e às páginas de viagens, no máximo uma vez a cada 30 s por instância;
+- a cada minuto por um pinger externo gratuito, quando está configurado ([Africa's Talking → Verificação de chegadas a cada minuto](africas-talking.md#verificação-de-chegadas-a-cada-minuto));
+- pelo GitHub Actions ([`.github/workflows/arrival-check.yml`](../.github/workflows/arrival-check.yml), "Verificação de chegadas (SMS)"), que chama `POST /api/simulation {"action":"check"}`. O agendamento pede 5 min, mas o [GitHub](conceitos.md#github "O site onde o repositório está guardado e partilhado, e onde se revêem as alterações.") atrasa os agendamentos gratuitos: em Outubro de 2026 corria a cada 40 a 50 minutos. Fica como recurso, não como relógio. O GitHub também pausa os agendamentos de um [repositório](conceitos.md#repositorio "A pasta do projecto com todo o seu histórico no git.") sem actividade durante 60 dias (volta-se a ligar em Actions → Verificação de chegadas (SMS) → Enable workflow).
+
+Porquê não um cron da [Vercel](conceitos.md#vercel "A empresa cujos servidores correm as três aplicações e as publicam a cada merge."): o plano Hobby só permite cron jobs uma vez por dia. `POST /api/simulation {"action":"check"}` corre a verificação a pedido, e `GET /api/simulation` diz quantos autocarros estão em viagem e quantos acompanhamentos estão activos.
 
 ## Sessão USSD
 
@@ -232,19 +272,20 @@ sequenceDiagram
   P->>AT: 1
   AT->>C: POST text="1"
   C-->>AT: "CON Onde esta? …"
-  P->>AT: museu
-  AT->>C: POST text="1*museu"
+  P->>AT: capuchinho
+  AT->>C: POST text="1*capuchinho"
   C->>DB: rede (guardada 5 min) → pesquisa tolerante de locais
-  C-->>AT: "CON De: Museu / Para onde vai? …"
-  P->>AT: zimpeto
-  AT->>C: POST text="1*museu*zimpeto"
-  C->>DB: planJourneys (o mesmo planeador da web), Utente + MISSION
-  C-->>AT: "CON Directo, chega 09:14 / Apanhe em Museu (210) as 08:32 …"
+  C-->>AT: "CON De: Capuchinho / Para onde vai? …"
+  P->>AT: combatentes
+  AT->>C: POST text="1*capuchinho*combatentes"
+  C->>DB: planJourneys (o mesmo planeador da web, só autocarros em viagem)
+  C-->>AT: "CON Directo, chega 21:21 / Apanhe em Capuchinho as 21:11 … / 1. Acompanhar por SMS"
   P->>AT: 1
-  AT->>C: POST text="1*museu*zimpeto*1"
-  C-->>AT: "END Detalhes enviados por SMS."
+  AT->>C: POST text="1*capuchinho*combatentes*1"
+  C-->>AT: "END Vai receber a viagem por SMS e avisos ate chegar …"
+  C--)DB: waitUntil(gravar o Acompanhamento)
   C--)AT: waitUntil(enviar a viagem por SMS)
-  AT-->>P: último ecrã, e depois o SMS
+  AT-->>P: último ecrã, e depois o SMS; os avisos seguem até ao destino
 ```
 
 Cada pedido traz o histórico completo em `text`. Cada tecla é lida como o ecrã a que respondeu a pede: num ecrã de pergunta é texto, numa lista é o número de um item (7 e 8 mudam de página, 0 volta). A explicação completa, com a tabela de cada tecla e todos os ecrãs, está em [Serviço USSD → Leitura das teclas](ussd.md#leitura-das-teclas).
@@ -267,19 +308,24 @@ sequenceDiagram
     D->>D: redesenha só se o veículo ou a rota mudaram
   end
   D->>C: POST /api/driver/trip {action: "iniciar"} (Bearer)
-  C->>DB: UPDATE Motorista SET emViagem = true, viagemIniciadaEm = now()
-  loop a cada 30 s
+  C->>DB: terminal mais perto de onde o autocarro está parado → viagemSentido
+  C->>DB: UPDATE Motorista SET emViagem = true, viagemIniciadaEm = now(), viagemSentido
+  loop a cada 10 s
     D->>C: GET /api/driver/trip (Bearer)
-    C-->>D: {emViagem, viagemIniciadaEm}
+    C-->>D: {emViagem, viagemIniciadaEm, autocarro: posição, estado, próximas paragens}
   end
   loop a cada 60 s
     D->>C: GET /api/driver/seguidores (Bearer)
-    C->>DB: MISSION das últimas 3 h nas paragens da rota
+    C->>DB: MISSION das últimas 3 h e viagens acompanhadas à espera nas paragens da rota
     C-->>D: {total, paragens:[{nome, aEspera}]}
   end
+  D->>C: POST /api/driver/trip {action: "encerrar"} (Bearer)
+  C->>DB: Transporte.currGeoLocation = onde o autocarro está agora; emViagem = false
 ```
 
-A opção 6 do USSD (`6*PIN*1*1`) escreve os mesmos dois campos ([`lib/driverTrips.ts`](../transport-client/lib/driverTrips.ts)), por isso uma viagem iniciada de um lado aparece do outro em 30 s. Porquê no servidor e não no telemóvel: o motorista pode usar os dois meios no mesmo dia. Ver [Portal do motorista](portal-motorista.md).
+A opção 6 do USSD (`6*PIN*1*1`) escreve os mesmos campos ([`lib/driverTrips.ts`](../transport-client/lib/driverTrips.ts)), por isso uma viagem iniciada de um lado aparece do outro em 10 s. Porquê no servidor e não no telemóvel: o motorista pode usar os dois meios no mesmo dia.
+
+**Este estado é o que põe o autocarro a andar para os passageiros.** Antes de "Iniciar viagem", o autocarro está parado e "Fora de serviço" na web, no USSD e no painel, e não entra nas viagens nem nos SMS. Depois, parte do terminal guardado em `viagemSentido` à hora de `viagemIniciadaEm`. Ao terminar, fica onde estava. O portal desenha o autocarro onde a web o desenha (a posição de `GET /api/driver/trip`), não onde está o telemóvel, e mostra "Os passageiros vêem: Em circulação" com as próximas paragens. Uma viagem não começa sem veículo, sem rota, ou numa rota desactivada (409 com o motivo). Ver [Portal do motorista](portal-motorista.md) e [Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição).
 
 ## Posição GPS
 
@@ -301,7 +347,7 @@ sequenceDiagram
   end
 ```
 
-Os leitores não mudam. Durante 3 minutos depois de uma posição, `vehiclePosition()` devolve o ponto GPS em vez do ponto do horário, em todos os endpoints e no painel. Ver [Localização e GPS](localizacao-gps.md) e [`app/api/gps/route.ts`](../transport-client/app/api/gps/route.ts).
+Os leitores não mudam. Durante 3 minutos depois de uma posição, `vehiclePosition()` devolve o ponto GPS em vez do ponto calculado pela viagem, em todos os endpoints e no painel. Ver [Localização e GPS](localizacao-gps.md) e [`app/api/gps/route.ts`](../transport-client/app/api/gps/route.ts).
 
 ## Alterações no painel
 
@@ -375,7 +421,7 @@ Cada entidade tem os mesmos endpoints: `GET /api/{entidade}` (uma página da lis
 | | |
 |---|---|
 | **POST** `/api/transportes` | Precisa de `matricula` (única), `modelo`, `marca` e `viaId`. Recebe um `codigo` numérico e uma posição inicial. |
-| **GET** | Lista com `search` na matrícula, modelo, marca e rota. Também:<br>• `/api/transportes/estado`: a coluna "Agora" da lista;<br>• `/{id}/posicao`: a posição calculada;<br>• `/{id}/operacao`: o dia pelo horário. |
+| **GET** | Lista com `search` na matrícula, modelo, marca e rota. Também:<br>• `/api/transportes/estado`: a coluna "Agora" da lista;<br>• `/{id}/posicao`: a posição calculada;<br>• `/{id}/operacao`: a viagem em curso, desde que o motorista a iniciou. |
 | **PUT** `/api/transportes/{id}` | Todos os campos; uma matrícula nova é verificada contra duplicados. **PATCH** muda só a rota (`{"viaId"}`, ou `null` para a tirar). |
 | **DELETE** | Recusado enquanto houver motorista ou proprietário atribuído (400: tirá-los primeiro). Apaga também as linhas `GeoLocation` importadas do veículo. |
 | **GPS** | `POST /{id}/gps` cria um código de dispositivo, mostrado uma vez e guardado como hash SHA-256. O dispositivo envia posições para `/api/gps` da aplicação dos passageiros, que escreve `currGeoLocation`, `gpsAtualizadoEm`, velocidade e rumo. `DELETE /{id}/gps` revoga o código e limpa-os. |
@@ -415,7 +461,7 @@ Cada entidade tem os mesmos endpoints: `GET /api/{entidade}` (uma página da lis
 |---|---|
 | **Criado** | Na web, ao registar (`POST /api/auth/register`): palavra-passe em bcrypt, token de sessão de 90 dias. Por USSD, sem palavra-passe, quando a opção 1 mostra uma viagem; registar depois com esse telefone completa a mesma conta. Pelo painel (`POST /api/utentes`). |
 | **Lido e alterado** | A página do próprio passageiro (`/user-info`): nome e palavra-passe, por `/api/user/*` com o seu token, que só chega ao seu registo. O painel: `/utentes`, `PUT /api/utentes/{id}`. O hash da palavra-passe nunca é devolvido. |
-| **Alertas** | Guardados como `MISSION` numa paragem, a partir de "Avisar-me por SMS…" ao acompanhar uma viagem (`POST /api/user/missions/save`) ou do ecrã de viagem do USSD. Guardar a mesma paragem outra vez recomeça-o. A verificação de chegadas envia um SMS quando um autocarro está a menos de 1 km e regista `notificadoEm`; alertas com mais de 24 horas são ignorados. "Remover" apaga o alerta. |
+| **Alertas** | Guardados como `MISSION` numa paragem, a partir de "Avisar-me por SMS…" ao acompanhar uma viagem (`POST /api/user/missions/save`) (até Outubro de 2026, também do ecrã de viagem do USSD; hoje o USSD grava um `Acompanhamento`). Guardar a mesma paragem outra vez recomeça-o. A verificação de chegadas envia um SMS quando o próximo autocarro em viagem chega à paragem em 5 minutos ou menos e regista `notificadoEm`; alertas com mais de 24 horas são ignorados. "Remover" apaga o alerta. |
 | **DELETE** (painel) | Recusado enquanto o passageiro tiver alertas. A página de detalhe envia `?force=true`, que apaga primeiro os alertas. |
 | **Aparece** | Página da conta do passageiro (perfil, "Missões"). SMS. Portal do motorista: passageiros à espera ao longo da rota. Páginas de passageiro e de paragem do painel. |
 </details>
@@ -439,7 +485,7 @@ Cada entidade tem os mesmos endpoints: `GET /api/{entidade}` (uma página da lis
 | "Gerar PIN" / "Gerar novo PIN" | `POST /api/motoristas/{id}/pin` | `Motorista.password` = bcrypt(PIN de 6 algarismos de `crypto.randomInt`) | `{"pin": "123456"}` |
 | Remover PIN | `DELETE /api/motoristas/{id}/pin` | `Motorista.password` = null (o motorista não pode entrar) | `{"definido": false}` |
 | "Gerar código do dispositivo" / "Gerar novo código" | `POST /api/transportes/{id}/gps` | `Transporte.gpsDispositivoHash` = sha256(código de 20 caracteres, 120 bits aleatórios) | `{"codigo": "…", "servidor": GPS_SERVER_URL}` |
-| "Revogar dispositivo" | `DELETE /api/transportes/{id}/gps` | hash e campos GPS limpos; o veículo volta às posições pelo horário | `{"ok": true}` |
+| "Revogar dispositivo" | `DELETE /api/transportes/{id}/gps` | hash e campos GPS limpos; o veículo volta às posições pela viagem do motorista | `{"ok": true}` |
 
 Um PIN ou código novo substitui o antigo logo. Porquê só uma vez: o servidor guarda só o hash, por isso não o pode mostrar outra vez; perdido o PIN, gera-se outro.
 

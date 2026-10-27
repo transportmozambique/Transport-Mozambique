@@ -1,20 +1,22 @@
 import { prisma } from "@/lib/prisma";
 
 /**
- * Onde está um veículo agora: a sua posição GPS real enquanto é recente, senão a posição pelo
- * horário na sua via. As mesmas regras de transport-client/lib/vehiclePosition.ts (manter as duas
- * iguais), para o painel mostrar o autocarro onde a aplicação dos passageiros e o USSD o mostram.
+ * Onde está um veículo agora: a sua posição GPS real enquanto é recente, senão onde a viagem em
+ * curso do motorista o põe, senão parado (fora de serviço). As mesmas regras de
+ * transport-client/lib/vehiclePosition.ts (manter as duas iguais), para o painel mostrar o
+ * autocarro onde a aplicação dos passageiros, o USSD e o portal do motorista o mostram.
  * Porquê uma cópia: as duas aplicações são publicadas em separado e não partilham pacotes.
  */
 
 type LatLng = [number, number];
+type Direction = 1 | -1;
 
 export const GPS_FRESH_MS = 3 * 60 * 1000;
 const MAPUTO_UTC_OFFSET_MIN = 120; // Africa/Maputo é UTC+2 todo o ano
-const SERVICE_START_MIN = 5 * 60; // 05:00
-const SERVICE_END_MIN = 21 * 60; // 21:00
 const TERMINAL_STOP_S = 5 * 60;
 const DEFAULT_SPEED_KMH = 30;
+/** Um autocarro parado mais longe do que isto da sua via fica no terminal do início */
+const PARKED_ON_ROUTE_M = 300;
 
 export interface VehiclePosition {
   point: LatLng;
@@ -23,12 +25,16 @@ export interface VehiclePosition {
   /** Metros ao longo do percurso da via, quando tem um. */
   progress: number | null;
   /** 1 = para o último ponto do percurso, -1 = de volta; null quando desconhecido. */
-  direction: 1 | -1 | null;
-  /** Segundos até um autocarro parado partir (paragem no terminal, ou de noite). */
+  direction: Direction | null;
+  /** Segundos até um autocarro parado num terminal partir, na viagem em curso. */
   waitS: number;
+  /** O motorista não iniciou a viagem: parado, e os passageiros vêem-no "Fora de serviço" */
   outOfService: boolean;
   at: Date;
 }
+
+/** Campos a seleccionar em Transporte.motorista para saber a viagem em curso */
+export const TRIP_FIELDS = { emViagem: true, viagemIniciadaEm: true, viagemSentido: true } as const;
 
 interface PositionedVehicle {
   id: string;
@@ -36,6 +42,7 @@ interface PositionedVehicle {
   gpsAtualizadoEm: Date | null;
   gpsDirecao: number | null;
   gpsVelocidade: number | null;
+  motorista: { emViagem: boolean; viagemIniciadaEm: Date | null; viagemSentido: number | null } | null;
 }
 
 interface Geometry {
@@ -90,15 +97,6 @@ function nearestIndex(g: Geometry, point: LatLng): number {
   return best;
 }
 
-function unitHash(text: string): number {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return (h >>> 0) / 0x100000000;
-}
-
 function pointAlong(g: Geometry, distance: number): LatLng {
   let i = 1;
   while (i < g.path.length - 1 && g.cumulative[i] < distance) i++;
@@ -114,12 +112,34 @@ export async function travelSpeedMps(): Promise<number> {
   return ((rule?.velocidadeViagemKmh || DEFAULT_SPEED_KMH) * 1000) / 3600;
 }
 
+/** A viagem em curso: quando começou e de que terminal partiu (1 = início do percurso); null quando parado. */
+function tripOf(vehicle: PositionedVehicle): { start: Date; from: Direction } | null {
+  const m = vehicle.motorista;
+  if (!m?.emViagem || !m.viagemIniciadaEm) return null;
+  return { start: new Date(m.viagemIniciadaEm), from: m.viagemSentido === -1 ? -1 : 1 };
+}
+
+/** Numa viagem: segundos desde o início → metros ao longo do percurso, a andar ou parado num terminal, e em que sentido. */
+function tripAt(elapsedS: number, g: Geometry, speedMps: number, from: Direction): { progress: number; moving: boolean; direction: Direction; waitS: number } {
+  const legS = g.length / speedMps;
+  const cycleS = 2 * legS + 2 * TERMINAL_STOP_S;
+  const t = Math.max(0, elapsedS) % cycleS;
+  const first = from === 1 ? 0 : g.length;
+  const back = (from * -1) as Direction;
+  const at = (along: number, dir: Direction) => (dir === 1 ? along : g.length - along);
+  if (t < legS) return { progress: at(t * speedMps, from), moving: true, direction: from, waitS: 0 };
+  if (t < legS + TERMINAL_STOP_S) return { progress: g.length - first, moving: false, direction: back, waitS: legS + TERMINAL_STOP_S - t };
+  if (t < 2 * legS + TERMINAL_STOP_S) return { progress: at((t - legS - TERMINAL_STOP_S) * speedMps, back), moving: true, direction: back, waitS: 0 };
+  return { progress: first, moving: false, direction: from, waitS: cycleS - t };
+}
+
 export function vehiclePosition(vehicle: PositionedVehicle, g: Geometry, speedMps: number, now = new Date()): VehiclePosition | null {
   const fix = parseLatLng(vehicle.currGeoLocation);
+  const trip = tripOf(vehicle);
   if (fix && vehicle.gpsAtualizadoEm && now.getTime() - vehicle.gpsAtualizadoEm.getTime() < GPS_FRESH_MS) {
-    const moving = (vehicle.gpsVelocidade ?? 1) > 0.5;
+    const moving = (vehicle.gpsVelocidade ?? 1) > 0.5 && trip !== null;
     let progress: number | null = null;
-    let direction: 1 | -1 | null = null;
+    let direction: Direction | null = null;
     if (g.path.length > 1) {
       const i = nearestIndex(g, fix);
       progress = g.cumulative[i];
@@ -129,37 +149,28 @@ export function vehiclePosition(vehicle: PositionedVehicle, g: Geometry, speedMp
         direction = diff <= 90 ? 1 : -1;
       }
     }
-    return { point: fix, source: "gps", moving, progress, direction, waitS: 0, outOfService: false, at: vehicle.gpsAtualizadoEm };
+    return { point: fix, source: "gps", moving, progress, direction, waitS: 0, outOfService: trip === null, at: vehicle.gpsAtualizadoEm };
+  }
+
+  const base = { source: "horario" as const, at: now };
+  if (!trip) {
+    // Parado: onde a última viagem acabou, quando está na via, senão no terminal do início
+    const parked = { ...base, moving: false, direction: null, waitS: 0, outOfService: true };
+    if (g.path.length === 0) return fix ? { ...parked, point: fix, progress: null } : null;
+    if (fix && g.path.length > 1) {
+      const progress = g.cumulative[nearestIndex(g, fix)];
+      const onRoute = pointAlong(g, progress);
+      if (haversine(onRoute, fix) <= PARKED_ON_ROUTE_M) return { ...parked, point: onRoute, progress };
+    }
+    return { ...parked, point: g.path[0], progress: 0 };
   }
 
   if (g.path.length === 0) {
-    return fix ? { point: fix, source: "horario", moving: false, progress: null, direction: null, waitS: 0, outOfService: false, at: now } : null;
+    return fix ? { ...base, point: fix, moving: false, progress: null, direction: null, waitS: 0, outOfService: false } : null;
   }
-  const base = { source: "horario" as const, at: now };
-  const phase = unitHash(vehicle.id);
-  const minutes = (((now.getTime() / 60000 + MAPUTO_UTC_OFFSET_MIN) % 1440) + 1440) % 1440;
-  if (g.length < 1) return { ...base, point: g.path[0], moving: false, progress: 0, direction: null, waitS: 0, outOfService: false };
-  if (minutes < SERVICE_START_MIN || minutes >= SERVICE_END_MIN) {
-    const waitS = ((((SERVICE_START_MIN - minutes) % 1440) + 1440) % 1440) * 60;
-    return phase < 0.5
-      ? { ...base, point: g.path[0], moving: false, progress: 0, direction: 1, waitS, outOfService: true }
-      : { ...base, point: g.path[g.path.length - 1], moving: false, progress: g.length, direction: -1, waitS, outOfService: true };
-  }
-  const legS = g.length / speedMps;
-  const cycleS = 2 * legS + 2 * TERMINAL_STOP_S;
-  const t = ((minutes - SERVICE_START_MIN) * 60 + phase * cycleS) % cycleS;
-  if (t < legS) {
-    const progress = t * speedMps;
-    return { ...base, point: pointAlong(g, progress), moving: true, progress, direction: 1, waitS: 0, outOfService: false };
-  }
-  if (t < legS + TERMINAL_STOP_S) {
-    return { ...base, point: g.path[g.path.length - 1], moving: false, progress: g.length, direction: -1, waitS: legS + TERMINAL_STOP_S - t, outOfService: false };
-  }
-  if (t < 2 * legS + TERMINAL_STOP_S) {
-    const progress = g.length - (t - legS - TERMINAL_STOP_S) * speedMps;
-    return { ...base, point: pointAlong(g, progress), moving: true, progress, direction: -1, waitS: 0, outOfService: false };
-  }
-  return { ...base, point: g.path[0], moving: false, progress: 0, direction: 1, waitS: cycleS - t, outOfService: false };
+  if (g.length < 1) return { ...base, point: g.path[0], moving: false, progress: 0, direction: trip.from, waitS: 0, outOfService: false };
+  const s = tripAt((now.getTime() - trip.start.getTime()) / 1000, g, speedMps, trip.from);
+  return { ...base, point: pointAlong(g, s.progress), moving: s.moving, progress: s.progress, direction: s.direction, waitS: s.waitS, outOfService: false };
 }
 
 /** A próxima paragem a que o autocarro chega no seu sentido, e em quantos minutos. */
@@ -169,7 +180,7 @@ export function nextStop(
   stops: { nome: string; geoLocation: string | null }[],
   speedMps: number,
 ): { nome: string; minutos: number } | null {
-  if (position.progress === null || g.path.length < 2) return null;
+  if (position.outOfService || position.progress === null || g.path.length < 2) return null;
   const p = position.progress;
   const dir = position.direction ?? 1;
   const located = stops
@@ -216,106 +227,105 @@ export async function positionSummary(vehicle: PositionedVehicle, via: { geoLoca
   };
 }
 
-const SERVICE_S = (SERVICE_END_MIN - SERVICE_START_MIN) * 60;
-
-/** Estado pelo horário num momento do dia de serviço (segundos desde as 05:00). */
-function timetableAt(serviceS: number, g: Geometry, speedMps: number, phase: number) {
-  const legS = g.length / speedMps;
-  const cycleS = 2 * legS + 2 * TERMINAL_STOP_S;
-  const t = (((serviceS + phase * cycleS) % cycleS) + cycleS) % cycleS;
-  if (t < legS) return { progress: t * speedMps, moving: true };
-  if (t < legS + TERMINAL_STOP_S) return { progress: g.length, moving: false };
-  if (t < 2 * legS + TERMINAL_STOP_S) return { progress: g.length - (t - legS - TERMINAL_STOP_S) * speedMps, moving: true };
-  return { progress: 0, moving: false };
+/** "07h": a hora de Maputo de um instante */
+function hourLabel(ms: number): string {
+  const h = Math.floor((((ms / 60000 + MAPUTO_UTC_OFFSET_MIN) % 1440) + 1440) % 1440 / 60);
+  return `${String(h).padStart(2, "0")}h`;
 }
 
+/** Contas da viagem em curso feitas no máximo sobre este tempo (uma viagem esquecida ligada dias) */
+const MAX_TRIP_S = 24 * 3600;
+
 /**
- * O dia de serviço de um veículo pelo horário: quilómetros e viagens feitos e previstos, por hora,
- * e as próximas horas a que passa em cada paragem em cada sentido. O histórico de GPS real não é
- * guardado, por isso estes são os números do horário.
+ * A viagem em curso de um veículo, desde que o motorista a iniciou: quilómetros e chegadas a um
+ * terminal, por hora, e as próximas horas a que passa em cada paragem em cada sentido. Sem viagem
+ * iniciada, o veículo está parado: tudo a zero e sem passagens. O histórico de GPS real não é
+ * guardado, por isso estes são os números da viagem à velocidade de viagem da tarifa.
  */
 export async function operationSummary(
-  vehicle: { id: string },
+  vehicle: PositionedVehicle,
   via: { geoLocationPath: string | null; terminalPartida: string; terminalChegada: string; paragens: { paragem: { nome: string; geoLocation: string | null } }[] } | null,
   now = new Date(),
 ) {
   const g = routeGeometry(via?.geoLocationPath);
   if (!via || g.path.length < 2 || g.length < 1) return null;
   const speed = await travelSpeedMps();
-  const phase = unitHash(vehicle.id);
   const legS = g.length / speed;
   const cycleS = 2 * legS + 2 * TERMINAL_STOP_S;
-
-  const dayMs = 86400000;
-  const msOfDay = (((now.getTime() + MAPUTO_UTC_OFFSET_MIN * 60000) % dayMs) + dayMs) % dayMs;
-  const serviceStart = now.getTime() - msOfDay + SERVICE_START_MIN * 60000; // hoje às 05:00 de Maputo
-  const nowS = Math.min(Math.max((now.getTime() - serviceStart) / 1000, 0), SERVICE_S);
-
-  // Percorrer o dia de serviço em passos de 30 s
-  const STEP = 30;
-  const porHora = Array.from({ length: SERVICE_S / 3600 }, (_, h) => ({
-    hora: `${String(SERVICE_START_MIN / 60 + h).padStart(2, "0")}h`,
-    km: 0,
-    viagens: 0,
-  }));
-  let kmHoje = 0;
-  let kmDia = 0;
-  let viagensHoje = 0;
-  let prev = timetableAt(0, g, speed, phase);
-  for (let s = STEP; s <= SERVICE_S; s += STEP) {
-    const cur = timetableAt(s, g, speed, phase);
-    const km = Math.abs(cur.progress - prev.progress) / 1000;
-    const arrived = prev.moving && !cur.moving ? 1 : 0; // chegou a um terminal
-    const bucket = porHora[Math.min(porHora.length - 1, Math.floor((s - STEP) / 3600))];
-    bucket.km += km;
-    bucket.viagens += arrived;
-    kmDia += km;
-    if (s <= nowS) {
-      kmHoje += km;
-      viagensHoje += arrived;
-    }
-    prev = cur;
-  }
-  let acumulado = 0;
-  const porHoraOut = porHora.map((h) => {
-    acumulado += h.km;
-    return { hora: h.hora, km: Math.round(h.km), kmAcumulado: Math.round(acumulado), viagens: h.viagens };
-  });
-
-  // Próxima passagem em cada paragem: para o último ponto do percurso (ida) e de volta (volta)
-  const nextPass = (cycleT: number) => {
-    const from = Math.max((now.getTime() - serviceStart) / 1000, 0);
-    const base = cycleT - phase * cycleS; // segundos de serviço das passagens: base + k * ciclo
-    const today = base + Math.ceil((from - base) / cycleS) * cycleS;
-    if (today < SERVICE_S) return new Date(serviceStart + today * 1000).toISOString();
-    const tomorrow = base + Math.ceil(-base / cycleS) * cycleS; // primeira passagem depois das 05:00 de amanhã
-    return new Date(serviceStart + dayMs + tomorrow * 1000).toISOString();
-  };
-  const passagens = via.paragens
+  const trip = tripOf(vehicle);
+  const stops = via.paragens
     .map((vp) => ({ nome: vp.paragem.nome, at: parseLatLng(vp.paragem.geoLocation) }))
     .filter((s): s is { nome: string; at: LatLng } => s.at !== null)
     .map((s) => ({ nome: s.nome, progress: g.cumulative[nearestIndex(g, s.at)] }))
-    .sort((a, b) => a.progress - b.progress)
-    .map((s) => ({
-      nome: s.nome,
-      km: Math.round(s.progress / 100) / 10,
-      ida: nextPass(s.progress / speed),
-      volta: nextPass(legS + TERMINAL_STOP_S + (g.length - s.progress) / speed),
-    }));
-
-  return {
+    .sort((a, b) => a.progress - b.progress);
+  const common = {
     comprimentoKm: Math.round(g.length / 100) / 10,
     minutosPorSentido: Math.round(legS / 60),
-    paragens: passagens.length,
-    horasHoje: Math.round((nowS / 3600) * 10) / 10,
-    kmHoje: Math.round(kmHoje),
-    kmPlaneado: Math.round(kmDia),
-    viagensHoje,
-    viagensPlaneadas: porHora.reduce((sum, h) => sum + h.viagens, 0),
-    porHora: porHoraOut,
-    passagens,
+    paragens: stops.length,
     // Nomes dos sentidos: o percurso vai do primeiro ponto ao último
     ida: via.terminalChegada,
     volta: via.terminalPartida,
+  };
+  if (!trip) {
+    return {
+      ...common,
+      emViagem: false,
+      iniciadaEm: null,
+      horasHoje: 0,
+      kmHoje: 0,
+      viagensHoje: 0,
+      porHora: [] as { hora: string; km: number; kmAcumulado: number; viagens: number }[],
+      passagens: stops.map((s) => ({ nome: s.nome, km: Math.round(s.progress / 100) / 10, ida: null, volta: null })),
+    };
+  }
+
+  // Percorrer a viagem em passos de 30 s, por hora de Maputo
+  const startMs = trip.start.getTime();
+  const elapsedS = Math.min(Math.max(0, (now.getTime() - startMs) / 1000), MAX_TRIP_S);
+  const STEP = 30;
+  const buckets = new Map<string, { km: number; viagens: number }>();
+  let km = 0;
+  let viagens = 0;
+  let prev = tripAt(0, g, speed, trip.from);
+  for (let s = STEP; s <= elapsedS; s += STEP) {
+    const cur = tripAt(s, g, speed, trip.from);
+    const d = Math.abs(cur.progress - prev.progress) / 1000;
+    const arrived = prev.moving && !cur.moving ? 1 : 0; // chegou a um terminal
+    const label = hourLabel(startMs + s * 1000);
+    const b = buckets.get(label) ?? { km: 0, viagens: 0 };
+    b.km += d;
+    b.viagens += arrived;
+    buckets.set(label, b);
+    km += d;
+    viagens += arrived;
+    prev = cur;
+  }
+  let acumulado = 0;
+  const porHora = [...buckets].map(([hora, b]) => {
+    acumulado += b.km;
+    return { hora, km: Math.round(b.km), kmAcumulado: Math.round(acumulado), viagens: b.viagens };
+  });
+
+  // Próxima passagem em cada paragem: os segundos do ciclo em que passa nela em cada sentido, mais voltas inteiras
+  const nowS = (now.getTime() - startMs) / 1000;
+  const nextPass = (cycleT: number) => new Date(startMs + (cycleT + Math.max(0, Math.ceil((nowS - cycleT) / cycleS)) * cycleS) * 1000).toISOString();
+  const passIn = (progress: number, dir: Direction) => {
+    const along = dir === 1 ? progress : g.length - progress; // metros desde o terminal de onde parte nesse sentido
+    return dir === trip.from ? along / speed : legS + TERMINAL_STOP_S + along / speed;
+  };
+  return {
+    ...common,
+    emViagem: true,
+    iniciadaEm: trip.start.toISOString(),
+    horasHoje: Math.round((elapsedS / 3600) * 10) / 10,
+    kmHoje: Math.round(km),
+    viagensHoje: viagens,
+    porHora,
+    passagens: stops.map((s) => ({
+      nome: s.nome,
+      km: Math.round(s.progress / 100) / 10,
+      ida: nextPass(passIn(s.progress, 1)),
+      volta: nextPass(passIn(s.progress, -1)),
+    })),
   };
 }
