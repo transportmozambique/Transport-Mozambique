@@ -1,7 +1,7 @@
 # Fluxos de dados
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 3. Perceber como funciona › **Fluxos de dados** (página 10 de 25)
+[Documentação](README.md) › 3. Perceber como funciona › **Fluxos de dados** (página 10 de 26)
 
 Anterior: [Configuração](configuracao.md) · [Índice](README.md) · Seguinte: [Localização e GPS](localizacao-gps.md)
 
@@ -13,7 +13,7 @@ Anterior: [Configuração](configuracao.md) · [Índice](README.md) · Seguinte:
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
 - 3. Perceber como funciona: **Fluxos de dados** · [Localização e GPS](localizacao-gps.md) · [Serviço USSD](ussd.md) · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
 - 4. Usar as aplicações: [Aplicação dos passageiros](app-passageiros.md) · [Portal do motorista](portal-motorista.md) · [Painel de administração](painel-admin.md)
-- 5. Pôr online: [Publicação](publicacao.md) · [Guia da Vercel](guia-vercel.md) · [Guia da Neon](guia-neon.md) · [Africa's Talking](africas-talking.md)
+- 5. Pôr online: [Publicação](publicacao.md) · [Guia da Vercel](guia-vercel.md) · [Guia da Neon](guia-neon.md) · [Africa's Talking](africas-talking.md) · [Guia do cron-job.org](guia-cron-job.md)
 - 6. Manter: [Testes](testes.md) · [Resolução de problemas](resolucao-de-problemas.md) · [Limitações](limitacoes.md)
 
 </details>
@@ -249,7 +249,7 @@ sequenceDiagram
 Os avisos de 15, 10 e 5 minutos só chegam a tempo se a verificação corre pelo menos a cada minuto. Corre:
 
 - a cada pedido ao USSD, ao portal do motorista (que pergunta a cada 10 s durante uma viagem), ao mapa da web (de 5 em 5 s) e às páginas de viagens, no máximo uma vez a cada 30 s por instância;
-- a cada minuto por um pedido agendado externo e gratuito: na produção, um cronjob no cron-job.org desde 2026-10-27 ([Africa's Talking → Verificação de chegadas a cada minuto](africas-talking.md#verificação-de-chegadas-a-cada-minuto));
+- a cada minuto por um pedido agendado externo e gratuito: na produção, um cronjob no cron-job.org desde 2026-10-27 ([Guia do cron-job.org](guia-cron-job.md));
 - pelo GitHub Actions ([`.github/workflows/arrival-check.yml`](../.github/workflows/arrival-check.yml), "Verificação de chegadas (SMS)"), que chama `POST /api/simulation {"action":"check"}`. O agendamento pede 5 min, mas o [GitHub](conceitos.md#github "O site onde o repositório está guardado e partilhado, e onde se revêem as alterações.") atrasa os agendamentos gratuitos: em Outubro de 2026 corria a cada 40 a 50 minutos. Fica como recurso, não como relógio. O GitHub também pausa os agendamentos de um [repositório](conceitos.md#repositorio "A pasta do projecto com todo o seu histórico no git.") sem actividade durante 60 dias (volta-se a ligar em Actions → Verificação de chegadas (SMS) → Enable workflow).
 
 Porquê não um cron da [Vercel](conceitos.md#vercel "A empresa cujos servidores correm as três aplicações e as publicam a cada merge."): o plano Hobby só permite cron jobs uma vez por dia. `POST /api/simulation {"action":"check"}` corre a verificação a pedido, e `GET /api/simulation` diz quantos autocarros estão em viagem e quantos acompanhamentos estão activos.

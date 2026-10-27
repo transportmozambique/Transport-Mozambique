@@ -1,7 +1,7 @@
 # Limitações
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 6. Manter › **Limitações** (página 25 de 25)
+[Documentação](README.md) › 6. Manter › **Limitações** (página 26 de 26)
 
 Anterior: [Resolução de problemas](resolucao-de-problemas.md) · [Índice](README.md)
 
@@ -13,7 +13,7 @@ Anterior: [Resolução de problemas](resolucao-de-problemas.md) · [Índice](REA
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
 - 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · [Localização e GPS](localizacao-gps.md) · [Serviço USSD](ussd.md) · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
 - 4. Usar as aplicações: [Aplicação dos passageiros](app-passageiros.md) · [Portal do motorista](portal-motorista.md) · [Painel de administração](painel-admin.md)
-- 5. Pôr online: [Publicação](publicacao.md) · [Guia da Vercel](guia-vercel.md) · [Guia da Neon](guia-neon.md) · [Africa's Talking](africas-talking.md)
+- 5. Pôr online: [Publicação](publicacao.md) · [Guia da Vercel](guia-vercel.md) · [Guia da Neon](guia-neon.md) · [Africa's Talking](africas-talking.md) · [Guia do cron-job.org](guia-cron-job.md)
 - 6. Manter: [Testes](testes.md) · [Resolução de problemas](resolucao-de-problemas.md) · **Limitações**
 
 </details>
@@ -78,7 +78,7 @@ Estavam nesta lista e já não são limitações:
 ## Notificações
 
 - **O agendamento do [GitHub](conceitos.md#github "O site onde o repositório está guardado e partilhado, e onde se revêem as alterações.") não chega para os avisos de 15, 10 e 5 minutos.** O GitHub pede a verificação "a cada 5 minutos", mas num repositório público corre-a com grandes atrasos (em Outubro de 2026, a cada 40 a 50 minutos), e suspende-a num repositório sem actividade durante 60 dias. Sem tráfego na web, no USSD ou no portal, os avisos chegam tarde ou saltam passos.
-  *Contornar:* um agendador externo que envie `POST https://transport-mz.vercel.app/api/simulation` com `{"action":"check"}` a cada minuto ([Africa's Talking → Verificação de chegadas a cada minuto](africas-talking.md#verificação-de-chegadas-a-cada-minuto)), ou o Vercel Cron num plano pago. Se o workflow ficar suspenso, ligá-lo outra vez em Actions → "Verificação de chegadas (SMS)" → Enable workflow.
+  *Contornado* desde 2026-10-27: um cronjob do cron-job.org envia `POST https://transport-mz.vercel.app/api/simulation` com `{"action":"check"}` a cada minuto ([Guia do cron-job.org](guia-cron-job.md)). Outra forma seria o Vercel Cron num plano pago. Se o workflow ficar suspenso, ligá-lo outra vez em Actions → "Verificação de chegadas (SMS)" → Enable workflow.
 - **O sistema não sabe quando o passageiro entra no autocarro.** Uma viagem acompanhada conta-o a bordo quando o autocarro anunciado sai da paragem de entrada. Quem o perdeu recebe a seguir os avisos de bordo desse autocarro.
   *Contornar:* o aviso "esta a chegar" diz quando chega o seguinte; o passageiro pede outra vez a viagem no USSD, o que começa um acompanhamento novo.
 - Os alertas com mais de 24 horas são ignorados, e um alerta envia no máximo um SMS a cada 30 minutos. É de propósito: o passageiro pede outra vez para uma viagem nova.

@@ -1,7 +1,7 @@
 # Estado do projecto
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 1. Conhecer o projecto › **Estado do projecto** (página 6 de 25)
+[Documentação](README.md) › 1. Conhecer o projecto › **Estado do projecto** (página 6 de 26)
 
 Anterior: [Fontes de dados](fontes-de-dados.md) · [Índice](README.md) · Seguinte: [Primeiros passos](primeiros-passos.md)
 
@@ -13,7 +13,7 @@ Anterior: [Fontes de dados](fontes-de-dados.md) · [Índice](README.md) · Segui
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
 - 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · [Localização e GPS](localizacao-gps.md) · [Serviço USSD](ussd.md) · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
 - 4. Usar as aplicações: [Aplicação dos passageiros](app-passageiros.md) · [Portal do motorista](portal-motorista.md) · [Painel de administração](painel-admin.md)
-- 5. Pôr online: [Publicação](publicacao.md) · [Guia da Vercel](guia-vercel.md) · [Guia da Neon](guia-neon.md) · [Africa's Talking](africas-talking.md)
+- 5. Pôr online: [Publicação](publicacao.md) · [Guia da Vercel](guia-vercel.md) · [Guia da Neon](guia-neon.md) · [Africa's Talking](africas-talking.md) · [Guia do cron-job.org](guia-cron-job.md)
 - 6. Manter: [Testes](testes.md) · [Resolução de problemas](resolucao-de-problemas.md) · [Limitações](limitacoes.md)
 
 </details>
@@ -38,7 +38,7 @@ Onde o projecto está em 2026-10-18: o que funciona, que dados tem, o que espera
 | Posições dos autocarros | Pela **viagem do motorista** para todos os autocarros: parados até o motorista carregar em "Iniciar viagem", depois a ir e voltar ao longo da rota. A entrada de [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") funciona (`/api/gps`, [Traccar Client](conceitos.md#traccar "Uma aplicação gratuita para telemóvel que envia a posição do telemóvel pelo protocolo OsmAnd."), portal do motorista), mas nenhum veículo tem dispositivo ainda ([Localização e GPS](localizacao-gps.md)). |
 | [Base de dados](conceitos.md#base-de-dados "O sítio organizado onde a plataforma guarda tudo o que tem de durar: rotas, paragens, veículos, contas.") | [PostgreSQL](conceitos.md#postgresql "O programa de base de dados que este projecto usa; gratuito e muito usado.") na [Neon](conceitos.md#neon "A empresa que guarda a base de dados PostgreSQL da produção, na internet."), [ramo](conceitos.md#ramo "Uma linha de trabalho separada, onde se fazem mudanças sem tocar na versão principal.") `production` ([Guia da Neon](guia-neon.md)). |
 | Alojamento | Três projectos na [Vercel](conceitos.md#vercel "A empresa cujos servidores correm as três aplicações e as publicam a cada merge."); cada [merge](conceitos.md#pull-request "Um pull request é o pedido para juntar um ramo ao main; o merge é a junção, quando o pedido é aceite.") na `main` publica-os ([Guia da Vercel](guia-vercel.md)). |
-| Verificações e [agendamento](conceitos.md#agendamento "Uma tarefa que corre sozinha a uma hora marcada, ou de tantos em tantos minutos.") | [GitHub Actions](conceitos.md#ci "Verificações que o GitHub corre sozinho a cada pull request, para nenhum erro conhecido chegar ao main."): "Verificações" em cada pull request ([Testes → CI](testes.md#ci-no-github)), e a "Verificação de chegadas (SMS)", de reserva ([Publicação](publicacao.md#os-três-projectos)). A verificação a cada minuto é um cronjob no cron-job.org ([Africa's Talking → Verificação de chegadas a cada minuto](africas-talking.md#verificação-de-chegadas-a-cada-minuto)). |
+| Verificações e [agendamento](conceitos.md#agendamento "Uma tarefa que corre sozinha a uma hora marcada, ou de tantos em tantos minutos.") | [GitHub Actions](conceitos.md#ci "Verificações que o GitHub corre sozinho a cada pull request, para nenhum erro conhecido chegar ao main."): "Verificações" em cada pull request ([Testes → CI](testes.md#ci-no-github)), e a "Verificação de chegadas (SMS)", de reserva ([Publicação](publicacao.md#os-três-projectos)). A verificação a cada minuto é um cronjob no cron-job.org ([Guia do cron-job.org](guia-cron-job.md)). |
 
 ## Os dados
 

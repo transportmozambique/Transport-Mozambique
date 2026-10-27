@@ -10,7 +10,7 @@ export async function GET() {
   }
 }
 
-// POST {"action": "check"}: corre agora a verificação dos SMS de chegada (o GitHub Actions e um pedido agendado externo chamam-no; ver docs/africas-talking.md).
+// POST {"action": "check"}: corre agora a verificação dos SMS de chegada (o cronjob do cron-job.org a cada minuto e o GitHub Actions chamam-no; ver docs/guia-cron-job.md).
 // As posições não precisam de arranque nem paragem: vêm do GPS real ou da viagem do motorista a cada leitura.
 export async function POST(request: NextRequest) {
   try {

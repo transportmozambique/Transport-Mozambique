@@ -1,7 +1,7 @@
 # Serviço USSD
 
 <!-- navegação: gerada por .github/scripts/docs-nav.py, não editar à mão -->
-[Documentação](README.md) › 3. Perceber como funciona › **Serviço USSD** (página 12 de 25)
+[Documentação](README.md) › 3. Perceber como funciona › **Serviço USSD** (página 12 de 26)
 
 Anterior: [Localização e GPS](localizacao-gps.md) · [Índice](README.md) · Seguinte: [Segurança](seguranca.md)
 
@@ -13,7 +13,7 @@ Anterior: [Localização e GPS](localizacao-gps.md) · [Índice](README.md) · S
 - 2. Montar localmente: [Primeiros passos](primeiros-passos.md) · [Base de dados](base-de-dados.md) · [Configuração](configuracao.md)
 - 3. Perceber como funciona: [Fluxos de dados](fluxos-de-dados.md) · [Localização e GPS](localizacao-gps.md) · **Serviço USSD** · [Segurança](seguranca.md) · [Referência da API](referencia-api.md) · [Mapa do código](mapa-do-codigo.md)
 - 4. Usar as aplicações: [Aplicação dos passageiros](app-passageiros.md) · [Portal do motorista](portal-motorista.md) · [Painel de administração](painel-admin.md)
-- 5. Pôr online: [Publicação](publicacao.md) · [Guia da Vercel](guia-vercel.md) · [Guia da Neon](guia-neon.md) · [Africa's Talking](africas-talking.md)
+- 5. Pôr online: [Publicação](publicacao.md) · [Guia da Vercel](guia-vercel.md) · [Guia da Neon](guia-neon.md) · [Africa's Talking](africas-talking.md) · [Guia do cron-job.org](guia-cron-job.md)
 - 6. Manter: [Testes](testes.md) · [Resolução de problemas](resolucao-de-problemas.md) · [Limitações](limitacoes.md)
 
 </details>
@@ -335,7 +335,7 @@ CON 1 transbordo, chega 22:01                   CON 2 transbordos, chega 22:42
 ```
 
 - `2` mostra a opção seguinte (a partir da segunda, `2` outra vez mostra a seguinte, e dá a volta); "2. Outra opcao" só aparece quando há mais de uma.
-- `1` (**Acompanhar por SMS**) envia a viagem mostrada num SMS, com todos os passos: caminhadas ("Caminhe 150 m ate …"), a rota e a matrícula de cada autocarro, onde e quando apanhar e sair, e cada tarifa. Por exemplo: `Viagem Capuchinho > Praca dos Combatentes: chega 21:21, 47 MT. 1) Apanhe a rota 411 (ADA-194M) em Capuchinho as 21:11; saia em Praca dos Combatentes (X23) as 21:21 (47 MT). Vamos avisar por SMS: …`. Depois chegam os avisos de cada autocarro, até ao destino: a 15, 10 e 5 minutos, "esta a chegar", 15, 10 e 5 minutos antes de sair, onde apanhar o autocarro seguinte, e "chegou ao seu destino". A lista completa, com exemplos, está em [Fluxos de dados → Os avisos de uma viagem acompanhada](fluxos-de-dados.md#os-avisos-de-uma-viagem-acompanhada); os avisos precisam da [verificação a cada minuto](africas-talking.md#verificação-de-chegadas-a-cada-minuto) para chegar a horas.
+- `1` (**Acompanhar por SMS**) envia a viagem mostrada num SMS, com todos os passos: caminhadas ("Caminhe 150 m ate …"), a rota e a matrícula de cada autocarro, onde e quando apanhar e sair, e cada tarifa. Por exemplo: `Viagem Capuchinho > Praca dos Combatentes: chega 21:21, 47 MT. 1) Apanhe a rota 411 (ADA-194M) em Capuchinho as 21:11; saia em Praca dos Combatentes (X23) as 21:21 (47 MT). Vamos avisar por SMS: …`. Depois chegam os avisos de cada autocarro, até ao destino: a 15, 10 e 5 minutos, "esta a chegar", 15, 10 e 5 minutos antes de sair, onde apanhar o autocarro seguinte, e "chegou ao seu destino". A lista completa, com exemplos, está em [Fluxos de dados → Os avisos de uma viagem acompanhada](fluxos-de-dados.md#os-avisos-de-uma-viagem-acompanhada); os avisos precisam da [verificação a cada minuto](guia-cron-job.md) para chegar a horas.
 - `0` volta ao destino (para escrever outro).
 - **Escreve:** só a tecla `1`. Grava um [`Acompanhamento`](glossario.md#a-rede-e-as-pessoas "Uma viagem acompanhada por SMS: os avisos de cada autocarro até ao destino") com o telefone, os autocarros da viagem, a etapa actual e o último aviso enviado; um acompanhamento anterior do mesmo telefone acaba (uma viagem de cada vez). Ver os ecrãs não escreve nada. (Até Outubro de 2026, cada ecrã de viagem criava um [`Utente`](glossario.md#a-rede-e-as-pessoas "A tabela das contas de passageiros") sem palavra-passe e um [`MISSION`](glossario.md#a-rede-e-as-pessoas "Um alerta de chegada: um SMS quando um autocarro estiver perto de uma paragem"); já não.)
 - **Nenhum autocarro em serviço:** `END Nenhum autocarro em servico agora de Capuchinho para Praca dos Combatentes. Tente mais tarde.` quando as rotas ligam os dois locais mas nenhum motorista delas iniciou a viagem.

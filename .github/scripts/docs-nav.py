@@ -46,6 +46,7 @@ PARTES = [
         ("guia-vercel.md", "Guia da Vercel"),
         ("guia-neon.md", "Guia da Neon"),
         ("africas-talking.md", "Africa's Talking"),
+        ("guia-cron-job.md", "Guia do cron-job.org"),
     ]),
     ("6. Manter", [
         ("testes.md", "Testes"),
