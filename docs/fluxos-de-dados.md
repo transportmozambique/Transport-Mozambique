@@ -248,7 +248,7 @@ sequenceDiagram
 
 Os avisos de 15, 10 e 5 minutos só chegam a tempo se a verificação corre pelo menos a cada minuto. Corre:
 
-- a cada pedido ao USSD, ao portal do motorista (que pergunta a cada 10 s durante uma viagem), ao mapa da web (de 5 em 5 s) e às páginas de viagens, no máximo uma vez a cada 30 s por instância;
+- a cada pedido ao USSD, ao portal do motorista (que pergunta a cada 10 s durante uma viagem), ao mapa da web (de 5 em 5 s), às páginas de viagens e a cada posição GPS nova em `/api/gps`, no máximo uma vez a cada 30 s por instância;
 - a cada minuto por um pedido agendado externo e gratuito: na produção, um cronjob no cron-job.org desde 2026-10-27 ([Guia do cron-job.org](guia-cron-job.md));
 - pelo GitHub Actions ([`.github/workflows/arrival-check.yml`](../.github/workflows/arrival-check.yml), "Verificação de chegadas (SMS)"), que chama `POST /api/simulation {"action":"check"}`. O agendamento pede 5 min, mas o [GitHub](conceitos.md#github "O site onde o repositório está guardado e partilhado, e onde se revêem as alterações.") atrasa os agendamentos gratuitos: em Outubro de 2026 corria a cada 40 a 50 minutos. Fica como recurso, não como relógio. O GitHub também pausa os agendamentos de um [repositório](conceitos.md#repositorio "A pasta do projecto com todo o seu histórico no git.") sem actividade durante 60 dias (volta-se a ligar em Actions → Verificação de chegadas (SMS) → Enable workflow).
 

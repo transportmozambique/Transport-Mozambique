@@ -191,6 +191,8 @@ Quando corre bem, a linha do veículo é actualizada:
 
 Os leitores decidem se a posição é recente por `gpsAtualizadoEm`, por isso uma posição que chega tarde com a sua hora original fica guardada mas pode já contar como antiga.
 
+Depois de responder, uma posição guardada corre também a verificação de chegadas, no máximo uma vez a cada 30 s por instância: os avisos por SMS de quem espera este autocarro saem com a posição nova, sem esperar pelo pedido agendado de cada minuto ([Guia do cron-job.org → O cronjob não sabe onde estão os autocarros](guia-cron-job.md#o-cronjob-não-sabe-onde-estão-os-autocarros)). As posições ignoradas não a correm.
+
 ## Verificar que funciona
 
 **Com [`curl`](conceitos.md#curl "Um comando que faz pedidos HTTP a partir do terminal, como um navegador sem janela.")**, de qualquer máquina (substituir o código; localmente usar `http://localhost:3000`):

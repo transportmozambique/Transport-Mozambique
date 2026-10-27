@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
+import { waitUntil } from '@vercel/functions';
 import { prisma } from '@/lib/prisma';
+import { maybeCheckArrivals } from '@/lib/busSimulator';
 
 /**
  * Posições GPS reais dos veículos.
@@ -21,6 +23,10 @@ import { prisma } from '@/lib/prisma';
  *
  * Responde 200 quando a posição foi guardada (ou era mais antiga do que a última), 400 para
  * coordenadas inválidas, 401 para um código desconhecido.
+ *
+ * Uma posição nova também corre a verificação de chegadas (os avisos por SMS), no máximo a cada
+ * 30 s por instância: com GPS, os avisos acompanham o autocarro sem esperar pelo pedido agendado
+ * de cada minuto (docs/guia-cron-job.md).
  */
 
 // O portal do motorista (outro domínio) envia posições a partir do navegador
@@ -111,6 +117,8 @@ async function handle(request: NextRequest) {
       gpsDirecao: heading === null ? null : ((heading % 360) + 360) % 360,
     },
   });
+  // A posição mudou: um aviso pode ter ficado na hora. Corre depois da resposta, para o dispositivo não esperar
+  waitUntil(maybeCheckArrivals());
   return NextResponse.json({ ok: true });
 }
 
