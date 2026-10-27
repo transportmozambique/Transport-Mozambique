@@ -73,7 +73,7 @@ Cada tarefa é o caminho mais curto pelos ecrãs. As secções seguintes descrev
 2. Na coluna **Estado**, carregar em **Activa** desactiva a rota; carregar em **Desactivada** activa-a. Aparece "Rota X19 activada" (ou desactivada).
 3. A web, o [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.") e os [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") usam as rotas novas em até 5 minutos (cada instância guarda a rede 5 minutos). Os motoristas de uma rota desactivada não conseguem iniciar a viagem ("A rota do seu veículo está desactivada").
 
-Porquê desactivar em vez de apagar: as rotas, as paragens e os veículos ficam guardados, e voltar atrás é um clique. Desde 2026-10-27 só estão activas a X19, a 411 e a X22 ([Base de dados → Rotas activas](base-de-dados.md#rotas-activas)).
+Porquê desactivar em vez de apagar: a rota e as suas paragens ficam guardadas, e voltar atrás é um clique. Desde 2026-10-27 só estão activas a X19, a 411 e a X22 ([Base de dados → Rotas activas](base-de-dados.md#rotas-activas)). Uma rota activada só tem autocarros se tiver veículos com motorista: os das rotas desactivadas foram apagados nesse dia ([Base de dados → Veículos e motoristas das rotas desactivadas](base-de-dados.md#veículos-e-motoristas-das-rotas-desactivadas)), por isso uma rota nova precisa de veículos e motoristas criados aqui.
 
 <a id="tarefa-redesenhar"></a>**Redesenhar o percurso de uma rota** (uma linha que corta quarteirões)
 

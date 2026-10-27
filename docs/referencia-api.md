@@ -209,7 +209,7 @@ Uma caminhada é `{"tipo": "pe", "de", "para", "metros", "minutos"}`; a partir d
 
 Cinco usos, escolhidos pelos parâmetros. Código: [`app/api/buses/route.ts`](../transport-client/app/api/buses/route.ts) e [`lib/vehiclePosition.ts`](../transport-client/lib/vehiclePosition.ts).
 
-**1. Todos os autocarros, cada um com o percurso e as paragens da sua rota** (sem parâmetros). Cerca de 6 MB (1 MB comprimido) para 451 veículos, e por isso já nenhuma página o carrega; o mapa ao vivo usa `?fields=map`:
+**1. Todos os autocarros, cada um com o percurso e as paragens da sua rota** (sem parâmetros). Com 451 veículos eram cerca de 6 MB (1 MB comprimido), e por isso já nenhuma página o carrega (desde 2026-10-27 há 6); o mapa ao vivo usa `?fields=map`:
 
 ```json
 {

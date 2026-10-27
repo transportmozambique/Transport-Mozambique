@@ -39,10 +39,10 @@ Produção em 2026-10-18:
 | | 170 (refs do OSM como `X12`, `C5`, `503`) | Relações de rota do OpenStreetMap (redes [Chapas](glossario.md#transportes-em-maputo "Os minibuses que levam a maior parte dos passageiros de Maputo"), EMTPM, Corujas, REM, RCM) | Reais, como mapeadas | ODbL |
 | Percursos das rotas | 261 | Caminhos do [OSRM](conceitos.md#router "Um serviço que, dados dois ou mais pontos, responde com o caminho pelas ruas entre eles e a distância.") nas estradas do OpenStreetMap ([servidores](conceitos.md#servidor "Um computador sempre ligado que recebe pedidos e responde a eles.") FOSSGIS e de demonstração do OSRM) | Calculados | ODbL (as estradas) |
 | Províncias / municípios | 11 / 2 | Escritos pelos primeiros scripts de dados | Nomes reais (as 11 províncias de Moçambique; Maputo, Matola) | |
-| Veículos ([`Transporte`](glossario.md#a-rede-e-as-pessoas "A tabela dos veículos (vehicle)")) | 111 | Os primeiros scripts de dados | Inventados | |
-| | 340 `ADA-001M`–`ADA-340M` | `import-osm.mjs --buses` | Inventados | |
-| Motoristas ([`Motorista`](glossario.md#a-rede-e-as-pessoas "A tabela dos motoristas e dos seus PIN")) | 111 | Os primeiros scripts de dados, com fotografias de banco de imagens (Pexels) | Inventados | Licença Pexels (fotografias) |
-| | 340 | `add-drivers.mjs`, listas de nomes moçambicanos | Inventados | |
+| Veículos ([`Transporte`](glossario.md#a-rede-e-as-pessoas "A tabela dos veículos (vehicle)")) | 111, apagados em 2026-10-27 | Os primeiros scripts de dados | Inventados | |
+| | 340 `ADA-001M`–`ADA-340M`, dos quais ficam 6 (os das rotas activas) | `import-osm.mjs --buses` | Inventados | |
+| Motoristas ([`Motorista`](glossario.md#a-rede-e-as-pessoas "A tabela dos motoristas e dos seus PIN")) | 111, apagados em 2026-10-27 | Os primeiros scripts de dados, com fotografias de banco de imagens (Pexels) | Inventados | Licença Pexels (fotografias) |
+| | 340, dos quais ficam 6 ([Base de dados → Veículos e motoristas das rotas desactivadas](base-de-dados.md#veículos-e-motoristas-das-rotas-desactivadas)) | `add-drivers.mjs`, listas de nomes moçambicanos | Inventados | |
 | Proprietários ([`Proprietario`](glossario.md#a-rede-e-as-pessoas "A tabela dos donos dos veículos")) | 11 | Os primeiros scripts de dados | Inventados | |
 | Passageiros ([`Utente`](glossario.md#a-rede-e-as-pessoas "A tabela das contas de passageiros")) | poucos | Pessoas que se registaram na web ou usaram o [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.") durante os testes | Contas reais | dados pessoais ([Segurança](seguranca.md)) |
 | Regra de tarifa ([`Tarifa`](glossario.md#a-rede-e-as-pessoas "A regra de tarifa: preço mínimo, preço por km e velocidades")) | 1 | Escolhida pela equipa (10 MT mínimo, 10 MT/km, 30 km/h) | Uma suposição, não um tarifário oficial | |

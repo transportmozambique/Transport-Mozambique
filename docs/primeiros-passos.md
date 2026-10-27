@@ -159,7 +159,7 @@ Os dados de demonstração são pequenos mas completos:
 | Passageiros ([`Utente`](glossario.md#a-rede-e-as-pessoas "A tabela das contas de passageiros")) | 3 (`+258840000001`, `+258850000002`, `+258860000003`, palavra-passe `123456`) |
 | Proprietários ([`Proprietario`](glossario.md#a-rede-e-as-pessoas "A tabela dos donos dos veículos")) | 2 |
 
-Estas contas só existem na base de dados local. A produção é muito maior (261 rotas pelas estradas, 1 902 paragens, 451 veículos); para trabalhar com ela, ver [Trabalhar com uma cópia dos dados de produção](#trabalhar-com-uma-cópia-dos-dados-de-produção).
+Estas contas só existem na base de dados local. A produção é muito maior (261 rotas pelas estradas, 3 delas activas, e 1 902 paragens); para trabalhar com ela, ver [Trabalhar com uma cópia dos dados de produção](#trabalhar-com-uma-cópia-dos-dados-de-produção).
 
 ## 7. Correr as aplicações
 
