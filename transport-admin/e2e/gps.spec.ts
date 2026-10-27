@@ -13,15 +13,15 @@ test('Transporte: posição em tempo real e código do dispositivo GPS', async (
 
   // Rodapé da posição: valores reais da via, não os antigos de exemplo ("45 km/h", "Costa do Sol")
   const status = page.getByTestId('position-status');
-  await expect(status).toContainText(/GPS real|estimado pelo horário/);
+  await expect(status).toContainText(/GPS real|estimado pela viagem|onde parou/);
   const footer = page.getByTestId('position-footer');
   await expect(footer).toContainText(/\d+ km\/h|—/);
   await expect(footer).toContainText(/\d+ min|às \d\d:\d\d|—/);
   const nextStop = (await footer.locator('p').nth(3).innerText()).trim();
   expect(['—', ...stopNames]).toContain(nextStop);
 
-  // Os números do dia vêm do horário da via; nada de combustível, passageiros ou manutenção inventados
-  await expect(page.getByTestId('operacao-cards')).toContainText('Quilómetros Hoje');
+  // Os números vêm da viagem em curso do motorista; nada de combustível, passageiros ou manutenção inventados
+  await expect(page.getByTestId('operacao-cards')).toContainText('Quilómetros na Viagem');
   await expect(page.getByTestId('passagens')).toContainText(stopNames[0] ?? '');
   for (const fake of ['Consumo de Combustível', 'Passageiros Transportados', '45,230 km', 'Manutenção', 'vs ontem']) {
     await expect(page.getByText(fake)).toHaveCount(0);

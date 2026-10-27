@@ -223,7 +223,7 @@ cd transport-client
 npx tsx scripts/ussd-ecras.ts "" "1" "1*museu"
 ```
 
-Cada argumento é o `text` que a Africa's Talking enviaria: todas as teclas até agora, separadas por `*` ([Serviço USSD → Leitura das teclas](ussd.md#leitura-das-teclas)). `USSD_HORA="2026-10-19T08:30:00+02:00"` fixa o relógio, para ver horários de dia mesmo à noite.
+Cada argumento é o `text` que a Africa's Talking enviaria: todas as teclas até agora, separadas por `*` ([Serviço USSD → Leitura das teclas](ussd.md#leitura-das-teclas)). As viagens só contam com os autocarros cujo motorista iniciou a viagem: `USSD_TELEFONE="<telefone de um motorista>" npx tsx scripts/ussd-ecras.ts "6*<PIN>*1*1"` inicia uma ([Serviço USSD → Testar](ussd.md#testar)).
 
 **B. Com [`curl`](conceitos.md#curl "Um comando que faz pedidos HTTP a partir do terminal, como um navegador sem janela."), contra o servidor do passo 7** (o mesmo pedido que a Africa's Talking faz):
 

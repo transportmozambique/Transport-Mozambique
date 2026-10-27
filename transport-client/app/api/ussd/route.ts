@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { sendSMS } from '@/lib/notifications';
+import { sendSMS, toGsm } from '@/lib/notifications';
 import { getFareRule, fareFor, parseLatLng, haversineMeters, orderStopsAlongRoute } from '@/lib/fares';
-import { findDriverByPhone, verifyDriverPin, startTrip, endTrip } from '@/lib/driverTrips';
+import { findDriverByPhone, verifyDriverPin, startTrip, endTrip, TripError } from '@/lib/driverTrips';
 import { waitUntil } from '@vercel/functions';
 import { POSITION_FIELDS, vehiclePosition } from '@/lib/vehiclePosition';
-import { maputoClock } from '@/lib/eta';
+import { dayClock, startFollow } from '@/lib/journeyAlerts';
+import { maybeCheckArrivals } from '@/lib/busSimulator';
 import {
-  loadNetwork, placeLabel, planJourneys, towards,
-  type BusLeg, type Journey, type Network, type NetRoute, type NetStop,
+  hasConnection, loadNetwork, placeLabel, plannedFare, planJourneys, towards,
+  type BusLeg, type Journey, type Network, type NetRoute, type NetStop, type PlannedFare,
 } from '@/lib/journeys';
 import { normalizeName, placeName, searchPlaces, type Place } from '@/lib/places';
 import { USSD_MAX, cutText, render, replay, type Answer, type Menu, type Screen } from '@/lib/ussdSteps';
 import { timingSafeEqual } from 'crypto';
-import { findUtenteIdByPhone } from '@/lib/phones';
+
 
 // Formato USSD da Africa's Talking
 interface USSDRequest {
@@ -64,7 +65,8 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     });
 
-    // Tratar o pedido USSD
+    // Tratar o pedido USSD; cada tecla é também uma ocasião para enviar os SMS de chegada pendentes
+    waitUntil(maybeCheckArrivals());
     const response = toGsm(await handleUSSD(sessionId, phoneNumber, text));
 
     console.log('📤 USSD Response:', response);
@@ -90,20 +92,6 @@ export async function POST(request: NextRequest) {
 
 // ─── ECRÃS ────────────────────────────────────────────────────────────────────
 // Como se lê cada tecla (a repetição da sessão) está em lib/ussdSteps.ts.
-
-/**
- * A maioria dos telemóveis e das redes só mostra caracteres GSM-7 no USSD; letras acentuadas ou
- * estragam o ecrã ou reduzem o seu tamanho para metade, por isso tiram-se os acentos.
- */
-function toGsm(text: string): string {
-  return text
-    .replace(/[º⁰]/g, 'o') // ordinais, como em "1º de Maio" (também escrito com um zero em expoente)
-    .replace(/ª/g, 'a') // "2ª Rotunda"
-    .replace(/[–—]/g, '-')
-    .replace(/[‘’]/g, "'")
-    .replace(/[“”]/g, '"')
-    .normalize('NFD').replace(/[̀-ͯ]/g, '');
-}
 
 /** Um ecrã END que acaba com `note` na sua própria linha; o corpo é encurtado para o ecrã caber em USSD_MAX. */
 function endWithNote(body: string, note: string): string {
@@ -170,7 +158,7 @@ const INVALID = 'END Opcao invalida. Tente novamente.';
 
 function sms(phoneNumber: string, text: string) {
   try {
-    // Sem acentos: uma letra acentuada põe o SMS inteiro em Unicode (70 caracteres por parte em vez de 160)
+    // Sem acentos (toGsm): uma letra acentuada põe o SMS inteiro em Unicode (70 caracteres por parte em vez de 160)
     waitUntil(sendSMS(phoneNumber, toGsm(text)));
   } catch (e) {
     console.error('Erro de SMS:', e);
@@ -314,7 +302,8 @@ function routeStopList(net: Network, route: NetRoute): NetStop[] {
  * O passageiro escreve parte do nome da origem e escolhe-a nos resultados, e depois o mesmo para o
  * destino. A resposta é a melhor viagem, com transbordos quando nenhum autocarro vai directo (o
  * mesmo planeador da aplicação web, para as duas darem a mesma resposta); 2 mostra a opção
- * seguinte, 1 envia-a por SMS.
+ * seguinte, 1 acompanha-a por SMS: a viagem num SMS, e depois os avisos de cada etapa até ao
+ * destino (lib/journeyAlerts.ts). Só contam os autocarros cujo motorista iniciou a viagem.
  *
  *   1*<origem escrita>[*<escolha>]*<destino escrito>[*<escolha>][*2…][*1]
  */
@@ -338,35 +327,39 @@ function journeyMenu(phoneNumber: string): Menu {
     if ('screen' in to) return to.screen;
 
     const journeys = await plan(from.place, to.place);
-    if (!journeys.length) return { kind: 'end', text: `Nao ha autocarro de ${cutText(from.place.nome, 50)} para ${cutText(to.place.nome, 50)}.` };
+    if (!journeys.length) {
+      // Há ligação, mas nenhum autocarro dela em viagem agora (os motoristas não a iniciaram)?
+      const linked = await connected(from.place, to.place);
+      return {
+        kind: 'end',
+        text: linked
+          ? `Nenhum autocarro em servico agora de ${cutText(from.place.nome, 40)} para ${cutText(to.place.nome, 40)}. Tente mais tarde.`
+          : `Nao ha autocarro de ${cutText(from.place.nome, 50)} para ${cutText(to.place.nome, 50)}.`,
+      };
+    }
 
-    // Depois do destino: cada 2 mostra a opção seguinte; 1 envia por SMS a opção mostrada
+    // Depois do destino: cada 2 mostra a opção seguinte; 1 acompanha por SMS a opção mostrada
     const rest = answers.slice(to.next).map((a) => a.text);
     const shown = rest.filter((k) => k === '2').length;
     const journey = journeys[shown % journeys.length];
     if (rest[rest.length - 1] === '1') {
       return {
         kind: 'end',
-        text: 'Detalhes enviados por SMS.',
-        effect: () => sms(phoneNumber, journeySms(journey, from.place.nome, to.place.nome)),
+        text: 'Vai receber a viagem por SMS e avisos ate chegar: autocarro a 15, 10 e 5 min, chegada, transbordos e destino.',
+        effect: () => waitUntil(startFollow({ telefone: phoneNumber, journey, from: from.place.nome, to: to.place.nome })),
       };
     }
-    // Para o SMS de chegada do autocarro encontrar este passageiro na paragem onde apanha o primeiro autocarro
-    const board = journey.etapas.find((e): e is BusLeg => e.tipo === 'autocarro')!.de;
     return {
       kind: 'keys',
       text: journeyScreen(journey, journeys.length > 1),
       keys: journeys.length > 1 ? ['1', '2'] : ['1'],
-      effect: () => createMissionForUser(phoneNumber, { id: board.id, geoLocation: `${board.lat},${board.lng}` }),
     };
   };
 }
 
-/** "16:34", ou "amanha 06:32" no dia seguinte (hora de Maputo). */
-function dayClock(iso: string): string {
-  const day = (d: Date) => d.toLocaleDateString('pt-PT', { timeZone: 'Africa/Maputo' });
-  const at = new Date(iso);
-  return `${day(at) === day(new Date()) ? '' : 'amanha '}${maputoClock(at)}`;
+/** Verdadeiro quando as rotas ligam os dois locais (há um plano), mesmo sem autocarros em viagem agora. */
+async function connected(from: Place<NetStop>, to: Place<NetStop>): Promise<boolean> {
+  return hasConnection(from.stops.map((s) => s.id), to.stops.map((s) => s.id));
 }
 
 /** Uma viagem num só ecrã: onde apanhar cada autocarro e onde sair, com os nomes encurtados para caber. */
@@ -375,7 +368,7 @@ function journeyScreen(j: Journey, more: boolean): string {
   const head = `${j.transbordos === 0 ? 'Directo' : `${j.transbordos} transbordo${j.transbordos > 1 ? 's' : ''}`}, chega ${dayClock(j.chegada)}`;
   const total = j.duracaoMin < 60 ? `${j.duracaoMin} min` : `${Math.floor(j.duracaoMin / 60)} h ${j.duracaoMin % 60} min`;
   const summary = `${total}, ${j.tarifa} MT`;
-  const nav = `1. Receber por SMS${more ? '\n2. Outra opcao' : ''}\n0. Voltar`;
+  const nav = `1. Acompanhar por SMS${more ? '\n2. Outra opcao' : ''}\n0. Voltar`;
   for (let max = 30; max >= 6; max -= 2) {
     const lines =
       buses.length === 1
@@ -385,16 +378,6 @@ function journeyScreen(j: Journey, more: boolean): string {
     if (body.length <= USSD_MAX) return body;
   }
   return `${head}\n${summary}\n${nav}`;
-}
-
-/** A viagem inteira para o SMS: caminhadas, cada autocarro com a rota e a matrícula, horas e tarifas. */
-function journeySms(j: Journey, from: string, to: string): string {
-  const steps = j.etapas.map((e, i) =>
-    e.tipo === 'pe'
-      ? `${i + 1}) Caminhe ${e.metros} m ate ${e.para.nome}.`
-      : `${i + 1}) Apanhe ${e.via.nome} (${e.transporte.matricula}) em ${e.de.nome} as ${dayClock(e.embarque)}; saia em ${e.para.nome} as ${dayClock(e.chegada)} (${e.tarifa} MT).`,
-  );
-  return `Viagem ${from} > ${to}: chega ${dayClock(j.chegada)}, ${j.tarifa} MT. ${steps.join(' ')}`;
 }
 
 // ─── 2. ROTAS: NUM LOCAL, OU PELO NÚMERO ──────────────────────────────────────
@@ -408,18 +391,22 @@ function journeySms(j: Journey, from: string, to: string): string {
 function routesMenu(phoneNumber: string): Menu {
   return async (answers) => {
     const net = await loadNetwork();
-    const step = routeStep(net, answers, 0, 'Rotas de um local\nEscreva o nome do local ou o numero da rota (ex: Baixa ou X12)');
+    const step = routeStep(net, answers, 0, 'Rotas de um local\nEscreva o nome do local ou o numero da rota (ex: Museu ou X19)');
     if ('screen' in step) return step.screen;
     const route = step.route;
     const meters = route.stops[route.stops.length - 1].at - route.stops[0].at;
-    const [rule, buses] = await Promise.all([getFareRule(), prisma.transporte.count({ where: { viaId: route.id } })]);
+    const [rule, buses, running] = await Promise.all([
+      getFareRule(),
+      prisma.transporte.count({ where: { viaId: route.id } }),
+      prisma.transporte.count({ where: { viaId: route.id, motorista: { emViagem: true } } }),
+    ]);
     const details = `${route.codigo} ${route.nome}
 De: ${route.terminals[0] || towards(net, route, -1)}
 Para: ${route.terminals[1] || towards(net, route, 1)}
 Paragens: ${routeStopList(net, route).length}
 Distancia: ${(meters / 1000).toFixed(1)} km
 Tarifa (percurso todo): ${fareFor(meters, rule)} MT
-Autocarros: ${buses}`;
+Em servico: ${running} de ${buses}`;
     return { kind: 'end', text: cutText(details, USSD_MAX), effect: () => sms(phoneNumber, details) };
   };
 }
@@ -435,7 +422,7 @@ Autocarros: ${buses}`;
 function routeStopsMenu(phoneNumber: string): Menu {
   return async (answers) => {
     const net = await loadNetwork();
-    const step = routeStep(net, answers, 0, 'Paragens de uma rota\nEscreva o numero da rota ou um local onde passa (ex: X12 ou Museu)');
+    const step = routeStep(net, answers, 0, 'Paragens de uma rota\nEscreva o numero da rota ou um local onde passa (ex: X19 ou Museu)');
     if ('screen' in step) return step.screen;
     const route = step.route;
 
@@ -458,12 +445,24 @@ Rotas que passam aqui: ${codes.join(', ')}`;
 /**
  * A tarifa entre dois locais escritos: a da melhor viagem, contando todos os autocarros (o mesmo
  * planeador da opção 1 e da web), com os autocarros e o tempo a bordo e a pé. Porquê a da viagem
- * e não uma distância em linha recta: o passageiro paga cada autocarro que apanha.
+ * e não uma distância em linha recta: o passageiro paga cada autocarro que apanha. Sem autocarros
+ * em viagem, a da melhor ligação pelas rotas (plannedFare): o preço não depende dos motoristas.
  *
  *   4*<origem escrita>[*<escolha>]*<destino escrito>[*<escolha>]
  */
 function fareMenu(phoneNumber: string): Menu {
-  const plans = new Map<string, Promise<Journey[]>>();
+  const plans = new Map<string, Promise<PlannedFare | null>>();
+  const fareOf = async (from: string[], to: string[]): Promise<PlannedFare | null> => {
+    const [best] = await planJourneys(from, to);
+    if (!best) return plannedFare(from, to);
+    const buses = best.etapas.filter((e): e is BusLeg => e.tipo === 'autocarro');
+    return {
+      tarifa: best.tarifa,
+      codigos: buses.map((b) => b.via.codigo),
+      minutos: best.etapas.reduce((sum, e) => sum + (e.tipo === 'pe' ? e.minutos : e.viagemMin), 0),
+      metros: buses.reduce((sum, b) => sum + b.metros, 0),
+    };
+  };
   return async (answers) => {
     const net = await loadNetwork();
     const from = placeStep(net, answers, 0, { ask: 'Calcular tarifa\nDe onde parte? Escreva o nome da paragem ou do local', title: 'De onde?' });
@@ -476,19 +475,17 @@ function fareMenu(phoneNumber: string): Menu {
     if ('screen' in to) return to.screen;
 
     const key = `${from.place.key}>${to.place.key}`;
-    if (!plans.has(key)) plans.set(key, planJourneys(from.place.stops.map((s) => s.id), to.place.stops.map((s) => s.id)));
-    const [best] = await plans.get(key)!;
+    if (!plans.has(key)) plans.set(key, fareOf(from.place.stops.map((s) => s.id), to.place.stops.map((s) => s.id)));
+    const best = await plans.get(key)!;
     if (!best) return { kind: 'end', text: `Nao ha autocarro de ${cutText(from.place.nome, 50)} para ${cutText(to.place.nome, 50)}.` };
 
-    const buses = best.etapas.filter((e): e is BusLeg => e.tipo === 'autocarro');
-    const minutes = best.etapas.reduce((sum, e) => sum + (e.tipo === 'pe' ? e.minutos : e.viagemMin), 0);
-    const km = buses.reduce((sum, b) => sum + b.metros, 0) / 1000;
+    const codes = best.codigos;
     const details = `TARIFA
 De: ${from.place.nome}
 Para: ${to.place.nome}
 Preco: ${best.tarifa} MT
-${buses.length === 1 ? `Directo, rota ${buses[0].via.codigo}` : `${buses.length - 1} transbordo${buses.length > 2 ? 's' : ''}: rotas ${buses.map((b) => b.via.codigo).join(' > ')}`}
-Viagem: ${minutes} min, ${km.toFixed(1)} km`;
+${codes.length === 1 ? `Directo, rota ${codes[0]}` : `${codes.length - 1} transbordo${codes.length > 2 ? 's' : ''}: rotas ${codes.join(' > ')}`}
+Viagem: ${best.minutos} min, ${(best.metros / 1000).toFixed(1)} km`;
     return { kind: 'end', text: cutText(details, USSD_MAX), effect: () => sms(phoneNumber, details) };
   };
 }
@@ -499,7 +496,7 @@ Viagem: ${minutes} min, ${km.toFixed(1)} km`;
 const plateKey = (plate: string) => plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
 
 /**
- * Um autocarro pela matrícula, ou parte dela ("ACK", "145M"), e depois onde está agora (GPS ou horário).
+ * Um autocarro pela matrícula, ou parte dela ("ADA", "193M"), e depois o seu estado e onde está agora (GPS, ou a viagem do motorista).
  *
  *   5*<matrícula escrita>[*<escolha>]
  */
@@ -507,14 +504,15 @@ function trackBusMenu(phoneNumber: string): Menu {
   let plates: Promise<{ id: string; matricula: string }[]> | null = null;
   return async (answers) => {
     const typed = answers[0];
-    if (!typed) return { kind: 'ask', text: 'Rastrear autocarro\nEscreva a matricula ou parte dela (ex: ACK ou 184M)' };
+    if (!typed) return { kind: 'ask', text: 'Rastrear autocarro\nEscreva a matricula ou parte dela (ex: ADA ou 193M)' };
     const wanted = plateKey(typed.text);
-    if (wanted.length < 3) return { kind: 'ask', retype: true, text: 'Escreva pelo menos 3 letras ou numeros da matricula (ex: ACK)' };
+    if (wanted.length < 3) return { kind: 'ask', retype: true, text: 'Escreva pelo menos 3 letras ou numeros da matricula (ex: ADA)' };
 
-    plates ??= prisma.transporte.findMany({ select: { id: true, matricula: true }, orderBy: { matricula: 'asc' } });
+    // Só os autocarros das rotas activas, como no mapa
+    plates ??= prisma.transporte.findMany({ where: { via: { ativa: true } }, select: { id: true, matricula: true }, orderBy: { matricula: 'asc' } });
     const matches = (await plates).filter((t) => plateKey(t.matricula).includes(wanted)).slice(0, 30);
     if (!matches.length) {
-      return { kind: 'ask', retype: true, text: `Nenhum autocarro com "${cutText(typed.text, 20)}".\nEscreva outra vez parte da matricula (ex: ACK)` };
+      return { kind: 'ask', retype: true, text: `Nenhum autocarro com "${cutText(typed.text, 20)}".\nEscreva outra vez parte da matricula (ex: ADA)` };
     }
     let chosen = matches[0];
     if (matches.length > 1) {
@@ -543,48 +541,14 @@ function trackBusMenu(phoneNumber: string): Menu {
     if (!transport) return { kind: 'end', text: 'Autocarro nao encontrado.' };
     const position = vehiclePosition(transport, transport.via?.geoLocationPath, new Date(), await getFareRule());
     const near = position && nearestStopName(position.point.join(','), transport.via?.paragens.map((vp) => vp.paragem) ?? []);
+    // O mesmo estado que o portal do motorista: parado até o motorista iniciar a viagem
+    const state = !position ? 'Localizacao indisponivel' : !position.inService ? 'Parado, fora de servico' : position.moving ? 'Em circulacao' : 'No terminal';
     const details = `AUTOCARRO ${transport.matricula}
 ${transport.marca || ''} ${transport.modelo || ''}
 Rota: ${transport.via ? `${transport.via.codigo} ${transport.via.nome}` : 'Sem rota atribuida'}
-${near ? `Perto de: ${near}` : position ? 'Em circulacao' : 'Localizacao indisponivel'}`;
+${state}${near ? `\n${position?.inService ? 'Perto de' : 'Em'}: ${near}` : ''}`;
     return { kind: 'end', text: cutText(details, USSD_MAX), effect: () => sms(phoneNumber, details) };
   };
-}
-
-/** Alerta de chegada: a verificação de chegadas envia um SMS ao passageiro quando um autocarro se aproxima de `stop`. */
-async function createMissionForUser(phoneNumber: string, stop: { id: string; geoLocation: string }) {
-  // O mesmo passageiro que no site, seja com que espaços ou indicativo o número foi guardado
-  const existingId = await findUtenteIdByPhone(phoneNumber);
-  let user = existingId ? await prisma.utente.findUnique({ where: { id: existingId } }) : null;
-
-  if (!user) {
-    user = await prisma.utente.create({
-      data: {
-        nome: `User ${phoneNumber.slice(-4)}`,
-        telefone: phoneNumber,
-        email: `${phoneNumber}@temp.com`,
-        senha: 'temp', // substituída quando o passageiro se regista no site
-        mISSION: `USSD-${phoneNumber}-${Date.now()}`, // identificador único do pedido
-      }
-    });
-  }
-
-  // Reutilizar o pedido de hoje para esta paragem em vez de juntar um por consulta
-  const existing = await prisma.mISSION.findFirst({
-    where: { utenteId: user.id, paragemId: stop.id, createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
-  });
-  if (existing) return existing;
-
-  return prisma.mISSION.create({
-    data: {
-      mISSIONUtente: `USSD-${Date.now()}`,
-      codigoParagem: stop.id,
-      geoLocationUtente: stop.geoLocation,
-      geoLocationParagem: stop.geoLocation,
-      utenteId: user.id,
-      paragemId: stop.id,
-    }
-  });
 }
 
 // ─── 6. MOTORISTAS (SEM SESSÃO) ───────────────────────────────────────────────
@@ -636,7 +600,8 @@ PIN:`;
     }
   });
 
-  const t = driverInfo?.transporte;
+  // O veículo com a viagem do motorista, para a posição ser a mesma que os passageiros vêem
+  const t = driverInfo?.transporte ? { ...driverInfo.transporte, motorista: driverInfo } : null;
   const v = t?.via;
   const statusLabel = driverInfo?.emViagem ? 'ONLINE' : 'OFFLINE';
 
@@ -785,6 +750,8 @@ Veiculo: ${t?.matricula || 'N/A'}
 Ate proxima viagem!`;
           }
         } catch (error) {
+          // Sem veículo, sem rota, ou rota desactivada: a viagem não começa, e o motorista sabe porquê
+          if (error instanceof TripError) return `END ${error.message}`;
           console.error('Erro ao actualizar a viagem do motorista:', error);
           return `END Erro ao atualizar status da viagem. Tente novamente.`;
         }

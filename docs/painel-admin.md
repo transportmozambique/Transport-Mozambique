@@ -67,6 +67,14 @@ Cada tarefa é o caminho mais curto pelos ecrãs. As secções seguintes descrev
 4. Confirmar a lista "Paragens da Rota": as paragens a menos de 50 m da linha estão marcadas. Desmarcar as que o autocarro não serve.
 5. Carregar em **Criar Via**. Se recusar com "Não foi possível calcular o percurso pelas estradas…", os [routers](conceitos.md#router "Um serviço que, dados dois ou mais pontos, responde com o caminho pelas ruas entre eles e a distância.") não responderam: mover um ponto para tentar outra vez ([detalhes](#rotas-vias)).
 
+<a id="tarefa-activar-rotas"></a>**Activar ou desactivar rotas** (escolher as rotas que os passageiros vêem)
+
+1. Barra lateral → **Vias**. Por omissão a lista mostra só as rotas **Activas**; o filtro ao lado da pesquisa muda para "Desactivadas" ou "Todas".
+2. Na coluna **Estado**, carregar em **Activa** desactiva a rota; carregar em **Desactivada** activa-a. Aparece "Rota X19 activada" (ou desactivada).
+3. A web, o [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.") e os [SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.") usam as rotas novas em até 5 minutos (cada instância guarda a rede 5 minutos). Os motoristas de uma rota desactivada não conseguem iniciar a viagem ("A rota do seu veículo está desactivada").
+
+Porquê desactivar em vez de apagar: as rotas, as paragens e os veículos ficam guardados, e voltar atrás é um clique. Desde 2026-10-27 só estão activas a X19, a 411 e a X22 ([Base de dados → Rotas activas](base-de-dados.md#rotas-activas)).
+
 <a id="tarefa-redesenhar"></a>**Redesenhar o percurso de uma rota** (uma linha que corta quarteirões)
 
 1. **Vias** → abrir a rota → **Redesenhar percurso**.
@@ -84,7 +92,7 @@ Cada tarefa é o caminho mais curto pelos ecrãs. As secções seguintes descrev
 
 1. **Transportes** → **Novo Transporte**.
 2. Preencher matrícula, modelo, marca, cor, ano, lotação e estado, escolher a **rota**, e carregar em **Criar Transporte**.
-3. A partir do minuto seguinte, o veículo aparece no mapa dos passageiros na sua posição pelo horário nessa rota ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)).
+3. A partir do minuto seguinte, o veículo aparece no mapa dos passageiros, parado nessa rota, se a rota estiver activa. Anda, e entra nas viagens, quando o motorista iniciar a viagem ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)).
 4. Para passar um veículo existente para outra rota: **Vias** → a rota nova → **Editar** → **Atribuir Transporte**.
 
 <a id="tarefa-motorista"></a>**Criar um motorista e deixá-lo entrar**
@@ -92,7 +100,7 @@ Cada tarefa é o caminho mais curto pelos ecrãs. As secções seguintes descrev
 1. **Motoristas** → **Novo Motorista**. Preencher os dados pessoais, de documentos e de contacto e carregar em **Criar Motorista**.
 2. Dar-lhe um veículo: **Motoristas** → **Atribuir Motoristas**. Escolher o veículo à esquerda e o motorista à direita, depois **Atribuir Motorista**. (Ou, na página do veículo, "Atribuir Motorista".)
 3. Abrir a página do motorista e carregar em **Gerar PIN** no cartão "PIN de Acesso". Apontar os 6 algarismos: só se mostram uma vez.
-4. Dar ao motorista o PIN e o endereço do portal, https://transport-mz-driver.vercel.app. Ele entra com o número de telefone e o PIN ([Portal do motorista](portal-motorista.md#o-dia-de-um-motorista-passo-a-passo)). O mesmo PIN funciona na opção 6 do [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.").
+4. Dar ao motorista o PIN e o endereço do portal, https://transport-mz-driver.vercel.app. Ele entra com o número de telefone e o PIN ([Portal do motorista](portal-motorista.md#o-dia-de-um-motorista-passo-a-passo)). O mesmo PIN funciona na opção 6 do USSD.
 
 <a id="tarefa-pin"></a>**Dar um PIN a um motorista, ou repor um PIN esquecido**
 
@@ -102,12 +110,12 @@ Página do motorista → **Gerar PIN** (ou **Gerar novo PIN**). O PIN aparece um
 
 Na página do veículo antigo, carregar no × ao lado do motorista; depois atribuí-lo ao veículo novo como no passo 2 de [Criar um motorista](#tarefa-motorista). Um portal do motorista aberto mostra o veículo e a rota novos em 5 minutos, sem sair da conta.
 
-<a id="tarefa-gps"></a>**Ligar um GPS a um veículo** (posições reais em vez do horário)
+<a id="tarefa-gps"></a>**Ligar um GPS a um veículo** (posições reais em vez das calculadas)
 
 1. **Transportes** → abrir o veículo → cartão **Rastreador GPS** → **Gerar código do dispositivo**.
 2. Copiar o código de 20 caracteres (só aparece uma vez) e a configuração por baixo.
 3. Pôr o código num rastreador GPS ou na aplicação [Traccar Client](conceitos.md#traccar "Uma aplicação gratuita para telemóvel que envia a posição do telemóvel pelo protocolo OsmAnd.") de um telemóvel que vai no veículo ([Localização e GPS](localizacao-gps.md#1-criar-o-código-do-dispositivo)). Ou o motorista cola-o no perfil do portal do motorista ("Código [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") do veículo").
-4. Quando as posições chegam, o cartão diz **GPS ativo** e os passageiros vêem a posição real em vez da do horário.
+4. Quando as posições chegam, o cartão diz **GPS ativo** e os passageiros vêem a posição real em vez da calculada pela viagem.
 
 <a id="tarefa-tarifa"></a>**Mudar as tarifas ou as velocidades**
 
@@ -169,10 +177,10 @@ Tudo menos "Agora" vem de um só pedido, `GET /api/dashboard/stats`, **guardado 
 
 | Bloco | O que conta |
 |---|---|
-| Transportes / Motoristas / Vias / Paragens | As linhas de cada tabela. Em Transportes: quantos não têm motorista ("todos com motorista" quando nenhum). Em Motoristas: "activos" = motoristas com estado `ativo` **e** um veículo. Em Vias: rotas com pelo menos um veículo. Cada cartão abre a sua lista. |
-| Mapa de vias | O percurso guardado de cada rota, na cor da rota, no mapa de ruas da [OpenFreeMap](conceitos.md#mosaicos "As imagens das ruas por baixo dos autocarros e das paragens, que o mapa descarrega aos bocados (mosaicos) conforme se mexe."). Uma rota tocada na lista "Vias" aparece sozinha; tocar outra vez mostra todas. |
-| Agora | O que cada veículo está a fazer agora, de `GET /api/transportes/estado` (GPS, ou o horário sem GPS), a cada 30 segundos: Em circulação, Parados (num terminal ou fora de serviço), Com GPS activo, Sem rota (sem percurso onde o pôr). Sem cache. |
-| Vias | Todas as rotas com os terminais e o número de veículos, as com mais veículos primeiro. |
+| Transportes / Motoristas / Vias activas / Paragens | As linhas de cada tabela. Em Transportes: quantos não têm motorista ("todos com motorista" quando nenhum). Em Motoristas: "activos" = motoristas com estado `ativo` **e** um veículo. Em Vias activas: as rotas que os passageiros vêem (`Via.ativa`), e quantas têm pelo menos um veículo. Cada cartão abre a sua lista. |
+| Mapa de vias | O percurso guardado de cada rota activa, na cor da rota, no mapa de ruas da [OpenFreeMap](conceitos.md#mosaicos "As imagens das ruas por baixo dos autocarros e das paragens, que o mapa descarrega aos bocados (mosaicos) conforme se mexe."). Uma rota tocada na lista "Vias" aparece sozinha; tocar outra vez mostra todas. |
+| Agora | O que cada veículo está a fazer agora, de `GET /api/transportes/estado` (GPS, ou a viagem do motorista), a cada 30 segundos: Em circulação, Parados (num terminal ou fora de serviço), Com GPS activo, Sem rota (sem percurso onde o pôr). Sem cache. |
+| Vias | As rotas activas com os terminais e o número de veículos, as com mais veículos primeiro. |
 | Vias por município | Rotas por município. |
 | Paragens por município | Paragens distintas nas rotas de cada município. Uma paragem servida por rotas dos dois municípios conta nos dois, e uma paragem sem rotas não conta em nenhum. |
 | Vias com mais veículos | As 5 rotas com mais veículos. |
@@ -187,9 +195,9 @@ Tudo menos "Agora" vem de um só pedido, `GET /api/dashboard/stats`, **guardado 
 
 | "Agora" | Significado |
 |---|---|
-| Em circulação | A andar na sua rota (uma posição GPS recente com velocidade, ou o horário). |
-| No terminal | Parado num terminal entre dois sentidos. |
-| Fora de serviço | Fora do horário de serviço (antes das 05:00 ou depois das 21:00, hora de Maputo), parado num terminal. |
+| Em circulação | O motorista iniciou a viagem e o autocarro anda na sua rota (pelo GPS recente, ou pela viagem). |
+| No terminal | Em viagem, nos 5 minutos de espera num terminal entre dois sentidos. |
+| Fora de serviço | O motorista não iniciou a viagem: o autocarro está parado e os passageiros não contam com ele. |
 | Sem rota | A sua rota não tem percurso e não há posição guardada. |
 
 A coluna vem de `GET /api/transportes/estado`, a cada 30 s. Usa as mesmas regras de posição da aplicação dos passageiros ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição); [`lib/vehiclePosition.ts`](../transport-admin/lib/vehiclePosition.ts)). Os contadores no topo (Total, Em Circulação, Parados, GPS ativo) filtram a lista quando se clica neles.
@@ -200,14 +208,14 @@ A coluna vem de `GET /api/transportes/estado`, a cada 30 s. Usa as mesmas regras
 
 | Bloco | Conteúdo | Fonte |
 |---|---|---|
-| Quilómetros Hoje, Tempo de Operação, Viagens Hoje | Quilómetros, horas e chegadas a terminais até agora, hoje, pelo horário (05:00–21:00 à velocidade da regra de tarifa), com os números do dia inteiro por baixo. | `GET /api/transportes/{id}/operacao`, a cada 60 s |
+| Quilómetros na Viagem, Tempo de Operação, Chegadas a um Terminal | Quilómetros, horas e chegadas a terminais desde que o motorista iniciou a viagem, à velocidade da regra de tarifa ("Viagem iniciada às 08:05"). Sem viagem, zero e "O motorista não iniciou a viagem". | `GET /api/transportes/{id}/operacao`, a cada 60 s |
 | Rota | O comprimento do percurso da rota e o número de paragens. | o mesmo |
-| Localização e Rota | Mapa 3D com a rota e o veículo. A etiqueta diz de onde vem a posição: "Em movimento · GPS real", "Parado no terminal · estimado pelo horário", e assim por diante. Por baixo: velocidade actual, próxima paragem, minutos até ela. | `GET /api/transportes/{id}/posicao`, a cada 15 s |
+| Localização e Rota | Mapa 3D com a rota e o veículo. A etiqueta diz de onde vem a posição: "Em movimento · GPS real", "Parado no terminal · estimado pela viagem", "Fora de serviço (viagem não iniciada) · onde parou", e assim por diante. Por baixo: velocidade actual, próxima paragem, minutos até ela. | `GET /api/transportes/{id}/posicao`, a cada 15 s |
 | Rastreador GPS | O dispositivo GPS do veículo ([abaixo](#cartão-do-rastreador-gps)). | `GET /api/transportes/{id}/gps`, a cada 30 s |
 | Pessoas Associadas | O motorista (× retira-o do veículo) e os proprietários ("+ Atribuir"). | |
 | Informações do Transporte | Matrícula, número, modelo, marca, cor, lotação, rota, estado, data de registo. | |
-| Quilómetros ao Longo do Dia, Viagens por Hora | Quilómetros acumulados e chegadas a terminais por hora, pelo horário. | `operacao` |
-| Próximas Passagens nas Paragens | Para cada paragem, pela ordem de viagem: a distância ao início do percurso, e a próxima vez que o veículo lá passa em cada sentido, pelo horário. Com GPS ao vivo o veículo pode ir adiantado ou atrasado. | `operacao` |
+| Quilómetros na Viagem, Chegadas por Hora | Quilómetros acumulados e chegadas a terminais por hora, desde o início da viagem. Escondidos sem viagem. | `operacao` |
+| Próximas Passagens nas Paragens | Para cada paragem, pela ordem de viagem: a distância ao início do percurso, e a próxima vez que o veículo lá passa em cada sentido, pela viagem em curso. Sem viagem, "—" e "Sem passagens: o motorista não iniciou a viagem". Com GPS ao vivo o veículo pode ir adiantado ou atrasado. | `operacao` |
 
 ### Cartão do rastreador GPS
 
@@ -217,12 +225,12 @@ Código: [`GpsTrackerCard.tsx`](../transport-admin/app/components/GpsTrackerCard
 
 | Etiqueta | Significado |
 |---|---|
-| Não configurado | Ainda sem código de dispositivo. O veículo usa a posição pelo horário. |
+| Não configurado | Ainda sem código de dispositivo. O veículo usa a posição calculada pela viagem do motorista. |
 | Sem sinal recente | Há um código, mas nenhuma posição chegou nos últimos 3 minutos. |
-| GPS ativo | Chegou uma posição nos últimos 3 minutos. Os passageiros vêem-na em vez do horário. |
+| GPS ativo | Chegou uma posição nos últimos 3 minutos. Os passageiros vêem-na em vez da calculada pela viagem. |
 
 - **"Gerar código do dispositivo"** / **"Gerar novo código"** cria um código de 20 caracteres (`POST /api/transportes/{id}/gps`). Aparece **uma vez** ("só é mostrado agora; guarde-o"), com a configuração para a aplicação Traccar Client. Só se guarda o seu SHA-256. Um código novo pára logo o antigo.
-- **"Revogar dispositivo"** (com confirmação) apaga o código e os campos de GPS guardados (`DELETE`). O veículo volta à posição pelo horário.
+- **"Revogar dispositivo"** (com confirmação) apaga o código e os campos de GPS guardados (`DELETE`). O veículo volta à posição calculada pela viagem.
 
 Como preparar o telemóvel ou o rastreador está em [Localização e GPS](localizacao-gps.md#1-criar-o-código-do-dispositivo).
 
@@ -232,7 +240,7 @@ Como preparar o telemóvel ou o rastreador está em [Localização e GPS](locali
 
 ![Lista de rotas com totais](images/admin-vias.png)
 
-**Lista.** Código, nome, município, terminais, cor, número de paragens e de veículos. Os contadores no topo são totais sobre todas as rotas que coincidem com a pesquisa: rotas, paragens (todas as paragens do sistema), veículos em rotas, e a média de paragens por rota. A pesquisa coincide com o nome, o código ou o município, sem contar as maiúsculas.
+**Lista.** Código, nome, município, terminais, cor, número de paragens e de veículos, e **Estado**: "Activa" (os passageiros vêem-na) ou "Desactivada". Carregar no estado muda-o ([Activar ou desactivar rotas](#tarefa-activar-rotas)); o filtro ao lado da pesquisa mostra as activas (por omissão), as desactivadas ou todas. Os contadores no topo são totais sobre todas as rotas que coincidem com a pesquisa e o filtro: rotas, paragens (todas as paragens do sistema), veículos em rotas, e a média de paragens por rota. A pesquisa coincide com o nome, o código ou o município, sem contar as maiúsculas.
 
 **Detalhe (`/vias/{id}`).**
 
@@ -264,7 +272,7 @@ Como preparar o telemóvel ou o rastreador está em [Localização e GPS](locali
 2. **"Começar pelo percurso atual"** põe até 25 pontos ao longo do percurso actual (nas curvas) e pede ao router a estrada que passa por eles. Ou clicar no mapa ou numa paragem para juntar pontos, como ao desenhar uma rota nova. Arrastar, juntar ou apagar pontos onde o percurso pelas estradas sai do caminho do autocarro.
 3. Só um percurso pelas estradas se pode gravar, como em "Nova Via": enquanto o router não respondeu, ou quando falhou (linha a tracejado), "Guardar percurso" fica desligado.
 4. **"Paragens no novo percurso"** lista as paragens a menos de 50 m do percurso novo, pela ordem de viagem, marcadas "ligada" (já ligada) ou "nova". **"Paragens ligadas fora do novo percurso"** lista as paragens ligadas por onde o percurso novo já não passa. Cada paragem marcada fica ligada à rota; desmarcar as que a rota não serve.
-5. "Guardar percurso" grava o percurso e as paragens marcadas (`PATCH /api/vias/{id}` com `geoLocationPath` e `paragensIds`). As ligações que ficam mantêm-se como estavam. As posições pelo horário, as horas de chegada e as tarifas passam logo a usar o percurso novo ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)).
+5. "Guardar percurso" grava o percurso e as paragens marcadas (`PATCH /api/vias/{id}` com `geoLocationPath` e `paragensIds`). As ligações que ficam mantêm-se como estavam. As posições dos autocarros em viagem, as horas de chegada e as tarifas passam logo a usar o percurso novo ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)).
 
 Num telemóvel o mapa vem primeiro, por cima das listas de paragens.
 
@@ -369,7 +377,7 @@ A pesquisa e os filtros de categoria no topo escolhem entre os cartões dos rela
 
 <img src="images/admin-tarifa.png" alt="Página Tarifa: tarifa mínima, preço por km, velocidades de viagem e de chegada, factor de estrada, as tarifas de 2, 5 e 15 km, e Guardar tarifa" width="720">
 
-A regra por trás de todas as tarifas, tempos de viagem e posições pelo horário, na web, no USSD e neste painel ([Configuração → Regra de tarifa](configuracao.md#regra-de-tarifa-tarifa); [`app/tarifa/page.tsx`](../transport-admin/app/tarifa/page.tsx)). Barra lateral → Configuração → **Tarifa**.
+A regra por trás de todas as tarifas, tempos de viagem e posições dos autocarros em viagem, na web, no USSD e neste painel ([Configuração → Regra de tarifa](configuracao.md#regra-de-tarifa-tarifa); [`app/tarifa/page.tsx`](../transport-admin/app/tarifa/page.tsx)). Barra lateral → Configuração → **Tarifa**.
 
 | Campo | Por omissão | Efeito |
 |---|---|---|
@@ -379,7 +387,7 @@ A regra por trás de todas as tarifas, tempos de viagem e posições pelo horár
 | Velocidade de chegada | 45 km/h | Só para rotas sem percurso pela estrada. De 5 a 120. |
 | Factor de estrada | 1.3 | Distância pela estrada ÷ linha recta, só para rotas sem percurso pela estrada. De 1 a 3. |
 
-A linha cinzenta por baixo dos campos mostra quanto custam 2, 5 e 15 km com os valores escritos, antes de gravar. **"Guardar tarifa"** grava (`PUT /api/tarifa`); um valor fora do intervalo é recusado com o intervalo permitido. A aplicação dos passageiros e o USSD lêem a regra através de uma cache de 60 segundos, por isso as tarifas novas aparecem em menos de um minuto. As vistas do horário do próprio painel usam logo a velocidade nova.
+A linha cinzenta por baixo dos campos mostra quanto custam 2, 5 e 15 km com os valores escritos, antes de gravar. **"Guardar tarifa"** grava (`PUT /api/tarifa`); um valor fora do intervalo é recusado com o intervalo permitido. A aplicação dos passageiros e o USSD lêem a regra através de uma cache de 60 segundos, por isso as tarifas novas aparecem em menos de um minuto. As posições e as passagens do próprio painel usam logo a velocidade nova.
 
 ## API usada por cada página
 

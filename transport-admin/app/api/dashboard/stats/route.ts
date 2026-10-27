@@ -28,7 +28,7 @@ export async function GET() {
     ] = await Promise.all([
       prisma.transporte.count(),
       prisma.proprietario.count(),
-      prisma.via.count(),
+      prisma.via.count({ where: { ativa: true } }), // as rotas que os passageiros vêem
       prisma.paragem.count(),
       prisma.motorista.count(),
       prisma.motorista.count({ where: { status: 'ativo', transporteId: { not: null } } }),
@@ -88,7 +88,8 @@ export async function GET() {
       count: Number(m.paragens)
     }));
 
-    // TODAS as vias com o número de transportes e as coordenadas (também as vias sem transportes)
+    // As vias activas com o número de transportes e as coordenadas (também as vias sem transportes):
+    // o mapa do início mostra a rede que os passageiros vêem
     const viasComTransportes = await prisma.$queryRaw<Array<{ 
       id: string;
       nome: string; 
@@ -101,6 +102,7 @@ export async function GET() {
       SELECT v.id, v.nome, v.cor, v."geoLocationPath", v."terminalPartida", v."terminalChegada", COUNT(DISTINCT t.id)::int as count
       FROM "Via" v
       LEFT JOIN "Transporte" t ON t."viaId" = v.id
+      WHERE v."ativa" = true
       GROUP BY v.id, v.nome, v.cor, v."geoLocationPath", v."terminalPartida", v."terminalChegada"
       ORDER BY count DESC, v.nome ASC
     `;

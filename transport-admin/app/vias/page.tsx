@@ -10,6 +10,8 @@ interface Via {
   nome: string;
   codigo: string;
   cor: string;
+  /** Só as rotas activas aparecem na web, no USSD e nos SMS */
+  ativa: boolean;
   terminalPartida: string;
   terminalChegada: string;
   municipio: {
@@ -40,11 +42,14 @@ export default function Vias() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<{message: string, details?: string, canRemove?: boolean} | null>(null);
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
+  // Por omissão só as rotas activas (as que os passageiros vêem); "todas" mostra também as desactivadas
+  const [estado, setEstado] = useState<'true' | 'false' | ''>('true');
+  const [toggling, setToggling] = useState<string | null>(null);
 
   useEffect(() => {
     fetchVias();
     fetchUniqueParagensCount();
-  }, [currentPage, itemsPerPage, debouncedSearchTerm]);
+  }, [currentPage, itemsPerPage, debouncedSearchTerm, estado]);
 
   async function fetchVias() {
     try {
@@ -55,7 +60,7 @@ export default function Vias() {
         setInitialLoading(true);
       }
       
-      const response = await fetch(`/api/vias?page=${currentPage}&limit=${itemsPerPage}&search=${encodeURIComponent(debouncedSearchTerm)}`);
+      const response = await fetch(`/api/vias?page=${currentPage}&limit=${itemsPerPage}&search=${encodeURIComponent(debouncedSearchTerm)}${estado ? `&ativa=${estado}` : ''}`);
       const result = await response.json();
       
       // Resposta paginada
@@ -96,6 +101,26 @@ export default function Vias() {
   const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
+  };
+
+  /** Activa ou desactiva uma rota: uma rota desactivada sai do mapa, das viagens, do USSD e dos SMS */
+  const toggleAtiva = async (via: Via, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setToggling(via.id);
+    try {
+      const response = await fetch(`/api/vias/${via.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ativa: !via.ativa }),
+      });
+      if (!response.ok) throw new Error();
+      showNotification(via.ativa ? `Rota ${via.codigo} desactivada` : `Rota ${via.codigo} activada`, 'success');
+      await fetchVias();
+    } catch {
+      showNotification('Não foi possível mudar o estado da rota', 'error');
+    } finally {
+      setToggling(null);
+    }
   };
 
   const handleDeleteClick = (via: Via, e: React.MouseEvent) => {
@@ -484,6 +509,16 @@ export default function Vias() {
                   style={{ transition: 'none' }}
                 />
               </div>
+              <select
+                value={estado}
+                onChange={(e) => { setEstado(e.target.value as typeof estado); setCurrentPage(1); }}
+                aria-label="Estado das rotas"
+                className="py-2.5 px-3 border border-slate-300 rounded-xl text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
+              >
+                <option value="true">Activas</option>
+                <option value="false">Desactivadas</option>
+                <option value="">Todas</option>
+              </select>
             </div>
           </div>
 
@@ -518,6 +553,9 @@ export default function Vias() {
                     Transportes
                   </th>
                   <th className="px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th className="px-4 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Acções
                   </th>
                 </tr>
@@ -525,7 +563,7 @@ export default function Vias() {
               <tbody className="bg-white divide-y divide-slate-200">
                 {vias.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center">
+                    <td colSpan={9} className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center justify-center text-slate-500">
                         <svg className="w-12 h-12 mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -580,6 +618,17 @@ export default function Vias() {
                       </td>
                       <td className="hidden md:table-cell px-4 py-4 whitespace-nowrap">
                         <div className="text-sm text-slate-900 font-medium">{via._count?.transportes || 0}</div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <button
+                          onClick={(e) => toggleAtiva(via, e)}
+                          disabled={toggling === via.id}
+                          title={via.ativa ? 'Desactivar: deixa de aparecer aos passageiros' : 'Activar: aparece aos passageiros'}
+                          data-testid="via-ativa"
+                          className={`rounded-full px-3 py-1 text-xs font-semibold disabled:opacity-50 ${via.ativa ? 'bg-slate-900 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                        >
+                          {via.ativa ? 'Activa' : 'Desactivada'}
+                        </button>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2 lg:space-x-3">

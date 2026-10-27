@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { getFareRule, orderStopsAlongRoute } from '@/lib/fares';
-import { vehicleGeo } from '@/lib/vehiclePosition';
+import { POSITION_FIELDS, vehicleGeo } from '@/lib/vehiclePosition';
 
 type Driver = {
   id: string;
@@ -43,6 +43,7 @@ export async function driverProfile(driver: Driver) {
     ? await prisma.transporte.findUnique({
         where: { id: driver.transporteId },
         include: {
+          motorista: { select: POSITION_FIELDS.motorista.select },
           via: {
             include: {
               municipio: { select: { nome: true } },
@@ -74,7 +75,7 @@ export async function driverProfile(driver: Driver) {
           modelo: transporte.modelo,
           cor: transporte.cor,
           lotacao: transporte.lotacao,
-          // GPS real quando recente, senão a posição pelo horário na via
+          // GPS real quando recente, senão onde a viagem em curso o põe, senão onde está parado
           currGeoLocation: vehicleGeo(transporte, via?.geoLocationPath, new Date(), await getFareRule()) ?? transporte.currGeoLocation,
         }
       : null,
@@ -83,6 +84,7 @@ export async function driverProfile(driver: Driver) {
           id: via.id,
           nome: via.nome,
           codigo: via.codigo,
+          ativa: via.ativa,
           terminalPartida: via.terminalPartida,
           terminalChegada: via.terminalChegada,
           geoLocationPath: via.geoLocationPath,

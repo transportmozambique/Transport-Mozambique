@@ -51,7 +51,7 @@ Estavam nesta lista e já não são limitações:
 
 ## Posições e horas
 
-- **A maior parte das posições é estimada.** Sem uma posição [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") dos últimos 3 minutos, a posição de um autocarro vem do modelo do horário: vai e volta ao longo da rota das 05:00 às 21:00 à velocidade da regra de tarifa ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)). Não é um horário publicado, e os autocarros reais não o seguem.
+- **A maior parte das posições é estimada.** Sem uma posição [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") dos últimos 3 minutos, a posição de um autocarro vem da viagem do motorista: desde que ele carregou em "Iniciar viagem", vai e volta ao longo da rota à velocidade da regra de tarifa, a partir do [terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.") mais perto ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)). O trânsito e as paragens longas não contam, e um motorista que se esquece de iniciar ou terminar a viagem deixa os passageiros sem o autocarro, ou com um autocarro que já não anda.
   *Contornar:* dar GPS aos veículos. Cada um precisa de um código de dispositivo e de um [rastreador](conceitos.md#rastreador "Um aparelho (ou um telemóvel com uma aplicação) que envia a posição de um veículo pela internet; o código do dispositivo é a sua 'palavra-passe'.") ou de um telemóvel com o [Traccar Client](conceitos.md#traccar "Uma aplicação gratuita para telemóvel que envia a posição do telemóvel pelo protocolo OsmAnd.") ([Painel → Ligar um GPS](painel-admin.md#tarefa-gps)). Cada veículo equipado passa sozinho às posições reais; nada mais muda.
 - **Sem histórico de posições.** Cada posição GPS substitui a anterior; não há um trajecto para rever ou analisar. `GeoLocation` só tem linhas da importação inicial.
   *Contornar:* juntar uma tabela de posições (veículo, hora, ponto, velocidade), escrita por `POST /api/gps` ao lado da actualização que já faz, e apagar as linhas antigas num agendamento. O plano gratuito da [Neon](conceitos.md#neon "A empresa que guarda a base de dados PostgreSQL da produção, na internet.") guarda cerca de 0,5 GB, por isso guardam-se semanas, não anos.
@@ -59,7 +59,7 @@ Estavam nesta lista e já não são limitações:
   *Contornar:* todas as rotas de produção têm percurso. "Nova Via" no painel guarda sempre um.
 - **Os routers são serviços públicos gratuitos.** Desenhar rotas no painel e as caminhadas no mapa dos passageiros usam os [servidores](conceitos.md#servidor "Um computador sempre ligado que recebe pedidos e responde a eles.") da FOSSGIS e de demonstração do OSRM, que só permitem uso leve. Quando os dois estão em baixo, "Nova Via" e "Redesenhar percurso" não gravam, e as caminhadas desenham-se como linhas rectas.
   *Contornar:* esperar e tentar outra vez, o que chega para um administrador. Para muito tráfego, correr um servidor OSRM ou Valhalla com o extracto de Moçambique do [OpenStreetMap](conceitos.md#openstreetmap "Um mapa do mundo inteiro feito por voluntários, como uma Wikipédia dos mapas, que qualquer pessoa pode usar e corrigir.") (chega uma máquina virtual pequena) e definir `WALK_ROUTER_URL` para as caminhadas; os routers do painel são `ROUTERS` em [`RouteDrawer.tsx`](../transport-admin/app/components/RouteDrawer.tsx).
-- **A mesma velocidade em todo o lado.** O trânsito, a hora do dia e o tempo parado nas paragens não estão no modelo; só a paragem de 5 minutos em cada [terminal](conceitos.md#terminal "A janela onde se escrevem instruções para o computador em texto, em vez de clicar.").
+- **A mesma velocidade em todo o lado.** O trânsito, a hora do dia e o tempo parado nas paragens não estão no modelo; só a paragem de 5 minutos em cada terminal.
   *Contornar:* a velocidade está na página Tarifa do painel; baixá-la se os autocarros andam em geral abaixo de 30 km/h. Velocidades por hora ou por rota precisariam de colunas novas e de uma alteração nas duas cópias de `lib/vehiclePosition.ts`. Os veículos com GPS não são afectados.
 
 ## Viagens
@@ -77,8 +77,10 @@ Estavam nesta lista e já não são limitações:
 
 ## Notificações
 
-- **A verificação agendada pode atrasar-se ou ficar suspensa.** O [GitHub](conceitos.md#github "O site onde o repositório está guardado e partilhado, e onde se revêem as alterações.") arranca os workflows agendados alguns minutos mais tarde quando está ocupado, e suspende-os num repositório sem actividade durante 60 dias.
-  *Contornar:* ligá-lo outra vez em Actions → "Verificação de chegadas (SMS)" → Enable workflow. Para um horário mais apertado, usar um agendador externo (cron-job.org, por exemplo) que envie `POST https://transport-mz.vercel.app/api/simulation` com `{"action":"check"}`, ou o Vercel Cron num plano pago.
+- **O agendamento do [GitHub](conceitos.md#github "O site onde o repositório está guardado e partilhado, e onde se revêem as alterações.") não chega para os avisos de 15, 10 e 5 minutos.** O GitHub pede a verificação "a cada 5 minutos", mas num repositório público corre-a com grandes atrasos (em Outubro de 2026, a cada 40 a 50 minutos), e suspende-a num repositório sem actividade durante 60 dias. Sem tráfego na web, no USSD ou no portal, os avisos chegam tarde ou saltam passos.
+  *Contornar:* um agendador externo que envie `POST https://transport-mz.vercel.app/api/simulation` com `{"action":"check"}` a cada minuto ([Africa's Talking → Verificação de chegadas a cada minuto](africas-talking.md#verificação-de-chegadas-a-cada-minuto)), ou o Vercel Cron num plano pago. Se o workflow ficar suspenso, ligá-lo outra vez em Actions → "Verificação de chegadas (SMS)" → Enable workflow.
+- **O sistema não sabe quando o passageiro entra no autocarro.** Uma viagem acompanhada conta-o a bordo quando o autocarro anunciado sai da paragem de entrada. Quem o perdeu recebe a seguir os avisos de bordo desse autocarro.
+  *Contornar:* o aviso "esta a chegar" diz quando chega o seguinte; o passageiro pede outra vez a viagem no USSD, o que começa um acompanhamento novo.
 - Os alertas com mais de 24 horas são ignorados, e um alerta envia no máximo um SMS a cada 30 minutos. É de propósito: o passageiro pede outra vez para uma viagem nova.
 
 ## Dados
@@ -113,7 +115,8 @@ Estavam nesta lista e já não são limitações:
 
 ## Portal do motorista
 
-- **O marcador do autocarro é a posição do telemóvel.** O mapa do portal põe o autocarro onde o telemóvel está, e no início do percurso da rota até o navegador dar uma posição. Não é a posição que os passageiros vêem, que vem do GPS do veículo ou do horário ([Portal do motorista → Painel](portal-motorista.md#painel-dashboard)).
+- **O autocarro no mapa do portal é o que os passageiros vêem, não o telemóvel.** Sem GPS, o portal põe o autocarro onde a viagem o calcula, que pode estar à frente ou atrás do autocarro real ([Portal do motorista → Painel](portal-motorista.md#painel-dashboard)).
+  *Contornar:* partilhar o GPS do telemóvel no portal ou instalar o Traccar Client: o autocarro passa a estar onde o telemóvel está, para o motorista e para os passageiros.
 - **O GPS do navegador pára em segundo plano.** Partilhar a posição do telemóvel a partir do portal só funciona com a página aberta e o ecrã ligado.
   *Contornar:* para seguir sem falhas, instalar o Traccar Client no telemóvel com o código do dispositivo do veículo ([Localização e GPS → Traccar Client](localizacao-gps.md#traccar-client-num-telemóvel)); continua a enviar com o ecrã desligado.
 - **O estado da viagem não muda as posições.** "Iniciar viagem" e "Terminar viagem" são um estado partilhado com o USSD; não arrancam nem param o autocarro no mapa. As posições reais vêm do GPS.
@@ -129,7 +132,7 @@ Estavam nesta lista e já não são limitações:
 ## Código e repositório
 
 - **Três cópias do esquema.** `prisma/schema.prisma` é a referência; `transport-client/prisma/schema.prisma` tem de ser igual e `transport-admin/prisma/schema.prisma` só difere no bloco do generator. Mudam-se as três juntas; o CI falha quando diferem.
-- **Duas cópias do código das posições.** `lib/vehiclePosition.ts` existe na aplicação dos passageiros e no painel; uma alteração às regras do horário tem de ir para as duas.
+- **Duas cópias do código das posições.** `lib/vehiclePosition.ts` existe na aplicação dos passageiros e no painel; uma alteração às regras das posições tem de ir para as duas.
 - **Muitos avisos antigos do lint** ([Testes](testes.md#tipos-e-lint)), por isso o lint não está no CI. A aplicação dos passageiros e o portal do motorista não têm [testes automáticos](conceitos.md#testes "Programas que experimentam as aplicações sozinhos e avisam quando algo deixou de funcionar."); [Testes](testes.md#aplicação-dos-passageiros-e-ussd-à-mão) lista o que confirmar à mão.
 - **A produção não tem histórico de migrações** (`_prisma_migrations`), por isso as alterações ao esquema aplicam-se à mão com SQL idempotente ([Publicação → Alterações à base de dados em produção](publicacao.md#alterações-à-base-de-dados-em-produção)).
 

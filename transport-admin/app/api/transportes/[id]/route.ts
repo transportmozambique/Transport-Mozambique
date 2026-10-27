@@ -31,6 +31,10 @@ export async function GET(
             telefone: true,
             email: true,
             foto: true,
+            // A viagem em curso: põe o autocarro a andar, como na aplicação dos passageiros
+            emViagem: true,
+            viagemIniciadaEm: true,
+            viagemSentido: true,
           },
         },
         proprietarios: {
@@ -58,7 +62,7 @@ export async function GET(
       );
     }
 
-    // Onde está agora: GPS real quando recente, senão a posição pelo horário na via
+    // Onde está agora: GPS real quando recente, senão onde a viagem do motorista o põe, senão parado
     const posicao = await positionSummary(transporte, transporte.via);
     const latitude = posicao?.latitude ?? -25.9655;
     const longitude = posicao?.longitude ?? 32.5892;

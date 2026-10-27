@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { routeGeometry, travelSpeedMps, vehiclePosition } from '@/lib/vehiclePosition';
+import { TRIP_FIELDS, routeGeometry, travelSpeedMps, vehiclePosition } from '@/lib/vehiclePosition';
 
 export type EstadoAgora = 'circulacao' | 'terminal' | 'fora-de-servico' | 'sem-posicao';
 
-// GET: o que cada veículo está a fazer agora (GPS real quando recente, senão o horário), para a lista
+// GET: o que cada veículo está a fazer agora (GPS real quando recente, senão a viagem do motorista;
+// sem viagem iniciada, fora de serviço), para a lista
 export async function GET() {
   const [speed, transportes] = await Promise.all([
     travelSpeedMps(),
@@ -15,6 +16,7 @@ export async function GET() {
         gpsAtualizadoEm: true,
         gpsVelocidade: true,
         gpsDirecao: true,
+        motorista: { select: TRIP_FIELDS },
         via: { select: { geoLocationPath: true } },
       },
     }),

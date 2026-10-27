@@ -72,6 +72,19 @@ const NEAR_RADIUS_M = 1500;
 const NEAR_MAX = 8;
 const BUS_REFRESH_MS = 5000;
 
+/**
+ * Um autocarro parado (o motorista ainda não iniciou a viagem, o portal diz "Parado") fica
+ * esbatido no mapa, com o estado em cinzento no balão.
+ */
+function paintStatus(marker: maplibregl.Marker, line: HTMLElement | undefined, status: string) {
+  const parked = status === "Fora de serviço";
+  marker.getElement().style.opacity = parked ? "0.5" : "";
+  if (line) {
+    line.textContent = status;
+    line.style.color = parked ? "#64748b" : "#059669";
+  }
+}
+
 
 const isDesktop = () => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches;
 
@@ -100,6 +113,8 @@ export default function TripPlanner() {
   const map = useRef<maplibregl.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const busMarkers = useRef(new Map<string, maplibregl.Marker>());
+  // A linha do estado no balão de cada autocarro, para a mudar quando o motorista inicia ou termina a viagem
+  const busStatus = useRef(new Map<string, HTMLElement>());
   // Linhas das vias dos autocarros tocados até agora (pares [lng, lat]), pedidas no primeiro toque
   const busRoutes = useRef(new Map<string, [number, number][]>());
   const lastTappedBus = useRef<string | null>(null);
@@ -353,14 +368,15 @@ export default function TripPlanner() {
       const el = document.createElement("div");
       el.innerHTML = BUS_SVG;
       el.setAttribute("aria-label", `Autocarro ${bus.matricula}`);
-      const popup = new maplibregl.Popup({ offset: 20 }).setDOMContent(
-        popupContent([
-          { text: bus.matricula, bold: true },
-          { text: bus.via },
-          { text: bus.status, color: "#059669" },
-          { text: "Acompanhar →", href: `/viagem?b=${bus.id}` },
-        ]),
-      );
+      const content = popupContent([
+        { text: bus.matricula, bold: true },
+        { text: bus.via },
+        { text: bus.status, color: "#059669", key: "status" },
+        { text: "Acompanhar →", href: `/viagem?b=${bus.id}` },
+      ]);
+      const statusLine = content.querySelector<HTMLElement>('[data-key="status"]') ?? undefined;
+      if (statusLine) busStatus.current.set(bus.id, statusLine);
+      const popup = new maplibregl.Popup({ offset: 20 }).setDOMContent(content);
       el.addEventListener("click", async () => {
         const show = (coords: [number, number][]) =>
           source("bus-route")?.setData(
@@ -380,7 +396,9 @@ export default function TripPlanner() {
           // Sem linha desta vez; o próximo toque pede outra vez
         }
       });
-      busMarkers.current.set(bus.id, new maplibregl.Marker({ element: el }).setLngLat([bus.longitude, bus.latitude]).setPopup(popup).addTo(m));
+      const marker = new maplibregl.Marker({ element: el }).setLngLat([bus.longitude, bus.latitude]).setPopup(popup).addTo(m);
+      paintStatus(marker, statusLine, bus.status);
+      busMarkers.current.set(bus.id, marker);
     }
   }, [mapReady, buses]);
 
@@ -391,7 +409,9 @@ export default function TripPlanner() {
         const data = await fetch("/api/buses?fields=position").then((res) => res.json());
         for (const bus of data.buses ?? []) {
           const marker = busMarkers.current.get(bus.id);
-          if (marker) glideMarker(marker, [bus.longitude, bus.latitude]);
+          if (!marker) continue;
+          glideMarker(marker, [bus.longitude, bus.latitude]);
+          if (bus.status) paintStatus(marker, busStatus.current.get(bus.id), bus.status);
         }
       } catch {
         // A actualização seguinte tenta outra vez

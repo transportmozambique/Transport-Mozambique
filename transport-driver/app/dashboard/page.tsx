@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { Map as MapLibreMap, Marker } from "maplibre-gl";
-import { API_BASE, type TripState } from "@/lib/api";
+import { API_BASE, type BusNow, type TripState } from "@/lib/api";
 import Sheet, { type SheetSnap } from "../components/Sheet";
 
 interface MotoristaData {
@@ -75,7 +75,8 @@ export default function DashboardPage() {
   const router = useRouter();
   const [motorista, setMotorista] = useState<MotoristaData | null>(null);
   const [isActive, setIsActive] = useState(false);
-  const [speed, setSpeed] = useState(0);
+  // O autocarro como os passageiros o vêem (a mesma posição e o mesmo estado da web e do USSD)
+  const [bus, setBus] = useState<BusNow | null>(null);
   const [waiting, setWaiting] = useState<Waiting | null>(null);
   const [tripStart, setTripStart] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -87,9 +88,8 @@ export default function DashboardPage() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const busRef = useRef<Marker | null>(null);
-  // A posição do telemóvel: o marcador do autocarro segue-a
-  const [here, setHere] = useState<[number, number] | null>(null);
-  const hereRef = useRef<[number, number] | null>(null);
+  // Onde está o autocarro para os passageiros: o marcador segue-o
+  const busAtRef = useRef<[number, number] | null>(null);
   // GPS real: durante uma viagem a posição do telemóvel vai para /api/gps com o código do dispositivo
   // do veículo (criado no painel, Transporte → Rastreador GPS), guardado uma vez neste telemóvel.
   const [gpsCode, setGpsCode] = useState("");
@@ -109,8 +109,6 @@ export default function DashboardPage() {
 
     if (navigator.geolocation) {
       const watchId = navigator.geolocation.watchPosition((p) => {
-        setSpeed(Math.round((p.coords.speed || 0) * 3.6));
-        setHere([p.coords.longitude, p.coords.latitude]);
         const g = gpsRef.current;
         if (!g.active || !g.code || Date.now() - g.lastSent < 15000) return;
         g.lastSent = Date.now();
@@ -223,8 +221,8 @@ export default function DashboardPage() {
 
         const busEl = document.createElement('div');
         busEl.innerHTML = BUS_SVG;
-        busRef.current = new maplibregl.Marker({ element: busEl, anchor: 'center' }).setLngLat(hereRef.current ?? coords[0]).addTo(map);
-        map.flyTo({ center: hereRef.current ?? coords[0], zoom: 14, pitch: 60, duration: 2000 });
+        busRef.current = new maplibregl.Marker({ element: busEl, anchor: 'center' }).setLngLat(busAtRef.current ?? coords[0]).addTo(map);
+        map.flyTo({ center: busAtRef.current ?? coords[0], zoom: 14, pitch: 60, duration: 2000 });
       });
     });
 
@@ -236,18 +234,22 @@ export default function DashboardPage() {
     };
   }, [motorista]);
 
-  // O marcador do autocarro fica onde está o telemóvel, logo que a sua posição é conhecida
+  // O marcador do autocarro fica onde os passageiros o vêem: parado até iniciar a viagem, depois a
+  // andar pela rota (ou na posição GPS enviada pelo telemóvel ou pelo rastreador)
   useEffect(() => {
-    hereRef.current = here;
-    if (here) busRef.current?.setLngLat(here);
-  }, [here]);
+    if (!bus) return;
+    busAtRef.current = [bus.lng, bus.lat];
+    busRef.current?.setLngLat(busAtRef.current);
+    const el = busRef.current?.getElement();
+    if (el) el.style.opacity = bus.estado === 'Fora de serviço' ? '0.55' : '1';
+  }, [bus]);
 
   useEffect(() => {
     if (mapReady) mapRef.current?.setPadding(mapPadding(snap));
   }, [snap, mapReady]);
 
   const centre = () => {
-    const at = here ?? parsePoints(motorista?.via?.geoLocationPath)[0];
+    const at = busAtRef.current ?? parsePoints(motorista?.via?.geoLocationPath)[0];
     if (at) mapRef.current?.flyTo({ center: at, zoom: 16, pitch: 60 });
   };
 
@@ -255,12 +257,14 @@ export default function DashboardPage() {
   const applyTrip = useCallback((trip: TripState) => {
     setIsActive(trip.emViagem);
     setTripStart(trip.emViagem && trip.viagemIniciadaEm ? new Date(trip.viagemIniciadaEm).getTime() : null);
+    setBus(trip.autocarro ?? null);
   }, []);
 
   const handleLogout = useCallback(() => { localStorage.removeItem('motorista'); router.push('/'); }, [router]);
 
-  // Lido ao abrir e verificado a cada 30 s, para uma viagem iniciada ou terminada por USSD aparecer aqui.
-  // O token de sessão da entrada identifica o motorista; sem um válido, entra-se outra vez.
+  // Lido ao abrir e a cada 10 s, para uma viagem iniciada ou terminada por USSD aparecer aqui e o
+  // autocarro andar no mapa como na web. O token de sessão da entrada identifica o motorista; sem
+  // um válido, entra-se outra vez.
   const sessionToken: string | undefined = motorista?.token;
   useEffect(() => {
     if (!motorista) return;
@@ -274,7 +278,7 @@ export default function DashboardPage() {
       .then((trip: TripState | null) => { if (trip && !cancelled) applyTrip(trip); })
       .catch(() => {});
     load();
-    const i = setInterval(load, 30000);
+    const i = setInterval(load, 10000);
     return () => { cancelled = true; clearInterval(i); };
   }, [motorista, sessionToken, applyTrip, handleLogout]);
 
@@ -413,9 +417,11 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-3 gap-2">
             <Stat value={clock(rideTime)} label="Tempo de viagem" small />
-            <Stat value={String(speed)} label="km/h" />
+            <Stat value={String(bus?.velocidade ?? 0)} label="km/h" />
             <Stat value={String(total)} label="À espera" accent={total > 0} />
           </div>
+
+          <PassengerView bus={bus} active={isActive} />
 
           <button
             onClick={() => setShowProfile(true)}
@@ -538,6 +544,42 @@ function DriverId({ motorista }: { motorista: MotoristaData }) {
         </span>
       </span>
     </>
+  );
+}
+
+/**
+ * O que os passageiros vêem deste autocarro agora, na web e no USSD: o estado, e as próximas
+ * paragens com os minutos. Mostra ao motorista que "Iniciar viagem" é o que o põe no mapa.
+ */
+function PassengerView({ bus, active }: { bus: BusNow | null; active: boolean }) {
+  if (!bus) {
+    return (
+      <p className="rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-600">
+        Os passageiros não vêem este autocarro: sem veículo, ou a rota está desactivada.
+      </p>
+    );
+  }
+  return (
+    <section className="rounded-2xl border border-slate-200 px-4 py-3">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs font-medium text-slate-500">Os passageiros vêem</span>
+        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-800">{bus.estado}</span>
+      </div>
+      {active && bus.proximas.length > 0 ? (
+        <ol className="mt-2 space-y-1">
+          {bus.proximas.map((p, i) => (
+            <li key={`${p.nome}-${i}`} className="flex justify-between gap-3 text-sm">
+              <span className="truncate text-slate-800">{p.nome}</span>
+              <span className="shrink-0 font-semibold tabular-nums text-slate-900">{p.minutos <= 1 ? 'agora' : `${p.minutos} min`}</span>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="mt-1 text-sm text-slate-600">
+          {active ? 'No terminal, a seguir para ' + bus.sentido + '.' : 'Parado. Carregue em "Iniciar viagem" para o autocarro aparecer a andar.'}
+        </p>
+      )}
+    </section>
   );
 }
 

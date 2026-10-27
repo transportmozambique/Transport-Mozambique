@@ -78,7 +78,7 @@ export async function GET(
     // Paragens pela ordem de viagem (a ordem dos ids não é)
     via.paragens = orderStopsAlongRoute(via.paragens, via.geoLocationPath, (vp) => vp.paragem.geoLocation);
 
-    // Velocidade de viagem da regra de tarifa activa: o horário e todas as estimativas de tempo usam-na
+    // Velocidade de viagem da regra de tarifa activa: as posições em viagem e todas as estimativas de tempo usam-na
     const tarifa = await prisma.tarifa.findFirst({ where: { ativa: true }, orderBy: { updatedAt: 'desc' } });
 
     return NextResponse.json({ ...via, velocidadeViagemKmh: tarifa?.velocidadeViagemKmh ?? 30 }, {
@@ -113,7 +113,7 @@ export async function PATCH(
   try {
     const params = await Promise.resolve(context.params);
     const body = await request.json();
-    const { nome, terminalPartida, terminalChegada, cor, municipioId, paragensIds, geoLocationPath } = body;
+    const { nome, terminalPartida, terminalChegada, cor, municipioId, paragensIds, geoLocationPath, ativa } = body;
 
     // Dados básicos da via
     const updateData: any = {};
@@ -132,6 +132,8 @@ export async function PATCH(
     if (terminalPartida) updateData.terminalPartida = terminalPartida;
     if (terminalChegada) updateData.terminalChegada = terminalChegada;
     if (cor) updateData.cor = cor;
+    // Activar ou desactivar: só as rotas activas aparecem na web, no USSD e nos SMS
+    if (typeof ativa === 'boolean') updateData.ativa = ativa;
     
     // O município, quando dado
     if (municipioId) {

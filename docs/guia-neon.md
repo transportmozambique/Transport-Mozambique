@@ -144,7 +144,7 @@ O resultado mostra dois separadores: **1: SET** ("Statement executed successfull
 
 ![Duas instruções: o separador do resultado do SELECT](images/neon-guide-two-statements.png)
 
-A regra de tarifa é 10 MT de mínimo, 10 MT por km, e 30 km/h de velocidade de viagem para o horário.
+A regra de tarifa é 10 MT de mínimo, 10 MT por km, e 30 km/h de velocidade de viagem para os autocarros em viagem.
 
 ## 5. Descarregar, histórico e consultas guardadas
 
@@ -254,7 +254,7 @@ Lê-se assim:
 
 - 340 veículos, os das rotas do [OpenStreetMap](conceitos.md#openstreetmap "Um mapa do mundo inteiro feito por voluntários, como uma Wikipédia dos mapas, que qualquer pessoa pode usar e corrigir."), não tinham motorista quando a captura foi feita. Os motoristas de demonstração juntaram-se no mesmo dia, por isso os 451 têm hoje um ([Base de dados → Motoristas para os veículos importados](base-de-dados.md#motoristas-para-os-veículos-importados));
 - nenhum motorista está em viagem;
-- nenhum veículo tem posição GPS ao vivo, por isso todos os autocarros do mapa vêm do horário ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)).
+- nenhum veículo tem posição GPS ao vivo, por isso todos os autocarros do mapa vêm da viagem do motorista, e estão parados enquanto ele não a iniciar ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)).
 
 **Ver a mudança:**
 
@@ -300,8 +300,8 @@ ORDER BY alertas DESC;
 **Ver a mudança:**
 
 - Na aplicação dos passageiros, entrar, planear uma viagem e tocar em "Avisar-me por SMS quando o autocarro estiver perto…". A linha da paragem aparece aqui, com `alertas` 1 e `sms_enviados` 0.
-- Quando um autocarro está a menos de 1 km e a verificação de chegadas corre, `sms_enviados` passa a 1.
-- O mesmo pela opção 1 do USSD no [simulador da Africa's Talking](africas-talking.md#usar-o-menu-no-simulador) também junta um passageiro USSD em 7.4. Usa-se um número de teste; [Base de dados → Passageiros criados por USSD](base-de-dados.md#passageiros-criados-por-ussd-ainda-sem-palavra-passe) mostra como os encontrar e apagar.
+- Quando o próximo autocarro em viagem chega à paragem em 5 minutos ou menos e a verificação de chegadas corre, `sms_enviados` passa a 1.
+- A opção 1 do USSD já não cria alertas: "Acompanhar por SMS" grava um [`Acompanhamento`](glossario.md#a-rede-e-as-pessoas "Uma viagem acompanhada por SMS: os avisos de cada autocarro até ao destino") ([Base de dados → Viagens acompanhadas por SMS](base-de-dados.md#viagens-acompanhadas-por-sms)).
 
 ### Mais consultas
 

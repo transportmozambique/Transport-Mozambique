@@ -110,7 +110,7 @@ A única linha de `Tarifa`, `padrao`, tem valores escolhidos pela equipa, não u
 
 | Dados | Produzidos por |
 |---|---|
-| Posições dos autocarros sem [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") | Calculadas a partir do percurso da rota, da hora do dia e da velocidade da tarifa (o modelo de horário, [Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)). Não é um horário publicado. |
+| Posições dos autocarros sem [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") | Calculadas a partir do percurso da rota, da hora em que o motorista iniciou a viagem e da velocidade da tarifa ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)). Sem viagem iniciada, o autocarro está parado. Não é um horário publicado. |
 | Posições GPS | [Rastreadores](conceitos.md#rastreador "Um aparelho (ou um telemóvel com uma aplicação) que envia a posição de um veículo pela internet; o código do dispositivo é a sua 'palavra-passe'."), a aplicação [Traccar Client](conceitos.md#traccar "Uma aplicação gratuita para telemóvel que envia a posição do telemóvel pelo protocolo OsmAnd."), ou o portal do motorista num telemóvel, por `POST /api/gps`. Nenhum envia em produção ainda. |
 | Horas de chegada, viagens, tarifas | Calculadas a cada pedido a partir do que está acima e da regra de tarifa. |
 | Alertas de chegada ([`MISSION`](glossario.md#a-rede-e-as-pessoas "Um alerta de chegada: um SMS quando um autocarro estiver perto de uma paragem")) | Passageiros, na web ou por USSD. |

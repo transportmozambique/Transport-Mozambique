@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { operationSummary } from '@/lib/vehiclePosition';
+import { TRIP_FIELDS, operationSummary } from '@/lib/vehiclePosition';
 
-// GET: o dia de serviço do veículo pelo horário (km, viagens, próxima passagem em cada paragem)
+// GET: a viagem em curso do veículo, desde que o motorista a iniciou (km, viagens, próxima passagem em cada paragem)
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const t = await prisma.transporte.findUnique({
     where: { id },
     select: {
       id: true,
+      currGeoLocation: true,
+      gpsAtualizadoEm: true,
+      gpsDirecao: true,
+      gpsVelocidade: true,
+      motorista: { select: TRIP_FIELDS },
       via: {
         select: {
           geoLocationPath: true,

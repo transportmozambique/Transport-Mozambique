@@ -511,7 +511,7 @@ function DashboardContent() {
             icon={ICONS.driver}
             onClick={() => router.push('/motoristas')}
           />
-          <Kpi label="Vias" value={stats.vias} note={`${viasComVeiculos} com veículos`} icon={ICONS.route} onClick={() => router.push('/vias')} />
+          <Kpi label="Vias activas" value={stats.vias} note={`${viasComVeiculos} com veículos`} icon={ICONS.route} onClick={() => router.push('/vias')} />
           <Kpi label="Paragens" value={stats.paragens} note="pontos de paragem" icon={ICONS.stop} onClick={() => router.push('/paragens')} />
         </div>
 
@@ -533,7 +533,7 @@ function DashboardContent() {
           </Card>
 
           <div className="flex min-w-0 flex-col gap-4">
-            <Card title="Agora" subtitle="O que cada veículo está a fazer (GPS ou horário)">
+            <Card title="Agora" subtitle="O que cada veículo está a fazer (GPS, ou a viagem do motorista)">
               {agora ? (
                 <div className="grid grid-cols-2 gap-2">
                   <MiniStat value={agora.circulacao} label="Em circulação" />

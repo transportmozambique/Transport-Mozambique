@@ -83,7 +83,7 @@ Lê-se: "envia (`-X POST`) a este endereço, avisando que o corpo é JSON (`-H`)
 Começa uma verificação de chegadas ([SMS](conceitos.md#sms "As mensagens de texto curtas dos telemóveis.")) em segundo plano ([Fluxos de dados → Alerta de chegada](fluxos-de-dados.md#alerta-de-chegada-e-sms)) e diz o modo das posições. Já nenhuma página o chama (a actualização das posições do mapa faz a mesma verificação). Código: [`app/api/startup/route.ts`](../transport-client/app/api/startup/route.ts).
 
 ```json
-{"success": true, "status": {"mode": "gps-or-timetable", "busCount": 111, "withFreshGps": 0, "lastArrivalCheck": null}}
+{"success": true, "status": {"mode": "gps-or-driver-trip", "busCount": 6, "inService": 4, "withFreshGps": 0, "following": 0, "lastArrivalCheck": null}}
 ```
 
 #### `GET /api/stops`
@@ -215,7 +215,7 @@ Cinco usos, escolhidos pelos parâmetros. Código: [`app/api/buses/route.ts`](..
 {
  "buses": [{
    "id": "cmozbuqta00189ounhmm7x4d6", "matricula": "ACK-185M", "via": "Rota 85",
-   "latitude": -26.0503637, "longitude": 32.3397297, "fonte": "horario", "status": "Em Circulação", "fare": 50,
+   "latitude": -26.0503637, "longitude": 32.3397297, "fonte": "horario", "status": "Em circulação", "fare": 50,
    "routePath": [[32.293904, -25.988661], "… (612 itens)"],
    "stops": [{"id": "cmoveqjxi00k514ln4nojifju", "nome": "Segundo Portão da Rádio Marconi",
               "latitude": -25.9886584, "longitude": 32.2938877, "isTerminal": true}, "… (15 itens)"]
@@ -224,12 +224,12 @@ Cinco usos, escolhidos pelos parâmetros. Código: [`app/api/buses/route.ts`](..
 }
 ```
 
-`fonte` é `gps` (uma posição com menos de 3 minutos) ou `horario` ([Localização e GPS → Como se escolhe uma posição](localizacao-gps.md#como-se-escolhe-uma-posição)). Aqui `fare` é a tarifa do percurso todo.
+`fonte` é `gps` (uma posição com menos de 3 minutos) ou `horario` (calculada pela viagem do motorista; o nome ficou do antigo modelo de horário) ([Localização e GPS → Como se escolhe uma posição](localizacao-gps.md#como-se-escolhe-uma-posição)). `status` é `"Em circulação"`, `"No terminal"` ou `"Fora de serviço"` (o motorista não iniciou a viagem). Aqui `fare` é a tarifa do percurso todo. Só aparecem os veículos das rotas activas.
 
 **1b. A primeira carga do mapa ao vivo** (`?fields=map`): o que um marcador e o seu balão mostram, cerca de 20 KB comprimido. A linha da rota de um autocarro tocado vem de [`GET /api/bus/{id}`](#get-apibusid) (`routeCoords`). Porquê separado: o mapa abre depressa mesmo numa ligação lenta, e só se descarrega o percurso que se vai ver.
 
 ```json
-{"buses": [{"id": "cmozbuqta00189ounhmm7x4d6", "matricula": "ACK-185M", "via": "Rota 85", "latitude": -26.0503637, "longitude": 32.3397297, "fonte": "horario", "status": "Em Circulação"}, "… (451 itens)"], "total": 451}
+{"buses": [{"id": "cmvczf52j00xfjhtk3z0wv71x", "matricula": "ADA-014M", "via": "Xipamanine - Museu", "latitude": -25.975327887475753, "longitude": 32.58826561699251, "fonte": "horario", "status": "Fora de serviço"}, "… (6 itens)"], "total": 6}
 ```
 
 **1c. Os autocarros cuja rota serve uma paragem** (`?servesStop=ID_DA_PARAGEM`): `{"buses": [{"id", "matricula", "via"}], "total"}`, por matrícula. Os alertas de chegada da página da conta usam-no para seguir um autocarro até à paragem guardada.
@@ -237,12 +237,12 @@ Cinco usos, escolhidos pelos parâmetros. Código: [`app/api/buses/route.ts`](..
 **2. Só as posições, pedidas a cada 5 s** (`?fields=position`). Também faz a verificação de chegadas (SMS), no máximo a cada 30 s por instância. Os percursos das rotas ficam em cache 5 minutos por instância.
 
 ```json
-{"buses": [{"id": "cmozbuqta00189ounhmm7x4d6", "latitude": -26.0503789, "longitude": 32.3397508, "fonte": "horario", "direcao": 128.63}, "… (111 itens)"], "total": 111}
+{"buses": [{"id": "cmvczf52j00xfjhtk3z0wv71x", "latitude": -25.975327887475753, "longitude": 32.58826561699251, "fonte": "horario", "direcao": null, "status": "Fora de serviço"}, "… (6 itens)"], "total": 6}
 ```
 
-`direcao` é o rumo em graus (0 = norte), ou `null`.
+`direcao` é o rumo em graus (0 = norte), ou `null` (parado). `status` vem também aqui, para o mapa mudar um autocarro de "Fora de serviço" para "Em circulação" logo que o motorista inicia a viagem.
 
-**3. Pesquisa: os autocarros que servem uma origem e um destino** (`?paragemId=ORIGEM&destinoId=DESTINO`, e opcionalmente `&viaIds=A,B` ou o antigo `&viaId=A`). Sem ids de rotas, consideram-se todos os veículos. Os resultados vêm ordenados pela hora de chegada.
+**3. Pesquisa: os autocarros que servem uma origem e um destino** (`?paragemId=ORIGEM&destinoId=DESTINO`, e opcionalmente `&viaIds=A,B` ou o antigo `&viaId=A`). Sem ids de rotas, consideram-se todos os veículos das rotas activas. Só entram os autocarros em viagem; os resultados vêm ordenados pela hora de chegada.
 
 ```json
 {
@@ -251,7 +251,7 @@ Cinco usos, escolhidos pelos parâmetros. Código: [`app/api/buses/route.ts`](..
    "via": "Rua do Cajueiro (Fedel Castro) - Estrada Circular", "viaId": "cmoveturn00xh14lnebtzwv1x",
    "direcao": "Rua do Cajueiro (Fedel Castro) → Farmácia",
    "distancia": 2336, "tempoEstimado": 42, "tempoViagem": 5, "velocidade": 30, "fare": 24,
-   "latitude": -25.8272823, "longitude": 32.5702438, "fonte": "horario", "status": "Em Circulação",
+   "latitude": -25.8272823, "longitude": 32.5702438, "fonte": "horario", "status": "Em circulação",
    "routeCoords": [[32.549758, -25.839792], "… (238 itens)"],
    "stops": ["… (12 itens)"]
  }],
@@ -266,7 +266,7 @@ Cinco usos, escolhidos pelos parâmetros. Código: [`app/api/buses/route.ts`](..
 | `distancia` | metros da **viagem** da origem ao destino, ao longo do percurso |
 | `tempoViagem` | minutos a bordo |
 | `fare` | MT, pela regra de tarifa activa |
-| `velocidade` | km/h agora: a do GPS quando a posição é recente, senão a velocidade de viagem da regra de tarifa (0 quando parado) |
+| `velocidade` | km/h agora: a do GPS quando a posição é recente, senão a velocidade de viagem da regra de tarifa (0 quando parado ou fora de serviço) |
 | `direcao` | o sentido do autocarro, como "primeira paragem → última paragem" desse troço |
 
 Erros: 400 `Indique a origem (paragemId) e o destino (destinoId)`; 404 `Origem não encontrada` / `Destino não encontrado`.
@@ -360,7 +360,7 @@ Um autocarro, com os números da viagem entre duas paragens quando se dá `?para
  "via": "Rua do Cajueiro (Fedel Castro) - Estrada Circular", "viaId": "cmoveturn00xh14lnebtzwv1x",
  "direcao": "Rua do Cajueiro (Fedel Castro) → Farmácia", "velocidade": 30,
  "latitude": -25.8272469, "longitude": 32.5702499, "fonte": "horario", "direcaoGraus": 8.87,
- "posicaoEm": "2026-10-17T09:43:53.332Z", "status": "Em Circulação",
+ "posicaoEm": "2026-10-17T09:43:53.332Z", "status": "Em circulação",
  "routeCoords": [[32.549758, -25.839792], "… (238 itens)"],
  "stops": [{"id": "cmoverp1d00p714lng507qgbw", "nome": "Rua do Cajueiro (Fedel Castro)", "latitude": -25.8398513,
             "longitude": 32.54965, "isTerminal": false, "isPickup": true, "isDestination": false}, "… (12 itens)"],
@@ -369,7 +369,7 @@ Um autocarro, com os números da viagem entre duas paragens quando se dá `?para
 }
 ```
 
-Aqui `distancia` é o que o **autocarro** ainda tem de andar até à origem, e `distanciaViagem` o da viagem. `jaPassou` é verdadeiro quando o autocarro já passou a origem e volta na volta seguinte. `posicaoEm` é a hora da posição GPS, ou do cálculo numa posição pelo horário.
+Aqui `distancia` é o que o **autocarro** ainda tem de andar até à origem, e `distanciaViagem` o da viagem. `jaPassou` é verdadeiro quando o autocarro já passou a origem e volta na volta seguinte. `posicaoEm` é a hora da posição GPS, ou do cálculo numa posição pela viagem. Num autocarro fora de serviço (o motorista não iniciou a viagem), `status` é `"Fora de serviço"`, `velocidade` 0, e `tempoEstimado`, `distancia`, `tempoViagem`, `distanciaViagem` e `fare` são `null`: um autocarro parado não tem hora de chegada.
 
 Erros: 404 `Autocarro não encontrado`; 400 `Este transporte não tem via atribuída`.
 
@@ -378,11 +378,19 @@ Erros: 404 `Autocarro não encontrado`; 400 `Este transporte não tem via atribu
 `GET` dá o mesmo estado que `/api/startup`, com a última verificação de chegadas. Código: [`app/api/simulation/route.ts`](../transport-client/app/api/simulation/route.ts) e [`lib/busSimulator.ts`](../transport-client/lib/busSimulator.ts).
 
 ```json
-{"success": true, "status": {"mode": "gps-or-timetable", "busCount": 111, "withFreshGps": 0,
- "lastArrivalCheck": {"checkedAt": "2026-10-17T09:43:52.729Z", "missions": 4, "notified": 2}}}
+{"success": true, "status": {"mode": "gps-or-driver-trip", "busCount": 6, "inService": 4, "withFreshGps": 0, "following": 1,
+ "lastArrivalCheck": {"checkedAt": "2026-10-27T19:02:00.306Z", "missions": 0, "notified": 0, "journeys": 0}}}
 ```
 
-`POST {"action": "check"}` corre já a verificação de chegadas e responde com `notified` (SMS enviados) e o estado. Outra acção responde 400. O endpoint é público, mas a verificação só envia os SMS que estão na hora. O [GitHub Actions](conceitos.md#ci "Verificações que o GitHub corre sozinho a cada pull request, para nenhum erro conhecido chegar ao main.") chama-o a cada 5 minutos ([Fluxos de dados → Alerta de chegada](fluxos-de-dados.md#alerta-de-chegada-e-sms)).
+| Campo | Significado |
+|---|---|
+| `busCount` | veículos das rotas activas |
+| `inService` | desses, os que estão em viagem (o motorista iniciou-a) |
+| `withFreshGps` | os que enviaram GPS nos últimos 3 minutos |
+| `following` | viagens acompanhadas por SMS ainda a decorrer ([`Acompanhamento`](glossario.md#a-rede-e-as-pessoas "Uma viagem acompanhada por SMS: os avisos de cada autocarro até ao destino") sem `terminadoEm`) |
+| `lastArrivalCheck` | a última verificação nesta instância: alertas de paragem lidos (`missions`), SMS enviados (`notified`), e desses os avisos das viagens acompanhadas (`journeys`); `null` antes da primeira |
+
+`POST {"action": "check"}` corre já a verificação de chegadas e responde com `notified` (SMS enviados) e o estado. Outra acção responde 400. O endpoint é público, mas a verificação só envia os SMS que estão na hora, e nunca o mesmo duas vezes. Um pedido agendado externo deve chamá-lo a cada minuto ([Africa's Talking → Verificação de chegadas a cada minuto](africas-talking.md#verificação-de-chegadas-a-cada-minuto)); o [GitHub Actions](conceitos.md#ci "Verificações que o GitHub corre sozinho a cada pull request, para nenhum erro conhecido chegar ao main.") também, como reserva ([Fluxos de dados → Alerta de chegada](fluxos-de-dados.md#alerta-de-chegada-e-sms)).
 
 ### Conta do passageiro
 
@@ -467,11 +475,22 @@ O motorista com sessão, como a base de dados o tem agora: o mesmo objecto da re
 
 #### `GET /api/driver/trip`, `POST /api/driver/trip`
 
-`GET` → `{"emViagem": false, "viagemIniciadaEm": null}`. `POST {"action": "iniciar"}` ou `{"action": "encerrar"}` → o estado novo, por exemplo `{"emViagem": true, "viagemIniciadaEm": "2026-10-17T09:43:53.862Z"}`. Iniciar uma viagem já iniciada mantém a hora de início. 400 noutra acção; 401 `Sessão inválida ou expirada. Entre de novo.`; 404 `Motorista não encontrado`.
+O estado da viagem do motorista, com o autocarro como os passageiros o vêem agora (a mesma posição e o mesmo estado da web e do USSD). Código: [`app/api/driver/trip/route.ts`](../transport-client/app/api/driver/trip/route.ts).
+
+```json
+{"emViagem": true, "viagemIniciadaEm": "2026-10-27T18:32:19.620Z",
+ "autocarro": {"lat": -25.9589704554329, "lng": 32.58434848158363, "direcao": 32.69, "fonte": "horario",
+   "estado": "Em circulação", "velocidade": 30, "sentido": "Praça dos Combatentes",
+   "proximas": [{"nome": "Coop", "minutos": 1}, {"nome": "Esquina OMM", "minutos": 1}, {"nome": "OMM", "minutos": 2}]}}
+```
+
+`autocarro` é `null` quando o motorista não tem veículo ou a rota está desactivada. `estado` é `"Em circulação"`, `"No terminal"` ou `"Fora de serviço"`; `proximas` são as 3 paragens seguintes (vazio fora de serviço). O `GET` também dispara a verificação de chegadas (no máximo a cada 30 s por instância).
+
+`POST {"action": "iniciar"}` ou `{"action": "encerrar"}` → o estado novo, no mesmo formato. Iniciar uma viagem já iniciada mantém a hora de início. Erros: 400 noutra acção; 401 `Sessão inválida ou expirada. Entre de novo.`; 404 `Motorista não encontrado`; 409 quando a viagem não pode começar: `Não tem veículo atribuído. Peça ao administrador.`, `O seu veículo não tem rota. Peça ao administrador.` ou `A rota do seu veículo está desactivada. Peça ao administrador.`
 
 #### `GET /api/driver/seguidores`
 
-Os passageiros à espera ao longo da rota do motorista: alertas de chegada das últimas 3 horas por paragem, pela ordem de viagem.
+Os passageiros à espera ao longo da rota do motorista, por paragem e pela ordem de viagem: os alertas de chegada da web das últimas 3 horas, e as viagens acompanhadas por SMS cujo passageiro espera um autocarro desta rota nessa paragem.
 
 ```json
 {"total": 3, "paragens": [{"nome": "Rua do Cajueiro (Fedel Castro)", "aEspera": 0}, {"nome": "Rua do Cajueiro (Fedel Castro)", "aEspera": 1}, "… (12 itens)"]}
@@ -552,6 +571,7 @@ Cada entidade tem um endpoint de lista e um de registo (código em [`transport-a
 | `limit` | veículos | número máximo de linhas; 1000 por omissão |
 | `search` | todas | filtro de texto; sem distinguir maiúsculas, menos nos proprietários. As rotas também coincidem pelo município; os veículos pela matrícula, modelo, marca e nome da rota; os motoristas pelo nome, BI, carta e telefone. Nos motoristas e passageiros, uma pesquisa só de algarismos (pelo menos 3, com espaços, `+` e `-` permitidos) também coincide com os algarismos do telefone, seja qual for o espaçamento guardado, com ou sem `258` ([`lib/phoneSearch.ts`](../transport-admin/lib/phoneSearch.ts)). |
 | `countOnly=true` | províncias, municípios, rotas, paragens, motoristas, proprietários | só as contagens, por exemplo `{"total": 91}` |
+| `ativa` | rotas | `true` só as activas (as que os passageiros vêem), `false` só as desactivadas; sem ele, todas. A página "Vias" envia `ativa=true` por omissão. As activas vêm primeiro. |
 | `filter` | motoristas | `ativos`, `inativos` ou `comTransporte` |
 | `availableOnly=true`, `includeTransportId` | veículos | veículos sem motorista (e mais um veículo dado), para o formulário do motorista |
 
@@ -589,6 +609,7 @@ Muda os campos enviados; os outros ficam. Código: [`app/api/vias/[id]/route.ts`
 |---|---|
 | `nome`, `terminalPartida`, `terminalChegada`, `cor`, `municipioId` | os dados da rota |
 | `geoLocationPath` | um percurso novo: `"lng,lat;lng,lat;…"` ou `[[lng, lat], …]`, guardado como `lng,lat` com 6 casas decimais. Menos de dois pontos válidos: 400 `{"error": "O percurso da via precisa de pelo menos dois pontos válidos"}`. O painel só envia um percurso pelas estradas ([Painel → Redesenhar o percurso de uma rota](painel-admin.md#tarefa-redesenhar)). |
+| `ativa` | `true` ou `false`: a rota aparece ou não aos passageiros (web, USSD, SMS). `{"ativa": false}` desactiva-a sem apagar nada ([Painel → Activar ou desactivar rotas](painel-admin.md#tarefa-activar-rotas)). |
 | `paragensIds` | as paragens da rota passam a ser exactamente esta lista. As ligações a paragens que continuam na lista ficam como estão (com a marca de terminal); as outras apagam-se e criam-se as novas. |
 
 `{"geoLocationPath": "32.57,-25.95;32.575,-25.955;32.6,-25.97"}` responde a rota actualizada com as suas paragens e contagens; 404 numa rota desconhecida.
@@ -607,7 +628,7 @@ O que cada veículo está a fazer agora, para a coluna "Agora" da lista de veíc
 {"cmozbuqta00189ounhmm7x4d6": {"estado": "circulacao", "gps": false}, "…": {"estado": "terminal", "gps": false}}
 ```
 
-`estado` é `circulacao`, `terminal`, `fora-de-servico` ou `sem-posicao`.
+`estado` é `circulacao`, `terminal`, `fora-de-servico` (o motorista não iniciou a viagem) ou `sem-posicao`.
 
 #### `GET /api/transportes/{id}/posicao`
 
@@ -618,17 +639,16 @@ O que cada veículo está a fazer agora, para a coluna "Agora" da lista de veíc
 
 #### `GET /api/transportes/{id}/operacao`
 
-O dia do veículo pelo horário:
+A viagem em curso do veículo, desde que o motorista a iniciou:
 
 ```json
-{"comprimentoKm": 10, "minutosPorSentido": 20, "paragens": 12,
- "horasHoje": 6.7, "kmHoje": 162, "kmPlaneado": 385, "viagensHoje": 16, "viagensPlaneadas": 38,
- "porHora": [{"hora": "05h", "km": 25, "kmAcumulado": 25, "viagens": 2}, "… (16 itens)"],
- "passagens": [{"nome": "Rua do Cajueiro (Fedel Castro)", "km": 0, "ida": "2026-10-17T10:25:08.258Z", "volta": "2026-10-17T10:20:08.258Z"}, "… (12 itens)"],
- "ida": "Estrada Circular", "volta": "Rua do Cajueiro (Fedel Castro)"}
+{"comprimentoKm": 6.2, "minutosPorSentido": 12, "paragens": 63, "ida": "Museu (X15)", "volta": "Xipamanine (X19)",
+ "emViagem": true, "iniciadaEm": "2026-10-27T18:40:19.620Z", "horasHoje": 0.4, "kmHoje": 8, "viagensHoje": 1,
+ "porHora": [{"hora": "20h", "km": 7, "kmAcumulado": 7, "viagens": 1}, {"hora": "21h", "km": 1, "kmAcumulado": 8, "viagens": 0}],
+ "passagens": [{"nome": "Xipamanine (X19)", "km": 0, "ida": "2026-10-27T19:15:02.098Z", "volta": "2026-10-27T19:10:02.098Z"}, "… (63 itens)"]}
 ```
 
-`passagens` são as próximas passagens em cada paragem para cada terminal (`ida` para o último terminal da rota, `volta` de regresso).
+`horasHoje`, `kmHoje` e `viagensHoje` (chegadas a um terminal) contam desde `iniciadaEm`. `passagens` são as próximas passagens em cada paragem para cada terminal (`ida` para o último terminal da rota, `volta` de regresso). Sem viagem (`emViagem: false`), os números são 0, `porHora` vem vazio e `ida`/`volta` de cada passagem são `null`.
 
 #### `GET|POST|DELETE /api/transportes/{id}/gps`
 
@@ -669,7 +689,7 @@ Código: [`app/api/motoristas/[id]/pin/route.ts`](../transport-admin/app/api/mot
 
 #### `GET|PUT /api/tarifa`
 
-A regra de tarifa activa ([`Tarifa`](glossario.md#a-rede-e-as-pessoas "A regra de tarifa: preço mínimo, preço por km e velocidades")), que todas as tarifas, tempos de viagem e posições pelo horário usam ([Configuração → Regra de tarifa](configuracao.md#regra-de-tarifa-tarifa)). A página "Tarifa" lê-a e grava-a ([Painel → Tarifa](painel-admin.md#tarifa)). Código: [`app/api/tarifa/route.ts`](../transport-admin/app/api/tarifa/route.ts).
+A regra de tarifa activa ([`Tarifa`](glossario.md#a-rede-e-as-pessoas "A regra de tarifa: preço mínimo, preço por km e velocidades")), que todas as tarifas, tempos de viagem e posições dos autocarros em viagem usam ([Configuração → Regra de tarifa](configuracao.md#regra-de-tarifa-tarifa)). A página "Tarifa" lê-a e grava-a ([Painel → Tarifa](painel-admin.md#tarifa)). Código: [`app/api/tarifa/route.ts`](../transport-admin/app/api/tarifa/route.ts).
 
 `GET` → a regra, `{"id", "nome": "padrao", "tarifaMinima": 10, "precoPorKm": 10, "fatorEstrada": 1.3, "velocidadeViagemKmh": 30, "velocidadeChegadaKmh": 45, "ativa": true, "createdAt", "updatedAt"}`; 404 `Não há tarifa activa` quando nenhuma linha está activa.
 
@@ -701,7 +721,7 @@ Um valor fora do intervalo responde 400 com a regra do campo, por exemplo `Tarif
 
 | Endpoint | Conteúdo |
 |---|---|
-| `GET /api/dashboard/stats` | Tudo o que o início do painel mostra menos o cartão "Agora": contadores, veículos por município, todas as rotas com o percurso e o número de veículos, rotas e paragens por município. Em cache 5 minutos por instância. |
+| `GET /api/dashboard/stats` | Tudo o que o início do painel mostra menos o cartão "Agora": contadores (`vias` conta só as rotas activas), veículos por município, as rotas activas com o percurso e o número de veículos, rotas e paragens por município. Em cache 5 minutos por instância. |
 | `GET /api/relatorios/stats` | O relatório "Estatísticas Gerais": `{"totalTransportes": 451, "totalVias": 261, "totalParagens": 1902, "totalProprietarios": 11, "totalMotoristas": 451, "totalProvincias": 11, "totalMunicipios": 2, "totalUtentes": 8, "transportComMotorista": 451, "transportSemMotorista": 0, "motoristasAtivos": 451, "utentesSubscritos": 6}` (produção, 2026-10-18) |
 
 <!-- navegação-fim: gerada por .github/scripts/docs-nav.py -->

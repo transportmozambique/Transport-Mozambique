@@ -2,10 +2,13 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { orderStopsAlongRoute } from '@/lib/fares';
 import { driverIdFromRequest } from '@/lib/driverSession';
+import { AVISO, type AlertLeg } from '@/lib/journeyAlerts';
 
-// Passageiros à espera ao longo da via do motorista: alertas pedidos (web ou USSD) nas últimas
-// 3 horas numa paragem da via. Os alertas já respondidos por um SMS de chegada contam na mesma: esse
-// SMS sai quando um autocarro está a 1 km, que é quando o motorista mais precisa do número. Só para o portal do motorista.
+// Passageiros à espera ao longo da via do motorista, por paragem: os alertas de paragem pedidos na
+// web nas últimas 3 horas, e as viagens acompanhadas por SMS (USSD) cuja etapa actual começa numa
+// paragem desta via e que ainda não entraram no autocarro. Os alertas já respondidos por um SMS de
+// chegada contam na mesma: esse SMS sai quando um autocarro está perto, que é quando o motorista
+// mais precisa do número. Só para o portal do motorista.
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -33,6 +36,7 @@ export async function GET(request: Request) {
           select: {
             via: {
               select: {
+                id: true,
                 geoLocationPath: true,
                 paragens: { select: { paragem: { select: { id: true, nome: true, geoLocation: true } } } },
               },
@@ -54,6 +58,14 @@ export async function GET(request: Request) {
       _count: { _all: true },
     });
     const byStop = new Map(counts.map((c) => [c.paragemId, c._count._all]));
+    const follows = await prisma.acompanhamento.findMany({
+      where: { terminadoEm: null, aviso: { lt: AVISO.A_CHEGAR } },
+      select: { etapas: true, etapa: true },
+    });
+    for (const f of follows) {
+      const leg = (f.etapas as unknown as AlertLeg[])[f.etapa];
+      if (leg?.viaId === via.id) byStop.set(leg.from, (byStop.get(leg.from) ?? 0) + 1);
+    }
     const paragens = stops.map((s) => ({ nome: s.nome, aEspera: byStop.get(s.id) ?? 0 }));
     return json({ total: paragens.reduce((sum, p) => sum + p.aEspera, 0), paragens });
   } catch (error) {

@@ -26,6 +26,21 @@ export function toInternationalPhone(to: string): string {
 }
 
 /**
+ * Só caracteres GSM-7. Nos ecrãs USSD, a maioria dos telemóveis e das redes não mostra letras
+ * acentuadas (estragam o ecrã ou reduzem o seu tamanho para metade); num SMS, uma só letra
+ * acentuada põe a mensagem inteira em Unicode (70 caracteres por parte em vez de 160).
+ */
+export function toGsm(text: string): string {
+  return text
+    .replace(/[º⁰]/g, 'o') // ordinais, como em "1º de Maio" (também escrito com um zero em expoente)
+    .replace(/ª/g, 'a') // "2ª Rotunda"
+    .replace(/[–—]/g, '-')
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+/**
  * Enviar SMS de notificação. Nunca lança erro: o SMS é secundário ao fluxo
  * (USSD, notificações), por isso falhas são apenas registadas.
  */
@@ -34,7 +49,8 @@ export async function sendSMS(to: string, message: string) {
   const phoneNumber = toInternationalPhone(to);
 
   if (!client) {
-    console.warn(`SMS não enviado para ${phoneNumber}: AFRICASTALKING_API_KEY não configurada`);
+    // Sem chave (localmente): o texto fica no registo, para se ver o que teria sido enviado
+    console.warn(`SMS não enviado para ${phoneNumber} (AFRICASTALKING_API_KEY não configurada): ${message}`);
     return null;
   }
 
@@ -44,36 +60,15 @@ export async function sendSMS(to: string, message: string) {
       message,
       ...(process.env.AFRICASTALKING_SHORTCODE ? { from: process.env.AFRICASTALKING_SHORTCODE } : {}),
     });
-    console.log(`✅ SMS enviado para ${phoneNumber}:`, result);
+    console.log(`SMS enviado para ${phoneNumber}:`, result);
     return result;
   } catch (error) {
-    console.error(`❌ Erro ao enviar SMS para ${phoneNumber}:`, error);
+    console.error(`Erro ao enviar SMS para ${phoneNumber}:`, error);
     return null;
   }
 }
 
-/**
- * Enviar notificação de autocarro próximo
- */
-export async function notifyBusArrival(
-  phoneNumber: string,
-  busMatricula: string,
-  paragemNome: string,
-  tempoEstimado: number
-) {
-  const message = `🚌 Autocarro ${busMatricula} está a ${tempoEstimado} minutos da ${paragemNome}!`;
-
-  return sendSMS(phoneNumber, message);
-}
-
-/**
- * Enviar notificação de mission criada
- */
-export async function notifyMissionCreated(
-  phoneNumber: string,
-  paragemNome: string
-) {
-  const message = `✅ Missão criada! Você será notificado quando um autocarro estiver chegando na ${paragemNome}.`;
-
-  return sendSMS(phoneNumber, message);
+/** O SMS de um alerta de paragem (web): um autocarro chega à paragem do passageiro. */
+export async function notifyBusArrival(phoneNumber: string, busMatricula: string, codigo: string, paragemNome: string, minutos: number) {
+  return sendSMS(phoneNumber, toGsm(`Autocarro ${busMatricula} (rota ${codigo}) chega a ${paragemNome} em ${minutos} min.`));
 }

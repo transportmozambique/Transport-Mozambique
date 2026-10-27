@@ -1,19 +1,21 @@
 import { prisma } from './prisma';
-import { getFareRule, type LatLng } from './fares';
+import { getFareRule, type FareRule, type LatLng } from './fares';
 import {
   POSITION_FIELDS,
+  currentSpeedKmh,
   estimateBusTrip,
   minutesUntilPass,
+  statusLabel,
   vehiclePosition,
   type Direction,
   type VehiclePosition,
 } from './vehiclePosition';
-import { loadNetwork, pathBetween, ref, towards, type NetRoute, type Network, type StopRef, type Vehicle } from './journeys';
+import { firstBus, loadNetwork, pathBetween, ref, towards, vehiclesOn, type NetRoute, type Network, type StopRef, type Vehicle } from './journeys';
 import { distanceMeters, walkMinutes } from './places';
 
 /**
  * Acompanhar a viagem que o passageiro escolheu: os mesmos autocarros, etapa a etapa, com as
- * horas recalculadas pelas posições de agora (GPS quando recente, senão o horário). A página diz
+ * horas recalculadas pelas posições de agora (GPS quando recente, senão a viagem do motorista). A página diz
  * em que etapa o passageiro está (`active`) e se já está no autocarro dessa etapa (`onBoard`); as
  * caminhadas anteriores medem-se a partir de onde ele está agora.
  */
@@ -88,6 +90,9 @@ export interface FollowedBus {
   transporte: { id: string; matricula: string };
   via: { id: string; codigo: string; nome: string; cor: string };
   sentido: string;
+  /** "Em circulação", "No terminal", ou "Fora de serviço" quando o motorista não iniciou a viagem */
+  estado: ReturnType<typeof statusLabel>;
+  velocidade: number;
   autocarro: Omit<LiveBus, 'trecho' | 'minutosAteEmbarque' | 'metrosAteEmbarque'>;
   percurso: [number, number][];
   /** As paragens à frente no sentido em que vai, com os minutos até passar em cada uma */
@@ -105,6 +110,37 @@ async function vehiclesById(ids: string[]): Promise<Map<string, Vehicle>> {
     select: { ...POSITION_FIELDS, matricula: true, viaId: true },
   });
   return new Map(rows.map((v) => [v.id, v]));
+}
+
+/**
+ * Onde está um autocarro numa etapa de `a` a `b` metros ao longo do percurso, no sentido `travel`:
+ * antes da paragem de embarque (ainda a caminho), entre as duas paragens, ou depois da de saída.
+ * `riding`: o passageiro vai nele (um autocarro no outro sentido já passou a saída e deu a volta).
+ */
+export function trechoOf(position: VehiclePosition | null, a: number, b: number, travel: Direction, riding: boolean): LiveBus['trecho'] {
+  const p = position?.progress ?? null;
+  if (p === null || position?.direction == null) return riding ? 'entre' : 'antes';
+  if (position.direction !== travel) return riding ? 'depois' : 'antes';
+  const along = travel === 1 ? p : -p;
+  const [from, to] = travel === 1 ? [a, b] : [-a, -b];
+  return along < from ? 'antes' : along <= to ? 'entre' : 'depois';
+}
+
+/**
+ * O autocarro em que vai o passageiro de uma etapa: o indicado, enquanto está em viagem entre as
+ * duas paragens; senão o autocarro em viagem que passou a paragem de embarque há menos tempo (o
+ * que ele apanhou, quando o indicado deixou de andar).
+ */
+export function ridingBus(route: NetRoute, vehicles: Vehicle[], preferred: string | null, a: number, b: number, travel: Direction, rule: FareRule, now: Date) {
+  let best: { vehicle: Vehicle; position: VehiclePosition; behind: number } | null = null;
+  for (const vehicle of vehicles) {
+    const position = vehiclePosition(vehicle, route.g, now, rule);
+    if (!position?.inService || trechoOf(position, a, b, travel, false) !== 'entre') continue;
+    if (vehicle.id === preferred) return { vehicle, position };
+    const behind = Math.abs(position.progress! - a);
+    if (!best || behind < best.behind) best = { vehicle, position, behind };
+  }
+  return best;
 }
 
 function routeOf(net: Network, vehicle: Vehicle | undefined): NetRoute {
@@ -145,6 +181,8 @@ export async function followJourney(args: {
   const active = Math.max(0, Math.min(args.active, legs.length));
   const onBoard = args.onBoard && active < legs.length;
   const [net, rule, vehicles] = await Promise.all([loadNetwork(), getFareRule(), vehiclesById(legs.map((l) => l.busId))]);
+  // Os outros autocarros das mesmas rotas: quando o indicado está parado, ou outro vem primeiro
+  const onRoutes = await vehiclesOn([...vehicles.values()].flatMap((v) => (v.viaId ? [v.viaId] : [])));
 
   const etapas: (FollowWalk | FollowBus)[] = [];
   let t = now.getTime();
@@ -159,8 +197,8 @@ export async function followJourney(args: {
   };
 
   legs.forEach((leg, i) => {
-    const vehicle = vehicles.get(leg.busId);
-    const route = routeOf(net, vehicle);
+    const asked = vehicles.get(leg.busId);
+    const route = routeOf(net, asked);
     const a = route.at.get(leg.from);
     const b = route.at.get(leg.to);
     if (a === undefined || b === undefined || leg.from === leg.to) throw new FollowError('Paragem fora da rota deste autocarro');
@@ -177,26 +215,27 @@ export async function followJourney(args: {
     const path = route.g.path;
     const stops = route.routeStops;
     const travel: Direction = b > a ? 1 : -1;
+    // O autocarro desta etapa: a bordo, o do passageiro; à espera, o primeiro em viagem que chega à
+    // paragem (o próximo, quando o indicado parou ou outro vem antes); senão o indicado, parado
+    const ridingNow = estado === 'agora' && onBoard;
+    const sameRoute = onRoutes.get(route.id) ?? [asked!];
+    const vehicle =
+      (ridingNow
+        ? ridingBus(route, sameRoute, leg.busId, a, b, travel, rule, now)?.vehicle
+        : estado !== 'feito'
+          ? firstBus(route, sameRoute, leg.from, leg.to, rule, new Date(t))?.vehicle
+          : undefined) ?? asked;
     const busNow = vehiclePosition(vehicle!, route.g, now, rule);
     const fromNow = estimateBusTrip({ vehicle: vehicle!, path, stops, origemId: leg.from, destinoId: leg.to, rule, now });
-    const p = busNow?.progress ?? null;
     // No sentido contrário, um autocarro em que o passageiro vai já passou a paragem de saída e deu a
     // volta no terminal; um que ele espera ainda tem de dar a volta e vir
-    const ridingNow = estado === 'agora' && onBoard;
-    const along = p === null ? null : travel === 1 ? p : -p;
-    const [from, to] = travel === 1 ? [a, b] : [-a, -b];
-    const trecho: LiveBus['trecho'] =
-      along === null || busNow?.direction == null
-        ? ridingNow ? 'entre' : 'antes'
-        : busNow.direction !== travel
-          ? ridingNow ? 'depois' : 'antes'
-          : along < from ? 'antes' : along <= to ? 'entre' : 'depois';
+    const trecho = trechoOf(busNow, a, b, travel, ridingNow);
 
     let embarque: number | null = null;
     let chegada: number | null = null;
     let perde = false;
     if (estado === 'agora' && onBoard) {
-      chegada = busNow ? now.getTime() + minutesUntilPass(busNow, route.g.length, b, travel, rule) * 60000 : null;
+      chegada = busNow?.inService ? now.getTime() + minutesUntilPass(busNow, route.g.length, b, travel, rule) * 60000 : null;
     } else if (estado !== 'feito') {
       const ready = new Date(t);
       const trip = estimateBusTrip({ vehicle: vehicle!, path, stops, origemId: leg.from, destinoId: leg.to, rule, now: ready });
@@ -266,7 +305,7 @@ export async function followBus(busId: string, stopId: string | null, now = new 
   const p = position?.progress ?? null;
 
   const proximas =
-    position && p !== null
+    position?.inService && p !== null
       ? route.stops
           .filter((s) => (dir === 1 ? s.at > p : s.at < p))
           .sort((x, y) => (dir === 1 ? x.at - y.at : y.at - x.at))
@@ -276,7 +315,7 @@ export async function followBus(busId: string, stopId: string | null, now = new 
 
   let paragem: FollowedBus['paragem'] = null;
   const at = stopId ? route.at.get(stopId) : undefined;
-  if (stopId && at !== undefined && position && p !== null) {
+  if (stopId && at !== undefined && position?.inService && p !== null) {
     const ways = ([1, -1] as Direction[]).map((d) => ({ d, minutos: minutesUntilPass(position, route.g.length, at, d, rule) }));
     const soonest = ways.sort((x, y) => x.minutos - y.minutos)[0];
     paragem = { paragem: stopRef(net, stopId), minutos: soonest.minutos, sentido: towards(net, route, soonest.d) };
@@ -286,6 +325,8 @@ export async function followBus(busId: string, stopId: string | null, now = new 
     transporte: { id: vehicle!.id, matricula: vehicle!.matricula },
     via: { id: route.id, codigo: route.codigo, nome: route.nome, cor: route.cor },
     sentido: towards(net, route, dir),
+    estado: statusLabel(position),
+    velocidade: currentSpeedKmh(vehicle!, position, rule),
     autocarro: live(position, first.point),
     percurso: pathBetween(route, 0, route.g.length),
     proximas,

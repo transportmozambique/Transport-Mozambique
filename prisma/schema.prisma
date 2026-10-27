@@ -98,6 +98,7 @@ model Via {
   terminalPartida    String
   terminalChegada    String
   geoLocationPath    String
+  ativa              Boolean @default(true) // Só as rotas activas aparecem na web, no USSD e nos SMS
   codigoMunicipio    String
   administradorId    String?
 
@@ -242,6 +243,7 @@ model Motorista {
   status          String   @default("ativo") // ativo, inativo, suspenso
   emViagem        Boolean  @default(false)    // Viagem em curso (USSD e portal do motorista)
   viagemIniciadaEm DateTime?
+  viagemSentido   Int?     // Sentido da viagem em curso: 1 parte do início do percurso da via, -1 do fim
   transporteId    String?  @unique           // Cada motorista só pode estar em UM transporte
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -329,4 +331,24 @@ model Tarifa {
   ativa                Boolean  @default(true)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+}
+
+// Uma viagem escolhida no USSD (ou na web) que o passageiro pediu para acompanhar por SMS: a
+// verificação de chegadas (lib/journeyAlerts.ts) envia os avisos de cada etapa até ao destino
+model Acompanhamento {
+  id           String    @id @default(cuid())
+  telefone     String
+  utenteId     String?
+  etapas       Json      // [{ viaId, busId, from, to }]: os autocarros da viagem, pela ordem
+  destinoId    String?   // a paragem final, quando a viagem acaba com uma caminhada
+  destinoNome  String
+  etapa        Int       @default(0) // o autocarro que o passageiro espera ou em que vai
+  aviso        Int       @default(0) // o último aviso enviado nesta etapa (lib/journeyAlerts.ts)
+  transporteId String?   // o autocarro do último aviso
+  terminadoEm  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([terminadoEm])
+  @@index([telefone])
 }

@@ -46,7 +46,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
   return NextResponse.json({ codigo, servidor: GPS_SERVER_URL });
 }
 
-// DELETE: revoga o código; o veículo volta às posições pelo horário
+// DELETE: revoga o código; o veículo volta à posição pela viagem do motorista (ou parado)
 export async function DELETE(_request: NextRequest, { params }: Params) {
   const { id } = await params;
   try {

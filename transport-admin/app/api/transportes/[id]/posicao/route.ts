@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { positionSummary } from '@/lib/vehiclePosition';
+import { TRIP_FIELDS, positionSummary } from '@/lib/vehiclePosition';
 
-// GET: onde está o veículo agora (GPS real ou horário), para o mapa ao vivo da página de detalhe
+// GET: onde está o veículo agora (GPS real, a viagem do motorista, ou parado), para o mapa ao vivo da página de detalhe
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const t = await prisma.transporte.findUnique({
@@ -13,6 +13,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       gpsAtualizadoEm: true,
       gpsDirecao: true,
       gpsVelocidade: true,
+      motorista: { select: TRIP_FIELDS },
       via: { select: { geoLocationPath: true, paragens: { select: { paragem: { select: { nome: true, geoLocation: true } } } } } },
     },
   });

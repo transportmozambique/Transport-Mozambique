@@ -127,7 +127,7 @@ O mesmo está no painel da Vercel em **Deployments** e **Logs** de cada projecto
 **Teste rápido depois de uma publicação de produção** (só lê):
 
 ```bash
-curl -s https://transport-mz.vercel.app/api/simulation                       # {"success":true,"status":{"mode":"gps-or-timetable","busCount":…}}
+curl -s https://transport-mz.vercel.app/api/simulation                       # {"success":true,"status":{"mode":"gps-or-driver-trip","busCount":…}}
 curl -s "https://transport-mz.vercel.app/api/buses?fields=position" | head -c 200
 curl -s -o /dev/null -w "%{http_code}\n" -X POST https://transport-mz.vercel.app/api/ussd \
   -d "sessionId=g&serviceCode=*384*848080%23&phoneNumber=%2B258840000009&text="   # 403 (a guarda do callback está activa)

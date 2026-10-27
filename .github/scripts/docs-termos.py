@@ -107,6 +107,7 @@ GLOSSARIO = [
     ("a-rede-e-as-pessoas", "A tabela dos donos dos veículos", [], [r"Proprietario"]),
     ("a-rede-e-as-pessoas", "A tabela das contas de passageiros", [], [r"Utente"]),
     ("a-rede-e-as-pessoas", "Um alerta de chegada: um SMS quando um autocarro estiver perto de uma paragem", [], [r"MISSION"]),
+    ("a-rede-e-as-pessoas", "Uma viagem acompanhada por SMS: os avisos de cada autocarro até ao destino", [], [r"Acompanhamento"]),
     ("a-rede-e-as-pessoas", "A regra de tarifa: preço mínimo, preço por km e velocidades", [], [r"Tarifa"]),
     ("a-rede-e-as-pessoas", "A tabela das contas do painel de administração", [], [r"Administrador"]),
     ("transportes-em-maputo", "Os minibuses que levam a maior parte dos passageiros de Maputo", [r"(?i:chapas?)"], []),

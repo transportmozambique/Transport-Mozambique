@@ -43,18 +43,18 @@ interface Posicao {
   minutosAteProxima: number | null;
 }
 
-// O dia de serviço do veículo pelo horário (GET /api/transportes/[id]/operacao)
+// A viagem em curso do veículo, desde que o motorista a iniciou (GET /api/transportes/[id]/operacao)
 interface Operacao {
   comprimentoKm: number;
   minutosPorSentido: number;
   paragens: number;
   horasHoje: number;
   kmHoje: number;
-  kmPlaneado: number;
   viagensHoje: number;
-  viagensPlaneadas: number;
   porHora: { hora: string; km: number; kmAcumulado: number; viagens: number }[];
-  passagens: { nome: string; km: number; ida: string; volta: string }[];
+  passagens: { nome: string; km: number; ida: string | null; volta: string | null }[];
+  emViagem: boolean;
+  iniciadaEm: string | null;
   ida: string;
   volta: string;
 }
@@ -775,14 +775,14 @@ export default function TransporteDetalhes() {
           </div>
         )}
 
-        {/* Cartões de estatísticas: o dia pelo horário do veículo */}
+        {/* Cartões de estatísticas: a viagem em curso, desde que o motorista a iniciou */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-testid="operacao-cards">
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-900 font-medium mb-1">Quilómetros Hoje</p>
+                <p className="text-sm text-slate-900 font-medium mb-1">Quilómetros na Viagem</p>
                 <p className="text-2xl sm:text-3xl font-bold text-slate-900">{operacao ? `${operacao.kmHoje} km` : '—'}</p>
-                <p className="mt-2 text-xs text-slate-600">{operacao ? `de ${operacao.kmPlaneado} km no dia (horário)` : 'Sem rota atribuída'}</p>
+                <p className="mt-2 text-xs text-slate-600">{!operacao ? 'Sem rota atribuída' : operacao.emViagem ? 'desde o início da viagem' : 'O motorista não iniciou a viagem'}</p>
               </div>
               <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
                 <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -796,7 +796,7 @@ export default function TransporteDetalhes() {
               <div>
                 <p className="text-sm text-slate-900 font-medium mb-1">Tempo de Operação</p>
                 <p className="text-2xl sm:text-3xl font-bold text-slate-900">{operacao ? `${operacao.horasHoje.toLocaleString('pt-PT')} h` : '—'}</p>
-                <p className="mt-2 text-xs text-slate-600">Serviço das 05:00 às 21:00</p>
+                <p className="mt-2 text-xs text-slate-600">{operacao?.iniciadaEm ? `Viagem iniciada às ${horaMaputo(operacao.iniciadaEm)}` : 'Sem viagem em curso'}</p>
               </div>
               <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
                 <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -808,9 +808,9 @@ export default function TransporteDetalhes() {
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-900 font-medium mb-1">Viagens Hoje</p>
+                <p className="text-sm text-slate-900 font-medium mb-1">Chegadas a um Terminal</p>
                 <p className="text-2xl sm:text-3xl font-bold text-slate-900">{operacao ? operacao.viagensHoje : '—'}</p>
-                <p className="mt-2 text-xs text-slate-600">{operacao ? `de ${operacao.viagensPlaneadas} no dia · ${operacao.minutosPorSentido} min por sentido` : 'Sem rota atribuída'}</p>
+                <p className="mt-2 text-xs text-slate-600">{operacao ? `nesta viagem · ${operacao.minutosPorSentido} min por sentido` : 'Sem rota atribuída'}</p>
               </div>
               <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
                 <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -849,11 +849,11 @@ export default function TransporteDetalhes() {
                   {!posicao
                     ? 'Sem localização'
                     : posicao.foraDeServico
-                      ? 'Fora de serviço (05:00–21:00)'
+                      ? 'Fora de serviço (viagem não iniciada)'
                       : posicao.emMovimento
                         ? 'Em movimento'
                         : 'Parado no terminal'}
-                  {posicao && ` · ${posicao.fonte === 'gps' ? 'GPS real' : 'estimado pelo horário'}`}
+                  {posicao && ` · ${posicao.fonte === 'gps' ? 'GPS real' : posicao.foraDeServico ? 'onde parou' : 'estimado pela viagem'}`}
                 </span>
               </div>
             </div>
@@ -1082,14 +1082,14 @@ export default function TransporteDetalhes() {
           </div>
         </div>
 
-        {/* Gráficos: o dia pelo horário do veículo */}
-        {operacao && (
+        {/* Gráficos: a viagem em curso, por hora */}
+        {operacao && operacao.porHora.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">Quilómetros ao Longo do Dia</h3>
-                  <p className="text-sm text-slate-900">Acumulado por hora, pelo horário da rota</p>
+                  <h3 className="text-lg font-bold text-slate-900">Quilómetros na Viagem</h3>
+                  <p className="text-sm text-slate-900">Acumulado por hora, desde o início da viagem</p>
                 </div>
                 <div className="px-3 py-1 bg-slate-100 text-slate-900 rounded-xl text-xs font-semibold">Hoje</div>
               </div>
@@ -1110,8 +1110,8 @@ export default function TransporteDetalhes() {
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">Viagens por Hora</h3>
-                  <p className="text-sm text-slate-900">Chegadas a um terminal, pelo horário da rota</p>
+                  <h3 className="text-lg font-bold text-slate-900">Chegadas por Hora</h3>
+                  <p className="text-sm text-slate-900">Chegadas a um terminal, desde o início da viagem</p>
                 </div>
                 <div className="px-3 py-1 bg-slate-100 text-slate-900 rounded-xl text-xs font-semibold">Hoje</div>
               </div>
@@ -1136,7 +1136,11 @@ export default function TransporteDetalhes() {
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6" data-testid="passagens">
             <div className="mb-6">
               <h3 className="text-lg font-bold text-slate-900">Próximas Passagens nas Paragens</h3>
-              <p className="text-sm text-slate-900">Pelo horário da rota; com GPS ativo o autocarro pode estar adiantado ou atrasado</p>
+              <p className="text-sm text-slate-900">
+                {operacao.emViagem
+                  ? 'Pela viagem em curso; com GPS ativo o autocarro pode estar adiantado ou atrasado'
+                  : 'Sem passagens: o motorista não iniciou a viagem'}
+              </p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -1155,8 +1159,8 @@ export default function TransporteDetalhes() {
                       <td className="hidden py-2 pr-4 text-slate-500 sm:table-cell">{i + 1}</td>
                       <td className="py-2 pr-4 font-medium text-slate-900">{p.nome}</td>
                       <td className="hidden py-2 pr-4 text-slate-600 sm:table-cell">{p.km.toLocaleString('pt-PT')}</td>
-                      <td className="py-2 pr-4 text-slate-900">{horaMaputo(p.ida)}</td>
-                      <td className="py-2 text-slate-900">{horaMaputo(p.volta)}</td>
+                      <td className="py-2 pr-4 text-slate-900">{p.ida ? horaMaputo(p.ida) : '—'}</td>
+                      <td className="py-2 text-slate-900">{p.volta ? horaMaputo(p.volta) : '—'}</td>
                     </tr>
                   ))}
                 </tbody>

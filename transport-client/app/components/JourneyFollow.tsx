@@ -753,7 +753,9 @@ function BusPanel({ bus }: { bus: FollowedBus }) {
           ))}
         </ol>
       ) : (
-        <p className="text-sm text-slate-600">O autocarro está parado no terminal.</p>
+        <p className="text-sm text-slate-600">
+          {bus.estado === "Fora de serviço" ? "O autocarro está parado: o motorista ainda não iniciou a viagem." : "O autocarro está parado no terminal."}
+        </p>
       )}
       {bus.paragem && <div className="mt-3"><AlertButton transporteId={bus.transporte.id} paragemId={bus.paragem.paragem.id} paragem={bus.paragem.paragem.nome} /></div>}
       <p className="mt-3 text-[11px] text-slate-500">Atualizado às {maputoClock(new Date(bus.atualizadoEm))}.</p>
