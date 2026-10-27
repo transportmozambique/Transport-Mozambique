@@ -637,13 +637,13 @@ O que faz, por partes:
 
 Na produção deu `3 | 445 | 445 | 111 | 6 | 6`. Correr outra vez não apaga nada.
 
-**A cópia de antes.** Antes de apagar, criou-se na Neon o ramo `copia-antes-limpar-frota-2026-10-27`: a produção tal como estava nesse momento. Para recuperar um veículo ou um motorista:
+**A cópia de antes.** Antes de apagar, criou-se na Neon o ramo `copia-antes-limpar-frota-2026-10-27`, uma cópia da produção desse momento. Foi apagado em 2026-10-28, a pedido, por isso os veículos e motoristas apagados já não se recuperam dele.
 
-1. Neon → projecto → **Branches** → `copia-antes-limpar-frota-2026-10-27`. O ramo não tem computador ligado: carregar em **Add compute** e confirmar.
-2. **SQL Editor**, com esse ramo escolhido no selector de ramos, e ler as linhas a recuperar (por exemplo `SELECT * FROM "Transporte" WHERE matricula = 'ADA-001M'`).
-3. Voltar a pôr o selector em **production** antes de qualquer alteração, e criar o veículo ou o motorista no painel com esses dados.
+Para uma limpeza destas no futuro, o mesmo cuidado:
 
-Quando a cópia já não for precisa, apaga-se o ramo em **Branches** → o ramo → **Delete**; a produção não muda.
+1. Antes de apagar, criar um ramo de cópia: Neon → projecto → **Branches** → **Create branch**, a partir de `production`.
+2. Para recuperar uma linha, abrir o ramo (carregar em **Add compute** se não tiver computador), ler as linhas no **SQL Editor** com esse ramo escolhido, voltar a pôr o selector em **production**, e criar o que falta no painel.
+3. Apagar o ramo só quando já não for preciso: **Branches** → o ramo → **Delete**. A produção não muda.
 
 ## Mudar dados
 

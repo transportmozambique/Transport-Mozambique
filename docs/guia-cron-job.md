@@ -27,7 +27,7 @@ Desde 2026-10-27, um **cronjob** do [cron-job.org](https://cron-job.org) chama a
 
 - **O tráfego.** A web, o [USSD](conceitos.md#ussd "Os menus que aparecem num telemóvel quando se marca um código como *384*848080#; funcionam em qualquer telemóvel, sem internet.") e o portal do motorista também disparam a verificação, no máximo a cada 30 s por instância ([`CHECK_INTERVAL_MS`](../transport-client/lib/busSimulator.ts)), mas só quando alguém os usa.
 - **O [GitHub Actions](conceitos.md#ci "Verificações que o GitHub corre sozinho a cada pull request, para nenhum erro conhecido chegar ao main.").** O [workflow](../.github/workflows/arrival-check.yml) "Verificação de chegadas (SMS)" pede 5 minutos, mas o [GitHub](conceitos.md#github "O site onde o repositório está guardado e partilhado, e onde se revêem as alterações.") atrasa os agendamentos gratuitos: em Outubro de 2026 corria a cada 40 a 50 minutos. Fica como reserva.
-- **A [Vercel](conceitos.md#vercel "A empresa cujos servidores correm as três aplicações e as publicam a cada merge.").** No plano Hobby, um cron job da Vercel só pode correr uma vez por dia.
+- **A Vercel.** No plano Hobby, um cron job da Vercel só pode correr uma vez por dia.
 
 O cron-job.org é gratuito, corre a cada minuto e guarda o histórico de cada pedido.
 
@@ -170,6 +170,32 @@ O `POST` chega a [`transport-client/app/api/simulation/route.ts`](../transport-c
 2. o aviso seguinte de cada viagem acompanhada por SMS (opção 1 do USSD), em `checkJourneyAlerts()` de [`lib/journeyAlerts.ts`](../transport-client/lib/journeyAlerts.ts).
 
 **Porquê pode ser chamado a mais.** Cada viagem acompanhada guarda o último aviso enviado, e um aviso só se envia depois de a linha ser actualizada com sucesso (`claim()`). Por isso, quando o cronjob, uma visita à web e o GitHub Actions correm a verificação ao mesmo tempo, só um envia cada SMS. Chamá-la a mais só gasta um pouco de tempo de servidor. O caminho inteiro está em [Fluxos de dados → O que dispara a verificação](fluxos-de-dados.md#o-que-dispara-a-verificação).
+
+### O cronjob não sabe onde estão os autocarros
+
+O cronjob é só o relógio: dispara a cada minuto, sempre, esteja um autocarro perto ou longe de uma paragem. A localização entra **dentro** de cada verificação:
+
+1. Para cada viagem acompanhada, calcula-se a posição do autocarro anunciado naquele momento: pelo [GPS](conceitos.md#gps) quando há uma posição recente, senão pela viagem do motorista (a hora a que carregou em "Iniciar viagem" e a velocidade da regra de tarifa, 30 km/h, ao longo do percurso) ([Localização e GPS](localizacao-gps.md)).
+2. Daí saem os minutos que faltam até à paragem de entrada (à espera) ou até à paragem de saída (a bordo), pela distância ao longo do percurso.
+3. Os minutos escolhem o aviso, em [`waitLevel()` e `rideLevel()`](../transport-client/lib/journeyAlerts.ts):
+
+   | À espera, até à paragem de entrada | Aviso |
+   |---|---|
+   | 15 min ou menos | "chega a … em N min" (15) |
+   | 10 min ou menos | "chega a … em N min" (10) |
+   | 5 min ou menos | "chega a … em N min" (5) |
+   | 1 min ou menos, ou a 150 m ou menos | "esta a chegar … Entre e saia em … daqui a N min" |
+
+   | A bordo, até à paragem de saída | Aviso |
+   |---|---|
+   | 15, 10 ou 5 min ou menos | "Chega a … em N min" ("Prepare-se para sair" aos 5) |
+   | 1 min ou menos, ou já passou | "Saia agora em …": o destino, ou o [transbordo](glossario.md#palavras-dos-ecrãs "Mudança de autocarro a meio de uma viagem") para o autocarro seguinte |
+
+4. Só sai um SMS quando o aviso calculado é mais adiantado do que o último enviado; senão, a verificação não faz nada.
+
+**Porquê um relógio e não a posição a disparar.** A maior parte dos autocarros não envia posições: a posição calcula-se no momento em que alguém a pede, e entre dois pedidos nenhum programa está a correr (a [Vercel](conceitos.md#vercel) só corre código quando chega um pedido). Alguém tem de perguntar "e agora?" de tempos a tempos, e o cronjob é esse alguém. Hoje, mesmo uma posição de GPS real que chega a `/api/gps` não dispara a verificação: fica guardada até à próxima.
+
+**O que isto quer dizer na prática.** Um aviso sai na primeira verificação depois de o autocarro passar o limiar, por isso pode chegar até 1 minuto depois: o de "5 min" pode dizer "chega em 4 min". O "Saia agora" sai quando falta 1 minuto ou menos, para não chegar depois de o autocarro passar a paragem.
 
 **Porquê o endpoint é público.** A verificação só envia os avisos que já estão na hora, e nunca o mesmo duas vezes, por isso quem a chamar não consegue enviar SMS a mais.
 
