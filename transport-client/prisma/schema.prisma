@@ -182,6 +182,7 @@ model Transporte {
   gpsAtualizadoEm    DateTime? // Hora da última posição GPS real (currGeoLocation)
   gpsVelocidade      Float?    // km/h na última posição GPS
   gpsDirecao         Float?    // Graus (0 = norte) na última posição GPS
+  gpsVelocidadeMedia Float?    // km/h, média das posições GPS dos últimos minutos (paragens incluídas): a velocidade das horas de chegada
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

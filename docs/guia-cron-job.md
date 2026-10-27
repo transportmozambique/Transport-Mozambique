@@ -175,8 +175,8 @@ O `POST` chega a [`transport-client/app/api/simulation/route.ts`](../transport-c
 
 O cronjob é só o relógio: dispara a cada minuto, sempre, esteja um autocarro perto ou longe de uma paragem. A localização entra **dentro** de cada verificação:
 
-1. Para cada viagem acompanhada, calcula-se a posição do autocarro anunciado naquele momento: pelo [GPS](conceitos.md#gps) quando há uma posição recente, senão pela viagem do motorista (a hora a que carregou em "Iniciar viagem" e a velocidade da regra de tarifa, 30 km/h, ao longo do percurso) ([Localização e GPS](localizacao-gps.md)).
-2. Daí saem os minutos que faltam até à paragem de entrada (à espera) ou até à paragem de saída (a bordo), pela distância ao longo do percurso.
+1. Para cada viagem acompanhada, calcula-se a posição do autocarro anunciado naquele momento: pelo [GPS](conceitos.md#gps) quando há uma posição recente; quando o GPS se calou a meio da viagem, a andar desde a última posição GPS; senão pela viagem do motorista (a hora a que carregou em "Iniciar viagem" e a velocidade da regra de tarifa, 30 km/h, ao longo do percurso) ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)).
+2. Daí saem os minutos que faltam até à paragem de entrada (à espera) ou até à paragem de saída (a bordo): a distância ao longo do percurso a dividir pela velocidade do autocarro. Com GPS é a sua média recente, com as paragens e o trânsito (entre 15 e 45 km/h); sem GPS, os 30 km/h da tarifa ([Localização e GPS → A velocidade das horas de chegada](localizacao-gps.md#a-velocidade-das-horas-de-chegada)).
 3. Os minutos escolhem o aviso, em [`waitLevel()` e `rideLevel()`](../transport-client/lib/journeyAlerts.ts):
 
    | À espera, até à paragem de entrada | Aviso |

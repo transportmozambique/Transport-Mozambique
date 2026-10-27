@@ -38,7 +38,9 @@ flowchart TD
   B -- não --> T{"O motorista iniciou a viagem?<br/>(Motorista.emViagem)"}
   T -- não --> P["Parado, fora de serviço<br/>onde ficou, ou no terminal do início"]
   T -- sim --> C{"A rota tem percurso?<br/>(Via.geoLocationPath)"}
-  C -- sim --> H["Posição pela viagem<br/>fonte = horario, em serviço"]
+  C -- sim --> F{"Houve GPS nesta viagem,<br/>perto da rota?"}
+  F -- sim --> D["A andar desde a última posição GPS<br/>fonte = horario, em serviço"]
+  F -- não --> H["Posição pela viagem<br/>fonte = horario, em serviço"
   C -- não --> L["Último ponto guardado, parado<br/>(Transporte.currGeoLocation)"]
 ```
 
@@ -49,7 +51,8 @@ flowchart TD
 - está **em movimento** quando a velocidade enviada é maior do que 0,5 km/h (ou desconhecida) **e** o motorista iniciou a viagem;
 - o seu sítio na rota é o ponto mais próximo do percurso da rota;
 - o **sentido** compara o rumo enviado com o rumo do próprio percurso nesse ponto: até 90° quer dizer "para o fim do percurso", senão "de volta";
-- a velocidade é `gpsVelocidade`.
+- a velocidade mostrada é `gpsVelocidade`, a última enviada;
+- as **horas de chegada** usam a velocidade média recente, `gpsVelocidadeMedia` ([abaixo](#a-velocidade-das-horas-de-chegada)).
 
 Um rastreador ligado num autocarro sem viagem iniciada mostra onde ele está, mas o autocarro continua fora de serviço.
 
@@ -67,11 +70,43 @@ O autocarro segue exactamente o percurso guardado: onde um percurso corta quarte
 
 O resultado depende só da hora, da viagem (início e terminal de partida), do percurso e da velocidade. **Porquê assim:** todos os [endpoints](conceitos.md#api "Uma API é a lista de pedidos que um servidor aceita de outros programas; cada um desses pedidos, com o seu endereço, é um endpoint."), todas as instâncias [serverless](conceitos.md#serverless "Um pedaço de código que a Vercel arranca só quando chega um pedido, e desliga a seguir.") e os menus USSD calculam a mesma posição sem falarem uns com os outros, e nada corre em segundo plano (a [Vercel](conceitos.md#vercel "A empresa cujos servidores correm as três aplicações e as publicam a cada merge.") não tem processos sempre ligados). **O que se perde:** sem GPS é uma estimativa: o trânsito e as paragens longas não contam, e o autocarro real pode ir adiantado ou atrasado. O GPS real resolve-o ([Limitações](limitacoes.md)).
 
+**2a. Viagem iniciada, o GPS calou-se.** Quando houve uma posição GPS depois de o motorista iniciar a viagem, a menos de 300 m do percurso, mas já tem mais de 3 minutos (o telemóvel perdeu o sinal, ou a aplicação fechou), o autocarro continua **a partir dessa última posição**:
+
+- no sentido que o GPS mostrava nesse momento (parado ou sem rumo: o sentido que a viagem do motorista tinha a essa hora);
+- à velocidade média do GPS nesse momento (ou à da tarifa, sem média);
+- com as mesmas voltas e esperas de 5 min nos terminais da regra 2.
+
+Porquê: a última posição real é mais certa do que onde a hora de início poria o autocarro. Antes, o autocarro "saltava" para essa posição quando o sinal falhava, e os avisos por SMS também. Uma posição GPS de antes da viagem em curso (de uma viagem anterior) não conta. O cálculo está em `sinceLastFix()`.
+
 **3. Sem viagem.** O autocarro está parado e fora de serviço. Fica no último ponto guardado em `currGeoLocation` quando esse ponto está a menos de 300 m do percurso (onde a última viagem acabou); senão, no primeiro ponto do percurso (`parkedPosition`).
 
 **4. Sem percurso.** Uma rota sem percurso guardado não se pode seguir. O veículo aparece parado no último `currGeoLocation` guardado; sem ele, não tem posição (o painel mostra "Sem rota").
 
-Uma posição GPS não muda a forma da rota nem a viagem. Quando a posição passa os 3 minutos, o veículo volta à posição pela viagem, que pode ser noutro sítio da rota.
+Uma posição GPS não muda a forma da rota nem a viagem. Quando a posição passa os 3 minutos, o veículo continua a partir dela (regra 2a).
+
+### A velocidade das horas de chegada
+
+Todas as horas de chegada (os avisos por SMS, as viagens da web e do USSD, "chega em N min" no mapa, a próxima paragem no painel) dividem a distância ao longo do percurso por uma velocidade, a de cada posição (`speedKmh`, calculada em `etaSpeedKmh()`):
+
+| Autocarro | Velocidade |
+|---|---|
+| Sem GPS nesta viagem | a de viagem da tarifa, `Tarifa.velocidadeViagemKmh` (30 km/h) |
+| Com GPS, recente ou calado há pouco (2a) | a média recente do GPS, `gpsVelocidadeMedia`, mas nunca abaixo de metade nem acima de uma vez e meia a da tarifa (15 a 45 km/h com 30) |
+
+**Como se calcula a média.** A cada posição nova, `/api/gps` mede a distância em linha recta desde a posição anterior e divide-a pelo tempo entre as duas ([`nextSpeedAverage()`](../transport-client/app/api/gps/route.ts)). Junta essa medida à média, a pesar mais as recentes: a média esquece as posições com uma constante de 5 minutos.
+
+| Caso | A média |
+|---|---|
+| Primeira posição, ou mais de 10 min sem posições | recomeça (`null`): usa-se a velocidade da tarifa até à posição seguinte |
+| Menos de 5 s desde a anterior | fica igual: tempo curto de mais para medir |
+| Um salto mais rápido do que 100 km/h | fica igual: é um erro do GPS |
+| Caso contrário | `média + (1 − e^(−segundos/300)) × (medida − média)` |
+
+**Porquê a distância e não a velocidade enviada.** A média tem de contar o tempo parado nas paragens e nos semáforos, que é parte do tempo de um autocarro. Muitos telemóveis não enviam posições enquanto estão parados, e a velocidade enviada no momento diz pouco sobre os próximos minutos.
+
+**Porquê os limites.** Um autocarro preso num semáforo, ou à espera no terminal, teria horas de chegada absurdas; uma média de poucos minutos não diz como vai ser o trânsito daqui a 15. Com os limites, o trânsito pode fazer as horas até duas vezes mais longas, ou um terço mais curtas.
+
+Testado em 2026-10-28 numa cópia local, com uma sequência de posições: 308 m em 30 s deram 37 km/h; parado 30 s, 33,5; mais 30 s, 30,3; uma posição 2 s depois e um salto de 5 km não mudaram a média; depois de 12 min sem posições, recomeçou.
 
 **Os estados**, iguais em todo o lado ([`statusLabel`](../transport-client/lib/vehiclePosition.ts)):
 
@@ -188,6 +223,7 @@ Quando corre bem, a linha do veículo é actualizada:
 | `gpsAtualizadoEm` | a hora da posição; a hora do servidor se faltava ou estava mais de 2 minutos no futuro |
 | `gpsVelocidade` | km/h, uma casa decimal, ou `NULL` se não veio velocidade |
 | `gpsDirecao` | 0–360°, ou `NULL` |
+| `gpsVelocidadeMedia` | km/h, a média recente ([A velocidade das horas de chegada](#a-velocidade-das-horas-de-chegada)) |
 
 Os leitores decidem se a posição é recente por `gpsAtualizadoEm`, por isso uma posição que chega tarde com a sua hora original fica guardada mas pode já contar como antiga.
 

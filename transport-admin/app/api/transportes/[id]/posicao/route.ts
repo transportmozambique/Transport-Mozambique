@@ -13,6 +13,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       gpsAtualizadoEm: true,
       gpsDirecao: true,
       gpsVelocidade: true,
+      gpsVelocidadeMedia: true,
       motorista: { select: TRIP_FIELDS },
       via: { select: { geoLocationPath: true, paragens: { select: { paragem: { select: { nome: true, geoLocation: true } } } } } },
     },

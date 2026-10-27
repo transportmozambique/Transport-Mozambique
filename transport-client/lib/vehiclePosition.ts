@@ -24,7 +24,10 @@ import {
  * - Com viagem iniciada, parte do terminal de onde saiu (Motorista.viagemSentido) à hora de início
  *   (viagemIniciadaEm) e vai e volta ao longo do percurso da via (ida, paragem no terminal do fim,
  *   volta, paragem no primeiro terminal) à velocidade de viagem da tarifa, até o motorista terminar.
- * - Uma posição GPS real (POST /api/gps) recente ganha a ambas.
+ * - Uma posição GPS real (POST /api/gps) recente ganha a ambas. Quando o GPS se cala a meio da
+ *   viagem, o autocarro continua a partir da última posição GPS, não da hora de início.
+ * - As horas de chegada usam a velocidade média recente do GPS (VehiclePosition.speedKmh), dentro
+ *   de limites, e sem GPS a velocidade de viagem da tarifa.
  *
  * Depende só da hora, da viagem e do percurso. Porquê: todos os endpoints, os menus USSD e todas
  * as instâncias serverless chegam ao mesmo resultado sem guardar nada, e nada tem de correr em
@@ -38,6 +41,13 @@ export const GPS_FRESH_MS = 3 * 60 * 1000;
 
 export const TERMINAL_STOP_S = 5 * 60; // tempo em cada terminal antes da viagem seguinte
 const DEFAULT_SPEED_KMH = 30;
+/**
+ * A média do GPS só conta entre estas fracções da velocidade da tarifa. Porquê: um autocarro preso
+ * num semáforo ou à espera no terminal teria horas de chegada absurdas, e uma média de poucos
+ * minutos não diz como vai ser o trânsito daqui a 15.
+ */
+const GPS_SPEED_MIN_FACTOR = 0.5;
+const GPS_SPEED_MAX_FACTOR = 1.5;
 /** Um autocarro parado mais longe do que isto da sua via fica no terminal do início (posição antiga de outra via) */
 const PARKED_ON_ROUTE_M = 300;
 
@@ -60,6 +70,8 @@ export interface VehiclePosition {
   inService: boolean;
   /** Hora da posição GPS, ou o momento em que a posição pela viagem foi calculada. */
   at: Date;
+  /** Velocidade, em km/h, das horas de chegada a partir desta posição (etaSpeedKmh). */
+  speedKmh: number;
 }
 
 /** O estado da viagem do motorista do veículo (Motorista.emViagem, viagemIniciadaEm, viagemSentido). */
@@ -75,6 +87,8 @@ export interface PositionedVehicle {
   gpsAtualizadoEm?: Date | null;
   gpsDirecao?: number | null;
   gpsVelocidade?: number | null;
+  /** km/h, média recente das posições GPS (POST /api/gps); null sem GPS ou depois de uma pausa longa. */
+  gpsVelocidadeMedia?: number | null;
   /** O motorista do veículo; sem motorista, ou sem viagem iniciada, o veículo está parado */
   motorista: TripFields | null;
 }
@@ -155,6 +169,21 @@ export function distanceAlongPath(path: LatLng[] | string | null | undefined, a:
 
 const speedMps = (rule?: Pick<FareRule, 'velocidadeViagemKmh'>) =>
   ((rule?.velocidadeViagemKmh || DEFAULT_SPEED_KMH) * 1000) / 3600;
+const kmhToMps = (kmh: number) => (kmh * 1000) / 3600;
+
+/**
+ * A velocidade das horas de chegada de um veículo: a média recente do seu GPS, limitada a entre
+ * metade e uma vez e meia a velocidade de viagem da tarifa; sem média, a da tarifa.
+ */
+export function etaSpeedKmh(
+  vehicle: Pick<PositionedVehicle, 'gpsVelocidadeMedia'>,
+  rule?: Pick<FareRule, 'velocidadeViagemKmh'>,
+): number {
+  const base = rule?.velocidadeViagemKmh || DEFAULT_SPEED_KMH;
+  const avg = vehicle.gpsVelocidadeMedia;
+  if (avg == null || !Number.isFinite(avg)) return base;
+  return Math.min(base * GPS_SPEED_MAX_FACTOR, Math.max(base * GPS_SPEED_MIN_FACTOR, avg));
+}
 
 /** A viagem em curso do veículo: quando começou e de que terminal partiu; null quando está parado. */
 export function tripOf(vehicle: PositionedVehicle): { start: Date; from: Direction } | null {
@@ -176,7 +205,7 @@ export function tripPosition(
   rule?: Pick<FareRule, 'velocidadeViagemKmh'>,
 ): VehiclePosition | null {
   if (g.path.length === 0) return null;
-  const base = { source: 'horario' as const, at: now, inService: true };
+  const base = { source: 'horario' as const, at: now, inService: true, speedKmh: rule?.velocidadeViagemKmh || DEFAULT_SPEED_KMH };
   const first = from === 1 ? 0 : g.length;
   if (g.path.length === 1 || g.length < 1) {
     return { ...base, point: g.path[0], heading: null, moving: false, progress: 0, direction: from, waitS: 0 };
@@ -215,7 +244,7 @@ export function tripPosition(
  */
 export function parkedPosition(vehicle: PositionedVehicle, g: RouteGeometry, now: Date = new Date()): VehiclePosition | null {
   const last = parseLatLng(vehicle.currGeoLocation);
-  const base = { source: 'horario' as const, heading: null, moving: false, direction: null, waitS: 0, inService: false, at: now };
+  const base = { source: 'horario' as const, heading: null, moving: false, direction: null, waitS: 0, inService: false, at: now, speedKmh: DEFAULT_SPEED_KMH };
   if (g.path.length === 0) return last ? { ...base, point: last, progress: null } : null;
   if (last && g.path.length > 1) {
     const progress = progressOf(g, last);
@@ -247,20 +276,16 @@ export function vehiclePosition(
   const g = path && !Array.isArray(path) && typeof path === 'object' ? path : routeGeometry(path as LatLng[] | string | null);
   const trip = tripOf(vehicle);
 
+  const speedKmh = etaSpeedKmh(vehicle, rule);
+
   if (hasFreshGps(vehicle, now)) {
     const point = parseLatLng(vehicle.currGeoLocation)!;
     const moving = (vehicle.gpsVelocidade ?? 1) > 0.5;
     let progress: number | null = null;
     let direction: Direction | null = null;
     if (g.path.length > 1) {
-      const i = nearestIndex(g, point);
       progress = progressOf(g, point);
-      // Sentido a partir do rumo do GPS comparado com o rumo do próprio percurso nesse ponto
-      if (moving && vehicle.gpsDirecao != null) {
-        const a = i < g.path.length - 1 ? i : i - 1;
-        const diff = Math.abs(((bearing(g.path[a], g.path[a + 1]) - vehicle.gpsDirecao + 540) % 360) - 180);
-        direction = diff <= 90 ? 1 : -1;
-      }
+      direction = gpsDirection(vehicle, g, point);
     }
     return {
       point,
@@ -273,15 +298,57 @@ export function vehiclePosition(
       waitS: 0,
       inService: trip !== null,
       at: new Date(vehicle.gpsAtualizadoEm!),
+      speedKmh,
     };
   }
   if (!trip) return parkedPosition(vehicle, g, now);
+  // O GPS calou-se a meio da viagem: continua a partir da última posição GPS, não da hora de início
+  const fromFix = sinceLastFix(vehicle, g, trip, now, { velocidadeViagemKmh: speedKmh }, rule);
+  if (fromFix) return fromFix;
   const scheduled = tripPosition(g, trip.start, trip.from, now, rule);
   if (scheduled) return scheduled;
   const last = parseLatLng(vehicle.currGeoLocation);
   return last
-    ? { point: last, source: 'horario', heading: null, moving: false, progress: null, direction: null, waitS: 0, inService: true, at: now }
+    ? { point: last, source: 'horario', heading: null, moving: false, progress: null, direction: null, waitS: 0, inService: true, at: now, speedKmh }
     : null;
+}
+
+/** O sentido de um veículo pelo rumo do GPS comparado com o rumo do percurso nesse ponto; null parado ou sem rumo. */
+function gpsDirection(vehicle: PositionedVehicle, g: RouteGeometry, point: LatLng): Direction | null {
+  if ((vehicle.gpsVelocidade ?? 1) <= 0.5 || vehicle.gpsDirecao == null || g.path.length < 2) return null;
+  const i = nearestIndex(g, point);
+  const a = i < g.path.length - 1 ? i : i - 1;
+  const diff = Math.abs(((bearing(g.path[a], g.path[a + 1]) - vehicle.gpsDirecao + 540) % 360) - 180);
+  return diff <= 90 ? 1 : -1;
+}
+
+/**
+ * Onde está agora um veículo cujo GPS deixou de enviar posições a meio da viagem: a andar desde a
+ * última posição GPS, no mesmo sentido, à velocidade `speed`, com as voltas nos terminais. Null
+ * quando essa posição é de antes da viagem em curso (de uma viagem anterior) ou fica longe da via.
+ * Porquê: a última posição real é mais certa do que onde a hora de início poria o autocarro, e
+ * assim ele não salta no mapa nem nos avisos quando o sinal falha.
+ */
+function sinceLastFix(
+  vehicle: PositionedVehicle,
+  g: RouteGeometry,
+  trip: { start: Date; from: Direction },
+  now: Date,
+  speed: Pick<FareRule, 'velocidadeViagemKmh'>,
+  rule?: Pick<FareRule, 'velocidadeViagemKmh'>,
+): VehiclePosition | null {
+  if (!vehicle.gpsAtualizadoEm || g.path.length < 2 || g.length < 1) return null;
+  const at = new Date(vehicle.gpsAtualizadoEm);
+  const point = parseLatLng(vehicle.currGeoLocation);
+  if (!point || at < trip.start || at > now) return null;
+  const progress = progressOf(g, point);
+  if (haversineMeters(pointAlong(g, progress).point, point) > PARKED_ON_ROUTE_M) return null;
+  // Parado ou sem rumo na última posição: o sentido que a viagem do motorista tinha nesse momento
+  const direction = gpsDirection(vehicle, g, point) ?? tripPosition(g, trip.start, trip.from, at, rule)?.direction ?? trip.from;
+  // Uma viagem equivalente: saiu do terminal atrás dele à hora certa para estar aqui às `at`
+  const fromTerminal = direction === 1 ? progress : g.length - progress;
+  const start = new Date(at.getTime() - (fromTerminal / kmhToMps(speed.velocidadeViagemKmh)) * 1000);
+  return tripPosition(g, start, direction, now, speed);
 }
 
 /** "lat,lng" da posição actual do veículo, no formato de Transporte.currGeoLocation. */
@@ -364,7 +431,7 @@ export function estimateBusTrip(args: {
   const travel: Direction = d > o ? 1 : -1;
   const atOrigin = progressOf(g, stops[o].point);
   const atDestination = progressOf(g, stops[d].point);
-  const v = speedMps(rule);
+  const v = kmhToMps(position.speedKmh);
   const passFrom = (p: VehiclePosition, afterS: number) => {
     const { meters, turns } = distanceUntilPass(p, g.length, atOrigin, travel);
     return { meters, turns, seconds: afterS + p.waitS + meters / v + turns * TERMINAL_STOP_S };
@@ -388,7 +455,7 @@ export function estimateBusTrip(args: {
 /**
  * Minutos até este autocarro, em `position`, passar a `target` metros ao longo do percurso no
  * sentido `travel`: a chegada a uma paragem para um passageiro já a bordo, ou as próximas passagens
- * de um autocarro nas paragens à frente.
+ * de um autocarro nas paragens à frente. À velocidade da posição (a média do GPS, ou a da tarifa).
  */
 export function minutesUntilPass(
   position: VehiclePosition,
@@ -398,7 +465,8 @@ export function minutesUntilPass(
   rule?: Pick<FareRule, 'velocidadeViagemKmh'>,
 ): number {
   const { meters, turns } = distanceUntilPass(position, length, target, travel);
-  const seconds = position.waitS + meters / speedMps(rule) + turns * TERMINAL_STOP_S;
+  const v = position.speedKmh ? kmhToMps(position.speedKmh) : speedMps(rule);
+  const seconds = position.waitS + meters / v + turns * TERMINAL_STOP_S;
   return Math.max(0, Math.round(seconds / 60));
 }
 
@@ -409,6 +477,7 @@ export const POSITION_FIELDS = {
   gpsAtualizadoEm: true,
   gpsDirecao: true,
   gpsVelocidade: true,
+  gpsVelocidadeMedia: true,
   motorista: { select: { emViagem: true, viagemIniciadaEm: true, viagemSentido: true } },
 } as const;
 
