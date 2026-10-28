@@ -126,6 +126,7 @@ Os pull requests juntados na `main` de [transportmozambique/Transport-Mozambique
 | 54 | 2026-10-28 | Só a publicação de produção actual corre a verificação de chegadas; apagadas as publicações de produção anteriores, que enviavam avisos errados ([Publicação → As publicações antigas](publicacao.md#as-publicações-antigas)) |
 | 55 | 2026-10-28 | As paragens de cada rota nos mapas do painel: no início (as das rotas activas) e na página de um veículo (as da sua rota) ([Painel de administração](painel-admin.md#início-dashboard)) |
 | 56 | 2026-10-28 | O sentido de um autocarro com GPS pelo troço do percurso onde está, e não pelo ponto do percurso mais perto: perto das esquinas parecia ir ao contrário, e os passageiros a bordo recebiam "Saia agora" cedo de mais ([Localização e GPS](localizacao-gps.md#como-se-escolhe-uma-posição)) |
+| 57 | 2026-10-28 | A X22 redesenhada só da Praça dos Combatentes a Zimpeto (era Magoanine → Praça dos Combatentes → Magoanine → Zimpeto, 20,9 km; agora 15,3 km), no painel ([Limitações → Posições e horas](limitacoes.md#posições-e-horas)) |
 
 <!-- navegação-fim: gerada por .github/scripts/docs-nav.py -->
 
