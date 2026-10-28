@@ -124,6 +124,7 @@ Os pull requests juntados na `main` de [transportmozambique/Transport-Mozambique
 | 52 | 2026-10-28 | Uma posição GPS nova corre a verificação de chegadas |
 | 53 | 2026-10-28 | Horas de chegada pela velocidade média do GPS; o autocarro continua da última posição GPS quando o sinal falha ([Localização e GPS](localizacao-gps.md#a-velocidade-das-horas-de-chegada)) |
 | 54 | 2026-10-28 | Só a publicação de produção actual corre a verificação de chegadas; apagadas as publicações de produção anteriores, que enviavam avisos errados ([Publicação → As publicações antigas](publicacao.md#as-publicações-antigas)) |
+| 55 | 2026-10-28 | As paragens de cada rota nos mapas do painel: no início (as das rotas activas) e na página de um veículo (as da sua rota) ([Painel de administração](painel-admin.md#início-dashboard)) |
 
 <!-- navegação-fim: gerada por .github/scripts/docs-nav.py -->
 

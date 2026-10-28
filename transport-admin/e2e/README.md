@@ -5,7 +5,8 @@ municípios, paragens, vias, proprietários, motoristas, transportes, utentes, a
 cria uma linha pelo formulário, encontra-a com a pesquisa da lista, abre a página de detalhe,
 edita-a, e apaga-a pela janela de confirmação. Também confirma que a API responde 401 sem sessão.
 
-Os outros ficheiros: `gps.spec.ts` (posição ao vivo e códigos de dispositivo GPS), `pin.spec.ts`
+Os outros ficheiros: `gps.spec.ts` (posição ao vivo e códigos de dispositivo GPS), `paragens-mapa.spec.ts`
+(paragens das rotas nos mapas do veículo e do início), `pin.spec.ts`
 (PIN do motorista), `search.spec.ts` (pesquisa do cabeçalho, e telefones encontrados pelos
 algarismos) e `tarifa.spec.ts` (a página da tarifa; volta a pôr os valores originais).
 

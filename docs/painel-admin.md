@@ -178,7 +178,7 @@ Tudo menos "Agora" vem de um só pedido, `GET /api/dashboard/stats`, **guardado 
 | Bloco | O que conta |
 |---|---|
 | Transportes / Motoristas / Vias activas / Paragens | As linhas de cada tabela. Em Transportes: quantos não têm motorista ("todos com motorista" quando nenhum). Em Motoristas: "activos" = motoristas com estado `ativo` **e** um veículo. Em Vias activas: as rotas que os passageiros vêem (`Via.ativa`), e quantas têm pelo menos um veículo. Cada cartão abre a sua lista. |
-| Mapa de vias | O percurso guardado de cada rota activa, na cor da rota, no mapa de ruas da [OpenFreeMap](conceitos.md#mosaicos "As imagens das ruas por baixo dos autocarros e das paragens, que o mapa descarrega aos bocados (mosaicos) conforme se mexe."). Uma rota tocada na lista "Vias" aparece sozinha; tocar outra vez mostra todas. |
+| Mapa de vias | O percurso guardado de cada rota activa, na cor da rota, no mapa de ruas da [OpenFreeMap](conceitos.md#mosaicos "As imagens das ruas por baixo dos autocarros e das paragens, que o mapa descarrega aos bocados (mosaicos) conforme se mexe."), com as suas paragens: um círculo branco por paragem, preto nos terminais; clicar numa mostra o nome. Uma rota tocada na lista "Vias" aparece sozinha, com as suas paragens; tocar outra vez mostra todas. |
 | Agora | O que cada veículo está a fazer agora, de `GET /api/transportes/estado` (GPS, ou a viagem do motorista), a cada 30 segundos: Em circulação, Parados (num terminal ou fora de serviço), Com GPS activo, Sem rota (sem percurso onde o pôr). Sem cache. |
 | Vias | As rotas activas com os terminais e o número de veículos, as com mais veículos primeiro. |
 | Vias por município | Rotas por município. |
@@ -210,7 +210,7 @@ A coluna vem de `GET /api/transportes/estado`, a cada 30 s. Usa as mesmas regras
 |---|---|---|
 | Quilómetros na Viagem, Tempo de Operação, Chegadas a um Terminal | Quilómetros, horas e chegadas a terminais desde que o motorista iniciou a viagem, à velocidade da regra de tarifa ("Viagem iniciada às 08:05"). Sem viagem, zero e "O motorista não iniciou a viagem". | `GET /api/transportes/{id}/operacao`, a cada 60 s |
 | Rota | O comprimento do percurso da rota e o número de paragens. | o mesmo |
-| Localização e Rota | Mapa 3D com a rota e o veículo. A etiqueta diz de onde vem a posição: "Em movimento · GPS real", "Parado no terminal · estimado pela viagem", "Fora de serviço (viagem não iniciada) · onde parou", e assim por diante. Por baixo: velocidade actual, próxima paragem, minutos até ela. | `GET /api/transportes/{id}/posicao`, a cada 15 s |
+| Localização e Rota | Mapa 3D com a rota, as suas paragens (cinzentas; os terminais pretos, com um T; clicar numa mostra o nome) e o veículo. As paragens vêm de `GET /api/transportes/{id}` (`stops`). A etiqueta diz de onde vem a posição: "Em movimento · GPS real", "Parado no terminal · estimado pela viagem", "Fora de serviço (viagem não iniciada) · onde parou", e assim por diante. Por baixo: velocidade actual, próxima paragem, minutos até ela. | `GET /api/transportes/{id}/posicao`, a cada 15 s |
 | Rastreador GPS | O dispositivo GPS do veículo ([abaixo](#cartão-do-rastreador-gps)). | `GET /api/transportes/{id}/gps`, a cada 30 s |
 | Pessoas Associadas | O motorista (× retira-o do veículo) e os proprietários ("+ Atribuir"). | |
 | Informações do Transporte | Matrícula, número, modelo, marca, cor, lotação, rota, estado, data de registo. | |

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext";
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import type { RouteStop } from '@/lib/routeOrder';
 
 interface Stats {
   transportes: number;
@@ -38,6 +39,7 @@ interface ViaData {
   path: string;
   start: string;
   end: string;
+  stops?: RouteStop[];
 }
 
 function DashboardContent() {
@@ -295,6 +297,9 @@ function DashboardContent() {
           console.error(`Erro ao tratar a via ${via.name}:`, error);
         }
       });
+
+      // As paragens de cada via, depois de todas as linhas, para ficarem por cima delas
+      viasData.forEach((via) => addStopsToMap(via.id, via.stops ?? []));
     });
 
     return () => {
@@ -349,9 +354,60 @@ function DashboardContent() {
     }
   };
 
+  // As paragens de uma via: um círculo por paragem (preto nos terminais), o nome ao clicar
+  const addStopsToMap = (viaId: string, stops: RouteStop[]) => {
+    const m = map.current;
+    if (!m || stops.length === 0 || m.getSource(`stops-${viaId}`)) return;
+    m.addSource(`stops-${viaId}`, {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: stops.map((s) => ({
+          type: 'Feature',
+          properties: { nome: s.nome, terminal: s.isTerminal },
+          geometry: { type: 'Point', coordinates: [s.longitude, s.latitude] },
+        })),
+      },
+    });
+    m.addLayer({
+      id: `stops-${viaId}`,
+      type: 'circle',
+      source: `stops-${viaId}`,
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, ['case', ['get', 'terminal'], 4, 2.5], 15, ['case', ['get', 'terminal'], 8, 6]],
+        'circle-color': ['case', ['get', 'terminal'], '#1e293b', '#ffffff'],
+        'circle-stroke-color': '#1e293b',
+        'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 11, 1, 15, 2],
+      },
+    });
+    m.on('click', `stops-${viaId}`, (e) => {
+      const f = e.features?.[0];
+      if (!f || f.geometry.type !== 'Point') return;
+      const box = document.createElement('div');
+      box.style.color = '#000';
+      const nome = document.createElement('strong');
+      nome.textContent = String(f.properties?.nome ?? '');
+      box.appendChild(nome);
+      if (f.properties?.terminal) box.append(document.createElement('br'), 'Terminal');
+      new maplibregl.Popup({ offset: 8 })
+        .setLngLat(f.geometry.coordinates as [number, number])
+        .setDOMContent(box)
+        .addTo(m);
+    });
+    m.on('mouseenter', `stops-${viaId}`, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', `stops-${viaId}`, () => { m.getCanvas().style.cursor = ''; });
+  };
+
   // Escolha de uma via
   useEffect(() => {
     if (!map.current) return;
+
+    // As paragens acompanham a via: só as da via escolhida, ou as de todas
+    viasData.forEach((via) => {
+      if (map.current?.getLayer(`stops-${via.id}`)) {
+        map.current.setLayoutProperty(`stops-${via.id}`, 'visibility', !selectedVia || via.id === selectedVia ? 'visible' : 'none');
+      }
+    });
 
     if (selectedVia) {
       // Esconder todas as vias menos a escolhida
