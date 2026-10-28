@@ -5,6 +5,7 @@ import { ridingBus, trechoOf } from './follow';
 import { distanceMeters, walkMinutes } from './places';
 import { maputoClock } from './eta';
 import { sendSMS, toGsm } from './notifications';
+import { isCurrentDeployment } from './deployment';
 import { TERMINAL_STOP_S, minutesUntilPass, vehiclePosition, type Direction } from './vehiclePosition';
 
 /**
@@ -132,8 +133,9 @@ export async function startFollow(args: { telefone: string; journey: Journey; fr
     },
   });
   await sendSMS(telefone, toGsm(`${journeyText(journey, from, to)} Vamos avisar por SMS: autocarro a 15, 10 e 5 min, chegada, transbordos e destino.`));
-  // Logo a seguir, o primeiro aviso, quando já é altura (o autocarro está a chegar à paragem)
-  await checkJourneyAlerts(now, follow.id);
+  // Logo a seguir, o primeiro aviso, quando já é altura (o autocarro está a chegar à paragem). Só na
+  // publicação de produção actual, como a verificação de chegadas (lib/deployment.ts)
+  if (await isCurrentDeployment()) await checkJourneyAlerts(now, follow.id);
   return follow;
 }
 

@@ -217,6 +217,8 @@ Como funciona, passo a passo:
 
 Porquê guardar o último aviso, e não calcular tudo outra vez: o servidor é serverless e não guarda memória entre pedidos; a linha na base de dados é a memória do acompanhamento.
 
+**Só a [publicação](conceitos.md#publicacao "Pôr uma versão nova do código a funcionar nos servidores, ao vivo, para toda a gente.") de produção actual verifica.** Antes de tudo, `isCurrentDeployment()` ([`lib/deployment.ts`](../transport-client/lib/deployment.ts)) pergunta ao domínio de produção qual é a publicação actual e só continua se for esta. Porquê: as publicações antigas continuam a responder nos seus endereços, com a mesma base de dados e a mesma chave do Africa's Talking, e uma página aberta numa delas enviaria avisos com o código antigo ([Publicação → As publicações antigas](publicacao.md#as-publicações-antigas)).
+
 ```mermaid
 sequenceDiagram
   autonumber
@@ -226,6 +228,7 @@ sequenceDiagram
   participant AT as Africa's Talking
   participant P as Telemóvel do passageiro
   T->>C: maybeCheckArrivals() (no máximo uma vez a cada 30 s por instância)
+  C->>C: isCurrentDeployment(): só a publicação de produção actual continua
   C->>DB: Acompanhamento sem terminadoEm
   loop cada acompanhamento
     C->>C: nextStep(): autocarros agora → aviso seguinte
