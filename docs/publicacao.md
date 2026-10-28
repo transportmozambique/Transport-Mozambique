@@ -128,6 +128,7 @@ O mesmo está no painel da Vercel em **Deployments** e **Logs** de cada projecto
 
 ```bash
 curl -s https://transport-mz.vercel.app/api/simulation                       # {"success":true,"status":{"mode":"gps-or-driver-trip","busCount":…}}
+curl -s https://transport-mz.vercel.app/api/versao                           # {"deploy":"dpl_…"}: a publicação que envia os SMS
 curl -s "https://transport-mz.vercel.app/api/buses?fields=position" | head -c 200
 curl -s -o /dev/null -w "%{http_code}\n" -X POST https://transport-mz.vercel.app/api/ussd \
   -d "sessionId=g&serviceCode=*384*848080%23&phoneNumber=%2B258840000009&text="   # 403 (a guarda do callback está activa)
@@ -139,12 +140,31 @@ Depois, abrir cada aplicação num [navegador](conceitos.md#navegador "O program
 
 ## Voltar atrás
 
-A Vercel guarda todas as publicações. Para pôr uma anterior outra vez no domínio de produção:
+A Vercel guarda as publicações (as de produção anteriores a 2026-10-28 foram apagadas: [As publicações antigas](#as-publicações-antigas)). Para pôr uma anterior outra vez no domínio de produção:
 
 - **Painel da Vercel:** projecto → Deployments → a última publicação de produção boa → "Instant Rollback" (ou "Promote to Production").
 - **CLI:** `vercel rollback <url da publicação>`.
 
+A publicação para onde se volta passa a ser a actual: é ela que corre a verificação de chegadas e envia os avisos por SMS.
+
 Voltar atrás só muda o código. As alterações à base de dados ficam, por isso só se volta a uma versão do código que funcione com o esquema actual, ou desfaz-se o esquema com uma nova migração idempotente. Voltar atrás não mexe na `main`: o [commit](conceitos.md#commit "Uma fotografia guardada do código num momento, com uma frase a dizer o que mudou.") mau também se reverte no GitHub, senão o merge seguinte publica-o outra vez.
+
+## As publicações antigas
+
+Cada publicação continua a funcionar no seu próprio endereço (`transport-<id>-transportmozambique.vercel.app`), mesmo depois de outra a substituir no domínio de produção. Esses endereços só abrem a quem tem [sessão](conceitos.md#sessao "Depois de entrar, o servidor dá uma prova de quem se é (um token), e o navegador mostra-a a cada pedido para não ter de pedir a palavra-passe outra vez.") na Vercel (os outros recebem um redireccionamento para o login), mas as publicações de produção usam a mesma base de dados e a mesma chave do Africa's Talking que a actual.
+
+**Só a publicação de produção actual corre a verificação de chegadas.** Uma página aberta numa publicação antiga (o mapa actualiza-se sozinho) dispararia a verificação com o código antigo. Por isso, a verificação começa por perguntar ao domínio de produção qual é a publicação actual (`GET /api/versao`) e só continua se for ela própria, em `isCurrentDeployment()` de [`lib/deployment.ts`](../transport-client/lib/deployment.ts). A resposta vale um minuto em cada instância. Nas pré-visualizações a verificação nunca corre. Fora da Vercel (no computador, com a base de dados local) corre sempre.
+
+**Porquê.** Em 2026-10-28, num teste com [GPS](conceitos.md#gps "O sistema de satélites com que um telemóvel ou um aparelho sabe as suas coordenadas.") em produção, uma publicação anterior às médias de GPS ainda corria verificações, a partir de uma página aberta no seu endereço. Enviou "chega em 9 min" quando o autocarro estava a 16, e "Saia agora: chegou ao seu destino" quando o GPS se calou, a um passageiro que ainda esperava ([Localização e GPS → A velocidade das horas de chegada](localizacao-gps.md#a-velocidade-das-horas-de-chegada)). Com o código actual, o mesmo momento não envia nada.
+
+**As publicações de produção anteriores a 2026-10-28 foram apagadas**, porque não tinham esta guarda. Por isso [Voltar atrás](#voltar-atrás) só vai até à primeira publicação com ela.
+
+Confirmar qual é a publicação actual:
+
+```bash
+curl -s https://transport-mz.vercel.app/api/versao     # {"deploy":"dpl_…"}
+vercel inspect transport-mz.vercel.app                  # o mesmo id, em "id"
+```
 
 ## Publicar à mão
 

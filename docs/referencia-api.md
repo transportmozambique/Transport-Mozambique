@@ -388,9 +388,13 @@ Erros: 404 `Autocarro não encontrado`; 400 `Este transporte não tem via atribu
 | `inService` | desses, os que estão em viagem (o motorista iniciou-a) |
 | `withFreshGps` | os que enviaram GPS nos últimos 3 minutos |
 | `following` | viagens acompanhadas por SMS ainda a decorrer ([`Acompanhamento`](glossario.md#a-rede-e-as-pessoas "Uma viagem acompanhada por SMS: os avisos de cada autocarro até ao destino") sem `terminadoEm`) |
-| `lastArrivalCheck` | a última verificação nesta instância: alertas de paragem lidos (`missions`), SMS enviados (`notified`), e desses os avisos das viagens acompanhadas (`journeys`); `null` antes da primeira |
+| `lastArrivalCheck` | a última verificação nesta instância: alertas de paragem lidos (`missions`), SMS enviados (`notified`), e desses os avisos das viagens acompanhadas (`journeys`); `skipped` quando não correu, por esta não ser a [publicação](conceitos.md#publicacao "Pôr uma versão nova do código a funcionar nos servidores, ao vivo, para toda a gente.") de produção actual ([Publicação → As publicações antigas](publicacao.md#as-publicações-antigas)); `null` antes da primeira |
 
 `POST {"action": "check"}` corre já a verificação de chegadas e responde com `notified` (SMS enviados) e o estado. Outra acção responde 400. O endpoint é público, mas a verificação só envia os SMS que estão na hora, e nunca o mesmo duas vezes. Um pedido agendado externo deve chamá-lo a cada minuto ([Guia do cron-job.org](guia-cron-job.md)); o [GitHub Actions](conceitos.md#ci "Verificações que o GitHub corre sozinho a cada pull request, para nenhum erro conhecido chegar ao main.") também, como reserva ([Fluxos de dados → Alerta de chegada](fluxos-de-dados.md#alerta-de-chegada-e-sms)).
+
+#### `GET /api/versao`
+
+A publicação que responde, pelo seu id na [Vercel](conceitos.md#vercel "A empresa cujos servidores correm as três aplicações e as publicam a cada merge."): `{"deploy": "dpl_…"}` (`null` fora da Vercel). Pedido pelo domínio de produção, diz qual é a publicação de produção actual, a única que corre a verificação de chegadas. Código: [`app/api/versao/route.ts`](../transport-client/app/api/versao/route.ts) e [`lib/deployment.ts`](../transport-client/lib/deployment.ts).
 
 ### Conta do passageiro
 

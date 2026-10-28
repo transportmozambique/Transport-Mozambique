@@ -164,7 +164,7 @@ O que é normal e o que não é:
 
 ## O que o pedido faz na plataforma
 
-O `POST` chega a [`transport-client/app/api/simulation/route.ts`](../transport-client/app/api/simulation/route.ts), que chama `checkAndNotifyUsers()` em [`lib/busSimulator.ts`](../transport-client/lib/busSimulator.ts). Esta faz duas coisas:
+O `POST` chega a [`transport-client/app/api/simulation/route.ts`](../transport-client/app/api/simulation/route.ts), que chama `checkAndNotifyUsers()` em [`lib/busSimulator.ts`](../transport-client/lib/busSimulator.ts). Esta confirma primeiro que é a [publicação](conceitos.md#publicacao "Pôr uma versão nova do código a funcionar nos servidores, ao vivo, para toda a gente.") de produção actual (numa antiga não faz nada, e `lastArrivalCheck.skipped` diz porquê: [Publicação → As publicações antigas](publicacao.md#as-publicações-antigas)). Depois faz duas coisas:
 
 1. os SMS dos alertas de paragem da web, quando o próximo autocarro em viagem chega em 5 minutos ou menos;
 2. o aviso seguinte de cada viagem acompanhada por SMS (opção 1 do USSD), em `checkJourneyAlerts()` de [`lib/journeyAlerts.ts`](../transport-client/lib/journeyAlerts.ts).

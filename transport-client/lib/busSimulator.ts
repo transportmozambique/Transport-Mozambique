@@ -3,6 +3,7 @@ import { getFareRule } from './fares';
 import { GPS_FRESH_MS } from './vehiclePosition';
 import { firstBus, loadNetwork, vehiclesOn } from './journeys';
 import { checkJourneyAlerts } from './journeyAlerts';
+import { isCurrentDeployment } from './deployment';
 
 /**
  * As posições dos autocarros já não são escritas por um ciclo: lib/vehiclePosition.ts calcula a
@@ -27,7 +28,7 @@ const STOP_ALERT_MIN = 5;
 const CHECK_INTERVAL_MS = 30 * 1000;
 
 let lastCheck = 0;
-let lastResult: { checkedAt: string; missions: number; notified: number; journeys: number } | null = null;
+let lastResult: { checkedAt: string; missions: number; notified: number; journeys: number; skipped?: string } | null = null;
 
 /** Os SMS dos alertas de paragem pendentes. Devolve quantos foram enviados. */
 async function checkStopAlerts(now: Date): Promise<{ missions: number; notified: number }> {
@@ -84,6 +85,11 @@ async function checkStopAlerts(now: Date): Promise<{ missions: number; notified:
 
 /** Envia os SMS de chegada pendentes (viagens acompanhadas e alertas de paragem). Devolve quantos foram enviados. */
 export async function checkAndNotifyUsers(now: Date = new Date()): Promise<number> {
+  // Só a publicação de produção actual: uma antiga, aberta no seu endereço, enviaria avisos errados
+  if (!(await isCurrentDeployment())) {
+    lastResult = { checkedAt: now.toISOString(), missions: 0, notified: 0, journeys: 0, skipped: 'não é a publicação de produção actual' };
+    return 0;
+  }
   let stops = { missions: 0, notified: 0 };
   let journeys = 0;
   try {

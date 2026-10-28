@@ -119,6 +119,11 @@ Os pull requests juntados na `main` de [transportmozambique/Transport-Mozambique
 | 46 | 2026-10-19 | Apagado o código que não se publicava (a aplicação antiga da raiz, a rota Telerivet, cerca de 250 scripts de uso único, cópias `*.backup` e `*.old`); os passageiros de teste do USSD apagados da produção no editor da Neon |
 | 47 | 2026-10-19 | Documentação para quem nunca programou: uma parte 0 com [Conceitos básicos](conceitos.md) e [Preparar o computador](preparar-o-computador.md); um resumo "Em palavras simples" no topo de cada página; cada termo técnico ligado à sua explicação, por um script verificado no CI; o que faz cada comando dos Primeiros passos; como ler e experimentar a Referência da [API](conceitos.md#api "Uma API é a lista de pedidos que um servidor aceita de outros programas; cada um desses pedidos, com o seu endereço, é um endpoint.") |
 | 48 | 2026-10-27 | Só 3 rotas activas (X19, 411, X22), escolhidas no painel; a viagem do motorista decide onde está o autocarro e se está em serviço, igual no portal, na web, no USSD e no painel; "Acompanhar por SMS" no USSD, com avisos a 15, 10 e 5 min, a chegar, a bordo, [transbordos](glossario.md#palavras-dos-ecrãs "Mudança de autocarro a meio de uma viagem") e destino; a tarifa do USSD sem autocarros em viagem |
+| 49 | 2026-10-27 | Apagados os 445 veículos e 445 motoristas das rotas desactivadas; o cronjob da verificação de chegadas na documentação |
+| 50–51 | 2026-10-28 | [Guia do cron-job.org](guia-cron-job.md), com capturas da configuração e do histórico; o cronjob é só o relógio, a posição do autocarro escolhe o aviso |
+| 52 | 2026-10-28 | Uma posição GPS nova corre a verificação de chegadas |
+| 53 | 2026-10-28 | Horas de chegada pela velocidade média do GPS; o autocarro continua da última posição GPS quando o sinal falha ([Localização e GPS](localizacao-gps.md#a-velocidade-das-horas-de-chegada)) |
+| 54 | 2026-10-28 | Só a publicação de produção actual corre a verificação de chegadas; apagadas as publicações de produção anteriores, que enviavam avisos errados ([Publicação → As publicações antigas](publicacao.md#as-publicações-antigas)) |
 
 <!-- navegação-fim: gerada por .github/scripts/docs-nav.py -->
 
