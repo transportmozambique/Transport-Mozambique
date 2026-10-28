@@ -102,12 +102,13 @@ DATABASE_URL=postgresql://postgres@127.0.0.1:55432/transport_test npm test
 
 ## Testes ponta a ponta do painel (Playwright)
 
-[`transport-admin/e2e/`](../transport-admin/e2e), 18 testes no Chromium contra uma compilação de produção do painel. Os detalhes e as opções estão em [`transport-admin/e2e/README.md`](../transport-admin/e2e/README.md). Porquê o Playwright: conduz um [navegador](conceitos.md#navegador "O programa com que se abrem sites: Chrome, Firefox, Edge, Safari.") real como um administrador, por isso apanha erros que só aparecem com as páginas, os mapas e a API juntos.
+[`transport-admin/e2e/`](../transport-admin/e2e), 19 testes no Chromium contra uma compilação de produção do painel. Os detalhes e as opções estão em [`transport-admin/e2e/README.md`](../transport-admin/e2e/README.md). Porquê o Playwright: conduz um [navegador](conceitos.md#navegador "O programa com que se abrem sites: Chrome, Firefox, Edge, Safari.") real como um administrador, por isso apanha erros que só aparecem com as páginas, os mapas e a API juntos.
 
 | Ficheiro | Cobre |
 |---|---|
 | `crud.spec.ts` | Para cada uma das nove entidades: criar pelo formulário, encontrar com a pesquisa da lista, abrir, editar, apagar pela janela de confirmação. E também: desenhar uma rota no mapa (as respostas dos [routers](conceitos.md#router "Um serviço que, dados dois ou mais pontos, responde com o caminho pelas ruas entre eles e a distância.") são dadas localmente), "Atribuir Transporte" numa rota, apagar um proprietário com um veículo, apagar uma paragem com um alerta de passageiro, e [401](conceitos.md#codigos-de-resposta "O número de três algarismos com que o servidor diz como correu o pedido.") da API sem [sessão](conceitos.md#sessao "Depois de entrar, o servidor dá uma prova de quem se é (um token), e o navegador mostra-a a cada pedido para não ter de pedir a palavra-passe outra vez."). |
 | `gps.spec.ts` | A posição ao vivo na página do veículo, e criar, usar e revogar um código de dispositivo GPS. |
+| `paragens-mapa.spec.ts` | As paragens das rotas nos mapas: um marcador por paragem na página do veículo, com o nome ao clicar; as paragens de cada rota activa no início. |
 | `pin.spec.ts` | Gerar o PIN de um motorista, mostrado uma vez. |
 | `search.spec.ts` | A pesquisa do cabeçalho: veículos, rotas e motoristas, Enter, sem resultados; um motorista encontrado pelos algarismos do telefone escritos de três formas. |
 | `tarifa.spec.ts` | A página da tarifa: os valores actuais, a pré-visualização das tarifas, um valor fora do intervalo recusado, gravar (os valores originais voltam a pôr-se). |

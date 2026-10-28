@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { routeStops } from '@/lib/routeOrder';
 
 // Guardar as estatísticas 5 minutos para aliviar a base de dados (o painel abre muitas vezes, os números mudam devagar)
 let cachedStats: any = null;
@@ -107,6 +108,13 @@ export async function GET() {
       ORDER BY count DESC, v.nome ASC
     `;
 
+    // As paragens de cada via activa, para o mapa do início as mostrar com a via
+    const viaParagens = await prisma.viaParagem.findMany({
+      where: { via: { ativa: true } },
+      select: { viaId: true, terminalBoolean: true, paragem: { select: { id: true, nome: true, geoLocation: true } } },
+    });
+    const paragensDaVia = (viaId: string) => viaParagens.filter((p) => p.viaId === viaId);
+
     const viasData = viasComTransportes.map(v => ({
       id: v.id,
       name: v.nome,
@@ -114,7 +122,8 @@ export async function GET() {
       color: v.cor,
       path: v.geoLocationPath,
       start: v.terminalPartida,
-      end: v.terminalChegada
+      end: v.terminalChegada,
+      stops: routeStops(paragensDaVia(v.id), v.geoLocationPath),
     }));
 
     const responseData = {

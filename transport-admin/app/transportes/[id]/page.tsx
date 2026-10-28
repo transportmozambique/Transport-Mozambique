@@ -229,8 +229,45 @@ export default function TransporteDetalhes() {
       if (transporte.routeCoords && transporte.routeCoords.length > 0) {
         drawRoute(transporte.routeCoords);
       } else {
-        // Sem dados da via, mostrar só o marcador do autocarro
+        // Sem percurso da via, as paragens e o marcador do autocarro
+        addStops();
         addBusMarker();
+      }
+
+      // As paragens da via: cinzentas, os terminais pretos com um T; o nome ao clicar
+      function addStops() {
+        transporte?.stops?.forEach((stop) => {
+          const size = stop.isTerminal ? "18px" : "14px";
+          const el = document.createElement("div");
+          el.style.cssText = `
+            width: ${size};
+            height: ${size};
+            background: ${stop.isTerminal ? "#1e293b" : "#6b7280"};
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+          `;
+          if (stop.isTerminal) el.textContent = "T";
+
+          const popup = document.createElement("div");
+          popup.style.color = "#000";
+          const nome = document.createElement("strong");
+          nome.textContent = stop.nome;
+          popup.appendChild(nome);
+          if (stop.isTerminal) popup.append(document.createElement("br"), "Terminal");
+
+          new maplibregl.Marker({ element: el })
+            .setLngLat([stop.longitude, stop.latitude])
+            .setPopup(new maplibregl.Popup({ offset: 15 }).setDOMContent(popup))
+            .addTo(map);
+        });
       }
 
       // Desenhar a via
@@ -279,56 +316,8 @@ export default function TransporteDetalhes() {
           }
         }, 'route');
 
-        // Juntar as paragens, se houver
-        if (transporte && transporte.stops && transporte.stops.length > 0) {
-          transporte.stops.forEach((stop) => {
-            // Estilo do marcador pelo tipo de paragem
-            let markerColor = "#6b7280"; // Cinzento por omissão
-            let markerSize = "14px";
-            let borderColor = "white";
-            let markerIcon = "";
-
-            if (stop.isTerminal) {
-              markerColor = "#1e293b"; // preto para os terminais
-              markerSize = "18px";
-              borderColor = "#ffffff";
-              markerIcon = "T";
-            }
-
-            const el = document.createElement("div");
-            el.style.cssText = `
-              width: ${markerSize};
-              height: ${markerSize};
-              background: ${markerColor};
-              border: 3px solid ${borderColor};
-              border-radius: 50%;
-              box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-              cursor: pointer;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 10px;
-              font-weight: bold;
-              color: white;
-            `;
-
-            if (markerIcon) {
-              el.textContent = markerIcon;
-            }
-
-            let popupContent = `<strong>${stop.nome}</strong>`;
-            if (stop.isTerminal) {
-              popupContent += `<br><span style="color: #6b7280;">Terminal</span>`;
-            }
-
-            new maplibregl.Marker({ element: el })
-              .setLngLat([stop.longitude, stop.latitude])
-              .setPopup(
-                new maplibregl.Popup({ offset: 15 }).setHTML(popupContent)
-              )
-              .addTo(map);
-          });
-        }
+        // As paragens da via
+        addStops();
 
         // Marcador do autocarro
         addBusMarker();

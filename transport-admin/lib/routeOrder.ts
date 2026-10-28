@@ -69,3 +69,28 @@ export function orderStopsAlongRoute<T>(
     .sort((a, b) => a.at - b.at || a.i - b.i)
     .map((s) => s.stop);
 }
+
+/** Uma paragem de uma via, como os mapas do painel a desenham */
+export interface RouteStop {
+  id: string;
+  nome: string;
+  latitude: number;
+  longitude: number;
+  isTerminal: boolean;
+}
+
+/**
+ * As paragens de uma via (as linhas ViaParagem com a sua Paragem) pela ordem do percurso, com as
+ * coordenadas de Paragem.geoLocation ("lat,lng"). As paragens sem coordenadas válidas ficam de fora.
+ */
+export function routeStops(
+  paragens: { terminalBoolean: boolean; paragem: { id: string; nome: string; geoLocation: string | null } }[],
+  geoLocationPath: string | null | undefined,
+): RouteStop[] {
+  return orderStopsAlongRoute(paragens, geoLocationPath, (p) => p.paragem.geoLocation).flatMap((p) => {
+    const [lat, lng] = (p.paragem.geoLocation || "").split(",").map(Number);
+    return Number.isFinite(lat) && Number.isFinite(lng)
+      ? [{ id: p.paragem.id, nome: p.paragem.nome, latitude: lat, longitude: lng, isTerminal: p.terminalBoolean }]
+      : [];
+  });
+}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { positionSummary } from '@/lib/vehiclePosition';
+import { routeStops } from '@/lib/routeOrder';
 
 export async function GET(
   request: NextRequest,
@@ -20,7 +21,7 @@ export async function GET(
             terminalPartida: true,
             terminalChegada: true,
             geoLocationPath: true,
-            paragens: { select: { paragem: { select: { nome: true, geoLocation: true } } } },
+            paragens: { select: { terminalBoolean: true, paragem: { select: { id: true, nome: true, geoLocation: true } } } },
           },
         },
         motorista: {
@@ -117,6 +118,8 @@ export async function GET(
       longitude,
       posicao,
       routeCoords,
+      // As paragens da via, pela ordem do percurso, para o mapa da página do transporte
+      stops: transporte.via ? routeStops(transporte.via.paragens, transporte.via.geoLocationPath) : [],
     });
   } catch (error: any) {
     return NextResponse.json(

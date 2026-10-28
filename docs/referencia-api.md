@@ -567,6 +567,8 @@ Cada entidade tem um endpoint de lista e um de registo (código em [`transport-a
 | Passageiros | `/api/utentes` | `/api/utentes/{id}` | `PUT` |
 | Administradores | `/api/administradores` | `/api/administradores/{id}` | `PATCH` |
 
+`GET /api/transportes/{id}` junta ao registo a posição (`posicao`, `latitude`, `longitude`), o percurso da rota (`routeCoords`, pares `[lng, lat]`) e as suas paragens pela ordem do percurso (`stops`: `id`, `nome`, `latitude`, `longitude`, `isTerminal`, este de `ViaParagem.terminalBoolean`), que o mapa da página do veículo desenha. Código: `routeStops()` em [`lib/routeOrder.ts`](../transport-admin/lib/routeOrder.ts).
+
 **Parâmetros das listas:**
 
 | Parâmetro | Listas | Significado |
@@ -725,7 +727,7 @@ Um valor fora do intervalo responde 400 com a regra do campo, por exemplo `Tarif
 
 | Endpoint | Conteúdo |
 |---|---|
-| `GET /api/dashboard/stats` | Tudo o que o início do painel mostra menos o cartão "Agora": contadores (`vias` conta só as rotas activas), veículos por município, as rotas activas com o percurso e o número de veículos, rotas e paragens por município. Em cache 5 minutos por instância. |
+| `GET /api/dashboard/stats` | Tudo o que o início do painel mostra menos o cartão "Agora": contadores (`vias` conta só as rotas activas), veículos por município, as rotas activas com o percurso, o número de veículos e as paragens (`stops`, como em `GET /api/transportes/{id}`), rotas e paragens por município. Em cache 5 minutos por instância. |
 | `GET /api/relatorios/stats` | O relatório "Estatísticas Gerais": `{"totalTransportes": 451, "totalVias": 261, "totalParagens": 1902, "totalProprietarios": 11, "totalMotoristas": 451, "totalProvincias": 11, "totalMunicipios": 2, "totalUtentes": 8, "transportComMotorista": 451, "transportSemMotorista": 0, "motoristasAtivos": 451, "utentesSubscritos": 6}` (produção, 2026-10-18) |
 
 <!-- navegação-fim: gerada por .github/scripts/docs-nav.py -->
