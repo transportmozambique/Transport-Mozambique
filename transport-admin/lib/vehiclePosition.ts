@@ -128,12 +128,35 @@ function etaSpeedMps(vehicle: PositionedVehicle, baseMps: number): number {
   return Math.min(baseMps * GPS_SPEED_MAX_FACTOR, Math.max(baseMps * GPS_SPEED_MIN_FACTOR, (avg * 1000) / 3600));
 }
 
-/** O sentido pelo rumo do GPS comparado com o rumo do percurso nesse ponto; null parado ou sem rumo. */
-function gpsDirection(vehicle: PositionedVehicle, g: Geometry, i: number): Direction | null {
+/**
+ * O sentido pelo rumo do GPS comparado com o rumo do troço do percurso onde o veículo está (o que
+ * passa mais perto de `point`); null parado ou sem rumo. Porquê o troço e não o ponto do percurso
+ * mais perto: perto de uma esquina, o troço que começa nesse ponto é o de depois da curva, e o
+ * veículo parecia ir ao contrário (como em transport-client/lib/vehiclePosition.ts).
+ */
+function gpsDirection(vehicle: PositionedVehicle, g: Geometry, point: LatLng): Direction | null {
   if ((vehicle.gpsVelocidade ?? 1) <= 0.5 || vehicle.gpsDirecao == null || g.path.length < 2) return null;
-  const a = i < g.path.length - 1 ? i : i - 1;
+  let a = 0;
+  let best = Infinity;
+  for (let s = 0; s < g.path.length - 1; s++) {
+    const d = segmentDistance(point, g.path[s], g.path[s + 1]);
+    if (d < best) {
+      best = d;
+      a = s;
+    }
+  }
   const diff = Math.abs(((bearing(g.path[a], g.path[a + 1]) - vehicle.gpsDirecao + 540) % 360) - 180);
   return diff <= 90 ? 1 : -1;
+}
+
+/** Distância (ao quadrado, em graus) de `p` ao segmento a–b, num plano local: só serve para comparar. */
+function segmentDistance(p: LatLng, a: LatLng, b: LatLng): number {
+  const k = Math.cos((p[0] * Math.PI) / 180);
+  const [ax, ay, bx, by, px, py] = [a[1] * k, a[0], b[1] * k, b[0], p[1] * k, p[0]];
+  const [dx, dy] = [bx - ax, by - ay];
+  const len = dx * dx + dy * dy;
+  const t = len > 0 ? Math.min(1, Math.max(0, ((px - ax) * dx + (py - ay) * dy) / len)) : 0;
+  return (px - ax - t * dx) ** 2 + (py - ay - t * dy) ** 2;
 }
 
 /** A viagem em curso: quando começou e de que terminal partiu (1 = início do percurso); null quando parado. */
@@ -168,7 +191,7 @@ export function vehiclePosition(vehicle: PositionedVehicle, g: Geometry, speedMp
     if (g.path.length > 1) {
       const i = nearestIndex(g, fix);
       progress = g.cumulative[i];
-      direction = trip !== null ? gpsDirection(vehicle, g, i) : null;
+      direction = trip !== null ? gpsDirection(vehicle, g, fix) : null;
     }
     return { point: fix, source: "gps", moving, progress, direction, waitS: 0, outOfService: trip === null, at: vehicle.gpsAtualizadoEm, speedMps: etaMps };
   }
@@ -196,7 +219,7 @@ export function vehiclePosition(vehicle: PositionedVehicle, g: Geometry, speedMp
     const progress = g.cumulative[i];
     if (haversine(pointAlong(g, progress), fix) <= PARKED_ON_ROUTE_M) {
       const fixS = (vehicle.gpsAtualizadoEm.getTime() - trip.start.getTime()) / 1000;
-      const direction = gpsDirection(vehicle, g, i) ?? tripAt(fixS, g, speedMps, trip.from).direction;
+      const direction = gpsDirection(vehicle, g, fix) ?? tripAt(fixS, g, speedMps, trip.from).direction;
       // Uma viagem equivalente: saiu do terminal atrás dele à hora certa para estar aqui à hora da posição
       const fromTerminal = direction === 1 ? progress : g.length - progress;
       const s = tripAt((now.getTime() - vehicle.gpsAtualizadoEm.getTime()) / 1000 + fromTerminal / etaMps, g, etaMps, direction);
