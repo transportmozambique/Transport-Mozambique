@@ -133,23 +133,6 @@ export function pointAlong(g: RouteGeometry, distance: number): { point: LatLng;
   return { point: [lat1 + (lat2 - lat1) * t, lng1 + (lng2 - lng1) * t], heading: bearing(g.path[i - 1], g.path[i]) };
 }
 
-/** Índice do ponto do percurso mais próximo de `point` (os percursos têm um ponto a cada ~50 m). */
-function nearestIndex(g: RouteGeometry, point: LatLng): number {
-  const k = Math.cos((point[0] * Math.PI) / 180);
-  let best = 0;
-  let bestDist = Infinity;
-  for (let i = 0; i < g.path.length; i++) {
-    const dLat = g.path[i][0] - point[0];
-    const dLng = (g.path[i][1] - point[1]) * k;
-    const d = dLat * dLat + dLng * dLng;
-    if (d < bestDist) {
-      bestDist = d;
-      best = i;
-    }
-  }
-  return best;
-}
-
 /** Metros ao longo do percurso até ao ponto do percurso mais próximo de `point`. */
 export function progressOf(g: RouteGeometry, point: LatLng): number {
   if (g.path.length < 2) return 0;
@@ -313,12 +296,17 @@ export function vehiclePosition(
     : null;
 }
 
-/** O sentido de um veículo pelo rumo do GPS comparado com o rumo do percurso nesse ponto; null parado ou sem rumo. */
+/**
+ * O sentido de um veículo pelo rumo do GPS comparado com o rumo do troço do percurso onde ele está
+ * (a projecção do ponto no percurso); null parado ou sem rumo. Porquê o troço e não o ponto do
+ * percurso mais perto: perto de uma esquina o ponto mais perto é o da esquina, e o troço que começa
+ * nele é o de depois da curva. O autocarro parecia ir ao contrário e, a bordo, já ter passado a
+ * paragem de saída ("Saia agora" antes do tempo, visto em 2026-10-28 na esquina antes do Hospital).
+ */
 function gpsDirection(vehicle: PositionedVehicle, g: RouteGeometry, point: LatLng): Direction | null {
   if ((vehicle.gpsVelocidade ?? 1) <= 0.5 || vehicle.gpsDirecao == null || g.path.length < 2) return null;
-  const i = nearestIndex(g, point);
-  const a = i < g.path.length - 1 ? i : i - 1;
-  const diff = Math.abs(((bearing(g.path[a], g.path[a + 1]) - vehicle.gpsDirecao + 540) % 360) - 180);
+  const { segment } = projectOnPath(g.path, point);
+  const diff = Math.abs(((bearing(g.path[segment], g.path[segment + 1]) - vehicle.gpsDirecao + 540) % 360) - 180);
   return diff <= 90 ? 1 : -1;
 }
 

@@ -50,7 +50,7 @@ flowchart TD
 
 - está **em movimento** quando a velocidade enviada é maior do que 0,5 km/h (ou desconhecida) **e** o motorista iniciou a viagem;
 - o seu sítio na rota é o ponto mais próximo do percurso da rota;
-- o **sentido** compara o rumo enviado com o rumo do próprio percurso nesse ponto: até 90° quer dizer "para o fim do percurso", senão "de volta";
+- o **sentido** compara o rumo enviado com o rumo do troço do percurso onde o autocarro está (a projecção do ponto no percurso): até 90° quer dizer "para o fim do percurso", senão "de volta". Porquê o troço e não o ponto do percurso mais perto: perto de uma esquina, o ponto mais perto é o da esquina, e o troço que começa nele é o de depois da curva. Até 2026-10-28 o autocarro parecia ir ao contrário em cerca de 12% da X19, e a bordo isso contava como "já passou a paragem de saída": num teste, "Saia agora em Bassopa" chegou com o autocarro ainda no Hospital, 770 m antes;
 - a velocidade mostrada é `gpsVelocidade`, a última enviada;
 - as **horas de chegada** usam a velocidade média recente, `gpsVelocidadeMedia` ([abaixo](#a-velocidade-das-horas-de-chegada)).
 
